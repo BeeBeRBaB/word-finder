@@ -1,0 +1,66 @@
+/* Lock the viewport: no page scroll or rubber-band on iPad / iOS standalone. */
+html,body{margin:0;height:100%;overflow:hidden;background:#16262f;font-family:'Atkinson Hyperlegible',sans-serif;overscroll-behavior:none;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+body{position:fixed;inset:0;width:100%;height:100%}
+a{color:#8fe8c8}a:hover{color:#b8f5dd}
+#app{height:100%;display:grid;box-sizing:border-box;overflow:hidden;
+  padding:calc(10px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));
+  grid-template-columns:1fr;grid-template-areas:"hdr" "grid" "side";
+  justify-items:center;align-content:start;gap:10px}
+/* Rows: header hugs its own height (min-content) so its text sits at the top
+   next to the grid's top edge; the list row takes all remaining height (1fr),
+   which keeps the list directly under the header instead of floating at the
+   grid's vertical centre. Without explicit rows both are `auto`, and the grid
+   spanning both rows pushes half its height into each — centring the rail. */
+#app[data-landscape]{grid-template-areas:"grid hdr" "grid side";grid-template-rows:min-content 1fr;align-content:start;justify-items:start;column-gap:20px;row-gap:4px}
+/* Landscape phones give ~280-320px of total height for the whole right rail
+   (header + list + hint), which the desktop/portrait chrome above doesn't fit
+   into — measured directly: iPhone-class landscape overflowed #app by ~19-38px
+   with the untrimmed rail. The hint is instructional, not gameplay-critical, so
+   it's the first thing to go; the list also loses a little internal breathing
+   room. Neither guard assertion (words visible, nothing clipped) needs it. */
+#app[data-landscape] #hint{display:none}
+#app[data-landscape] #listhdr{margin:2px 2px 4px}
+#app[data-landscape] #list{gap:4px 14px}
+#hdr{grid-area:hdr;width:100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+#kicker{font-weight:700;font-size:11px;letter-spacing:.18em;color:#6fa899}
+#theme{font-weight:700;font-size:28px;line-height:1.1;color:#eef6f2}
+#newbtn{border:1.5px solid #4fd1a5;color:#8fe8c8;background:transparent;border-radius:999px;padding:9px 16px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;min-height:44px}
+#newbtn:hover{background:rgba(79,209,165,.12)}
+#main{display:contents}
+#gridbox{grid-area:grid;position:relative;background:#1d2f3a;border:1px solid #2c4250;border-radius:16px;box-shadow:0 6px 20px rgba(6,20,28,.35);touch-action:none;cursor:pointer;flex:none}
+#pills,#fx{position:absolute;inset:0;pointer-events:none}
+.pill{position:absolute;border-radius:999px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
+.cell{position:absolute;text-align:center;font-weight:700;color:#dfe9e5;pointer-events:none}
+#side{grid-area:side;flex:none}
+#listhdr{display:flex;justify-content:space-between;align-items:baseline;margin:2px 2px 8px}
+#listhdr b{font-weight:700;font-size:12px;letter-spacing:.16em;color:#6fa899}
+#count{font-size:13px;color:#9fb8ae}
+#list{display:grid;gap:6px 14px}
+.w{justify-self:start;font-weight:700;font-size:17px;line-height:1.2;padding:4px 12px;border-radius:999px;cursor:default;color:#dfe9e5}
+.w.done{text-decoration:line-through;color:rgba(223,233,229,.6)}
+/* On find, the word glows green (fade in/out) for one beat, then main.js swaps
+   this class for `.done` and it strikes through. Duration matches GLOW_MS. */
+.w.glow{color:#eafff6;animation:foundGlow .9s ease}
+@keyframes foundGlow{0%{background:rgba(79,209,165,0)}45%{background:rgba(79,209,165,.42)}100%{background:rgba(79,209,165,0)}}
+#hint{margin-top:8px;font-size:12px;line-height:1.4;color:#7d968c;max-width:280px}
+#win{position:fixed;inset:0;background:rgba(10,20,26,.72);display:none;align-items:center;justify-content:center;z-index:50}
+#wincard{position:relative;background:#1d2f3a;border:1px solid #4fd1a5;border-radius:20px;padding:34px 42px;text-align:center;animation:popIn .45s ease;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+#wincard .big{font-size:44px}
+#wincard h2{font-weight:700;font-size:26px;color:#eef6f2;margin:8px 0 4px}
+#wincard p{font-size:14.5px;color:#9fb8ae;margin:0 0 20px}
+#winbtn{border:none;background:#4fd1a5;color:#0b2c20;border-radius:999px;padding:12px 22px;font-family:inherit;font-weight:700;font-size:15px;cursor:pointer}
+#winclose{position:absolute;top:0;right:0;width:44px;height:44px;border:none;background:transparent;color:#9fb8ae;font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+#winclose:hover{color:#eef6f2}
+@keyframes popIn{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
+#confirm{position:fixed;inset:0;background:rgba(10,20,26,.72);display:none;align-items:center;justify-content:center;z-index:60}
+#confirmcard{background:#1d2f3a;border:1px solid #4fd1a5;border-radius:20px;padding:34px 42px;text-align:center;animation:popIn .45s ease;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+#confirmcard p{font-size:14.5px;color:#9fb8ae;margin:0 0 20px;max-width:260px}
+#confirmcard div{display:flex;gap:12px;justify-content:center}
+#confirm-cancel,#confirm-ok{border:none;border-radius:999px;padding:12px 22px;font-family:inherit;font-weight:700;font-size:15px;cursor:pointer;min-height:44px}
+#confirm-cancel{background:transparent;border:1.5px solid #4fd1a5;color:#8fe8c8}
+#confirm-ok{background:#4fd1a5;color:#0b2c20}
+@media (prefers-reduced-motion: reduce){
+  #wincard{animation:none}
+  .pill{transition:none}
+  .w.glow{animation:none}
+}

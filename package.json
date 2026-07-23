@@ -1,0 +1,16 @@
+{
+  "name": "word-finder",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "node --test",
+    "test:e2e": "playwright test",
+    "test:live": "LIVE=1 playwright test --config playwright.live.config.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "typescript": "^5.7.0"
+  }
+}

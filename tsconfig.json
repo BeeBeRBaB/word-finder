@@ -1,0 +1,36 @@
+{
+  // "types": [] disables TypeScript's automatic @types/* auto-discovery. Without
+  // it, a stray global `@types/node` install (or any other ambient @types package)
+  // sitting outside this repo — e.g. in a developer's home-directory node_modules —
+  // gets silently pulled into every compile via TS's default upward-searching
+  // typeRoots behaviour, and its globals (`setTimeout` -> NodeJS.Timeout instead of
+  // the DOM's `number`, etc.) silently change what `npm run typecheck` reports from
+  // machine to machine. `types: []` makes the browser globals here come only from
+  // the explicit `lib` list below, so the result is identical everywhere.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable", "WebWorker"],
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": false,
+    "skipLibCheck": true,
+    "types": []
+  },
+  // tests/unit/**/*.test.js and tests/server.mjs are intentionally NOT included.
+  // They run under Node (node:test, node:http, node:fs/promises, node:path,
+  // node:url, the `process` global) and typing them correctly needs @types/node's
+  // ambient module declarations — there is no JSDoc-only way to make `import ...
+  // from 'node:http'` resolve to a real type without it. Installing @types/node
+  // was ruled out ("no new dependencies"), and hand-rolling ambient `declare module
+  // 'node:http' { ... }` shims for the handful of Node APIs these two files use
+  // would just be a bespoke, unmaintained, and likely-wrong re-implementation of
+  // that same package — worse than not checking them. Everything that runs in the
+  // browser (src/, sw.js) and the Playwright e2e specs (tests/e2e/** and
+  // tests/live/**, both pure DOM + @playwright/test, no Node built-ins) is fully
+  // covered below.
+  "include": ["src/**/*.js", "tests/e2e/**/*.js", "tests/live/**/*.js", "sw.js"]
+}
