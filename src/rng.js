@@ -2,7 +2,7 @@
 // so the same functions can be exercised from a plain unit test.
 //
 // Deterministic PRNG so a puzzle can be reproduced exactly. `?seed=N` pins the
-// sequence, `?theme=N` pins the theme; with neither, the clock seeds it and the
+// sequence, `?topic=N` pins the topic; with neither, the clock seeds it and the
 // game behaves exactly as before. This is the shipped path, not a test-only branch.
 
 /**
@@ -48,13 +48,13 @@ export function resolveSeed(search) {
 }
 
 /**
- * `?theme=N` clamped into range when present, else a random theme.
- * Note the asymmetry: the explicit branch must NOT touch `rng`, or pinning a theme
+ * `?topic=N` clamped into range when present, else a random topic.
+ * Note the asymmetry: the explicit branch must NOT touch `rng`, or pinning a topic
  * would shift the sequence and a pinned seed would produce a different grid.
  * @param {string} search @param {number} count @param {Rng} rng @returns {number}
  */
-export function resolveThemeIndex(search, count, rng) {
-  const v = new URLSearchParams(search).get('theme');
+export function resolveTopicIndex(search, count, rng) {
+  const v = new URLSearchParams(search).get('topic');
   if (v === null) return rng.int(count);
   const n = parseInt(v, 10);
   return Number.isFinite(n) ? Math.min(count - 1, Math.max(0, n)) : 0;

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { makeRng, resolveSeed, resolveThemeIndex } from '../../src/rng.js';
+import { makeRng, resolveSeed, resolveTopicIndex } from '../../src/rng.js';
 
 test('the same seed reproduces the same sequence', () => {
   const a = makeRng(42), b = makeRng(42);
@@ -36,15 +36,22 @@ test('resolveSeed honours ?seed= and falls back to the clock', () => {
   assert.ok(resolveSeed('') > 0);
 });
 
-test('resolveThemeIndex clamps ?theme= into range', () => {
+test('resolveTopicIndex clamps ?topic= into range', () => {
   const rng = makeRng(1);
-  assert.equal(resolveThemeIndex('?theme=5', 100, rng), 5);
-  assert.equal(resolveThemeIndex('?theme=999', 100, rng), 99);
-  assert.equal(resolveThemeIndex('?theme=-4', 100, rng), 0);
+  assert.equal(resolveTopicIndex('?topic=5', 100, rng), 5);
+  assert.equal(resolveTopicIndex('?topic=999', 100, rng), 99);
+  assert.equal(resolveTopicIndex('?topic=-4', 100, rng), 0);
 });
 
-test('resolveThemeIndex does not consume rng when ?theme= is explicit', () => {
+test('resolveTopicIndex does not consume rng when ?topic= is explicit', () => {
   const rngA = makeRng(5), rngB = makeRng(5);
-  resolveThemeIndex('?theme=3', 100, rngA);
-  assert.equal(rngA.int(50), rngB.int(50), 'explicit ?theme= must not draw from rng');
+  resolveTopicIndex('?topic=3', 100, rngA);
+  assert.equal(rngA.int(50), rngB.int(50), 'explicit ?topic= must not draw from rng');
+});
+
+// `?theme=` was the old name for this parameter and is deliberately NOT aliased —
+// keeping it alive would reintroduce the ambiguity the rename removes.
+test('the retired ?theme= parameter is ignored, not honoured', () => {
+  const rng = makeRng(1);
+  assert.equal(resolveTopicIndex('?theme=5', 100, rng), makeRng(1).int(100));
 });

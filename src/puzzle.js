@@ -17,12 +17,12 @@ export function cap(s) { return s.charAt(0) + s.slice(1).toLowerCase(); }
 /**
  * Generate a puzzle. `placements` records where each word actually landed, so a
  * test can assert the grid really contains what the word list claims.
- * @param {{themes:[string,string][], themeIdx:number, rng:Rng, size:number, count:number}} opts
+ * @param {{topics:[string,string][], topicIdx:number, rng:Rng, size:number, count:number}} opts
  * @returns {Puzzle}
  */
-export function buildPuzzle({ themes, themeIdx, rng, size, count }) {
-  const name = themes[themeIdx][0];
-  const pool = themes[themeIdx][1].split(',').filter(w => w.length <= size - 1);
+export function buildPuzzle({ topics, topicIdx, rng, size, count }) {
+  const name = topics[topicIdx][0];
+  const pool = topics[topicIdx][1].split(',').filter(w => w.length <= size - 1);
   const words = rng.shuffle(pool).slice(0, count).sort((a, b) => b.length - a.length);
 
   /** @type {(string|null)[][]} */

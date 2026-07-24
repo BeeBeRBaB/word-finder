@@ -2,14 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buildPuzzle, snap, readLine, matchWord, cap } from '../../src/puzzle.js';
 import { makeRng } from '../../src/rng.js';
-import { THEMES } from '../../src/themes.js';
+import { TOPICS } from '../../src/topics.js';
 
-const build = (seed, themeIdx = 0) =>
-  buildPuzzle({ themes: THEMES, themeIdx, rng: makeRng(seed), size: 13, count: 12 });
+const build = (seed, topicIdx = 0) =>
+  buildPuzzle({ topics: TOPICS, topicIdx, rng: makeRng(seed), size: 13, count: 12 });
 
 test('every placed word is actually readable in the grid', () => {
   for (let seed = 1; seed <= 50; seed++) {
-    const p = build(seed, seed % THEMES.length);
+    const p = build(seed, seed % TOPICS.length);
     for (const { word, x0, y0, dx, dy } of p.placements) {
       let read = '';
       for (let i = 0; i < word.length; i++) read += p.cells[(y0 + dy * i) * 13 + (x0 + dx * i)];
@@ -18,10 +18,10 @@ test('every placed word is actually readable in the grid', () => {
   }
 });
 
-test('all 12 words place across every theme', () => {
-  for (let i = 0; i < THEMES.length; i++) {
+test('all 12 words place across every topic', () => {
+  for (let i = 0; i < TOPICS.length; i++) {
     const p = build(i + 1, i);
-    assert.equal(p.words.length, 12, `theme ${THEMES[i][0]} placed ${p.words.length}`);
+    assert.equal(p.words.length, 12, `topic ${TOPICS[i][0]} placed ${p.words.length}`);
   }
 });
 

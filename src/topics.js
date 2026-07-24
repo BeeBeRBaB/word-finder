@@ -1,8 +1,8 @@
-// Puzzle content: each theme is [name, comma-separated uppercase words].
-// This is data, not logic — kept separate so new themes can be added
+// Puzzle content: each topic is [name, comma-separated uppercase words].
+// This is data, not logic — kept separate so new topics can be added
 // without touching the game engine.
 /** @type {[string,string][]} */
-export const THEMES = [
+export const TOPICS = [
 ["Summer","BEACH,SUNSHINE,POOL,LEMONADE,ICECREAM,SANDALS,SURF,PICNIC,SHELLS,KITE,TOWEL,VACATION"],
 ["Spring","BLOSSOM,RAINBOW,TULIP,ROBIN,SEEDS,PUDDLE,GARDEN,BREEZE,NEST,SPROUT,APRIL,UMBRELLA"],
 ["Fall","LEAVES,PUMPKIN,ACORN,HARVEST,SWEATER,CIDER,MAPLE,SCARECROW,RAKE,ORCHARD,FROST,OCTOBER"],
