@@ -1,24 +1,14 @@
 /* Two palettes, each written exactly once. `data-appearance` on <html> is always a
    RESOLVED value — `light` or `dark`, never `system`; src/appearance.js does the
    resolving. Doing it in JS rather than in a prefers-color-scheme media query is what
-   keeps this to two blocks instead of four, with no chance of the copies drifting. */
-:root, :root[data-appearance="light"]{
-  --bg:#eef3f1; --surface:#ffffff; --border:#cfdcd7;
-  --text:#1c3a31; --text-strong:#10241d; --muted:#5a736a; --label:#3f7d68; --hint:#6b8479;
-  --accent:#17876a; --accent-text:#12684f; --accent-hover:#0d5741; --accent-ink:#ffffff;
-  --accent-wash:rgba(23,135,106,.10);
-  --scrim:rgba(20,40,34,.45);
-  --shadow:0 6px 20px rgba(30,60,52,.14); --card-shadow:0 10px 40px rgba(30,60,52,.22);
-  --found-text:#0b3a2c; --done-text:rgba(28,58,49,.55); --glow:rgba(23,135,106,.30);
-  --pill-1:rgba(224,160,20,.34); --pill-2:rgba(40,150,210,.30);
-  --pill-3:rgba(230,90,110,.30); --pill-4:rgba(150,100,225,.30);
-  --pill-sel:rgba(23,135,106,.28); --pill-miss:rgba(220,50,50,.38);
-  --pill-edge:rgba(20,50,42,.16);
-  --confetti-1:#17876a; --confetti-2:#e0a014; --confetti-3:#2896d2;
-  --confetti-4:#e65a6e; --confetti-5:#9664e1; --confetti-6:#6b8479;
-}
-/* Value for value, the palette the game shipped with. Any change here is a regression. */
-:root[data-appearance="dark"]{
+   keeps this to two blocks instead of four, with no chance of the copies drifting.
+   Bare `:root` hangs off DARK, not light: nothing sets `data-appearance` until the
+   inline resolver in <head> runs (that's Task 6), so a visitor with JavaScript
+   disabled, or one whose resolver threw before it could set the attribute, gets the
+   appearance this game has always shipped with instead of an unstyled/white page.
+   Value for value, the palette below is what the game shipped with. Any change
+   here is a regression. */
+:root, :root[data-appearance="dark"]{
   --bg:#16262f; --surface:#1d2f3a; --border:#2c4250;
   --text:#dfe9e5; --text-strong:#eef6f2; --muted:#9fb8ae; --label:#6fa899; --hint:#7d968c;
   --accent:#4fd1a5; --accent-text:#8fe8c8; --accent-hover:#b8f5dd; --accent-ink:#0b2c20;
@@ -32,6 +22,21 @@
   --pill-edge:rgba(255,255,255,.25);
   --confetti-1:#4fd1a5; --confetti-2:#f0c45a; --confetti-3:#78dcff;
   --confetti-4:#ff8c96; --confetti-5:#be96ff; --confetti-6:#eef6f2;
+}
+:root[data-appearance="light"]{
+  --bg:#eef3f1; --surface:#ffffff; --border:#cfdcd7;
+  --text:#1c3a31; --text-strong:#10241d; --muted:#5a736a; --label:#3f7d68; --hint:#6b8479;
+  --accent:#17876a; --accent-text:#12684f; --accent-hover:#0d5741; --accent-ink:#ffffff;
+  --accent-wash:rgba(23,135,106,.10);
+  --scrim:rgba(20,40,34,.45);
+  --shadow:0 6px 20px rgba(30,60,52,.14); --card-shadow:0 10px 40px rgba(30,60,52,.22);
+  --found-text:#0b3a2c; --done-text:rgba(28,58,49,.55); --glow:rgba(23,135,106,.30);
+  --pill-1:rgba(224,160,20,.34); --pill-2:rgba(40,150,210,.30);
+  --pill-3:rgba(230,90,110,.30); --pill-4:rgba(150,100,225,.30);
+  --pill-sel:rgba(23,135,106,.28); --pill-miss:rgba(220,50,50,.38);
+  --pill-edge:rgba(20,50,42,.16);
+  --confetti-1:#17876a; --confetti-2:#e0a014; --confetti-3:#2896d2;
+  --confetti-4:#e65a6e; --confetti-5:#9664e1; --confetti-6:#6b8479;
 }
 
 /* Lock the viewport: no page scroll or rubber-band on iPad / iOS standalone. */

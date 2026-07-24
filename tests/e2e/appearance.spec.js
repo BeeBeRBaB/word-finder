@@ -46,3 +46,23 @@ test('the dark palette still resolves to the colours the game shipped with', asy
     pill1: 'rgba(240,196,90,.38)', pillEdge: 'rgba(255,255,255,.25)',
   });
 });
+
+// Nothing sets data-appearance until Task 6's inline script. A visitor with JS
+// disabled — or one whose resolver threw — must still get the appearance the game
+// has always shipped, not a white page. Regression guard for the selector swap:
+// with `:root` hanging off the light palette, this rendered #eef3f1.
+//
+// NOTE for Task 6: once the inline <head> script lands, it sets data-appearance
+// on every load, which will break the `hasAttribute(...) === false` assertion
+// below. That is an intentional supersession of this test, not a regression —
+// Task 6's brief should update or replace this test accordingly.
+test('with no data-appearance set at all, the app renders dark', async ({ page }) => {
+  await page.goto('/?seed=1&topic=0');
+  expect(await page.evaluate(() => document.documentElement.hasAttribute('data-appearance'))).toBe(false);
+  const seen = await page.evaluate(() => {
+    const cs = getComputedStyle(document.documentElement);
+    return { bg: cs.getPropertyValue('--bg').trim(), surface: cs.getPropertyValue('--surface').trim() };
+  });
+  expect(seen).toEqual({ bg: '#16262f', surface: '#1d2f3a' });
+  expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe('rgb(22, 38, 47)');
+});
