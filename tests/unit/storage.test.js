@@ -9,7 +9,7 @@ function memStore() {
 
 test('save/load round-trips', () => {
   const s = makeStorage(memStore());
-  const data = { seed: 42, themeIdx: 3, found: [{ word: 'BEACH', x0: 0, y0: 0, x1: 4, y1: 0 }] };
+  const data = { seed: 42, topicIdx: 3, found: [{ word: 'BEACH', x0: 0, y0: 0, x1: 4, y1: 0 }] };
   s.save(data);
   assert.deepEqual(s.load(), data);
 });
@@ -21,14 +21,14 @@ test('load returns null when empty', () => {
 test('a throwing store degrades to null / no throw', () => {
   const bad = { getItem() { throw new Error('nope'); }, setItem() { throw new Error('nope'); }, removeItem() {} };
   const s = makeStorage(bad);
-  assert.doesNotThrow(() => s.save({ seed: 1, themeIdx: 0, found: [] }));
+  assert.doesNotThrow(() => s.save({ seed: 1, topicIdx: 0, found: [] }));
   assert.equal(s.load(), null);
 });
 
 test('clear removes the saved entry', () => {
   const store = memStore();
   const s = makeStorage(store);
-  s.save({ seed: 1, themeIdx: 0, found: [] });
+  s.save({ seed: 1, topicIdx: 0, found: [] });
   s.clear();
   assert.equal(s.load(), null);
 });
@@ -47,10 +47,31 @@ test('default store resolution survives a throwing localStorage getter (Safari p
   try {
     let s;
     assert.doesNotThrow(() => { s = makeStorage(); });
-    assert.doesNotThrow(() => s.save({ seed: 1, themeIdx: 0, found: [] }));
+    assert.doesNotThrow(() => s.save({ seed: 1, topicIdx: 0, found: [] }));
     assert.equal(s.load(), null);
   } finally {
     if (orig) Object.defineProperty(globalThis, 'localStorage', orig);
     else delete globalThis.localStorage;
   }
+});
+
+// Saves written before the theme -> topic rename carry `themeIdx`. Dropping them
+// would not merely lose the migration, it would hand `undefined` to buildPuzzle and
+// crash on reload for anyone mid-game at deploy time.
+test('a legacy save written with themeIdx loads as topicIdx', () => {
+  const store = memStore();
+  store.setItem('wordfinder-save-v1', JSON.stringify({ seed: 7, themeIdx: 5, found: [] }));
+  assert.deepEqual(makeStorage(store).load(), { seed: 7, topicIdx: 5, found: [] });
+});
+
+test('topicIdx wins when a save somehow carries both keys', () => {
+  const store = memStore();
+  store.setItem('wordfinder-save-v1', JSON.stringify({ seed: 7, themeIdx: 5, topicIdx: 9, found: [] }));
+  assert.deepEqual(makeStorage(store).load(), { seed: 7, topicIdx: 9, found: [] });
+});
+
+test('a save missing both index keys loads as topic 0, never undefined', () => {
+  const store = memStore();
+  store.setItem('wordfinder-save-v1', JSON.stringify({ seed: 7, found: [] }));
+  assert.equal(makeStorage(store).load().topicIdx, 0);
 });
