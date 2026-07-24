@@ -64,10 +64,18 @@ function systemQuery() {
   const mq = matchMedia('(prefers-color-scheme: dark)');
   return {
     get matches() { return mq.matches; },
-    // MediaQueryList.addEventListener needs Safari 14+. That is already below this
-    // app's floor — Element.animate in effects.js requires 13.1, ES modules 10.1 —
-    // so the deprecated addListener spelling is not worth carrying.
-    subscribe(listener) { mq.addEventListener('change', () => listener()); },
+    // Subscribing is best-effort. MediaQueryList.addEventListener needs Safari 14+,
+    // ABOVE this app's ~13.1 floor (Element.animate in effects.js), so 13.x has only
+    // the older addListener spelling. Neither must ever throw: start() runs at module
+    // scope, so an escape here is a blank page, not a missing feature. Worst case the
+    // System setting stops tracking the OS until the next load.
+    subscribe(listener) {
+      const on = () => listener();
+      try {
+        if (mq.addEventListener) mq.addEventListener('change', on);
+        else if (mq.addListener) mq.addListener(on);
+      } catch { /* System won't auto-follow; never fatal */ }
+    },
   };
 }
 
@@ -77,7 +85,7 @@ function systemQuery() {
 export function makeAppearance(deps = {}) {
   let store = deps.store;
   if (store === undefined) {
-    try { store = /** @type {any} */ (globalThis).localStorage; } catch { store = null; }
+    try { store = globalThis.localStorage; } catch { store = null; }
   }
   const root = deps.root || document.documentElement;
   const query = deps.query === undefined ? systemQuery() : deps.query;

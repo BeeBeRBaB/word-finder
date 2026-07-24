@@ -13,7 +13,7 @@ const KEY = 'wordfinder-save-v1';
 /** @param {Pick<Storage,'getItem'|'setItem'|'removeItem'>|null} [store] */
 export function makeStorage(store) {
   if (store === undefined) {
-    try { store = /** @type {any} */ (globalThis).localStorage; } catch { store = null; }
+    try { store = globalThis.localStorage; } catch { store = null; }
   }
   return {
     /** @param {SaveData} data @returns {void} */

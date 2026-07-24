@@ -118,3 +118,44 @@ test('a missing matchMedia resolves system to light instead of throwing', () => 
   assert.doesNotThrow(() => a.start());
   assert.equal(root.dataset.appearance, 'light');
 });
+
+// systemQuery() is module-private, reached only when makeAppearance() is called
+// with no `query` dep — which needs globalThis.matchMedia. These two stub it out
+// and restore it in a finally, following the save/restore pattern in
+// tests/unit/storage.test.js's "throwing localStorage getter" case.
+
+test('start() subscribes via the old addListener spelling on a pre-Safari-14 MediaQueryList', () => {
+  const orig = globalThis.matchMedia;
+  const registered = [];
+  let matches = false;
+  // Old-Safari shape: addListener only, no addEventListener at all.
+  const mql = { get matches() { return matches; }, addListener(fn) { registered.push(fn); } };
+  globalThis.matchMedia = () => mql;
+  try {
+    const root = fakeRoot();
+    const a = makeAppearance({ store: memStore(), root });
+    assert.doesNotThrow(() => a.start());
+    assert.equal(root.dataset.appearance, 'light');
+    assert.ok(registered.length > 0, 'the listener must actually be registered via addListener');
+
+    matches = true;
+    registered.forEach((fn) => fn());
+    assert.equal(root.dataset.appearance, 'dark', 'flipping the fake OS query must repaint');
+  } finally {
+    if (orig === undefined) delete globalThis.matchMedia; else globalThis.matchMedia = orig;
+  }
+});
+
+test('start() never throws even if the MediaQueryList itself throws on subscribe', () => {
+  const orig = globalThis.matchMedia;
+  const mql = { matches: false, addEventListener() { throw new Error('nope'); } };
+  globalThis.matchMedia = () => mql;
+  try {
+    const root = fakeRoot();
+    const a = makeAppearance({ store: memStore(), root });
+    assert.doesNotThrow(() => a.start());
+    assert.equal(root.dataset.appearance, 'light', 'apply() still ran even though subscribing failed');
+  } finally {
+    if (orig === undefined) delete globalThis.matchMedia; else globalThis.matchMedia = orig;
+  }
+});
