@@ -6,8 +6,8 @@
 // through `unknown` (never `any`) is the standard, narrowly-scoped idiom for it.
 const sw = /** @type {ServiceWorkerGlobalScope} */ (/** @type {unknown} */ (self));
 
-const CACHE='wordfinder-v6';
-const ASSETS=['./','./index.html','./styles.css','./src/main.js','./src/rng.js','./src/puzzle.js','./src/layout.js','./src/view.js','./src/effects.js','./src/themes.js','./src/storage.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
+const CACHE='wordfinder-v7';
+const ASSETS=['./','./index.html','./styles.css','./src/main.js','./src/rng.js','./src/puzzle.js','./src/layout.js','./src/view.js','./src/effects.js','./src/topics.js','./src/storage.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 
 // Code changes on every deploy; icons and fonts only change when they are renamed.
 // Serving code cache-first pinned every visitor to the last cached build until CACHE

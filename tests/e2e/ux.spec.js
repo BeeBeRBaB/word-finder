@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { findWordInGrid, dragCells } from './helpers.js';
 
-test('New theme mid-game asks to confirm; cancel keeps the board', async ({ page }) => {
-  await page.goto('/?seed=1&theme=0');
+test('New game mid-game asks to confirm; cancel keeps the board', async ({ page }) => {
+  await page.goto('/?seed=1&topic=0');
   // Every `.w` chip's textContent is set from a word string in view.js, so it is
   // never actually null; see helpers.js's findWordInGrid for the same cast.
   const first = /** @type {string} */ (await page.locator('.w').first().textContent()).toUpperCase();
@@ -16,7 +16,7 @@ test('New theme mid-game asks to confirm; cancel keeps the board', async ({ page
 });
 
 test('the win overlay can be dismissed, leaving the solved board', async ({ page }) => {
-  await page.goto('/?seed=1&theme=0');
+  await page.goto('/?seed=1&topic=0');
   for (const el of await page.locator('.w').all()) {
     const w = /** @type {string} */ (await el.textContent()).toUpperCase();
     await dragCells(page, await findWordInGrid(page, w));
@@ -38,4 +38,15 @@ test('progress and puzzle survive a reload', async ({ page }) => {
   const grid2 = await page.locator('.cell').allTextContents();
   expect(grid2.join('')).toBe(grid1.join(''));   // same grid (seed restored)
   await expect(page.locator('.w.done')).toHaveCount(1);   // still crossed out
+});
+
+// "New theme" named an internal concept; "New game" names what the button does.
+// Pinned as a test because the same word now means the UI's appearance elsewhere.
+test('the visible copy talks about games, never themes', async ({ page }) => {
+  await page.goto('/?seed=1&topic=0');
+  await expect(page.locator('#newbtn')).toHaveText(/New game/);
+  await expect(page.locator('#winbtn')).toHaveText(/Play a new game/);
+  await expect(page.locator('#confirm p')).toHaveText(/Start a new game\?/);
+  await expect(page.locator('#confirm-ok')).toHaveText('New game');
+  await expect(page.locator('body')).not.toContainText(/theme/i);
 });

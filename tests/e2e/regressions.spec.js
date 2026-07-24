@@ -4,7 +4,7 @@ import { findWordInGrid, dragCells } from './helpers.js';
 // Regression for 43c8402. Winning schedules the overlay on a 700ms timer. Starting
 // a new puzzle inside that window used to let the stale timer drop the overlay over
 // a fresh grid, where it swallowed every pointer event and made the game unplayable.
-test('starting a new theme during the win delay leaves the board playable', async ({ page }) => {
+test('starting a new game during the win delay leaves the board playable', async ({ page }) => {
   await page.goto('/');
   const words = await page.locator('.w').allTextContents();
   for (const w of words) await dragCells(page, await findWordInGrid(page, w.toUpperCase()));
@@ -157,7 +157,7 @@ test('every asset in the service worker precache list actually resolves', async 
 // covered by the parsed ASSETS list, so a forgotten entry fails loudly by name.
 test('every same-origin asset the app loads is covered by the precache list', async ({ page }) => {
   // networkidle + the full cell count together prove main.js and its entire ES
-  // module import graph (rng/puzzle/layout/view/effects/themes) actually ran, not
+  // module import graph (rng/puzzle/layout/view/effects/topics) actually ran, not
   // just that the top-level script tag resolved.
   await page.goto('/', { waitUntil: 'networkidle' });
   await expect(page.locator('.cell')).toHaveCount(169);

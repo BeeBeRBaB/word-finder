@@ -1,4 +1,4 @@
-# Themed Word Finder — PWA
+# Word Finder — PWA
 
 A fully client-side word search game. No build step, no dependencies, no server code.
 
@@ -18,22 +18,22 @@ have no DOM access at all, which is what makes them cheap to unit-test:
 
 | File | Purpose | |
 | --- | --- | --- |
-| `src/rng.js` | Seeded PRNG and `?seed=` / `?theme=` resolution. | pure |
+| `src/rng.js` | Seeded PRNG and `?seed=` / `?topic=` resolution. | pure |
 | `src/puzzle.js` | Word placement, grid fill, drag snapping, hit-detection. | pure |
 | `src/layout.js` | Viewport arithmetic → grid dimensions. | pure |
 | `src/view.js` | Renders cells, selection pills and the word list. | DOM |
 | `src/effects.js` | Confetti and the WebAudio chime. | DOM |
 | `src/main.js` | Entry point: owns game state, wires events, registers the SW. | DOM |
-| `src/themes.js` | The 100 themed word lists (content, not logic). Add a theme here. | data |
+| `src/topics.js` | The 100 topic word lists (content, not logic). Add a topic here. | data |
 
 ### Reproducible puzzles
 
-`?seed=N` pins the puzzle, `?theme=N` pins the theme — e.g. `/?seed=1&theme=0`. With
-neither, the clock seeds it and a random theme is chosen.
+`?seed=N` pins the puzzle, `?topic=N` pins the topic — e.g. `/?seed=1&topic=0`. With
+neither, the clock seeds it and a random topic is chosen.
 
-### Adding a theme
+### Adding a topic
 
-Append `["Name","WORD1,WORD2,..."]` to the array in `src/themes.js`. Words should be uppercase and ≤ 12 letters; 12 are drawn per puzzle.
+Append `["Name","WORD1,WORD2,..."]` to the array in `src/topics.js`. Words should be uppercase and ≤ 12 letters; 12 are drawn per puzzle.
 
 ## Tests
 
@@ -64,7 +64,7 @@ takes control there, and that every asset the service worker precaches actually
 resolves on the live site. Run it manually after `git push`, once the Pages
 build has finished (usually 1–3 minutes); it is never invoked by `npm test`.
 
-See [Reproducible puzzles](#reproducible-puzzles) above for `?seed=` / `?theme=`
+See [Reproducible puzzles](#reproducible-puzzles) above for `?seed=` / `?topic=`
 — the same URL parameters the tests pin puzzles with.
 
 ## Host on GitHub Pages

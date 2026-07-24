@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Themed Word Finder</title>
+<title>Word Finder</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#1d2f3a">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -17,8 +17,8 @@
 <body>
 <div id="app">
   <div id="hdr">
-    <div><div id="kicker">THEMED WORD FINDER</div><div id="theme">Loading…</div></div>
-    <button id="newbtn" type="button">&#8635; New theme</button>
+    <div><div id="kicker">WORD FINDER</div><div id="topic">Loading…</div></div>
+    <button id="newbtn" type="button">&#8635; New game</button>
   </div>
   <div id="main">
     <div id="gridbox"><div id="pills"></div><div id="letters"></div><div id="fx"></div></div>
@@ -32,12 +32,12 @@
 <div id="win"><div id="wincard">
   <button id="winclose" type="button" aria-label="Close">&times;</button>
   <div class="big">&#127881;</div><h2>Puzzle solved!</h2><p id="winmsg"></p>
-  <button id="winbtn" type="button">Play a new theme &#8594;</button>
+  <button id="winbtn" type="button">Play a new game &#8594;</button>
 </div></div>
 <div id="confirm"><div id="confirmcard">
-  <p>Start a new puzzle? Your progress will be lost.</p>
+  <p>Start a new game? Your progress will be lost.</p>
   <div><button id="confirm-cancel" type="button">Cancel</button>
-  <button id="confirm-ok" type="button">New puzzle</button></div>
+  <button id="confirm-ok" type="button">New game</button></div>
 </div></div>
 <script type="module" src="src/main.js"></script>
 </body>

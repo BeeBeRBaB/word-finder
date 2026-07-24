@@ -1,8 +1,8 @@
-// Themed Word Finder — wiring. This is the only module that owns mutable game
+// Word Finder — wiring. This is the only module that owns mutable game
 // state, reads the URL, or listens for events; everything it calls is either pure
 // (rng, puzzle, layout) or a stateless renderer (view, effects).
-import { THEMES } from './themes.js';
-import { makeRng, resolveSeed, resolveThemeIndex } from './rng.js';
+import { TOPICS } from './topics.js';
+import { makeRng, resolveSeed, resolveTopicIndex } from './rng.js';
 import { buildPuzzle, cap, matchWord, readLine, snap } from './puzzle.js';
 import { computeLayout } from './layout.js';
 import { applyLayout, renderGrid, renderList, renderPills } from './view.js';
@@ -48,7 +48,7 @@ function must(id) {
 const els = {
   app: must('app'), gridbox: must('gridbox'), pills: must('pills'), letters: must('letters'), fx: must('fx'),
   list: must('list'), main: must('main'), side: must('side'), count: must('count'),
-  theme: must('theme'), win: must('win'), winmsg: must('winmsg'),
+  topic: must('topic'), win: must('win'), winmsg: must('winmsg'),
   confirm: must('confirm'), winclose: must('winclose'),
 };
 
@@ -73,7 +73,7 @@ const store = makeStorage();
 /** @type {number} */
 let currentSeed;
 /** @type {number} */
-let themeIdx;
+let topicIdx;
 // The word (if any) currently mid-glow in the list. `list()` renders it with the
 // green-glow class instead of the struck-through one; a timer clears it back to
 // null so it strikes through. Only ever set by a live find, never by a restore.
@@ -82,17 +82,17 @@ let justFound = null;
 
 /** Every puzzle is built from its own fresh rng seeded by `seed`, never the
  * shared/advanced one — that's what lets a single stored seed reproduce an
- * identical grid later (see `restore`), and what makes `newTheme` safe to
+ * identical grid later (see `restore`), and what makes `newGame` safe to
  * call repeatedly without drifting out of sync with what was last saved.
  * @param {number} seed @param {number} idx @returns {void} */
 function newPuzzle(seed, idx) {
   currentSeed = seed;
-  themeIdx = idx;
+  topicIdx = idx;
   const rng = makeRng(seed);
   justFound = null;
   state.found = {}; state.foundOrder = []; state.sel = null; state.miss = null; state.drag = null;
-  state.puzzle = buildPuzzle({ themes: THEMES, themeIdx: idx, rng, size: N, count: COUNT });
-  els.theme.textContent = cap(state.puzzle.name);
+  state.puzzle = buildPuzzle({ topics: TOPICS, topicIdx: idx, rng, size: N, count: COUNT });
+  els.topic.textContent = cap(state.puzzle.name);
   // Cancel any pending win reveal; otherwise starting a new puzzle within the
   // 700ms delay lets the stale timer drop the overlay over a fresh grid, where
   // it swallows every pointer event and makes the game unplayable.
@@ -104,13 +104,13 @@ function newPuzzle(seed, idx) {
 }
 
 /** Save just enough to regenerate the identical grid on reload: the seed and
- * theme (from which `buildPuzzle` reproduces the same cells) plus each found
+ * topic (from which `buildPuzzle` reproduces the same cells) plus each found
  * word's selection — not the 169 cells themselves.
  * @returns {void} */
 function persist() {
   store.save({
     seed: currentSeed,
-    themeIdx,
+    topicIdx,
     found: state.foundOrder.map(w => ({ word: w, ...state.found[w].sel })),
   });
 }
@@ -222,32 +222,32 @@ function endDrag() {
 els.gridbox.addEventListener('pointerup', endDrag);
 els.gridbox.addEventListener('pointercancel', endDrag);
 
-// A fresh theme is a player-facing surprise, so it stays on Math.random() rather
+// A fresh topic is a player-facing surprise, so it stays on Math.random() rather
 // than the seeded sequence — `?seed=` pins the puzzle you land on, not every one after.
 // It also gets a fresh seed (not the old `currentSeed`): `newPuzzle` builds its own
 // rng from scratch each time, so reusing the same seed here would reproduce the
-// exact same word/placement choices for the new theme too.
+// exact same word/placement choices for the new topic too.
 /** @returns {void} */
-function newTheme() {
+function newGame() {
   /** @type {number} */
   let i;
-  do { i = Math.floor(Math.random() * THEMES.length); } while (i === themeIdx);
+  do { i = Math.floor(Math.random() * TOPICS.length); } while (i === topicIdx);
   newPuzzle(Date.now() >>> 0, i);
 }
-/** Mid-puzzle, an accidental tap on "New theme" would silently wipe progress, so
+/** Mid-puzzle, an accidental tap on "New game" would silently wipe progress, so
  * confirm first; a fresh or fully-solved board has nothing to lose, so skip the
  * dialog and start immediately.
  * @returns {void} */
-function requestNewTheme() {
+function requestNewGame() {
   const inProgress = state.puzzle && state.foundOrder.length > 0
     && state.foundOrder.length < state.puzzle.words.length;
   if (inProgress) { els.confirm.style.display = 'flex'; return; }
-  newTheme();
+  newGame();
 }
-must('newbtn').addEventListener('click', requestNewTheme);
+must('newbtn').addEventListener('click', requestNewGame);
 must('confirm-cancel').addEventListener('click', () => { els.confirm.style.display = 'none'; });
-must('confirm-ok').addEventListener('click', () => { els.confirm.style.display = 'none'; newTheme(); });
-must('winbtn').addEventListener('click', newTheme);
+must('confirm-ok').addEventListener('click', () => { els.confirm.style.display = 'none'; newGame(); });
+must('winbtn').addEventListener('click', newGame);
 els.winclose.addEventListener('click', () => { els.win.style.display = 'none'; });
 els.win.addEventListener('click', (e) => { if (e.target === els.win) els.win.style.display = 'none'; });
 document.addEventListener('keydown', (e) => {
@@ -255,18 +255,18 @@ document.addEventListener('keydown', (e) => {
 });
 window.addEventListener('resize', layout);
 
-// Explicit `?seed=`/`?theme=` in the URL always wins (it's what the spec-1
+// Explicit `?seed=`/`?topic=` in the URL always wins (it's what the spec-1
 // determinism e2e test relies on), even over a saved game — that's the whole
 // point of pinning a puzzle by URL. Otherwise, prefer a saved game; only fall
 // back to a fresh random puzzle when there's nothing to restore.
 const params = new URLSearchParams(location.search);
-if (params.has('seed') || params.has('theme')) {
+if (params.has('seed') || params.has('topic')) {
   const seed = resolveSeed(location.search);
-  newPuzzle(seed, resolveThemeIndex(location.search, THEMES.length, makeRng(seed)));
+  newPuzzle(seed, resolveTopicIndex(location.search, TOPICS.length, makeRng(seed)));
 } else {
   const saved = store.load();
   if (saved) restore(saved);
-  else newPuzzle(Date.now() >>> 0, Math.floor(Math.random() * THEMES.length));
+  else newPuzzle(Date.now() >>> 0, Math.floor(Math.random() * TOPICS.length));
 }
 
 /** Regenerate the exact grid a save came from (same seed -> same fresh rng ->
@@ -275,7 +275,7 @@ if (params.has('seed') || params.has('theme')) {
  * contain, or one already replayed, is skipped rather than crashing.
  * @param {import('./storage.js').SaveData} saved @returns {void} */
 function restore(saved) {
-  newPuzzle(saved.seed, saved.themeIdx); // regenerates the identical grid, empty found
+  newPuzzle(saved.seed, saved.topicIdx); // regenerates the identical grid, empty found
   for (const f of saved.found) {
     if (!state.puzzle || !state.puzzle.words.includes(f.word) || state.found[f.word]) continue;
     state.found[f.word] = { sel: { x0: f.x0, y0: f.y0, x1: f.x1, y1: f.y1 } };

@@ -48,25 +48,25 @@ test('finding every word raises the win overlay', async ({ page }) => {
 });
 
 test('a diagonal word is selectable without overshoot', async ({ page }) => {
-  // Seed 1 with theme 0 is pinned because it is known to contain a
+  // Seed 1 with topic 0 is pinned because it is known to contain a
   // diagonally-placed word; findDiagonalWord throws if none exist, and an
   // unseeded puzzle only has a diagonal word most of the time (not always).
-  await page.goto('/?seed=1&theme=0');
+  await page.goto('/?seed=1&topic=0');
   const sel = await findDiagonalWord(page);
   await dragCells(page, sel);
   await expect(page.locator('#count')).toContainText('1 of 12 found');
 });
 
 test('the same seed reproduces the same puzzle', async ({ page }) => {
-  await page.goto('/?seed=12345&theme=0');
+  await page.goto('/?seed=12345&topic=0');
   const a = await page.locator('.cell').allTextContents();
-  const themeA = await page.locator('#theme').textContent();
-  await page.goto('/?seed=12345&theme=0');
+  const topicA = await page.locator('#topic').textContent();
+  await page.goto('/?seed=12345&topic=0');
   const b = await page.locator('.cell').allTextContents();
   expect(b.join('')).toBe(a.join(''));
-  expect(await page.locator('#theme').textContent()).toBe(themeA);
+  expect(await page.locator('#topic').textContent()).toBe(topicA);
 
-  await page.goto('/?seed=999&theme=0');
+  await page.goto('/?seed=999&topic=0');
   const c = await page.locator('.cell').allTextContents();
   expect(c.join('')).not.toBe(a.join(''));   // different seed, different grid
 });
