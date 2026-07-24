@@ -15,8 +15,6 @@ import { cap } from './puzzle.js';
  * }} Els
  */
 
-const PAL = ['rgba(240,196,90,.38)','rgba(120,220,255,.33)','rgba(255,140,150,.35)','rgba(190,150,255,.36)'];
-
 /**
  * @param {Els} els
  * @param {import('./layout.js').LayoutDims} dims
@@ -56,20 +54,23 @@ export function renderGrid(els, puzzle, dims, size, pad) {
   }
 }
 
+// Which palette slot each found word gets, cycling. The colours themselves live in
+// styles.css so they can follow the appearance setting; this module now holds none.
+const PILL_CLASS = ['p1', 'p2', 'p3', 'p4'];
+
 /** One rounded highlight bar laid over the cells of a selection.
- * @param {Selection} s @param {string} bg @param {number} cell @param {number} pad
+ * @param {Selection} s @param {string} variant @param {number} cell @param {number} pad
  * @returns {HTMLDivElement} */
-function pillDiv(s, bg, cell, pad) {
+function pillDiv(s, variant, cell, pad) {
   const h = Math.round(cell * 0.82);
   const cx0 = pad + (s.x0 + 0.5) * cell, cy0 = pad + (s.y0 + 0.5) * cell;
   const cx1 = pad + (s.x1 + 0.5) * cell, cy1 = pad + (s.y1 + 0.5) * cell;
   const d = document.createElement('div');
-  d.className = 'pill';
+  d.className = 'pill ' + variant;
   d.style.left = Math.round(cx0 - h / 2) + 'px';
   d.style.top = Math.round(cy0 - h / 2) + 'px';
   d.style.width = Math.round(Math.sqrt(Math.pow(cx1 - cx0, 2) + Math.pow(cy1 - cy0, 2)) + h) + 'px';
   d.style.height = h + 'px';
-  d.style.background = bg;
   d.style.transformOrigin = (h / 2) + 'px center';
   d.style.transform = 'rotate(' + Math.round(Math.atan2(cy1 - cy0, cx1 - cx0) * 180 / Math.PI) + 'deg)';
   return d;
@@ -80,9 +81,9 @@ function pillDiv(s, bg, cell, pad) {
  * @returns {void} */
 export function renderPills(els, state, dims, pad) {
   els.pills.innerHTML = '';
-  state.foundOrder.forEach((w, i) => els.pills.appendChild(pillDiv(state.found[w].sel, PAL[i % 4], dims.cell, pad)));
-  if (state.sel) els.pills.appendChild(pillDiv(state.sel, 'rgba(79,209,165,.30)', dims.cell, pad));
-  if (state.miss) els.pills.appendChild(pillDiv(state.miss, 'rgba(255,90,90,.5)', dims.cell, pad));
+  state.foundOrder.forEach((w, i) => els.pills.appendChild(pillDiv(state.found[w].sel, PILL_CLASS[i % 4], dims.cell, pad)));
+  if (state.sel) els.pills.appendChild(pillDiv(state.sel, 'sel', dims.cell, pad));
+  if (state.miss) els.pills.appendChild(pillDiv(state.miss, 'miss', dims.cell, pad));
 }
 
 /**

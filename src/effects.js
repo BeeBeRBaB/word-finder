@@ -17,7 +17,11 @@ export function burst(fxEl, s, count, dims, pad) {
   if (globalThis.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const cell = dims.cell;
   const cx = pad + ((s.x0 + s.x1) / 2 + 0.5) * cell, cy = pad + ((s.y0 + s.y1) / 2 + 0.5) * cell;
-  const colors = ['#4fd1a5','#f0c45a','#78dcff','#ff8c96','#be96ff','#eef6f2'];
+  // Confetti lives in the palette so it can follow the appearance setting — the old
+  // hardcoded set ended in a near-white that vanished on light paper. Read once per
+  // burst rather than once per particle; getComputedStyle is not cheap.
+  const cs = getComputedStyle(document.documentElement);
+  const colors = [1, 2, 3, 4, 5, 6].map(i => cs.getPropertyValue('--confetti-' + i).trim());
   for (let i = 0; i < count; i++) {
     const d = document.createElement('div');
     const sz = 5 + Math.random() * 6;

@@ -1,7 +1,43 @@
+/* Two palettes, each written exactly once. `data-appearance` on <html> is always a
+   RESOLVED value — `light` or `dark`, never `system`; src/appearance.js does the
+   resolving. Doing it in JS rather than in a prefers-color-scheme media query is what
+   keeps this to two blocks instead of four, with no chance of the copies drifting. */
+:root, :root[data-appearance="light"]{
+  --bg:#eef3f1; --surface:#ffffff; --border:#cfdcd7;
+  --text:#1c3a31; --text-strong:#10241d; --muted:#5a736a; --label:#3f7d68; --hint:#6b8479;
+  --accent:#17876a; --accent-text:#12684f; --accent-hover:#0d5741; --accent-ink:#ffffff;
+  --accent-wash:rgba(23,135,106,.10);
+  --scrim:rgba(20,40,34,.45);
+  --shadow:0 6px 20px rgba(30,60,52,.14); --card-shadow:0 10px 40px rgba(30,60,52,.22);
+  --found-text:#0b3a2c; --done-text:rgba(28,58,49,.55); --glow:rgba(23,135,106,.30);
+  --pill-1:rgba(224,160,20,.34); --pill-2:rgba(40,150,210,.30);
+  --pill-3:rgba(230,90,110,.30); --pill-4:rgba(150,100,225,.30);
+  --pill-sel:rgba(23,135,106,.28); --pill-miss:rgba(220,50,50,.38);
+  --pill-edge:rgba(20,50,42,.16);
+  --confetti-1:#17876a; --confetti-2:#e0a014; --confetti-3:#2896d2;
+  --confetti-4:#e65a6e; --confetti-5:#9664e1; --confetti-6:#6b8479;
+}
+/* Value for value, the palette the game shipped with. Any change here is a regression. */
+:root[data-appearance="dark"]{
+  --bg:#16262f; --surface:#1d2f3a; --border:#2c4250;
+  --text:#dfe9e5; --text-strong:#eef6f2; --muted:#9fb8ae; --label:#6fa899; --hint:#7d968c;
+  --accent:#4fd1a5; --accent-text:#8fe8c8; --accent-hover:#b8f5dd; --accent-ink:#0b2c20;
+  --accent-wash:rgba(79,209,165,.12);
+  --scrim:rgba(10,20,26,.72);
+  --shadow:0 6px 20px rgba(6,20,28,.35); --card-shadow:0 10px 40px rgba(0,0,0,.5);
+  --found-text:#eafff6; --done-text:rgba(223,233,229,.6); --glow:rgba(79,209,165,.42);
+  --pill-1:rgba(240,196,90,.38); --pill-2:rgba(120,220,255,.33);
+  --pill-3:rgba(255,140,150,.35); --pill-4:rgba(190,150,255,.36);
+  --pill-sel:rgba(79,209,165,.30); --pill-miss:rgba(255,90,90,.5);
+  --pill-edge:rgba(255,255,255,.25);
+  --confetti-1:#4fd1a5; --confetti-2:#f0c45a; --confetti-3:#78dcff;
+  --confetti-4:#ff8c96; --confetti-5:#be96ff; --confetti-6:#eef6f2;
+}
+
 /* Lock the viewport: no page scroll or rubber-band on iPad / iOS standalone. */
-html,body{margin:0;height:100%;overflow:hidden;background:#16262f;font-family:'Atkinson Hyperlegible',sans-serif;overscroll-behavior:none;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);font-family:'Atkinson Hyperlegible',sans-serif;overscroll-behavior:none;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
 body{position:fixed;inset:0;width:100%;height:100%}
-a{color:#8fe8c8}a:hover{color:#b8f5dd}
+a{color:var(--accent-text)}a:hover{color:var(--accent-hover)}
 #app{height:100%;display:grid;box-sizing:border-box;overflow:hidden;
   padding:calc(10px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));
   grid-template-columns:1fr;grid-template-areas:"hdr" "grid" "side";
@@ -22,43 +58,54 @@ a{color:#8fe8c8}a:hover{color:#b8f5dd}
 #app[data-landscape] #listhdr{margin:2px 2px 4px}
 #app[data-landscape] #list{gap:4px 14px}
 #hdr{grid-area:hdr;width:100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
-#kicker{font-weight:700;font-size:11px;letter-spacing:.18em;color:#6fa899}
-#topic{font-weight:700;font-size:28px;line-height:1.1;color:#eef6f2}
-#newbtn{border:1.5px solid #4fd1a5;color:#8fe8c8;background:transparent;border-radius:999px;padding:9px 16px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;min-height:44px}
-#newbtn:hover{background:rgba(79,209,165,.12)}
+#kicker{font-weight:700;font-size:11px;letter-spacing:.18em;color:var(--label)}
+#topic{font-weight:700;font-size:28px;line-height:1.1;color:var(--text-strong)}
+#newbtn{border:1.5px solid var(--accent);color:var(--accent-text);background:transparent;border-radius:999px;padding:9px 16px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;min-height:44px}
+#newbtn:hover{background:var(--accent-wash)}
 #main{display:contents}
-#gridbox{grid-area:grid;position:relative;background:#1d2f3a;border:1px solid #2c4250;border-radius:16px;box-shadow:0 6px 20px rgba(6,20,28,.35);touch-action:none;cursor:pointer;flex:none}
+#gridbox{grid-area:grid;position:relative;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);touch-action:none;cursor:pointer;flex:none}
 #pills,#fx{position:absolute;inset:0;pointer-events:none}
-.pill{position:absolute;border-radius:999px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
-.cell{position:absolute;text-align:center;font-weight:700;color:#dfe9e5;pointer-events:none}
+/* Pill colours are class-driven so they live in the palette with everything else.
+   They used to be rgba literals in view.js's PAL, tuned for a dark surface — at
+   ~35% alpha on white paper they were all but invisible. */
+.pill{position:absolute;border-radius:999px;box-shadow:inset 0 0 0 1px var(--pill-edge)}
+.pill.p1{background:var(--pill-1)}
+.pill.p2{background:var(--pill-2)}
+.pill.p3{background:var(--pill-3)}
+.pill.p4{background:var(--pill-4)}
+.pill.sel{background:var(--pill-sel)}
+.pill.miss{background:var(--pill-miss)}
+.cell{position:absolute;text-align:center;font-weight:700;color:var(--text);pointer-events:none}
 #side{grid-area:side;flex:none}
 #listhdr{display:flex;justify-content:space-between;align-items:baseline;margin:2px 2px 8px}
-#listhdr b{font-weight:700;font-size:12px;letter-spacing:.16em;color:#6fa899}
-#count{font-size:13px;color:#9fb8ae}
+#listhdr b{font-weight:700;font-size:12px;letter-spacing:.16em;color:var(--label)}
+#count{font-size:13px;color:var(--muted)}
 #list{display:grid;gap:6px 14px}
-.w{justify-self:start;font-weight:700;font-size:17px;line-height:1.2;padding:4px 12px;border-radius:999px;cursor:default;color:#dfe9e5}
-.w.done{text-decoration:line-through;color:rgba(223,233,229,.6)}
+.w{justify-self:start;font-weight:700;font-size:17px;line-height:1.2;padding:4px 12px;border-radius:999px;cursor:default;color:var(--text)}
+.w.done{text-decoration:line-through;color:var(--done-text)}
 /* On find, the word glows green (fade in/out) for one beat, then main.js swaps
-   this class for `.done` and it strikes through. Duration matches GLOW_MS. */
-.w.glow{color:#eafff6;animation:foundGlow .9s ease}
-@keyframes foundGlow{0%{background:rgba(79,209,165,0)}45%{background:rgba(79,209,165,.42)}100%{background:rgba(79,209,165,0)}}
-#hint{margin-top:8px;font-size:12px;line-height:1.4;color:#7d968c;max-width:280px}
-#win{position:fixed;inset:0;background:rgba(10,20,26,.72);display:none;align-items:center;justify-content:center;z-index:50}
-#wincard{position:relative;background:#1d2f3a;border:1px solid #4fd1a5;border-radius:20px;padding:34px 42px;text-align:center;animation:popIn .45s ease;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+   this class for `.done` and it strikes through. Duration matches GLOW_MS.
+   The 0%/100% stops are `transparent` rather than a token: the animation fades one
+   colour between two alphas, and a second token would carry no extra information. */
+.w.glow{color:var(--found-text);animation:foundGlow .9s ease}
+@keyframes foundGlow{0%{background:transparent}45%{background:var(--glow)}100%{background:transparent}}
+#hint{margin-top:8px;font-size:12px;line-height:1.4;color:var(--hint);max-width:280px}
+#win{position:fixed;inset:0;background:var(--scrim);display:none;align-items:center;justify-content:center;z-index:50}
+#wincard{position:relative;background:var(--surface);border:1px solid var(--accent);border-radius:20px;padding:34px 42px;text-align:center;animation:popIn .45s ease;box-shadow:var(--card-shadow)}
 #wincard .big{font-size:44px}
-#wincard h2{font-weight:700;font-size:26px;color:#eef6f2;margin:8px 0 4px}
-#wincard p{font-size:14.5px;color:#9fb8ae;margin:0 0 20px}
-#winbtn{border:none;background:#4fd1a5;color:#0b2c20;border-radius:999px;padding:12px 22px;font-family:inherit;font-weight:700;font-size:15px;cursor:pointer}
-#winclose{position:absolute;top:0;right:0;width:44px;height:44px;border:none;background:transparent;color:#9fb8ae;font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
-#winclose:hover{color:#eef6f2}
+#wincard h2{font-weight:700;font-size:26px;color:var(--text-strong);margin:8px 0 4px}
+#wincard p{font-size:14.5px;color:var(--muted);margin:0 0 20px}
+#winbtn{border:none;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:12px 22px;font-family:inherit;font-weight:700;font-size:15px;cursor:pointer}
+#winclose{position:absolute;top:0;right:0;width:44px;height:44px;border:none;background:transparent;color:var(--muted);font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+#winclose:hover{color:var(--text-strong)}
 @keyframes popIn{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
-#confirm{position:fixed;inset:0;background:rgba(10,20,26,.72);display:none;align-items:center;justify-content:center;z-index:60}
-#confirmcard{background:#1d2f3a;border:1px solid #4fd1a5;border-radius:20px;padding:34px 42px;text-align:center;animation:popIn .45s ease;box-shadow:0 10px 40px rgba(0,0,0,.5)}
-#confirmcard p{font-size:14.5px;color:#9fb8ae;margin:0 0 20px;max-width:260px}
+#confirm{position:fixed;inset:0;background:var(--scrim);display:none;align-items:center;justify-content:center;z-index:60}
+#confirmcard{background:var(--surface);border:1px solid var(--accent);border-radius:20px;padding:34px 42px;text-align:center;animation:popIn .45s ease;box-shadow:var(--card-shadow)}
+#confirmcard p{font-size:14.5px;color:var(--muted);margin:0 0 20px;max-width:260px}
 #confirmcard div{display:flex;gap:12px;justify-content:center}
 #confirm-cancel,#confirm-ok{border:none;border-radius:999px;padding:12px 22px;font-family:inherit;font-weight:700;font-size:15px;cursor:pointer;min-height:44px}
-#confirm-cancel{background:transparent;border:1.5px solid #4fd1a5;color:#8fe8c8}
-#confirm-ok{background:#4fd1a5;color:#0b2c20}
+#confirm-cancel{background:transparent;border:1.5px solid var(--accent);color:var(--accent-text)}
+#confirm-ok{background:var(--accent);color:var(--accent-ink)}
 @media (prefers-reduced-motion: reduce){
   #wincard{animation:none}
   .pill{transition:none}
