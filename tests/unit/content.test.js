@@ -48,7 +48,11 @@ test('every subject meets the word contract', async () => {
   for (const [cat, words] of mods) {
     for (const [id, raw] of Object.entries(words)) {
       const list = raw.split(',');
-      assert.ok(list.length >= 100, `${id}: ${list.length} words, need 100`);
+      // 40, not 100. The floor only has to make the draw vary: a board takes 12 of
+      // these, so 40 gives every deal a different dozen. Deepening a pool later is a
+      // pure data change — this number is the only thing that gates it, and no code
+      // anywhere assumes a pool size.
+      assert.ok(list.length >= 40, `${id}: ${list.length} words, need 40`);
       assert.equal(new Set(list).size, list.length, `${id}: duplicate word`);
       for (const w of list) {
         assert.match(w, /^[A-Z]+$/, `${id}: "${w}" is not bare uppercase A-Z`);

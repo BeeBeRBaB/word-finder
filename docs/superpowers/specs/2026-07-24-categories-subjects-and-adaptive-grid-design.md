@@ -226,7 +226,7 @@ Enforced by a unit test over every subject module. A subject that cannot meet it
 
 | Rule | Value |
 |---|---|
-| Words per subject | ≥ 100 |
+| Words per subject | ≥ 40 |
 | Word charset | `A–Z` only, uppercase, no spaces, hyphens or digits |
 | Word length | 3–12 letters |
 | Duplicates within a subject | none |
