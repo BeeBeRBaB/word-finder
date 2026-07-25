@@ -193,9 +193,30 @@ Measured before/after at rail widths 388 / 678 / 998px: the inter-column gap wen
 cannot drift. `layout.test.js` asserts the track never varies with the viewport, which is
 the invariant — the literal string is not.
 
-`#listhdr` and `#hint` carry a left margin matching `.w`'s horizontal padding, so the
-header and hint align with the word *text* rather than with the invisible left edge of
-the first pill.
+## 9. Follow-up: one left edge for the rail
+
+`WORD FINDER`, `Topic:`, `WORDS`, the word text and the hint all sit on a single left
+edge, verified at 1440×900, 390×664, 844×300 and 744×1053.
+
+Two separate things were pushing them apart:
+
+- **`.w` carries horizontal pill padding** for the found-glow, so its *text* starts 12px
+  (10px in landscape) inside wherever `#list` sits. `#list` is pulled back by exactly
+  that padding, which puts the glyphs on the edge and lets `#listhdr` and `#hint` sit at
+  a plain `0` instead of being nudged to chase them. The two values must move together.
+- **In portrait `#hdr` is the full app width while the grid is centred and narrower**, so
+  a rail pinned to the grid's width left the list indented from the header above it.
+  `#side` goes full width in portrait instead.
+
+The rejected fix was the mirror of that one — shrink `#hdr` to the grid's width so the
+header meets the list. On a 390px phone the topic block plus both buttons need ~340px and
+the grid is 293px, so the header **wrapped onto a second row and cost 48px** of exactly
+the height the portrait grid is short of. The grid stays centred and is simply not part
+of this alignment; it is a separate object.
+
+Vertical separation between the topic block and the list comes from `row-gap` in
+landscape, where they are stacked rows of one column and read as a single blob at 4px,
+and from `#listhdr`'s top margin in portrait.
 
 ## Cut
 
