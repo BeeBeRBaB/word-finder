@@ -57,41 +57,42 @@ test('the dark palette still resolves to the colours the game shipped with', asy
   });
 });
 
-// Task 6's inline <head> script now sets data-appearance on every normal load, so the
-// pre-Task-6 "nothing ever sets the attribute" world no longer exists — this
-// supersedes that version of the test (see its old comment, and correction 3 in
-// task-6-report.md). The underlying guarantee is unchanged: a visitor for whom the
-// resolver genuinely cannot run must still get the dark palette this game has always
-// shipped with, never an unstyled/white page. Two independent failure modes can cause
-// that — a throwing localStorage.getItem, and a missing matchMedia — and each gets
-// its own test below rather than one test stubbing both: the inline script always
-// calls getItem first, so breaking both at once would leave the matchMedia branch
-// unreached and its "coverage" illusory. Both tests also block src/main.js from
-// loading, to rule out the module papering over the inline script's failure.
-// Regression guard for the selector swap: with `:root` hanging off the light
-// palette, this rendered #eef3f1.
-test('when the resolver cannot run at all, the app still renders dark, not white', async ({ page }) => {
+// The inline <head> script (see its comment in index.html) sets data-appearance on
+// every normal load, so "nothing ever sets the attribute" is no longer the general
+// case. The underlying guarantee it still has to uphold is unchanged: a visitor for
+// whom the resolver genuinely cannot run must still get the dark palette this game
+// has always shipped with, never an unstyled/white page. Review fix: the localStorage
+// read now has its own inner try (see index.html), so a throwing getItem no longer
+// counts as "the resolver cannot run" -- it falls through to the OS query exactly
+// like an absent preference, and DOES set data-appearance. That is what the first
+// test below proves. matchMedia is the one call the inline script never guards
+// individually, so a missing/throwing matchMedia is the only remaining way to leave
+// data-appearance unset and fall back to the bare :root dark default -- the second
+// test. Both block src/main.js from loading, to rule out the module papering over
+// the inline script either way.
+test('a throwing localStorage.getItem falls through to the OS, it does not abort the resolver', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'light' });
   await page.addInitScript(() => {
-    // @ts-ignore - deliberately breaking the resolver's storage input
     window.localStorage.getItem = () => { throw new Error('blocked'); };
   });
   await page.route('**/src/main.js', route => route.abort());
   await page.goto('/?seed=1&topic=0');
-  expect(await page.evaluate(() => document.documentElement.hasAttribute('data-appearance'))).toBe(false);
+  expect(await page.evaluate(() => document.documentElement.getAttribute('data-appearance'))).toBe('light');
   const seen = await page.evaluate(() => {
     const cs = getComputedStyle(document.documentElement);
     return { bg: cs.getPropertyValue('--bg').trim(), surface: cs.getPropertyValue('--surface').trim() };
   });
-  expect(seen).toEqual({ bg: '#16262f', surface: '#1d2f3a' });
+  expect(seen).toEqual({ bg: '#eef3f1', surface: '#ffffff' });
   // The computed rule, not just the declared tokens — proves something is actually
-  // consuming --bg rather than it merely sitting on :root unused.
-  expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe('rgb(22, 38, 47)');
+  // consuming --bg rather than it merely sitting on the attribute unused.
+  expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe('rgb(238, 243, 241)');
 });
 
-// Genuinely exercises the branch the test above cannot reach: storage is untouched
-// here (getItem works normally, so the resolver gets past that call before it can
-// fail), and only matchMedia is missing.
-test('when only matchMedia is missing, the app still renders dark, not white', async ({ page }) => {
+// Regression guard for the selector swap: with `:root` hanging off the light
+// palette, this rendered #eef3f1. Genuinely exercises the "cannot run at all"
+// branch the test above no longer can: storage is untouched here (getItem works
+// normally), and only matchMedia is missing.
+test('when matchMedia is missing, the app still renders dark, not white', async ({ page }) => {
   await page.addInitScript(() => {
     // @ts-ignore - deliberately breaking only matchMedia; storage is untouched
     window.matchMedia = undefined;
@@ -143,6 +144,40 @@ test('an invalid stored preference resolves through the allowlist, never verbati
   await page.reload();
   await expect.poll(() => modeOf(page)).toBe(painted);
   expect(await bgOf(page)).toBe(paintedBg);
+});
+
+// Same bug class as the allowlist test above, reached through a different door: the
+// inline resolver used to sit entirely inside one try, so a throwing
+// localStorage.getItem (iOS Safari's "Block All Cookies", Chrome with site data
+// blocked -- storage.test.js's "Safari private mode" case) aborted the whole thing
+// before data-appearance was ever set. The page then painted the bare :root dark
+// default, while src/appearance.js -- which degrades that identical failure to
+// pref='system' and asks the OS -- resolved 'light' on a light machine and repainted
+// on hydration. Unlike the tests above, this leaves src/main.js unblocked: a
+// `readystatechange` listener installed before the document is parsed captures
+// data-appearance the instant `document.readyState` becomes 'interactive', which per
+// the HTML spec happens after parsing (so after the inline <head> script has run) but
+// before deferred/module scripts execute -- i.e. exactly the pre-hydration paint,
+// without having to fake the module's absence. This must fail against the pre-fix
+// inline script (nothing painted pre-hydration, module then paints 'light': a flip)
+// and pass once the storage read has its own inner try.
+test('a throwing localStorage falls through to the OS instead of flipping on hydration', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.addInitScript(() => {
+    window.localStorage.getItem = () => { throw new Error('blocked'); };
+    document.addEventListener('readystatechange', () => {
+      if (document.readyState === 'interactive') {
+        /** @type {any} */ (window).__prePaint = document.documentElement.dataset.appearance;
+      }
+    });
+  });
+  await page.goto('/?seed=1&topic=0');
+  await expect(page.locator('.cell').first()).toBeVisible(); // src/main.js really did hydrate
+
+  const prePaint = await page.evaluate(() => /** @type {any} */ (window).__prePaint);
+  const hydrated = await modeOf(page);
+  expect(prePaint).toBe(hydrated);   // no flip between what was painted and what hydration settled on
+  expect(hydrated).toBe('light');
 });
 
 test('the button cycles system -> light -> dark and repaints the page', async ({ page }) => {

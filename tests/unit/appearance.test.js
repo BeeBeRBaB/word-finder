@@ -41,6 +41,13 @@ test('resolveAppearance pins light and dark, and defers only for system', () => 
   assert.equal(resolveAppearance('system', false), 'light');
 });
 
+test('resolveAppearance treats "no OS to ask" as dark, not as "the OS says light"', () => {
+  assert.equal(resolveAppearance('system', null), 'dark');
+  // Pinned prefs never consult the OS at all, so a missing query can't affect them.
+  assert.equal(resolveAppearance('light', null), 'light');
+  assert.equal(resolveAppearance('dark', null), 'dark');
+});
+
 test('appearanceLabel names the preference, and what system resolved to', () => {
   assert.equal(appearanceLabel('system', 'dark'), 'Appearance: System (Dark)');
   assert.equal(appearanceLabel('system', 'light'), 'Appearance: System (Light)');
@@ -112,11 +119,11 @@ test('a throwing store degrades to "not remembered" rather than throwing', () =>
   assert.equal(root.dataset.appearance, 'light', 'the setting still applies for this session');
 });
 
-test('a missing matchMedia resolves system to light instead of throwing', () => {
+test('a missing matchMedia resolves system to dark instead of throwing', () => {
   const root = fakeRoot();
   const a = makeAppearance({ store: memStore(), root, query: null });
   assert.doesNotThrow(() => a.start());
-  assert.equal(root.dataset.appearance, 'light');
+  assert.equal(root.dataset.appearance, 'dark');
 });
 
 // systemQuery() is module-private, reached only when makeAppearance() is called

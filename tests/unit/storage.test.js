@@ -70,6 +70,16 @@ test('topicIdx wins when a save somehow carries both keys', () => {
   assert.deepEqual(makeStorage(store).load(), { seed: 7, topicIdx: 9, found: [] });
 });
 
+// The "both keys" case above uses topicIdx: 9, which `||` would also let through --
+// nothing yet distinguishes `??` from `||`. Topic 0 is reachable (`?topic=0` is used
+// throughout the e2e suite), and `topicIdx: 0 || themeIdx` would silently substitute
+// the legacy themeIdx, handing the player a different grid than the one they saved.
+test('a save carrying topicIdx: 0 keeps 0, never falling back to themeIdx', () => {
+  const store = memStore();
+  store.setItem('wordfinder-save-v1', JSON.stringify({ seed: 7, themeIdx: 5, topicIdx: 0, found: [] }));
+  assert.equal(makeStorage(store).load().topicIdx, 0);
+});
+
 test('a save missing both index keys loads as topic 0, never undefined', () => {
   const store = memStore();
   store.setItem('wordfinder-save-v1', JSON.stringify({ seed: 7, found: [] }));

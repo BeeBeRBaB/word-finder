@@ -40,8 +40,8 @@ Append `["Name","WORD1,WORD2,..."]` to the array in `src/topics.js`. Words shoul
 
 | Path | Purpose |
 | --- | --- |
-| `tests/unit/` | `node:test` specs for the pure `src/` modules (`rng`, `puzzle`, `layout`). No browser. |
-| `tests/e2e/` | Playwright specs (`smoke`, `gameplay`, `layout`, `regressions`) against a local static server (`tests/server.mjs`), on `desktop` and `mobile` viewport projects. |
+| `tests/unit/` | `node:test` specs for the pure `src/` modules (`rng`, `puzzle`, `layout`, `storage`, `appearance`), a token-parity check on the stylesheet (`tokens`), and a static assertion on the service worker (`sw`). No browser. |
+| `tests/e2e/` | Playwright specs (`smoke`, `gameplay`, `layout`, `regressions`, `ux`, `appearance`) against a local static server (`tests/server.mjs`), on `desktop` and `mobile` viewport projects. |
 | `tests/live/` | Playwright smoke test against the real deployed GitHub Pages site — see [Development](#development). |
 
 ## Development

@@ -11,13 +11,21 @@
      including a hand-edited, stale, or future-build value, falls through to the OS
      query) is exactly resolveAppearance(normalizePref(p), prefersDark) from
      src/appearance.js, which is why data-appearance can only ever hold a resolved
-     light/dark value -- see styles.css's header comment for that invariant. Keep the
-     two sites in step; the "module blocked entirely" and "allowlist, never verbatim"
-     tests in tests/e2e/appearance.spec.js guard this one. -->
-<script>try{var p=localStorage.getItem('wordfinder-appearance');if(p!=='light'&&p!=='dark')p=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.appearance=p}catch(e){}</script>
+     light/dark value -- see styles.css's header comment for that invariant.
+     The localStorage read gets its OWN inner try, separate from the outer one: iOS
+     Safari's "Block All Cookies" and Chrome with site data blocked (storage.test.js's
+     "Safari private mode" case) throw on getItem, and src/appearance.js degrades that
+     exact failure to pref='system' and asks the OS. If the outer try caught it instead,
+     this script would exit before data-appearance was ever set, the bare :root dark
+     default would paint, and the module would then resolve against the OS and repaint
+     on hydration -- a flip, the same bug class the allowlist above exists to prevent,
+     just reached through the storage read instead of the stored value. Keep the two
+     sites in step; the "module blocked entirely" and "allowlist, never verbatim" tests
+     in tests/e2e/appearance.spec.js guard this one. -->
+<script>try{var p=null;try{p=localStorage.getItem('wordfinder-appearance')}catch(e){}if(p!=='light'&&p!=='dark')p=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.appearance=p}catch(e){}</script>
 <title>Word Finder</title>
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#1d2f3a">
+<meta name="theme-color" content="#16262f">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">

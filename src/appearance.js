@@ -38,10 +38,16 @@ export function nextPref(pref) {
 }
 
 /** The concrete appearance a preference resolves to; only `system` consults the OS.
+ * `prefersDark` is `null` when there is no OS to ask at all (`matchMedia` missing) --
+ * that is a different claim from "the OS says light", and conflating the two used to
+ * resolve a missing query to `light`, disagreeing with styles.css's bare `:root`
+ * default and with what the inline resolver in index.html paints when its own
+ * `matchMedia` call is unavailable. No query now falls back to `dark`, matching both.
  * The return values are exactly the `data-appearance` values styles.css selects on.
- * @param {Pref} pref @param {boolean} prefersDark @returns {Mode} */
+ * @param {Pref} pref @param {boolean|null} prefersDark @returns {Mode} */
 export function resolveAppearance(pref, prefersDark) {
   if (pref === 'light' || pref === 'dark') return pref;
+  if (prefersDark === null) return 'dark';
   return prefersDark ? 'dark' : 'light';
 }
 
@@ -99,7 +105,9 @@ export function makeAppearance(deps = {}) {
 
   /** @returns {void} */
   function apply() {
-    const mode = resolveAppearance(pref, !!(query && query.matches));
+    // `null` (not `false`) when there's no query at all, so "no OS to ask" doesn't
+    // get treated as "the OS says light" -- see resolveAppearance's doc comment.
+    const mode = resolveAppearance(pref, query ? !!query.matches : null);
     root.dataset.appearance = mode;
     onApply(pref, mode);
   }

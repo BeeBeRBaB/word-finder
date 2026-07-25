@@ -87,9 +87,9 @@ accent-on-paper (links, the outlined button) stay legible.
 | `--text` | `#dfe9e5` | `#1c3a31` | grid letters, word list |
 | `--text-strong` | `#eef6f2` | `#10241d` | topic name, win heading |
 | `--muted` | `#9fb8ae` | `#5a736a` | found count, card body, close × |
-| `--label` | `#6fa899` | `#3f7d68` | kicker, WORDS header |
-| `--hint` | `#7d968c` | `#6b8479` | hint text |
-| `--accent` | `#4fd1a5` | `#17876a` | button fills and borders |
+| `--label` | `#6fa899` | `#37705d` | kicker, WORDS header |
+| `--hint` | `#7d968c` | `#586f65` | hint text |
+| `--accent` | `#4fd1a5` | `#157e63` | button fills and borders |
 | `--accent-text` | `#8fe8c8` | `#12684f` | text on outlined buttons, links |
 | `--accent-hover` | `#b8f5dd` | `#0d5741` | link hover |
 | `--accent-ink` | `#0b2c20` | `#ffffff` | text on a filled accent button |
@@ -98,12 +98,20 @@ accent-on-paper (links, the outlined button) stay legible.
 | `--shadow` | `0 6px 20px rgba(6,20,28,.35)` | `0 6px 20px rgba(30,60,52,.14)` | grid box |
 | `--card-shadow` | `0 10px 40px rgba(0,0,0,.5)` | `0 10px 40px rgba(30,60,52,.22)` | win/confirm cards |
 | `--found-text` | `#eafff6` | `#0b3a2c` | word mid-glow |
-| `--done-text` | `rgba(223,233,229,.6)` | `rgba(28,58,49,.55)` | struck-through word |
+| `--done-text` | `rgba(223,233,229,.6)` | `rgba(28,58,49,.76)` | struck-through word |
 | `--glow` | `rgba(79,209,165,.42)` | `rgba(23,135,106,.30)` | `foundGlow` keyframe peak |
 
 The `foundGlow` keyframe currently fades between the same rgba at 0% and 42% alpha. Only the
 peak becomes a token; the 0% and 100% stops become the keyword `transparent`, since a custom
 property cannot carry two alphas of one color without a second token for no benefit.
+
+**Post-launch correction:** `--label`, `--hint`, `--accent` and `--done-text`'s Light values
+above were darkened after a contrast pass found all four below WCAG AA (4.5:1) against `--bg`,
+while every dark-palette counterpart already cleared it. `--accent` is measured as the white
+`--accent-ink` text sits on it (filled buttons), not against `--bg`. `--done-text`'s alpha was
+raised to clear 4.5:1 against `--bg` while matching the dark side's own de-emphasised-vs-`--text`
+contrast ratio. Dark is unchanged, value for value, per the constraint above. See the comment
+above the light palette block in `styles.css` for the numbers.
 
 **Colors that must move out of JavaScript.** Both sets are tuned for a dark surface and
 break outright on light:
