@@ -1,55 +1,73 @@
+/* Type roles, and the only tokens in this file that are not colours — which is why they
+   sit in their own block rather than being duplicated into both palettes: a typeface
+   does not change with the appearance setting. This block must stay FIRST, above the
+   palettes — tokens.test.js locates it as the file's first root-level block, and there
+   is a test asserting exactly that, so moving it will fail loudly rather than silently.
+   Hyperlegible does all the actual reading — the grid and the word list — and is never
+   overridden there. Space Grotesk is the display voice, on the topic name and the win
+   heading only. Space Mono carries the tracked labels and the live count, where a
+   monospace keeps the digits from shifting as the score climbs. Both fall back to
+   Hyperlegible, which is loaded either way. */
+:root{
+  --display:'Space Grotesk','Atkinson Hyperlegible',sans-serif;
+  --utility:'Space Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+
 /* Two palettes, each written exactly once. `data-appearance` on <html> is always a
    RESOLVED value — `light` or `dark`, never `system`; src/appearance.js does the
    resolving. Doing it in JS rather than in a prefers-color-scheme media query is what
    keeps this to two blocks instead of four, with no chance of the copies drifting.
    Bare `:root` hangs off DARK, not light: nothing sets `data-appearance` until the
    inline resolver in <head> runs, so a visitor with JavaScript disabled, or one whose
-   resolver threw before it could set the attribute, gets the appearance this game has
-   always shipped with instead of an unstyled/white page.
-   Value for value, the palette below is what the game shipped with. Any change
-   here is a regression. */
+   resolver threw before it could set the attribute, gets the game's own appearance
+   instead of an unstyled/white page.
+
+   AMBER PHOSPHOR. The game shipped on a deep-water teal; this is the warm
+   re-palette. Every value below was checked against WCAG AA (4.5:1) rather than
+   picked by eye — see the ratio table in the spec named at the foot of this block.
+   Both palettes are asserted value-for-value by appearance.spec.js, so any edit here
+   is a deliberate change that has to update that spec and the spec's token table
+   together. Do not tune a value without re-running the contrast check. */
 :root, :root[data-appearance="dark"]{
-  --bg:#16262f; --surface:#1d2f3a; --border:#2c4250;
-  --text:#dfe9e5; --text-strong:#eef6f2; --muted:#9fb8ae; --label:#6fa899; --hint:#7d968c;
-  --accent:#4fd1a5; --accent-text:#8fe8c8; --accent-hover:#b8f5dd; --accent-ink:#0b2c20;
-  --accent-wash:rgba(79,209,165,.12);
-  --scrim:rgba(10,20,26,.72);
-  --shadow:0 6px 20px rgba(6,20,28,.35); --card-shadow:0 10px 40px rgba(0,0,0,.5);
-  --found-text:#eafff6; --done-text:rgba(223,233,229,.6); --glow:rgba(79,209,165,.42);
-  --pill-1:rgba(240,196,90,.38); --pill-2:rgba(120,220,255,.33);
-  --pill-3:rgba(255,140,150,.35); --pill-4:rgba(190,150,255,.36);
-  --pill-sel:rgba(79,209,165,.30); --pill-miss:rgba(255,90,90,.5);
+  --bg:#1a1310; --surface:#241a15; --border:#3d2b21;
+  --text:#f0e0d2; --text-strong:#fdf4ea; --muted:#bfa694; --label:#e0913f; --hint:#a89283;
+  --accent:#ff8c3a; --accent-text:#ffa869; --accent-hover:#ffc79a; --accent-ink:#2b1508;
+  --accent-wash:rgba(255,140,58,.12);
+  --scrim:rgba(16,10,7,.72);
+  --shadow:0 6px 20px rgba(12,6,3,.40); --card-shadow:0 10px 40px rgba(0,0,0,.5);
+  --found-text:#fff1e0; --done-text:rgba(240,224,210,.6); --glow:rgba(255,140,58,.42);
+  --pill-1:rgba(255,183,77,.34); --pill-2:rgba(120,205,200,.30);
+  --pill-3:rgba(255,130,140,.34); --pill-4:rgba(200,155,255,.32);
+  --pill-sel:rgba(255,140,58,.30); --pill-miss:rgba(255,80,70,.5);
   --pill-edge:rgba(255,255,255,.25);
-  --confetti-1:#4fd1a5; --confetti-2:#f0c45a; --confetti-3:#78dcff;
-  --confetti-4:#ff8c96; --confetti-5:#be96ff; --confetti-6:#eef6f2;
+  --confetti-1:#ff8c3a; --confetti-2:#ffc14d; --confetti-3:#78cdc8;
+  --confetti-4:#ff828c; --confetti-5:#c89bff; --confetti-6:#fdf4ea;
 }
-/* --label, --hint, --accent and --done-text are darkened from the values this
-   palette originally shipped with: measured against --bg, all four fell below WCAG
-   AA (4.5:1 for text under 18.66px bold / 24px) while every dark-palette counterpart
-   already cleared it (the weakest, dark's own --hint, sits at 4.89) -- a one-sided
-   regression in an app that deliberately ships Atkinson Hyperlegible. --accent is
-   measured as the white --accent-ink text sits on it (filled buttons), not against
-   --bg, since that's the pairing it's actually read against; darkening it also firms
-   up its other job as the outlined-button and card border. --done-text's alpha was
-   raised just enough to clear 4.5:1 against --bg while still reading as visibly
-   de-emphasised next to --text, matching the dark side's own --done-text-vs-legible
-   ratio (5.42:1) rather than only barely scraping past the floor. Do not tune these
-   back down without re-checking contrast -- and keep this in step with the token
-   table in docs/superpowers/specs/2026-07-24-appearance-and-topic-rename-design.md. */
+/* The light side is where warm palettes go wrong: an orange light enough to feel warm
+   on paper is too light to carry white button text. So --accent is measured as the
+   white --accent-ink sits on it (filled buttons, 5.08:1), not against --bg, since
+   that is the pairing it is actually read against; the same value then does duty as
+   the outlined-button and card border. --label is the 11px kicker, well under the
+   18.66px-bold large-text threshold, so it needs the full 4.5:1 and a first pass at
+   #a8500e (4.38) was rejected for it. --done-text's alpha is set to clear 4.5:1
+   against --bg while still reading as visibly struck-out next to --text, matching how
+   the dark side's own --done-text sits relative to its --text rather than scraping
+   the floor. Keep this in step with the token table in
+   docs/superpowers/specs/2026-07-24-amber-phosphor-design.md. */
 :root[data-appearance="light"]{
-  --bg:#eef3f1; --surface:#ffffff; --border:#cfdcd7;
-  --text:#1c3a31; --text-strong:#10241d; --muted:#5a736a; --label:#37705d; --hint:#586f65;
-  --accent:#157e63; --accent-text:#12684f; --accent-hover:#0d5741; --accent-ink:#ffffff;
-  --accent-wash:rgba(23,135,106,.10);
-  --scrim:rgba(20,40,34,.45);
-  --shadow:0 6px 20px rgba(30,60,52,.14); --card-shadow:0 10px 40px rgba(30,60,52,.22);
-  --found-text:#0b3a2c; --done-text:rgba(28,58,49,.76); --glow:rgba(23,135,106,.30);
-  --pill-1:rgba(224,160,20,.34); --pill-2:rgba(40,150,210,.30);
-  --pill-3:rgba(230,90,110,.30); --pill-4:rgba(150,100,225,.30);
-  --pill-sel:rgba(23,135,106,.28); --pill-miss:rgba(220,50,50,.38);
-  --pill-edge:rgba(20,50,42,.16);
-  --confetti-1:#17876a; --confetti-2:#e0a014; --confetti-3:#2896d2;
-  --confetti-4:#e65a6e; --confetti-5:#9664e1; --confetti-6:#6b8479;
+  --bg:#f2e3d5; --surface:#fffaf5; --border:#dfc9b5;
+  --text:#3a2418; --text-strong:#24140b; --muted:#775b47; --label:#9e4a0c; --hint:#725847;
+  --accent:#b84e0d; --accent-text:#a3450b; --accent-hover:#7d3406; --accent-ink:#ffffff;
+  --accent-wash:rgba(184,78,13,.10);
+  --scrim:rgba(45,25,14,.45);
+  --shadow:0 6px 20px rgba(90,55,30,.16); --card-shadow:0 10px 40px rgba(90,55,30,.24);
+  --found-text:#3d1c06; --done-text:rgba(58,36,24,.76); --glow:rgba(184,78,13,.28);
+  --pill-1:rgba(224,150,20,.34); --pill-2:rgba(30,150,145,.28);
+  --pill-3:rgba(225,80,100,.28); --pill-4:rgba(150,95,220,.28);
+  --pill-sel:rgba(184,78,13,.26); --pill-miss:rgba(210,45,40,.36);
+  --pill-edge:rgba(60,35,20,.16);
+  --confetti-1:#b84e0d; --confetti-2:#e0a014; --confetti-3:#1e9691;
+  --confetti-4:#e1506e; --confetti-5:#965fdc; --confetti-6:#8a6a55;
 }
 
 /* Lock the viewport: no page scroll or rubber-band on iPad / iOS standalone. */
@@ -76,8 +94,20 @@ a{color:var(--accent-text)}a:hover{color:var(--accent-hover)}
 #app[data-landscape] #listhdr{margin:2px 2px 4px}
 #app[data-landscape] #list{gap:4px 14px}
 #hdr{grid-area:hdr;width:100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
-#kicker{font-weight:700;font-size:11px;letter-spacing:.18em;color:var(--label)}
-#topic{font-weight:700;font-size:28px;line-height:1.1;color:var(--text-strong)}
+#kicker{font-family:var(--utility);font-weight:700;font-size:11px;letter-spacing:.18em;color:var(--label)}
+/* The topic underlines itself in one of the four pill hues, picked by hashing its name
+   (see accentSlot in main.js) so all 100 topics don't render identically. Deliberately
+   an underline rather than a rule element: text-decoration draws inside the line box,
+   so it adds no height — and the landscape rail has none to give (see #hdr notes below).
+   Font-size stays at 28px for the same reason; Space Grotesk changes the voice without
+   changing the metrics. */
+#topic{font-family:var(--display);font-weight:700;font-size:28px;line-height:1.1;color:var(--text-strong);
+  letter-spacing:-.015em;text-decoration:underline;text-decoration-thickness:3px;
+  text-underline-offset:6px;text-decoration-color:var(--topic-accent,var(--pill-sel))}
+#topic[data-accent="1"]{--topic-accent:var(--pill-1)}
+#topic[data-accent="2"]{--topic-accent:var(--pill-2)}
+#topic[data-accent="3"]{--topic-accent:var(--pill-3)}
+#topic[data-accent="4"]{--topic-accent:var(--pill-4)}
 #newbtn{border:1.5px solid var(--accent);color:var(--accent-text);background:transparent;border-radius:999px;padding:9px 16px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;min-height:44px}
 #newbtn:hover{background:var(--accent-wash)}
 #actions{display:flex;align-items:center;gap:8px}
@@ -105,14 +135,33 @@ a{color:var(--accent-text)}a:hover{color:var(--accent-hover)}
 .pill.sel{background:var(--pill-sel)}
 .pill.miss{background:var(--pill-miss)}
 .cell{position:absolute;text-align:center;font-weight:700;color:var(--text);pointer-events:none}
+/* A found letter lights up. Until this existed a found word was marked only by the pill
+   behind it and its letters read exactly like the filler around them. The colour shift
+   alone turned out to be nearly invisible -- on light, --found-text and --text are both
+   dark browns a hair apart -- so the halo is what actually carries the state, and it is
+   the one place the phosphor idea is stated outright. Costs no layout: text-shadow does
+   not reflow, so cells cannot shift as words are found. */
+.cell.found{color:var(--found-text);text-shadow:0 0 10px var(--glow)}
+/* One phosphor pass across the grid as a puzzle appears — the page-load moment, and the
+   only motion added here. Animating background-position rather than a transform keeps
+   the gradient inside the element, so #gridbox needs no overflow:hidden that could clip
+   a pill. It paints above the letters (a generated ::after is last in paint order) and
+   is pointer-events:none, so it cannot swallow the first drag. */
+#gridbox::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;
+  background:linear-gradient(105deg,transparent 40%,var(--glow) 50%,transparent 60%);
+  background-size:300% 100%;background-position:100% 0}
+#gridbox.sweep::after{animation:sweep .9s ease-out}
+@keyframes sweep{0%{opacity:0;background-position:100% 0}20%{opacity:1}80%{opacity:1}100%{opacity:0;background-position:-50% 0}}
 #side{grid-area:side;flex:none}
 #listhdr{display:flex;justify-content:space-between;align-items:baseline;margin:2px 2px 8px}
-#listhdr b{font-weight:700;font-size:12px;letter-spacing:.16em;color:var(--label)}
-#count{font-size:13px;color:var(--muted)}
+#listhdr b{font-family:var(--utility);font-weight:700;font-size:12px;letter-spacing:.16em;color:var(--label)}
+/* Monospace here is functional, not decorative: this string rewrites on every find and
+   proportional digits make it jitter sideways as the count climbs. */
+#count{font-family:var(--utility);font-size:13px;color:var(--muted)}
 #list{display:grid;gap:6px 14px}
 .w{justify-self:start;font-weight:700;font-size:17px;line-height:1.2;padding:4px 12px;border-radius:999px;cursor:default;color:var(--text)}
 .w.done{text-decoration:line-through;color:var(--done-text)}
-/* On find, the word glows green (fade in/out) for one beat, then main.js swaps
+/* On find, the word glows (fade in/out) for one beat, then main.js swaps
    this class for `.done` and it strikes through. Duration matches GLOW_MS.
    The 0%/100% stops are `transparent` rather than a token: the animation fades one
    colour between two alphas, and a second token would carry no extra information. */
@@ -121,8 +170,12 @@ a{color:var(--accent-text)}a:hover{color:var(--accent-hover)}
 #hint{margin-top:8px;font-size:12px;line-height:1.4;color:var(--hint);max-width:280px}
 #win{position:fixed;inset:0;background:var(--scrim);display:none;align-items:center;justify-content:center;z-index:50}
 #wincard{position:relative;background:var(--surface);border:1px solid var(--accent);border-radius:20px;padding:34px 42px;text-align:center;animation:popIn .45s ease;box-shadow:var(--card-shadow)}
-#wincard .big{font-size:44px}
-#wincard h2{font-weight:700;font-size:26px;color:var(--text-strong);margin:8px 0 4px}
+/* The solved puzzle's own strokes, drawn by renderSolvedShape. Sized in px to match
+   SOLVED_BOX in view.js — the two have to agree or the mark is cropped or floats. */
+#solved{position:relative;width:148px;height:148px;margin:0 auto 16px;
+  border-radius:14px;background:var(--bg);border:1px solid var(--border);overflow:hidden}
+#wincard h2{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:-.015em;
+  color:var(--text-strong);margin:8px 0 4px}
 #wincard p{font-size:14.5px;color:var(--muted);margin:0 0 20px}
 #winbtn{border:none;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:12px 22px;font-family:inherit;font-weight:700;font-size:15px;cursor:pointer}
 #winclose{position:absolute;top:0;right:0;width:44px;height:44px;border:none;background:transparent;color:var(--muted);font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
@@ -139,4 +192,7 @@ a{color:var(--accent-text)}a:hover{color:var(--accent-hover)}
   #wincard{animation:none}
   .pill{transition:none}
   .w.glow{animation:none}
+  /* main.js already skips calling sweep() under reduced motion; this is the belt to
+     that braces, so the animation cannot run even if the class is somehow present. */
+  #gridbox.sweep::after{animation:none}
 }

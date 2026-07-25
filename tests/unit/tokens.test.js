@@ -10,6 +10,12 @@ const css = readFileSync(new URL('../../styles.css', import.meta.url), 'utf8');
 // that also matches bare `:root`; LIGHT_ONLY only ever matches with the attribute set.
 const DEFAULT_DARK = ':root, :root[data-appearance="dark"]';
 const LIGHT_ONLY = ':root[data-appearance="light"]';
+// The type tokens (--display, --utility) are the only non-colour tokens in the file.
+// They are appearance-independent, so they live in one bare `:root` block instead of
+// being written into both palettes — and that block is kept first in styles.css so
+// this plain `:root` lookup finds it rather than the dark palette's own selector,
+// which also starts with `:root`.
+const TYPE = ':root';
 
 /** The custom-property names declared inside the block that `selector` opens.
  * @param {string} selector @returns {Set<string>} */
@@ -27,8 +33,14 @@ test('the light and dark palettes declare exactly the same tokens', () => {
   assert.ok(light.size >= 25, `only ${light.size} tokens — did the palette blocks move?`);
 });
 
-test('every var() the stylesheet references is declared in the palettes', () => {
-  const declared = tokensIn(DEFAULT_DARK);
+test('the type block is first, so it is what a bare `:root` lookup finds', () => {
+  const type = tokensIn(TYPE);
+  assert.deepEqual([...type].sort(), ['--display', '--utility'],
+    'the first `:root` block in styles.css is not the type block — did the palettes move above it?');
+});
+
+test('every var() the stylesheet references is declared in the palettes or the type block', () => {
+  const declared = new Set([...tokensIn(DEFAULT_DARK), ...tokensIn(TYPE)]);
   const used = new Set([...css.matchAll(/var\((--[\w-]+)\)/g)].map(m => m[1]));
   assert.deepEqual([...used].filter(t => !declared.has(t)), [], 'referenced but never declared');
 });

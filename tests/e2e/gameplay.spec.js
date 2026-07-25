@@ -17,12 +17,12 @@ test('dragging across nonsense finds nothing', async ({ page }) => {
   await expect(page.locator('#pills .pill')).toHaveCount(0);
 });
 
-test('a found word glows green, then crosses out', async ({ page }) => {
+test('a found word glows, then crosses out', async ({ page }) => {
   await page.goto('/');
   const sel = await findWordInGrid(page);
   await dragCells(page, sel);
   const chip = page.locator('.w', { hasText: new RegExp(`^${sel.word}$`, 'i') });
-  // The green glow is applied synchronously on pointerup, so it is already
+  // The glow is applied synchronously on pointerup, so it is already
   // present by the time dragCells resolves; the strike-through follows GLOW_MS
   // later. Both assertions auto-retry, so they observe the two states in order.
   await expect(chip).toHaveClass(/\bglow\b/);

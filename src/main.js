@@ -5,7 +5,7 @@ import { TOPICS } from './topics.js';
 import { makeRng, resolveSeed, resolveTopicIndex } from './rng.js';
 import { buildPuzzle, cap, matchWord, readLine, snap } from './puzzle.js';
 import { computeLayout } from './layout.js';
-import { applyLayout, renderGrid, renderList, renderPills } from './view.js';
+import { applyLayout, renderGrid, renderList, renderPills, renderFoundCells, renderSolvedShape } from './view.js';
 import { burst, pop } from './effects.js';
 import { makeStorage } from './storage.js';
 import { makeAppearance, appearanceLabel } from './appearance.js';
@@ -51,6 +51,7 @@ const els = {
   list: must('list'), main: must('main'), side: must('side'), count: must('count'),
   topic: must('topic'), win: must('win'), winmsg: must('winmsg'),
   confirm: must('confirm'), winclose: must('winclose'), appearance: must('appearance'),
+  solved: must('solved'),
 };
 
 // The single home of every mutable value in the game. Renderers receive it and
@@ -81,6 +82,28 @@ let topicIdx;
 /** @type {string|null} */
 let justFound = null;
 
+/** Which of the four pill hues a topic underlines its name with. Hashed from the
+ * name rather than drawn from the rng so a topic keeps the same colour every time it
+ * comes up, and rather than from `topicIdx` so reordering TOPICS doesn't reshuffle
+ * all 100. Reuses the pill tokens; it introduces no colour of its own.
+ * @param {string} name @returns {number} */
+function accentSlot(name) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  return h % 4 + 1;
+}
+
+/** One phosphor pass across the grid as a puzzle appears. Restarting a CSS animation
+ * needs the class gone, a forced reflow, then the class back — without the reflow the
+ * browser coalesces remove+add into no change at all and a second new game is still.
+ * @returns {void} */
+function sweep() {
+  if (prefersReducedMotion()) return;
+  els.gridbox.classList.remove('sweep');
+  void els.gridbox.offsetWidth;
+  els.gridbox.classList.add('sweep');
+}
+
 /** Every puzzle is built from its own fresh rng seeded by `seed`, never the
  * shared/advanced one — that's what lets a single stored seed reproduce an
  * identical grid later (see `restore`), and what makes `newGame` safe to
@@ -94,6 +117,7 @@ function newPuzzle(seed, idx) {
   state.found = {}; state.foundOrder = []; state.sel = null; state.miss = null; state.drag = null;
   state.puzzle = buildPuzzle({ topics: TOPICS, topicIdx: idx, rng, size: N, count: COUNT });
   els.topic.textContent = cap(state.puzzle.name);
+  els.topic.dataset.accent = String(accentSlot(state.puzzle.name));
   // Cancel any pending win reveal; otherwise starting a new puzzle within the
   // 700ms delay lets the stale timer drop the overlay over a fresh grid, where
   // it swallows every pointer event and makes the game unplayable.
@@ -101,6 +125,7 @@ function newPuzzle(seed, idx) {
   els.win.style.display = 'none';
   layout();
   list();
+  sweep();
   persist();
 }
 
@@ -129,6 +154,9 @@ function layout() {
   });
   applyLayout(els, state.dims);
   renderGrid(els, state.puzzle, state.dims, N, PAD);
+  // renderGrid rebuilds every cell from scratch, so found-ness has to be reapplied
+  // after it or a resize would wipe the grid's record of what you've already found.
+  renderFoundCells(els, state, N);
   pills();
 }
 
@@ -190,10 +218,11 @@ function endDrag() {
   if (hit) {
     state.found[hit] = { sel: s };
     state.foundOrder.push(hit);
+    renderFoundCells(els, state, N);
     const won = state.foundOrder.length === puzzle.words.length;
     burst(els.fx, s, won ? 90 : 34, state.dims, PAD);
     pop(won);
-    // Glow the word green for one beat, then strike it through. The timer only
+    // Glow the word for one beat, then strike it through. The timer only
     // clears the glow if `hit` is still the one glowing — finding a second word
     // meanwhile resets `justFound`, and that word's own timer strikes it. Under
     // reduced motion, skip the glow and strike immediately.
@@ -210,6 +239,7 @@ function endDrag() {
     if (won) state.winTimer = setTimeout(() => {
       state.winTimer = null;
       els.winmsg.textContent = 'You found every ' + cap(puzzle.name) + ' word.';
+      renderSolvedShape(els, state, N);
       els.win.style.display = 'flex';
     }, 700);
   } else if (!(s.x0 === s.x1 && s.y0 === s.y1)) {

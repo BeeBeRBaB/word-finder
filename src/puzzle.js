@@ -76,14 +76,23 @@ export function snap(sx, sy, fx, fy, size) {
   return { x1: sx + ux * L, y1: sy + uy * L };
 }
 
+/** Flat `cells` indices under a selection, start to end inclusive. Reading the
+ * letters and colouring the found ones both walk a selection the same way, so the
+ * stepping lives here once rather than being re-derived per caller.
+ * @param {number} size @param {Selection} sel @returns {number[]} */
+export function lineIndices(size, sel) {
+  const dx = Math.sign(sel.x1 - sel.x0), dy = Math.sign(sel.y1 - sel.y0);
+  const len = Math.max(Math.abs(sel.x1 - sel.x0), Math.abs(sel.y1 - sel.y0)) + 1;
+  /** @type {number[]} */
+  const out = [];
+  for (let i = 0; i < len; i++) out.push((sel.y0 + dy * i) * size + (sel.x0 + dx * i));
+  return out;
+}
+
 /** Read the letters under a selection, start to end inclusive.
  * @param {string[]} cells @param {number} size @param {Selection} sel @returns {string} */
 export function readLine(cells, size, sel) {
-  const dx = Math.sign(sel.x1 - sel.x0), dy = Math.sign(sel.y1 - sel.y0);
-  const len = Math.max(Math.abs(sel.x1 - sel.x0), Math.abs(sel.y1 - sel.y0)) + 1;
-  let out = '';
-  for (let i = 0; i < len; i++) out += cells[(sel.y0 + dy * i) * size + (sel.x0 + dx * i)];
-  return out;
+  return lineIndices(size, sel).map(i => cells[i]).join('');
 }
 
 /** First unfound word matching the string forwards or backwards.

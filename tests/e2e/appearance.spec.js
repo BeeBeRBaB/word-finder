@@ -49,11 +49,11 @@ test('the dark palette still resolves to the colours the game shipped with', asy
     };
   });
   expect(seen).toEqual({
-    bg: '#16262f', surface: '#1d2f3a', border: '#2c4250',
-    text: '#dfe9e5', textStrong: '#eef6f2', muted: '#9fb8ae',
-    label: '#6fa899', hint: '#7d968c',
-    accent: '#4fd1a5', accentText: '#8fe8c8', accentInk: '#0b2c20',
-    pill1: 'rgba(240,196,90,.38)', pillEdge: 'rgba(255,255,255,.25)',
+    bg: '#1a1310', surface: '#241a15', border: '#3d2b21',
+    text: '#f0e0d2', textStrong: '#fdf4ea', muted: '#bfa694',
+    label: '#e0913f', hint: '#a89283',
+    accent: '#ff8c3a', accentText: '#ffa869', accentInk: '#2b1508',
+    pill1: 'rgba(255,183,77,.34)', pillEdge: 'rgba(255,255,255,.25)',
   });
 });
 
@@ -82,10 +82,10 @@ test('a throwing localStorage.getItem falls through to the OS, it does not abort
     const cs = getComputedStyle(document.documentElement);
     return { bg: cs.getPropertyValue('--bg').trim(), surface: cs.getPropertyValue('--surface').trim() };
   });
-  expect(seen).toEqual({ bg: '#eef3f1', surface: '#ffffff' });
+  expect(seen).toEqual({ bg: '#f2e3d5', surface: '#fffaf5' });
   // The computed rule, not just the declared tokens — proves something is actually
   // consuming --bg rather than it merely sitting on the attribute unused.
-  expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe('rgb(238, 243, 241)');
+  expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe('rgb(242, 227, 213)');
 });
 
 // Regression guard for the selector swap: with `:root` hanging off the light
@@ -101,7 +101,7 @@ test('when matchMedia is missing, the app still renders dark, not white', async 
   await page.goto('/?seed=1&topic=0');
   expect(await page.evaluate(() => document.documentElement.hasAttribute('data-appearance'))).toBe(false);
   const bg = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--bg').trim());
-  expect(bg).toBe('#16262f');
+  expect(bg).toBe('#1a1310');
 });
 
 /** @param {Page} page */
@@ -249,7 +249,7 @@ test('the status bar colour tracks the page background', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.goto('/');
   const meta = page.locator('meta[name="theme-color"]');
-  await expect(meta).toHaveAttribute('content', '#16262f');
+  await expect(meta).toHaveAttribute('content', '#1a1310');
   await page.locator('#appearance').click();
-  await expect(meta).toHaveAttribute('content', '#eef3f1');
+  await expect(meta).toHaveAttribute('content', '#f2e3d5');
 });

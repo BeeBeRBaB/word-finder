@@ -61,6 +61,12 @@ including the existing rule that an explicit value must not draw from the rng.
 
 ## 2. Token layer
 
+> **Superseded on values only.** The token *values* in this section were replaced by the
+> amber-phosphor palette — see `2026-07-24-amber-phosphor-design.md`. Everything
+> structural below still holds: two blocks, resolved in JS, no color literals left in
+> JavaScript. The tables here are kept as the record of the teal palette the game
+> launched with.
+
 Every color in `styles.css` becomes a custom property. Both palettes live in exactly two
 blocks, selected by a `data-appearance` attribute on `<html>` that is always a *resolved*
 concrete value — `light` or `dark`, never `system`:
