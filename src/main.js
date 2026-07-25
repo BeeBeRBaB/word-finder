@@ -290,6 +290,14 @@ function reportLoadFailure(err) {
   els.category.textContent = '';
 }
 
+// Category ids whose module has failed to load this session. Read by newGame's random
+// draw just below (so Surprise me never re-picks a category already known not to
+// work) and by the picker's `isUnavailable` (so it can disable that option) — one
+// shared record rather than two, so the win card, which bypasses the picker's own
+// dialog entirely, still never repeats a draw already proven to fail.
+/** @type {Set<string>} */
+const unavailableCategories = new Set();
+
 // A fresh subject is a player-facing surprise, so it stays on Math.random() rather
 // than the seeded sequence — `?seed=` pins the puzzle you land on, not every one after.
 // It also gets a fresh seed: `newPuzzle` builds its own rng from scratch each time, so
@@ -297,12 +305,29 @@ function reportLoadFailure(err) {
 /** @param {string|null} [categoryId] restrict the pick to one category
  * @returns {Promise<void>} */
 async function newGame(categoryId) {
-  const id = categoryId ?? CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)].id;
-  const cat = await loadCategory(id);
+  // The exclusion only narrows the RANDOM draw — an explicit categoryId (the picker
+  // only ever offers one that isn't disabled, but this stays honest either way) is
+  // attempted regardless. Falls back to the full catalog if somehow everything in it
+  // is currently marked unavailable, the same "unless it's the only one" shape as the
+  // subject pick below.
+  const candidates = CATEGORIES.filter(c => !unavailableCategories.has(c.id));
+  const drawPool = candidates.length ? candidates : CATEGORIES;
+  const id = categoryId ?? drawPool[Math.floor(Math.random() * drawPool.length)].id;
+  /** @type {import('./subjects.js').CategoryData} */
+  let cat;
+  try {
+    cat = await loadCategory(id);
+  } catch (err) {
+    unavailableCategories.add(id);
+    throw err;
+  }
+  // A category that failed before but loads now (cache warmed, network back) is no
+  // longer a reason to skip it.
+  unavailableCategories.delete(id);
   // Avoid dealing the subject already on screen, unless it is the only one there is.
   const fresh = cat.subjectIds.filter(s => s !== subjectId);
-  const pool = fresh.length ? fresh : cat.subjectIds;
-  const pick = pool[Math.floor(Math.random() * pool.length)];
+  const subjectPool = fresh.length ? fresh : cat.subjectIds;
+  const pick = subjectPool[Math.floor(Math.random() * subjectPool.length)];
   newPuzzle(Date.now() >>> 0, await loadSubject(pick), PRESET);
 }
 // `newGame` rejects when a category cannot be fetched; the picker catches that to
@@ -315,6 +340,7 @@ const picker = makePicker({
   start: must('picker-start'),
   cancel: must('picker-cancel'),
   categories: CATEGORIES,
+  isUnavailable: (id) => unavailableCategories.has(id),
   onStart: (categoryId) => newGame(categoryId),
 });
 // Unconditional, unlike the confirm dialog it replaces: the dialog is now how a game

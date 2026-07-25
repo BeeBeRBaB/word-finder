@@ -23,8 +23,19 @@ test('the win overlay can be dismissed, leaving the solved board', async ({ page
 // would. The seeded initial puzzle (nature/birds) is unaffected -- its module is
 // fetched before the route is even relevant, and boot()'s own subject resolution
 // never touches Math.random() (it draws from the seeded rng instead).
+//
+// Service worker registration is disabled for this page (matching main.js's own `if
+// ('serviceWorker' in navigator)` guard, made false by deleting the prototype
+// accessor). This is load-bearing, not incidental: sw.js's activate handler calls
+// clients.claim(), and once it has claimed the page every fetch after that --
+// including a category's dynamic import() -- is issued from *inside the service
+// worker's own execution context*, a target page.route() cannot see. Left enabled,
+// the abort below silently did nothing and this test only ever passed because its
+// target category (CATEGORIES' last entry) happened to have no file on disk yet; now
+// that every category does, the abort has to actually be observed to keep failing.
 test('a failed deal from the win card tells the player, rather than leaving a stale overlay', async ({ page }) => {
   const target = CATEGORIES[CATEGORIES.length - 1].id;
+  await page.addInitScript(() => { delete Object.getPrototypeOf(navigator).serviceWorker; });
   await page.addInitScript((n) => {
     // Math.floor(r * n) === n - 1 for any r in [(n-1)/n, 1); 1 - 1/(2n) sits safely
     // inside that range regardless of n, so this always picks the LAST category.
