@@ -14,7 +14,11 @@
 
 - **No build step and no new dependencies.** The files in the repo are exactly what GitHub Pages serves. Dynamic `import()` must resolve at runtime in the browser with no bundler.
 - **Every module keeps its pure/DOM split.** `rng.js`, `puzzle.js`, `layout.js`, `catalog.js` must not touch the DOM. `subjects.js` takes its importer as an injected dependency.
-- **`npm run typecheck` must pass after every task.** JSDoc types are enforced; `any` is not acceptable, narrow casts through `unknown` are the established idiom.
+- **`npm run test:unit` must pass after every task, with no exceptions.**
+- **`npm run typecheck` must pass from Task 6 onward.** It cannot pass during Tasks 1-5, and that is not a defect to fix: `tsconfig.json` covers `src/**/*.js`, so `tsc` checks `src/main.js` no matter which file a task touched, and `main.js` is deliberately left calling the old signatures until Task 6. Expect exactly two errors, both in `main.js`, from the end of Task 2 until Task 6 lands:
+  - `src/main.js(118,32): error TS2353: … 'topics' does not exist in type …`
+  - `src/main.js(150,30): error TS2345: … Property 'count' is missing …`
+  An error anywhere other than those two `main.js` call sites is a real failure. JSDoc types are enforced; `any` is not acceptable, narrow casts through `unknown` are the established idiom.
 - **`styles.css` may hold no bare hex literal outside the two palette blocks**, and the type-role `:root` block must stay the file's first root-level block — `tests/unit/tokens.test.js` asserts both.
 - **Copy is fixed:** `↻ New game` (header), `Play a new game →` (win card), `Start a new game? Your progress will be lost.` (warning line), `Surprise me` (first select option), `Start` (picker confirm), `Cancel` (picker dismiss), app title `Word Finder`, kicker `WORD FINDER`.
 - **Storage keys:** game save stays `wordfinder-save-v1`; appearance stays `wordfinder-appearance`.
@@ -327,8 +331,10 @@ export function buildPuzzle({ name, pool, rng, size, count, mix }) {
 
 - [ ] **Step 5: Run the tests to verify they pass**
 
-Run: `npm run test:unit -- tests/unit/puzzle.test.js && npm run typecheck`
-Expected: PASS. `src/main.js` still calls `buildPuzzle({topics, topicIdx, …})` and is now broken; no unit test loads it, and Task 6 fixes it.
+Run: `npm run test:unit`
+Expected: PASS, whole suite.
+
+Then run `npm run typecheck` for information only. It now reports `src/main.js(118,32): error TS2353: … 'topics' does not exist …` — `main.js` still calls the old signature and is deliberately broken until Task 6. **Do not fix it.** Any error outside that one `main.js` call site is a real failure.
 
 - [ ] **Step 6: Commit**
 
@@ -525,8 +531,10 @@ and, in the portrait branch:
 
 - [ ] **Step 5: Run the tests to verify they pass**
 
-Run: `npm run test:unit -- tests/unit/layout.test.js && npm run typecheck`
-Expected: PASS, including the pinned `reservePortrait(12) === 366`.
+Run: `npm run test:unit`
+Expected: PASS, whole suite, including the pinned `reservePortrait(12) === 366`.
+
+`npm run typecheck` now reports a second deliberate `main.js` error alongside Task 1's — `src/main.js(150,30): error TS2345: … Property 'count' is missing …`. Both stay until Task 6. Do not fix them.
 
 - [ ] **Step 6: Commit**
 
@@ -875,8 +883,10 @@ git rm src/topics.js
 
 - [ ] **Step 7: Run the tests to verify they pass**
 
-Run: `npm run test:unit && npm run typecheck`
+Run: `npm run test:unit`
 Expected: PASS. `content.test.js` proves `nature/birds` meets all six bucket floors and the 100-word minimum.
+
+`npm run typecheck` still reports the two deliberate `main.js` errors and must report nothing else — in particular nothing about the new modules.
 
 - [ ] **Step 8: Commit**
 
@@ -1303,8 +1313,10 @@ Also update the header comment on `src/rng.js` lines 4-6:
 
 - [ ] **Step 6: Run the tests to verify they pass**
 
-Run: `npm run test:unit && npm run typecheck`
+Run: `npm run test:unit`
 Expected: PASS.
+
+`npm run typecheck` still reports the two deliberate `main.js` errors — and nothing about `storage.js` or `rng.js`. Task 6 clears them.
 
 - [ ] **Step 7: Commit**
 
