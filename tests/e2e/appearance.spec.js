@@ -61,16 +61,40 @@ test('the dark palette still resolves to the colours the game shipped with', asy
 // pre-Task-6 "nothing ever sets the attribute" world no longer exists — this
 // supersedes that version of the test (see its old comment, and correction 3 in
 // task-6-report.md). The underlying guarantee is unchanged: a visitor for whom the
-// resolver genuinely cannot run — localStorage.getItem throws, matchMedia is gone,
-// and (to rule out the module papering over it) src/main.js itself is blocked from
-// even loading — must still get the dark palette this game has always shipped with,
-// never an unstyled/white page. Regression guard for the selector swap: with `:root`
-// hanging off the light palette, this rendered #eef3f1.
+// resolver genuinely cannot run must still get the dark palette this game has always
+// shipped with, never an unstyled/white page. Two independent failure modes can cause
+// that — a throwing localStorage.getItem, and a missing matchMedia — and each gets
+// its own test below rather than one test stubbing both: the inline script always
+// calls getItem first, so breaking both at once would leave the matchMedia branch
+// unreached and its "coverage" illusory. Both tests also block src/main.js from
+// loading, to rule out the module papering over the inline script's failure.
+// Regression guard for the selector swap: with `:root` hanging off the light
+// palette, this rendered #eef3f1.
 test('when the resolver cannot run at all, the app still renders dark, not white', async ({ page }) => {
   await page.addInitScript(() => {
-    // @ts-ignore - deliberately breaking the resolver's own inputs
-    window.matchMedia = undefined;
+    // @ts-ignore - deliberately breaking the resolver's storage input
     window.localStorage.getItem = () => { throw new Error('blocked'); };
+  });
+  await page.route('**/src/main.js', route => route.abort());
+  await page.goto('/?seed=1&topic=0');
+  expect(await page.evaluate(() => document.documentElement.hasAttribute('data-appearance'))).toBe(false);
+  const seen = await page.evaluate(() => {
+    const cs = getComputedStyle(document.documentElement);
+    return { bg: cs.getPropertyValue('--bg').trim(), surface: cs.getPropertyValue('--surface').trim() };
+  });
+  expect(seen).toEqual({ bg: '#16262f', surface: '#1d2f3a' });
+  // The computed rule, not just the declared tokens — proves something is actually
+  // consuming --bg rather than it merely sitting on :root unused.
+  expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe('rgb(22, 38, 47)');
+});
+
+// Genuinely exercises the branch the test above cannot reach: storage is untouched
+// here (getItem works normally, so the resolver gets past that call before it can
+// fail), and only matchMedia is missing.
+test('when only matchMedia is missing, the app still renders dark, not white', async ({ page }) => {
+  await page.addInitScript(() => {
+    // @ts-ignore - deliberately breaking only matchMedia; storage is untouched
+    window.matchMedia = undefined;
   });
   await page.route('**/src/main.js', route => route.abort());
   await page.goto('/?seed=1&topic=0');
@@ -89,6 +113,37 @@ const bgOf = (page) => page.evaluate(() => getComputedStyle(document.body).backg
 // palette; sampling a grid letter too covers the content, not just the canvas.
 /** @param {Page} page */
 const inkOf = (page) => page.locator('.cell').first().evaluate(el => getComputedStyle(el).color);
+
+// Finding 1: the inline resolver used to write any non-'system' stored value straight
+// into data-appearance, unvalidated. A garbage value under a light OS made that
+// concrete: painted dark (data-appearance="banana" matches no CSS selector, so
+// styles.css's bare :root — dark — took over), then main.js's own normalizePref
+// coerced 'banana' to 'system' and repainted light. A visible flip on load, which is
+// the exact bug class this feature exists to prevent. This must fail against the
+// pre-fix inline script and pass after it allowlists to only 'light'/'dark'.
+test('an invalid stored preference resolves through the allowlist, never verbatim', async ({ page }) => {
+  // Light OS: maximizes visibility, since the pre-fix bug painted dark (bare :root
+  // fallback for an unrecognised data-appearance) then hydrated light.
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.addInitScript(() => {
+    window.localStorage.setItem('wordfinder-appearance', 'banana');
+  });
+
+  // Isolate what the pre-paint inline script alone produces, with the deferred
+  // module blocked so nothing else can set the attribute.
+  await page.route('**/src/main.js', route => route.abort());
+  await page.goto('/?seed=1&topic=0');
+  const painted = await modeOf(page);
+  expect(['light', 'dark']).toContain(painted);       // never 'banana' verbatim
+  const paintedBg = await bgOf(page);
+
+  // Now let the module run for real and hydrate. It must agree with what was
+  // already painted — disagreement here is exactly the load-time flip.
+  await page.unroute('**/src/main.js');
+  await page.reload();
+  await expect.poll(() => modeOf(page)).toBe(painted);
+  expect(await bgOf(page)).toBe(paintedBg);
+});
 
 test('the button cycles system -> light -> dark and repaints the page', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'dark' });
