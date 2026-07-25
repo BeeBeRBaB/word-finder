@@ -29,3 +29,34 @@ test("the install handler forces reload-mode requests, not a bare addAll(ASSETS)
     "bypassing GitHub Pages' max-age=600 HTTP cache the same way revalidate() does"
   );
 });
+
+test('the shell precache lists catalog.js and every src module, but no word pool', () => {
+  const m = sw.match(/const ASSETS=(\[[^\]]*\])/);
+  assert.ok(m, 'could not find ASSETS in sw.js');
+  /** @type {string[]} */
+  const assets = JSON.parse(m[1].replace(/'/g, '"'));
+  assert.ok(assets.includes('./src/catalog.js'), 'the picker needs names on every visit');
+  assert.ok(assets.includes('./src/subjects.js'), 'the loader is shell code, not content');
+  assert.ok(assets.includes('./src/picker.js'));
+  assert.ok(
+    !assets.some(a => a.startsWith('./src/subjects/')),
+    'word pools must not be precached: they are the whole reason the catalog is separate',
+  );
+});
+
+// The cost of getting this wrong is invisible until a deploy: the shell sweep would
+// delete every downloaded category, so a one-line CSS fix would cost every player a
+// full re-download and would strand an offline one with nothing to play.
+test('word pools live in their own cache, which the activate sweep spares', () => {
+  assert.match(sw, /const SUBJECT_CACHE='wordfinder-subjects'/, 'subjects need an unversioned cache');
+  const line = sw.split('\n').find((l) => l.includes("addEventListener('activate'"));
+  assert.ok(line, 'could not find the activate handler in sw.js');
+  assert.ok(
+    line.includes('k!==SUBJECT_CACHE'),
+    'the activate sweep deletes every cache that is not CACHE; it must spare SUBJECT_CACHE',
+  );
+});
+
+test('a subject module is routed to the subject cache, cache-first', () => {
+  assert.match(sw, /isSubject/, 'the fetch handler needs to recognise a word pool');
+});

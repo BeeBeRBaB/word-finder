@@ -6,8 +6,17 @@
 // through `unknown` (never `any`) is the standard, narrowly-scoped idiom for it.
 const sw = /** @type {ServiceWorkerGlobalScope} */ (/** @type {unknown} */ (self));
 
-const CACHE='wordfinder-v7';
+const CACHE='wordfinder-v8';
+// Word pools are deliberately NOT versioned with the shell. They are large, they
+// change only when their own file does, and the activate sweep below would otherwise
+// discard every category a player had downloaded on every single deploy.
+const SUBJECT_CACHE='wordfinder-subjects';
 const ASSETS=['./','./index.html','./styles.css','./src/main.js','./src/rng.js','./src/puzzle.js','./src/layout.js','./src/view.js','./src/effects.js','./src/catalog.js','./src/subjects.js','./src/storage.js','./src/appearance.js','./src/picker.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
+
+/** A lazily-imported word pool, as opposed to shell code. Matched on the directory
+ * rather than a list, because the catalog grows and sw.js must not have to grow with it.
+ * @param {URL} u @returns {boolean} */
+const isSubject=u=>u.pathname.includes('/src/subjects/');
 
 // Code changes on every deploy; icons and fonts only change when they are renamed.
 // Serving code cache-first pinned every visitor to the last cached build until CACHE
@@ -36,10 +45,25 @@ function revalidate(req){
 // stale main.js then imports a path the server no longer has and the grid stays blank
 // forever, offline included. Reload mode is the same fix `revalidate()` above applies.
 sw.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS.map(u=>new Request(u,{cache:'reload'})))).then(()=>sw.skipWaiting()))});
-sw.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>sw.clients.claim()))});
+sw.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE&&k!==SUBJECT_CACHE).map(k=>caches.delete(k)))).then(()=>sw.clients.claim()))});
 
 sw.addEventListener('fetch',e=>{
   if(e.request.method!=='GET')return;
+  const url=new URL(e.request.url);
+  // Word pools are strictly cache-first out of their own cache: they are large, they
+  // never change in place, and a revalidation on every deal would spend a request to
+  // learn nothing. A miss falls through to the network and stores the result, which
+  // is what "cache the categories you actually play" means.
+  if(url.origin===sw.location.origin&&isSubject(url)){
+    e.respondWith(caches.open(SUBJECT_CACHE).then(async cache=>{
+      const hit=await cache.match(e.request);
+      if(hit)return hit;
+      const res=await fetch(e.request);
+      if(res&&res.ok)cache.put(e.request,res.clone());
+      return res;
+    }));
+    return;
+  }
   const req=e.request;
   e.respondWith(caches.open(CACHE).then(async cache=>{
     const cached=await cache.match(req,{ignoreSearch:true});
