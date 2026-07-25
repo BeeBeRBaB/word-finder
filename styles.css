@@ -94,10 +94,18 @@ a{color:var(--accent-text)}a:hover{color:var(--accent-hover)}
    it's the first thing to go; the list also loses a little internal breathing
    room. Neither guard assertion (words visible, nothing clipped) needs it. */
 #app[data-landscape] #hint{display:none}
-#app[data-landscape] #listhdr{margin:2px 2px 4px}
+#app[data-landscape] #listhdr{margin:2px 2px 4px 10px}
 #app[data-landscape] #list{gap:4px 14px}
+/* The words keep their larger size in landscape and give up vertical padding instead:
+   at 6 rows, 2px off each side is 24px back, which is the difference between the rail
+   fitting an iPhone-class landscape and overflowing it. */
+#app[data-landscape] .w{padding:2px 10px}
 #hdr{grid-area:hdr;width:100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
-#kicker{font-family:var(--utility);font-weight:700;font-size:11px;letter-spacing:.18em;color:var(--label)}
+#kicker{font-family:var(--utility);font-weight:700;font-size:13px;letter-spacing:.18em;color:var(--label);margin-bottom:2px}
+/* Baseline-aligned so the small label sits on the topic's baseline and adds no height
+   of its own — the landscape rail has none spare (see the #hdr notes below). */
+#topicline{display:flex;align-items:baseline;gap:8px}
+#topiclbl{font-family:var(--utility);font-size:13px;color:var(--muted);flex:none}
 /* The topic underlines itself in one of the four pill hues, picked by hashing its name
    (see accentSlot in main.js) so all 100 topics don't render identically. Deliberately
    an underline rather than a rule element: text-decoration draws inside the line box,
@@ -156,13 +164,21 @@ a{color:var(--accent-text)}a:hover{color:var(--accent-hover)}
 #gridbox.sweep::after{animation:sweep .9s ease-out}
 @keyframes sweep{0%{opacity:0;background-position:100% 0}20%{opacity:1}80%{opacity:1}100%{opacity:0;background-position:-50% 0}}
 #side{grid-area:side;flex:none}
-#listhdr{display:flex;justify-content:space-between;align-items:baseline;margin:2px 2px 8px}
-#listhdr b{font-family:var(--utility);font-weight:700;font-size:12px;letter-spacing:.16em;color:var(--label)}
+/* The count sits directly after WORDS rather than being pushed to the far edge:
+   space-between parked it hundreds of px away in landscape, where the rail is every
+   pixel left over after the grid. */
+/* Left margin matches .w's horizontal padding so WORDS lines up with the word text
+   rather than with the invisible left edge of the first pill. */
+#listhdr{display:flex;justify-content:flex-start;align-items:baseline;gap:9px;margin:2px 2px 8px 12px}
+#listhdr b{font-family:var(--utility);font-weight:700;font-size:13px;letter-spacing:.16em;color:var(--label)}
 /* Monospace here is functional, not decorative: this string rewrites on every find and
    proportional digits make it jitter sideways as the count climbs. */
-#count{font-family:var(--utility);font-size:13px;color:var(--muted)}
+#count{font-family:var(--utility);font-size:14px;color:var(--muted)}
+/* Delimiter lives in CSS so #count's textContent stays the bare "n of 12 found" the
+   gameplay and smoke specs match on. */
+#count::before{content:'— ';opacity:.55}
 #list{display:grid;gap:6px 14px}
-.w{justify-self:start;font-weight:700;font-size:17px;line-height:1.2;padding:4px 12px;border-radius:999px;cursor:default;color:var(--text)}
+.w{justify-self:start;font-weight:700;font-size:19px;line-height:1.2;padding:4px 12px;border-radius:999px;cursor:default;color:var(--text)}
 .w.done{text-decoration:line-through;color:var(--done-text)}
 /* On find, the word glows (fade in/out) for one beat, then main.js swaps
    this class for `.done` and it strikes through. Duration matches GLOW_MS.
@@ -170,7 +186,7 @@ a{color:var(--accent-text)}a:hover{color:var(--accent-hover)}
    colour between two alphas, and a second token would carry no extra information. */
 .w.glow{color:var(--found-text);animation:foundGlow .9s ease}
 @keyframes foundGlow{0%{background:transparent}45%{background:var(--glow)}100%{background:transparent}}
-#hint{margin-top:8px;font-size:12px;line-height:1.4;color:var(--hint);max-width:280px}
+#hint{margin:8px 0 0 12px;font-size:13px;line-height:1.4;color:var(--hint);max-width:280px}
 #win{position:fixed;inset:0;background:var(--scrim);display:none;align-items:center;justify-content:center;z-index:50}
 #wincard{position:relative;background:var(--surface);border:1px solid var(--accent);border-radius:20px;padding:34px 42px;text-align:center;animation:popIn .45s ease;box-shadow:var(--card-shadow)}
 /* The solved puzzle's own strokes, drawn by renderSolvedShape. Sized in px to match

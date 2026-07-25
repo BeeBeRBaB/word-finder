@@ -166,6 +166,37 @@ kills the animation outright — belt and braces, since the class is applied fro
 Restarting the animation needs class-off, forced reflow, class-on. Without the reflow the
 browser coalesces remove+add into no change and a second new game is still.
 
+## 8. Follow-up: legibility and the word-list columns
+
+Sizes went up across the small type — `#kicker` 11→13px, `#listhdr b` 12→13px, `#count`
+13→14px, `#hint` 12→13px, and `.w` 17→19px. The word list is a fixed-height block in
+portrait, so every px the type grows is a px the grid gives back: `RESERVE_PORTRAIT` rose
+340→366 and the portrait cell drops ~2px as a result. In landscape there was no height to
+give at all, so `.w` keeps the larger size and surrenders vertical padding instead
+(4px→2px, which is 24px back over six rows). The e2e device table is what proved both.
+
+`#topic` gains a `Topic:` label as a **sibling**, not a `::before`. Two reasons: `#topic`'s
+textContent has to stay the bare topic name, since `gameplay.spec.js` compares it across
+two loads of one seed; and the per-topic underline is set on `#topic`, so a pseudo-element
+would drag the rule under the label too.
+
+The count moves from the far edge of the list header to directly after `WORDS`, separated
+by an em dash. `justify-content: space-between` had parked it hundreds of px away in
+landscape. The dash is a `::before` so `#count`'s textContent stays the bare
+`"n of 12 found"` the specs match on.
+
+**`listColumns` is `max-content max-content`, not `1fr 1fr`.** Fractional tracks split the
+*whole* rail, and in landscape the rail is every pixel left over after the grid — so on a
+wide window the second column sat hundreds of px from the first and slid on every resize.
+Measured before/after at rail widths 388 / 678 / 998px: the inter-column gap went from
+~194 / ~339 / ~499px to a constant 119px. Both orientations share one constant so they
+cannot drift. `layout.test.js` asserts the track never varies with the viewport, which is
+the invariant — the literal string is not.
+
+`#listhdr` and `#hint` carry a left margin matching `.w`'s horizontal padding, so the
+header and hint align with the word *text* rather than with the invisible left edge of
+the first pill.
+
 ## Cut
 
 A faint plotted field ruled behind the letters. It was the most decorative item in the

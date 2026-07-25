@@ -21,9 +21,21 @@ test('orientation flips on the 1.08 aspect threshold', () => {
   assert.equal(at(824, 280).landscape, true);
 });
 
-test('the word list is two columns in both orientations', () => {
-  assert.equal(at(370, 644).listColumns, '1fr 1fr');
-  assert.equal(at(824, 280).listColumns, '1fr 1fr');
+test('the word list is two content-sized columns in both orientations', () => {
+  // Content-sized rather than `1fr 1fr`: fractional tracks split the whole rail, and in
+  // landscape the rail is every pixel left over after the grid — so the second column
+  // sat far from the first on a wide window and slid on every resize.
+  assert.equal(at(370, 644).listColumns, 'max-content max-content');
+  assert.equal(at(824, 280).listColumns, 'max-content max-content');
+});
+
+test('the list column track never varies with the viewport', () => {
+  // The regression this guards is not the literal string above, it is the track being a
+  // function of available width at all. One distinct value across wildly different
+  // viewports is what keeps the second column from moving as the window resizes.
+  const seen = new Set([[390, 800], [900, 600], [1440, 900], [1920, 900], [824, 280]]
+    .map(([vw, vh]) => at(vw, vh).listColumns));
+  assert.equal(seen.size, 1, `list columns varied with the viewport: ${[...seen].join(' | ')}`);
 });
 
 test('grid fits within the available space on every in-scope device', () => {
