@@ -175,20 +175,33 @@ function layout() {
     size: state.size, pad: PAD, count: boardCount,
   });
   applyLayout(els, state.dims);
+  // What the cells currently on screen were built from. Everything below derives from
+  // exactly these three, so when none has changed the rebuild would produce a
+  // byte-identical grid -- and most resize frames change none of them: the landscape
+  // branch caps `cell` and derives it from height alone, so dragging a window's width
+  // leaves it identical on all but one frame of a drag. Keyed on the puzzle object too,
+  // not just its shape, or dealing a new board at the same size would skip the redraw
+  // and leave the previous puzzle's letters on screen.
+  if (rendered.puzzle === state.puzzle && rendered.cell === state.dims.cell && rendered.size === state.size) return;
+  rendered = { puzzle: state.puzzle, cell: state.dims.cell, size: state.size };
   renderGrid(els, state.puzzle, state.dims, state.size, PAD);
   // renderGrid rebuilds every cell from scratch, so found-ness has to be reapplied
   // after it or a resize would wipe the grid's record of what you've already found.
   renderFoundCells(els, state, state.size);
   pills();
 }
+/** @type {{puzzle: Puzzle|null, cell: number, size: number}} */
+let rendered = { puzzle: null, cell: 0, size: 0 };
 
 let resizeFrame = 0;
-/** One relayout per frame while resizing. `layout()` rebuilds all 100-169 cells and
- * dragging a window edge fires resize continuously, so unthrottled this is a full
- * rebuild per event. Cancel-and-reschedule rather than a pending flag: a flag that
- * only clears inside the callback would latch shut for good if a frame scheduled in
- * a hidden tab were ever dropped rather than deferred. `cancelAnimationFrame(0)` is
- * a no-op, so the initial value is safe. @returns {void} */
+/** One relayout per frame while resizing. Cancel-and-reschedule rather than a pending
+ * flag: a flag that only clears inside the callback would latch shut for good if a
+ * frame scheduled in a hidden tab were ever dropped rather than deferred.
+ * `cancelAnimationFrame(0)` is a no-op, so the initial value is safe.
+ *
+ * This coalesces a burst into one call, but a real browser already fires resize at most
+ * once per frame, so on its own it saves little -- the guard in `layout()` above is what
+ * actually removes the work. @returns {void} */
 function onResize() {
   cancelAnimationFrame(resizeFrame);
   resizeFrame = requestAnimationFrame(layout);

@@ -27,7 +27,12 @@ async function loadAll() {
 // 25 categories were being written in parallel this check could not exist, and its
 // absence was the ship blocker -- every other content rule is per-subject and passes
 // happily on a file with one subject in it, or on no file at all.
-const SUBJECTS_PER_CATEGORY = 24;
+// A floor, not an equality. Every category ships 24 today, but the README documents
+// adding a subject as appending one line to one file -- an equality check would turn
+// that documented one-line change red until 24 more landed elsewhere. What actually
+// has to hold is that no listed category is thin enough to feel repetitive or, worse,
+// missing entirely.
+const MIN_SUBJECTS_PER_CATEGORY = 24;
 
 test('every catalog category has a module with a full set of subjects', async () => {
   const mods = await loadAll();
@@ -37,7 +42,7 @@ test('every catalog category has a module with a full set of subjects', async ()
     const words = mods.get(id);
     if (!words) { problems.push(`${id}: listed in CATEGORIES but src/subjects/${id}.js does not exist`); continue; }
     const n = Object.keys(words).length;
-    if (n !== SUBJECTS_PER_CATEGORY) problems.push(`${id}: ${n} subjects, expected ${SUBJECTS_PER_CATEGORY}`);
+    if (n < MIN_SUBJECTS_PER_CATEGORY) problems.push(`${id}: ${n} subjects, need at least ${MIN_SUBJECTS_PER_CATEGORY}`);
   }
   assert.deepEqual(problems, []);
 });
@@ -115,9 +120,9 @@ function subjectsByWord(mods, key) {
 
 // The rule that matches what a player actually notices. You pick a category and get a
 // random subject inside it, so consecutive games come from the same 24 subjects -- that
-// is where a repeated word reads as padding. Every category was cleaned to this and
-// lands exactly on 6, which is why the ceiling is 6 rather than a round number: it is
-// the measured state of the content, not an aspiration.
+// is where a repeated word reads as padding. 6 is the measured state of the content
+// rather than a round number: no category exceeds it and 16 of the 25 sit exactly on
+// it, so there is no headroom to lower it into and no slack above it going unused.
 const WITHIN_CATEGORY_CEILING = 6;
 
 test('no word fills more than a quarter of its own category', async () => {
@@ -138,15 +143,16 @@ test('no word fills more than a quarter of its own category', async () => {
       + `them:\n${violations.join('\n')}`);
 });
 
-// Across all 582 subjects a ceiling this tight is the wrong rule, and measuring showed
+// Across all 600 subjects a ceiling this tight is the wrong rule, and measuring showed
 // why: reuse there is dominated by polysemy rather than padding. SCALE spans 14
 // categories because a music scale, a fish scale, a map scale and a kitchen scale are
 // four different words that happen to be spelled alike, and no diversification fixes
-// that. 52% of words are used in exactly one subject and the tail thins fast -- 424
-// words appear in more than 8 subjects, 32 in more than 16, 10 in more than 20, and
-// none at all in more than 30. So this ceiling is not a quality bar that content must
-// climb to; it is a regression guard sitting in the empty space above the whole corpus,
-// to catch a future category padding one word across everything.
+// that. 51% of words are used in exactly one subject and the tail thins fast -- 444
+// words appear in more than 8 subjects, 31 in more than 16, 7 in more than 20, and none
+// at all in more than 30. So this ceiling is not a quality bar that content must climb
+// to; it is a regression guard sitting in the empty space above the whole corpus, to
+// catch a future category padding one word across everything. Re-measure with
+// `npm run words` rather than trusting these numbers if the corpus has grown.
 const CORPUS_CEILING = 40;
 
 test('no word is sprayed across the whole corpus', async () => {

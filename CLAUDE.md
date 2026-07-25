@@ -18,8 +18,10 @@ without causing that.
 - **Types come from JSDoc**, checked with `tsc --noEmit`. `checkJs` and `strict`
   are on. There is no TypeScript source.
 - **`src/` is split on the pure / DOM boundary.** `rng`, `puzzle`, `layout`,
-  `storage`, `appearance` touch no DOM, which is the only reason they are cheap to
+  `storage`, `catalog` touch no DOM, which is the only reason they are cheap to
   unit-test. Reaching for `document` in one of those files costs that.
+  (`appearance` is *not* in that set — it resolves and writes `data-appearance` on
+  the root element.)
 
 ## Deploying
 
@@ -70,8 +72,22 @@ The PostToolUse hook blocks on this, so you will be told. `tsconfig.json` picks 
 file up automatically via its `src/**/*.js` glob. Add a unit test if the module is
 pure, and a row to the README's file table.
 
-**A topic:** append `["Name","WORD1,WORD2,..."]` to [src/topics.js](src/topics.js).
-Uppercase, 12 letters or fewer; 12 words are drawn per puzzle.
+**This does not apply to `src/subjects/*.js`.** Word pools are the one thing that
+must stay *out* of `ASSETS` — precaching them would pull all 25 categories into the
+installed shell and defeat the lazy load. `sw.js` routes that directory to its own
+runtime cache by prefix, so nothing there is ever listed. The hook won't catch a
+mistake either way: its glob is `src/*.js` and does not descend.
+
+**A subject:** append `'<category>/<slug>': 'WORD1,WORD2,...'` to
+`src/subjects/<category>.js`. That is the whole change — the category comes from the
+slug prefix and the display name from the slug title-cased, so nothing else
+registers it. 40+ words, uppercase A–Z, 3–12 letters, and six length-bucket floors
+that [tests/unit/content.test.js](tests/unit/content.test.js) enforces by name. 12
+words are drawn per puzzle on the full board, 8 on the compact one.
+
+**Never count letters by eye when writing content.** It was the single largest
+source of wasted time in the session that wrote all 600 subjects — every agent that
+hand-counted got lengths wrong. Run the pools through a script and read the failures.
 
 ## Automation in this repo
 

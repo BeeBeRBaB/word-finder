@@ -21,6 +21,7 @@ have no DOM access at all, which is what makes them cheap to unit-test:
 | `src/rng.js` | Seeded PRNG and `?seed=` / `?subject=` / `?category=` resolution. | pure |
 | `src/puzzle.js` | Word placement, grid fill, drag snapping, hit-detection. | pure |
 | `src/layout.js` | Screen arithmetic → grid dimensions. | pure |
+| `src/storage.js` | Reads and writes the saved game; discards a save it cannot trust. | pure |
 | `src/view.js` | Renders cells, selection pills and the word list. | DOM |
 | `src/effects.js` | Confetti and the WebAudio chime. | DOM |
 | `src/picker.js` | The category dialog. Reports a category id; owns no game state. | DOM |
@@ -73,8 +74,8 @@ runtime by directory, not listed. The picker reads its options from the catalog.
 
 | Path | Purpose |
 | --- | --- |
-| `tests/unit/` | `node:test` specs for the pure `src/` modules (`rng`, `puzzle`, `layout`, `storage`, `appearance`, `catalog`, `subjects`), the word-list contract every subject must meet (`content`) and a deal of every subject at both presets (`deal`), a token-parity check on the stylesheet (`tokens`), and a static assertion on the service worker (`sw`). No browser. |
-| `tests/e2e/` | Playwright specs (`smoke`, `gameplay`, `layout`, `regressions`, `ux`, `appearance`) against a local static server (`tests/server.mjs`), on `desktop` and `mobile` viewport projects. |
+| `tests/unit/` | `node:test` specs for the pure `src/` modules (`rng`, `puzzle`, `layout`, `storage`, `appearance`, `catalog`, `subjects`), the word-list and overlap contract every subject must meet (`content`), a token-parity check on the stylesheet (`tokens`), and a static assertion on the service worker (`sw`). No browser. |
+| `tests/e2e/` | Playwright specs (`smoke`, `gameplay`, `layout`, `picker`, `regressions`, `ux`, `appearance`) against a local static server (`tests/server.mjs`), on `desktop` and `mobile` viewport projects. |
 | `tests/live/` | Playwright smoke test against the real deployed GitHub Pages site — see [Development](#development). |
 
 ## Development
