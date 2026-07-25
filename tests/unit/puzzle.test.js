@@ -1,28 +1,107 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildPuzzle, snap, readLine, matchWord, cap } from '../../src/puzzle.js';
+import { buildPuzzle, pickWords, snap, readLine, matchWord, cap } from '../../src/puzzle.js';
 import { makeRng } from '../../src/rng.js';
-import { TOPICS } from '../../src/topics.js';
 
-const build = (seed, topicIdx = 0) =>
-  buildPuzzle({ topics: TOPICS, topicIdx, rng: makeRng(seed), size: 13, count: 12 });
+const FULL_MIX = [
+  { min: 3, max: 5, take: 3 },
+  { min: 6, max: 8, take: 5 },
+  { min: 9, max: 12, take: 4 },
+];
 
-test('every placed word is actually readable in the grid', () => {
-  for (let seed = 1; seed <= 50; seed++) {
-    const p = build(seed, seed % TOPICS.length);
-    for (const { word, x0, y0, dx, dy } of p.placements) {
-      let read = '';
-      for (let i = 0; i < word.length; i++) read += p.cells[(y0 + dy * i) * 13 + (x0 + dx * i)];
-      assert.equal(read, word, `seed ${seed}: ${word} is not at its recorded position`);
+/** A synthetic pool with plenty in every bucket. Deliberately not real content:
+ * this module must not know what a subject is, and a test that reached for one
+ * would quietly reintroduce that coupling. */
+const POOL = [
+  'ANT', 'BEE', 'COW', 'DOE', 'ELK', 'FOX', 'GNU', 'HEN',
+  'CROW', 'DEER', 'FROG', 'GOAT', 'IBIS', 'LARK', 'MOLE', 'NEWT',
+  'BISON', 'CAMEL', 'EAGLE', 'GOOSE', 'HORSE', 'KOALA', 'LEMUR', 'MOOSE',
+  'BADGER', 'BEAVER', 'CONDOR', 'DONKEY', 'FALCON', 'GERBIL', 'IGUANA', 'JAGUAR',
+  'BUZZARD', 'CHEETAH', 'DOLPHIN', 'GAZELLE', 'GIRAFFE', 'LEOPARD', 'MEERKAT', 'OCTOPUS',
+  'ANTELOPE', 'FLAMINGO', 'HEDGEHOG', 'KANGAROO', 'MARMOSET', 'PHEASANT', 'REINDEER', 'SQUIRREL',
+  'ALLIGATOR', 'BUTTERFLY', 'CORMORANT', 'CROCODILE', 'PORCUPINE', 'RATTLESNAKE', 'WOODPECKER', 'HUMMINGBIRD',
+];
+
+const build = (seed, opts = {}) => buildPuzzle({
+  name: 'Test', pool: POOL, rng: makeRng(seed),
+  size: 13, count: 12, mix: FULL_MIX, ...opts,
+});
+
+test('pickWords draws exactly the requested number from each length bucket', () => {
+  const words = pickWords(POOL, makeRng(7), { count: 12, mix: FULL_MIX });
+  assert.equal(words.length, 12);
+  const inBucket = (b) => words.filter(w => w.length >= b.min && w.length <= b.max).length;
+  assert.equal(inBucket(FULL_MIX[0]), 3, 'short bucket');
+  assert.equal(inBucket(FULL_MIX[1]), 5, 'medium bucket');
+  assert.equal(inBucket(FULL_MIX[2]), 4, 'long bucket');
+});
+
+test('pickWords never repeats a word', () => {
+  for (let seed = 1; seed <= 30; seed++) {
+    const words = pickWords(POOL, makeRng(seed), { count: 12, mix: FULL_MIX });
+    assert.equal(new Set(words).size, 12, `seed ${seed} repeated a word`);
+  }
+});
+
+test('pickWords varies its draw across seeds', () => {
+  const a = pickWords(POOL, makeRng(1), { count: 12, mix: FULL_MIX }).join(',');
+  const b = pickWords(POOL, makeRng(2), { count: 12, mix: FULL_MIX }).join(',');
+  assert.notEqual(a, b, 'a 56-word pool must not produce one canonical draw');
+});
+
+// The whole point of a deep pool is that the same subject deals differently. This
+// is the assertion that would catch a `slice(0, count)` creeping back in.
+test('pickWords is deterministic for one seed', () => {
+  const a = pickWords(POOL, makeRng(9), { count: 12, mix: FULL_MIX });
+  const b = pickWords(POOL, makeRng(9), { count: 12, mix: FULL_MIX });
+  assert.deepEqual(a, b);
+});
+
+test('pickWords backfills a short bucket rather than returning fewer words', () => {
+  // Only two words in 9-12, but the mix asks for four.
+  const thin = POOL.filter(w => w.length < 9).concat(['ALLIGATOR', 'BUTTERFLY']);
+  const words = pickWords(thin, makeRng(3), { count: 12, mix: FULL_MIX });
+  assert.equal(words.length, 12, 'must still return a full board');
+  assert.equal(new Set(words).size, 12);
+  assert.equal(words.filter(w => w.length >= 9).length, 2, 'takes what the bucket has');
+});
+
+test('pickWords throws when the pool cannot fill a board at all', () => {
+  assert.throws(() => pickWords(['ANT', 'BEE'], makeRng(1), { count: 12, mix: FULL_MIX }), /pool/i);
+});
+
+test('buildPuzzle places every word it lists, at both presets', () => {
+  const COMPACT_MIX = [
+    { min: 3, max: 4, take: 2 },
+    { min: 5, max: 6, take: 3 },
+    { min: 7, max: 9, take: 3 },
+  ];
+  for (let seed = 1; seed <= 60; seed++) {
+    for (const opts of [{}, { size: 10, count: 8, mix: COMPACT_MIX }]) {
+      const p = build(seed, opts);
+      const size = opts.size ?? 13, count = opts.count ?? 12;
+      assert.equal(p.words.length, count, `seed ${seed} size ${size} dealt ${p.words.length}`);
+      for (const { word, x0, y0, dx, dy } of p.placements) {
+        let read = '';
+        for (let i = 0; i < word.length; i++) read += p.cells[(y0 + dy * i) * size + (x0 + dx * i)];
+        assert.equal(read, word, `seed ${seed} size ${size}: ${word} is not at its recorded position`);
+      }
     }
   }
 });
 
-test('all 12 words place across every topic', () => {
-  for (let i = 0; i < TOPICS.length; i++) {
-    const p = build(i + 1, i);
-    assert.equal(p.words.length, 12, `topic ${TOPICS[i][0]} placed ${p.words.length}`);
-  }
+// The old buildPuzzle dropped a word that would not place after 400 attempts, so a
+// board could quietly come up one word short and nothing said so. `words` is now
+// exactly as long as `count` or buildPuzzle throws.
+test('buildPuzzle never silently returns a short board', () => {
+  for (let seed = 1; seed <= 60; seed++) assert.equal(build(seed).words.length, 12);
+});
+
+test('buildPuzzle respects the maximum word length for its grid size', () => {
+  const p = build(5, { size: 10, count: 8, mix: [
+    { min: 3, max: 4, take: 2 }, { min: 5, max: 6, take: 3 }, { min: 7, max: 9, take: 3 },
+  ] });
+  for (const w of p.words) assert.ok(w.length <= 9, `${w} is too long for a 10x10 grid`);
 });
 
 test('the same seed produces an identical grid', () => {

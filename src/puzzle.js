@@ -15,38 +15,127 @@ const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 export function cap(s) { return s.charAt(0) + s.slice(1).toLowerCase(); }
 
 /**
- * Generate a puzzle. `placements` records where each word actually landed, so a
- * test can assert the grid really contains what the word list claims.
- * @param {{topics:[string,string][], topicIdx:number, rng:Rng, size:number, count:number}} opts
+ * @typedef {{min:number, max:number, take:number}} Bucket
+ */
+
+/** How far a length sits outside a bucket's range; 0 when inside it.
+ * @param {number} len @param {Bucket} b @returns {number} */
+function distanceTo(len, b) {
+  if (len < b.min) return b.min - len;
+  if (len > b.max) return len - b.max;
+  return 0;
+}
+
+/**
+ * Draw `count` words, spread across the length buckets in `mix`. A pool of 100+
+ * words would otherwise deal twelve nine-letter words as readily as twelve
+ * four-letter ones, and neither makes a good board.
+ *
+ * A bucket short of candidates does not shrink the board: the shortfall is
+ * backfilled from whatever is left, nearest length first, so the caller always
+ * gets `count` words or an exception. Backfilling rather than throwing matters
+ * because the scarce bucket is always the short words, and a subject with only
+ * two three-letter words is still worth playing.
+ *
+ * @param {string[]} pool @param {import('./rng.js').Rng} rng
+ * @param {{count:number, mix:Bucket[]}} opts
+ * @returns {string[]}
+ */
+export function pickWords(pool, rng, { count, mix }) {
+  const lo = Math.min(...mix.map(b => b.min)), hi = Math.max(...mix.map(b => b.max));
+  const eligible = pool.filter(w => w.length >= lo && w.length <= hi);
+  if (eligible.length < count) {
+    throw new Error(`pool has ${eligible.length} eligible words, need ${count}`);
+  }
+  /** @type {Set<string>} */
+  const used = new Set();
+  /** @type {string[]} */
+  const out = [];
+  /** @type {Bucket[]} */
+  const unfilled = [];
+  for (const b of mix) {
+    const cands = rng.shuffle(eligible.filter(w => !used.has(w) && distanceTo(w.length, b) === 0));
+    for (const w of cands.slice(0, b.take)) { used.add(w); out.push(w); }
+    if (cands.length < b.take) unfilled.push(b);
+  }
+  if (out.length < count) {
+    // Nearest-length first, so a missing long word is replaced by the longest thing
+    // left rather than by whatever the shuffle happened to surface. Shuffle before
+    // sorting so ties inside one distance are still random; Array#sort is stable in
+    // every engine this ships to, so the shuffled order survives the tie.
+    const rest = rng.shuffle(eligible.filter(w => !used.has(w)))
+      .sort((a, b2) =>
+        Math.min(...unfilled.map(u => distanceTo(a.length, u))) -
+        Math.min(...unfilled.map(u => distanceTo(b2.length, u))));
+    for (const w of rest.slice(0, count - out.length)) { used.add(w); out.push(w); }
+  }
+  return out;
+}
+
+// How many times a single word may be swapped for another of the same length before
+// the puzzle gives up. Each swap costs a full 400-attempt placement pass, and with a
+// 100-word pool a board that cannot be filled in eight swaps is a broken subject, not
+// an unlucky seed.
+const MAX_SWAPS = 8;
+
+/**
+ * Generate a puzzle from a resolved word pool. `placements` records where each word
+ * actually landed, so a test can assert the grid really contains what the word list
+ * claims.
+ *
+ * This function knows nothing about categories, subjects or the catalog — it is
+ * handed a name and a bag of words. That is what lets `pickWords` and the placement
+ * logic be tested against a synthetic pool with no content module loaded.
+ *
+ * @param {{name:string, pool:string[], rng:Rng, size:number, count:number, mix:Bucket[]}} opts
  * @returns {Puzzle}
  */
-export function buildPuzzle({ topics, topicIdx, rng, size, count }) {
-  const name = topics[topicIdx][0];
-  const pool = topics[topicIdx][1].split(',').filter(w => w.length <= size - 1);
-  const words = rng.shuffle(pool).slice(0, count).sort((a, b) => b.length - a.length);
+export function buildPuzzle({ name, pool, rng, size, count, mix }) {
+  const fits = pool.filter(w => w.length <= size - 1);
+  const chosen = pickWords(fits, rng, { count, mix });
+  // Longest first: a long word has the fewest legal positions, so placing it into an
+  // empty grid and letting short words fill around it fails far less often.
+  const words = chosen.slice().sort((a, b) => b.length - a.length);
+  const spare = rng.shuffle(fits.filter(w => !chosen.includes(w)));
 
   /** @type {(string|null)[][]} */
   const g = Array.from({ length: size }, () => new Array(size).fill(null));
   /** @type {Placement[]} */
   const placements = [];
-  for (const w of words) {
-    for (let attempt = 0; attempt < 400; attempt++) {
-      const [dx, dy] = DIRS[rng.int(8)];
-      const span = w.length - 1;
-      const xmin = dx < 0 ? span : 0, xmax = dx > 0 ? size - 1 - span : size - 1;
-      const ymin = dy < 0 ? span : 0, ymax = dy > 0 ? size - 1 - span : size - 1;
-      if (xmax < xmin || ymax < ymin) continue;
-      const x0 = xmin + rng.int(xmax - xmin + 1);
-      const y0 = ymin + rng.int(ymax - ymin + 1);
-      let ok = true;
-      for (let i = 0; i < w.length; i++) {
-        const c = g[y0 + dy * i][x0 + dx * i];
-        if (c && c !== w[i]) { ok = false; break; }
+  let swaps = 0;
+
+  for (let i = 0; i < words.length; i++) {
+    let placed = false;
+    for (let swap = 0; !placed; swap++) {
+      const w = words[i];
+      for (let attempt = 0; attempt < 400; attempt++) {
+        const [dx, dy] = DIRS[rng.int(8)];
+        const span = w.length - 1;
+        const xmin = dx < 0 ? span : 0, xmax = dx > 0 ? size - 1 - span : size - 1;
+        const ymin = dy < 0 ? span : 0, ymax = dy > 0 ? size - 1 - span : size - 1;
+        if (xmax < xmin || ymax < ymin) continue;
+        const x0 = xmin + rng.int(xmax - xmin + 1);
+        const y0 = ymin + rng.int(ymax - ymin + 1);
+        let ok = true;
+        for (let j = 0; j < w.length; j++) {
+          const c = g[y0 + dy * j][x0 + dx * j];
+          if (c && c !== w[j]) { ok = false; break; }
+        }
+        if (!ok) continue;
+        for (let j = 0; j < w.length; j++) g[y0 + dy * j][x0 + dx * j] = w[j];
+        placements.push({ word: w, x0, y0, dx, dy });
+        placed = true;
+        break;
       }
-      if (!ok) continue;
-      for (let i = 0; i < w.length; i++) g[y0 + dy * i][x0 + dx * i] = w[i];
-      placements.push({ word: w, x0, y0, dx, dy });
-      break;
+      // A word that will not fit is swapped for another of the same length rather
+      // than dropped. Dropping is what the old generator did, and it produced boards
+      // that were quietly one word short with nothing anywhere saying so.
+      if (placed) break;
+      const alt = spare.findIndex(s => s.length === w.length);
+      if (alt === -1 || ++swaps > MAX_SWAPS) {
+        throw new Error(`could not place ${w} in a ${size}x${size} grid for "${name}"`);
+      }
+      words[i] = spare.splice(alt, 1)[0];
     }
   }
 
