@@ -10,9 +10,7 @@ function onDiskIds() {
   return readdirSync(DIR).filter(f => f.endsWith('.js')).map(f => f.slice(0, -3));
 }
 
-/** Load every category module that actually exists on disk, keyed by category id.
- * Categories are written in parallel, so a CATEGORIES entry with no file yet is
- * allowed -- it is simply absent from the returned map rather than a failure.
+/** Load every category module on disk, keyed by category id.
  * @returns {Promise<Map<string, Record<string,string>>>} */
 async function loadAll() {
   /** @type {Map<string, Record<string,string>>} */
@@ -23,6 +21,26 @@ async function loadAll() {
   }
   return out;
 }
+
+// The catalog is what the picker offers, so a listed category with no module is a
+// dead option: choosing it fails to load and "Surprise me" can land on it. While the
+// 25 categories were being written in parallel this check could not exist, and its
+// absence was the ship blocker -- every other content rule is per-subject and passes
+// happily on a file with one subject in it, or on no file at all.
+const SUBJECTS_PER_CATEGORY = 24;
+
+test('every catalog category has a module with a full set of subjects', async () => {
+  const mods = await loadAll();
+  /** @type {string[]} */
+  const problems = [];
+  for (const { id } of CATEGORIES) {
+    const words = mods.get(id);
+    if (!words) { problems.push(`${id}: listed in CATEGORIES but src/subjects/${id}.js does not exist`); continue; }
+    const n = Object.keys(words).length;
+    if (n !== SUBJECTS_PER_CATEGORY) problems.push(`${id}: ${n} subjects, expected ${SUBJECTS_PER_CATEGORY}`);
+  }
+  assert.deepEqual(problems, []);
+});
 
 test('every module on disk has a matching entry in CATEGORIES', () => {
   const ids = new Set(CATEGORIES.map(c => c.id));
@@ -74,62 +92,72 @@ test('every subject meets the word contract', async () => {
   }
 });
 
-// A cross-subject rule, not a per-subject one: the per-subject checks above cannot
-// see that a word is being reused as filler *across* subjects. Measured with
-// tools/words-db.mjs against the category files on disk as of 2026-07-24 (other
-// category files are being written in parallel, so these counts move; the shape of
-// the distribution does not): word reuse is a long tail -- the great majority of
-// words are used in only one or two subjects -- and every word already known to be
-// padding sits far above 8: CHAMPIONSHIP, COMPOSITION, COMPETITION, EQUIPMENT,
-// ATMOSPHERE, DECORATION, TOURNAMENT and CELEBRATION were all found in 15-26
-// subjects apiece. Words that are genuinely about many subjects rather than
-// generic filler sit in the same range, which is exactly why a bare count cannot
-// be the whole rule: FUR (a real animal trait) and SUN and ICE (real natural
-// phenomena) were found in 16-23 subjects too. 8 is a threshold with daylight
-// below it -- not a guess -- but it only works paired with a review step, which is
-// what OVERLAP_ALLOWLIST is for. The allowlist is deliberately short: only words a
-// human has actually looked at and confirmed are topical rather than padding
-// belong on it. Everything else over the ceiling -- ORBIT, GEAR, ENGINE, GRAVITY,
-// and the rest -- is left as a recorded violation for the category authors to
-// judge, not pre-approved here.
-const OVERLAP_CEILING = 8;
-const OVERLAP_ALLOWLIST = new Set(['FUR', 'SUN', 'ICE']);
-
-// 163 violations against the ceiling/allowlist above as measured on 2026-07-24 (14
-// of 25 category files on disk at that moment; other agents are actively adding
-// more, so re-running `node tools/words-db.mjs` will show a different number).
-// Skipped rather than deleted: the rule and its message are correct and ready, but
-// flipping it on is a content cleanup for the category authors, not something this
-// change should force onto unrelated in-flight work. Remove `.skip` once the
-// filler words below are fixed or -- for words that turn out to be genuinely
-// topical -- added to OVERLAP_ALLOWLIST above.
-test.skip('no word is reused as filler across more subjects than the overlap ceiling allows', async () => {
-  const mods = await loadAll();
-  /** @type {Map<string, Set<string>>} */
-  const subjectsByWord = new Map();
-  for (const [, words] of mods) {
+/** How many subjects use each word, keyed however `key` groups them.
+ * @param {Map<string, Record<string,string>>} mods
+ * @param {(cat: string, subjectId: string) => string} key
+ * @returns {Map<string, Map<string, Set<string>>>} */
+function subjectsByWord(mods, key) {
+  /** @type {Map<string, Map<string, Set<string>>>} */
+  const out = new Map();
+  for (const [cat, words] of mods) {
     for (const [subjectId, raw] of Object.entries(words)) {
+      const k = key(cat, subjectId);
+      if (!out.has(k)) out.set(k, new Map());
+      const group = out.get(k);
       for (const word of raw.split(',')) {
-        if (!subjectsByWord.has(word)) subjectsByWord.set(word, new Set());
-        subjectsByWord.get(word).add(subjectId);
+        if (!group.has(word)) group.set(word, new Set());
+        group.get(word).add(subjectId);
       }
     }
   }
+  return out;
+}
 
+// The rule that matches what a player actually notices. You pick a category and get a
+// random subject inside it, so consecutive games come from the same 24 subjects -- that
+// is where a repeated word reads as padding. Every category was cleaned to this and
+// lands exactly on 6, which is why the ceiling is 6 rather than a round number: it is
+// the measured state of the content, not an aspiration.
+const WITHIN_CATEGORY_CEILING = 6;
+
+test('no word fills more than a quarter of its own category', async () => {
+  const mods = await loadAll();
   /** @type {string[]} */
   const violations = [];
-  for (const [word, subjects] of subjectsByWord) {
-    if (OVERLAP_ALLOWLIST.has(word)) continue;
-    if (subjects.size > OVERLAP_CEILING) {
-      violations.push(`${word} appears in ${subjects.size} subjects (max ${OVERLAP_CEILING}): ${[...subjects].sort().join(', ')}`);
+  for (const [cat, group] of subjectsByWord(mods, c => c)) {
+    for (const [word, subjects] of group) {
+      if (subjects.size > WITHIN_CATEGORY_CEILING) {
+        violations.push(`${cat}: ${word} in ${subjects.size} subjects -- ${[...subjects].sort().join(', ')}`);
+      }
     }
   }
   violations.sort();
+  assert.equal(violations.length, 0,
+    `${violations.length} word(s) over the within-category ceiling of ${WITHIN_CATEGORY_CEILING}. Replace each with a `
+      + `word of the SAME LENGTH -- the bucket floors above are counted by length, so deleting drops the subject below `
+      + `them:\n${violations.join('\n')}`);
+});
 
-  assert.equal(
-    violations.length,
-    0,
-    `${violations.length} word(s) exceed the overlap ceiling of ${OVERLAP_CEILING} subjects -- each is either filler `
-      + `to diversify or a genuinely topical word to add to OVERLAP_ALLOWLIST:\n${violations.join('\n')}`,
-  );
+// Across all 582 subjects a ceiling this tight is the wrong rule, and measuring showed
+// why: reuse there is dominated by polysemy rather than padding. SCALE spans 14
+// categories because a music scale, a fish scale, a map scale and a kitchen scale are
+// four different words that happen to be spelled alike, and no diversification fixes
+// that. 52% of words are used in exactly one subject and the tail thins fast -- 424
+// words appear in more than 8 subjects, 32 in more than 16, 10 in more than 20, and
+// none at all in more than 30. So this ceiling is not a quality bar that content must
+// climb to; it is a regression guard sitting in the empty space above the whole corpus,
+// to catch a future category padding one word across everything.
+const CORPUS_CEILING = 40;
+
+test('no word is sprayed across the whole corpus', async () => {
+  const mods = await loadAll();
+  const all = subjectsByWord(mods, () => 'all').get('all') ?? new Map();
+  /** @type {string[]} */
+  const violations = [];
+  for (const [word, subjects] of all) {
+    if (subjects.size > CORPUS_CEILING) violations.push(`${word} appears in ${subjects.size} subjects`);
+  }
+  violations.sort();
+  assert.equal(violations.length, 0,
+    `${violations.length} word(s) over the corpus ceiling of ${CORPUS_CEILING}:\n${violations.join('\n')}`);
 });

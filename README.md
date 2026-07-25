@@ -25,7 +25,7 @@ have no DOM access at all, which is what makes them cheap to unit-test:
 | `src/effects.js` | Confetti and the WebAudio chime. | DOM |
 | `src/picker.js` | The category dialog. Reports a category id; owns no game state. | DOM |
 | `src/main.js` | Entry point: owns game state, wires events, registers the SW. | DOM |
-| `src/catalog.js` | Category and subject names. No words — loads on every visit. | data |
+| `src/catalog.js` | The 25 category names. No subjects, no words — loads on every visit. | data |
 | `src/subjects/*.js` | One category's word pools, 40+ words per subject. Lazily imported. | data |
 | `src/subjects.js` | Resolves a subject id to its pool, memoising each category module. | pure-ish |
 | `src/appearance.js` | Light / dark / system preference: resolve, persist, follow the OS. | DOM |
@@ -45,15 +45,23 @@ always restored at the size it was saved at.
 
 ### Adding a subject
 
-1. Add `{ id: '<category>/<slug>', name: '<Name>' }` to that category's `subjects` in
-   `src/catalog.js`. The slug is the name lowercased with non-alphanumerics replaced by `-`.
-2. Add `'<category>/<slug>': 'WORD1,WORD2,...'` to `src/subjects/<category>.js`.
+Add `'<category>/<slug>': 'WORD1,WORD2,...'` to `src/subjects/<category>.js`. That is the
+whole change — nothing registers a subject anywhere else. Its category is the slug's
+prefix and its display name is the slug title-cased, so `sports/card-games` is `Card
+Games` in `Sports & Games` without a line of configuration.
 
 The word list must hold **40+ words**, bare uppercase A–Z, 3–12 letters, no duplicates,
 with at least 6 words of 3–4 letters and 8 in each of 3–5, 5–6, 6–8, 7–9 and 9–12.
-`npm run test:unit` enforces all of it and names the subject and bucket that failed.
+No word may appear in more than **6 of its own category's 24 subjects** — that is what a
+player notices, since picking a category deals a random subject inside it. Across the
+whole corpus the ceiling is a far looser 40, a regression guard rather than a quality bar:
+reuse at that range is mostly polysemy, and a music scale, a fish scale and a map scale
+are three words that only look alike.
 
-Short words are the scarce ones — write those first.
+`npm run test:unit` enforces all of it and names the subject, bucket or word that failed.
+`npm run words` queries the same content as SQLite when you want to explore rather than
+assert. Short words are the scarce ones — write those first, and never count letters by
+eye.
 
 ### Adding a category
 
