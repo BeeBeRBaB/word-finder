@@ -96,6 +96,13 @@ test('every same-origin asset the app loads on the live origin is covered by the
     // service worker doesn't precache itself), and favicon.ico on principle even
     // though no browser has been observed requesting it here (no <link rel="icon">).
     const EXCLUDED = new Set(['sw.js', 'favicon.ico']);
+    // A per-category word pool, e.g. src/subjects/nature.js, is the one thing this app
+    // loads that must NOT be in ASSETS: precaching it would pull all 25 categories'
+    // words into the installed shell, defeating the point of fetching only the one a
+    // player deals. The service worker gives them their own runtime cache instead.
+    // src/subjects.js (the loader) is a different, always-precached file, and the
+    // trailing [^/]+ keeps this from matching it.
+    const LAZY_SUBJECT = /^src\/subjects\/[^/]+\.js$/;
 
     /** @type {string[]} */
     const out = [];
@@ -104,7 +111,7 @@ test('every same-origin asset the app loads on the live origin is covered by the
       if (u.origin !== location.origin) continue;        // cross-origin, e.g. Google Fonts
       if (!u.pathname.startsWith(rootPath)) continue;     // outside the app's own path
       const rel = normalize(u.pathname.slice(rootPath.length));
-      if (EXCLUDED.has(rel)) continue;
+      if (EXCLUDED.has(rel) || LAZY_SUBJECT.test(rel)) continue;
       if (!assetSet.has(rel)) out.push(rel);
     }
     return out;
