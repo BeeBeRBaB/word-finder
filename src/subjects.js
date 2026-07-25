@@ -1,16 +1,16 @@
-// Resolving a subject id to its words. The one place that knows word pools are
-// fetched rather than merely read, and the boundary where a network failure becomes
-// something the picker can act on.
+// Resolving a category or a subject id to its words. The one place that knows word
+// pools are fetched rather than merely read, and the boundary where a network
+// failure becomes something the picker can act on.
 
-import { findSubject } from './catalog.js';
+import { findCategory, categoryOf, subjectName } from './catalog.js';
 
-/** @typedef {import('./catalog.js').SubjectMeta} SubjectMeta */
-/** @typedef {SubjectMeta & {words:string[]}} Subject */
+/** @typedef {{id:string, name:string, subjectIds:string[], words:Record<string,string>}} CategoryData */
+/** @typedef {{id:string, name:string, category:string, categoryName:string, words:string[]}} Subject */
 
 /**
  * Why the failures are typed: offline with an uncached category and a typo'd
- * `?subject=` are the same rejected promise otherwise, and the picker needs to
- * disable an option for the first while ignoring the second.
+ * `?subject=` / `?category=` are the same rejected promise otherwise, and the
+ * picker needs to disable an option for the first while ignoring the second.
  */
 export class SubjectLoadError extends Error {
   /** @param {'unknown'|'unavailable'} reason @param {string} id */
@@ -27,30 +27,50 @@ export class SubjectLoadError extends Error {
  * memoisation can be observed. The default is the real dynamic import — a runtime
  * `import()` with no bundler in sight, which is what keeps the no-build-step rule.
  * @param {(category:string) => Promise<{WORDS:Record<string,string>}>} [importFn]
- * @returns {(id:string) => Promise<Subject>}
+ * @returns {{loadCategory:(id:string) => Promise<CategoryData>, loadSubject:(id:string) => Promise<Subject>}}
  */
 export function makeSubjectLoader(importFn) {
   /** @type {(category:string) => Promise<{WORDS:Record<string,string>}>} */
   const load = importFn ?? ((category) => import(`./subjects/${category}.js`));
   /** @type {Map<string, Record<string,string>>} */
   const cache = new Map();
-  return async function loadSubject(id) {
-    const meta = findSubject(id);
-    if (!meta) throw new SubjectLoadError('unknown', id);
-    let words = cache.get(meta.category);
+
+  /** One import per category id, memoised, regardless of whether it was reached via
+   * loadCategory or loadSubject.
+   * @param {string} category @param {string} idForError @returns {Promise<Record<string,string>>} */
+  async function fetchWords(category, idForError) {
+    let words = cache.get(category);
     if (!words) {
-      words = await load(meta.category).then(
+      words = await load(category).then(
         (m) => m.WORDS,
-        () => { throw new SubjectLoadError('unavailable', id); },
+        () => { throw new SubjectLoadError('unavailable', idForError); },
       );
-      cache.set(meta.category, words);
+      cache.set(category, words);
     }
+    return words;
+  }
+
+  /** @type {(id:string) => Promise<CategoryData>} */
+  async function loadCategory(id) {
+    const meta = findCategory(id);
+    if (!meta) throw new SubjectLoadError('unknown', id);
+    const words = await fetchWords(meta.id, id);
+    return { id: meta.id, name: meta.name, subjectIds: Object.keys(words), words };
+  }
+
+  /** @type {(id:string) => Promise<Subject>} */
+  async function loadSubject(id) {
+    const meta = findCategory(categoryOf(id));
+    if (!meta) throw new SubjectLoadError('unknown', id);
+    const words = await fetchWords(meta.id, id);
     const raw = words[id];
-    // The catalog and the module disagreeing is a content bug that content.test.js
-    // catches before it ships; treat it as unknown rather than crashing the boot.
+    // The module not having this key is a content bug that content.test.js catches
+    // before it ships; treat it as unknown rather than crashing the boot.
     if (!raw) throw new SubjectLoadError('unknown', id);
-    return { ...meta, words: raw.split(',') };
-  };
+    return { id, name: subjectName(id), category: meta.id, categoryName: meta.name, words: raw.split(',') };
+  }
+
+  return { loadCategory, loadSubject };
 }
 
-export const loadSubject = makeSubjectLoader();
+export const { loadCategory, loadSubject } = makeSubjectLoader();

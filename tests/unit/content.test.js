@@ -5,30 +5,38 @@ import { CATEGORIES } from '../../src/catalog.js';
 
 const DIR = new URL('../../src/subjects/', import.meta.url);
 
-/** Load every category module the catalog names, keyed by category id.
+/** @returns {string[]} */
+function onDiskIds() {
+  return readdirSync(DIR).filter(f => f.endsWith('.js')).map(f => f.slice(0, -3));
+}
+
+/** Load every category module that actually exists on disk, keyed by category id.
+ * Categories are written in parallel, so a CATEGORIES entry with no file yet is
+ * allowed -- it is simply absent from the returned map rather than a failure.
  * @returns {Promise<Map<string, Record<string,string>>>} */
 async function loadAll() {
   /** @type {Map<string, Record<string,string>>} */
   const out = new Map();
-  for (const c of CATEGORIES) {
-    const mod = await import(`../../src/subjects/${c.id}.js`);
-    out.set(c.id, mod.WORDS);
+  for (const id of onDiskIds()) {
+    const mod = await import(`../../src/subjects/${id}.js`);
+    out.set(id, mod.WORDS);
   }
   return out;
 }
 
-test('the catalog and the word modules agree in both directions', async () => {
+test('every module on disk has a matching entry in CATEGORIES', () => {
+  const ids = new Set(CATEGORIES.map(c => c.id));
+  for (const id of onDiskIds()) {
+    assert.ok(ids.has(id), `${id}.js exists on disk but CATEGORIES has no entry for it`);
+  }
+});
+
+test('every key in a module is that module\'s category slash a slug', async () => {
   const mods = await loadAll();
-  const onDisk = readdirSync(DIR).filter(f => f.endsWith('.js')).map(f => f.slice(0, -3)).sort();
-  assert.deepEqual(onDisk, CATEGORIES.map(c => c.id).sort(), 'a module exists that the catalog does not list');
-  for (const c of CATEGORIES) {
-    const words = mods.get(c.id);
-    assert.ok(words, `no module for ${c.id}`);
-    assert.deepEqual(
-      Object.keys(words).sort(),
-      c.subjects.map(s => s.id).sort(),
-      `${c.id}.js and the catalog list different subjects`,
-    );
+  for (const [cat, words] of mods) {
+    for (const id of Object.keys(words)) {
+      assert.match(id, new RegExp(`^${cat}/[a-z0-9]+(-[a-z0-9]+)*$`), `${id} is not a valid subject id for ${cat}.js`);
+    }
   }
 });
 

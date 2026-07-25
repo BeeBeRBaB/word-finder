@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { makeRng, resolveSeed, resolveSubject } from '../../src/rng.js';
+import { makeRng, resolveSeed, resolveTarget } from '../../src/rng.js';
 
 test('the same seed reproduces the same sequence', () => {
   const a = makeRng(42), b = makeRng(42);
@@ -37,42 +37,62 @@ test('resolveSeed honours ?seed= and falls back to the clock', () => {
 });
 
 const CATS = [
-  { id: 'nature', name: 'Nature', subjects: [
-    { id: 'nature/birds', name: 'Birds' }, { id: 'nature/trees', name: 'Trees' }] },
-  { id: 'food', name: 'Food & Drink', subjects: [
-    { id: 'food/pizza', name: 'Pizza' }, { id: 'food/candy', name: 'Candy' }] },
+  { id: 'nature', name: 'Nature' },
+  { id: 'food', name: 'Food & Drink' },
 ];
 
-test('resolveSubject honours an explicit ?subject=', () => {
-  assert.equal(resolveSubject('?subject=food/candy', CATS, makeRng(1)), 'food/candy');
+test('resolveTarget honours an explicit ?subject=', () => {
+  assert.deepEqual(
+    resolveTarget('?subject=food/candy', CATS, makeRng(1)),
+    { subject: 'food/candy', category: 'food' },
+  );
 });
 
-test('resolveSubject picks inside an explicit ?category=', () => {
-  const id = resolveSubject('?category=food', CATS, makeRng(1));
-  assert.ok(['food/pizza', 'food/candy'].includes(id), `got ${id}`);
+test('resolveTarget honours an explicit ?category=', () => {
+  assert.deepEqual(
+    resolveTarget('?category=food', CATS, makeRng(1)),
+    { subject: null, category: 'food' },
+  );
 });
 
-test('resolveSubject picks from the whole catalog when neither is given', () => {
-  const id = resolveSubject('', CATS, makeRng(1));
-  assert.ok(CATS.flatMap(c => c.subjects).some(s => s.id === id), `got ${id}`);
+test('resolveTarget draws a category at random when neither is given', () => {
+  const r = resolveTarget('', CATS, makeRng(1));
+  assert.equal(r.subject, null);
+  assert.ok(CATS.some(c => c.id === r.category), `got ${r.category}`);
 });
 
-// The asymmetry is not decoration. If pinning a subject drew from rng, the same
-// ?seed= would deal a different grid with and without ?subject=, and the determinism
+// The asymmetry is not decoration. If pinning consumed a draw, the same ?seed=
+// would deal a different grid with and without the parameter, and the determinism
 // the e2e suite rests on would quietly stop holding.
 test('an explicit ?subject= does not consume rng', () => {
   const a = makeRng(5), b = makeRng(5);
-  resolveSubject('?subject=food/candy', CATS, a);
+  resolveTarget('?subject=food/candy', CATS, a);
   assert.equal(a.int(50), b.int(50));
 });
 
-test('an unknown ?subject= falls back to a random one rather than throwing', () => {
-  const id = resolveSubject('?subject=nope/nope', CATS, makeRng(1));
-  assert.ok(CATS.flatMap(c => c.subjects).some(s => s.id === id), `got ${id}`);
+test('an explicit ?category= does not consume rng', () => {
+  const a = makeRng(5), b = makeRng(5);
+  resolveTarget('?category=food', CATS, a);
+  assert.equal(a.int(50), b.int(50));
+});
+
+test('an unknown ?subject= falls back to a random category rather than throwing', () => {
+  const r = resolveTarget('?subject=nope/nope', CATS, makeRng(1));
+  assert.equal(r.subject, null);
+  assert.ok(CATS.some(c => c.id === r.category), `got ${r.category}`);
+});
+
+test('an unknown ?category= falls back to a random category rather than throwing', () => {
+  const r = resolveTarget('?category=nope', CATS, makeRng(1));
+  assert.equal(r.subject, null);
+  assert.ok(CATS.some(c => c.id === r.category), `got ${r.category}`);
 });
 
 // ?topic=N was the old parameter and is deliberately NOT aliased: indices no longer
 // identify anything stable, so honouring one would silently deal the wrong subject.
 test('the retired ?topic= parameter is ignored, not honoured', () => {
-  assert.equal(resolveSubject('?topic=0', CATS, makeRng(1)), resolveSubject('', CATS, makeRng(1)));
+  assert.deepEqual(
+    resolveTarget('?topic=0', CATS, makeRng(1)),
+    resolveTarget('', CATS, makeRng(1)),
+  );
 });

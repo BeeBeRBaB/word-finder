@@ -48,30 +48,46 @@ export function resolveSeed(search) {
   return Number.isFinite(n) ? n : 0;
 }
 
+/** @typedef {{id:string, name:string}} CategoryRef */
+/** @typedef {{subject:string|null, category:string}} Target */
+
 /**
- * Which subject to deal, from the URL: `?subject=<id>` pins one, `?category=<id>`
- * pins the category and picks inside it, neither picks from the whole catalog.
+ * What to deal, from the URL: `?subject=<cat>/<slug>` pins a subject by shape alone
+ * — whether that slug is really in the category's module is only knowable after the
+ * module loads, so `loadSubject` (src/subjects.js) is what reports `unknown` for a
+ * key that is not there. `?category=<id>` pins the category and leaves the subject
+ * to be drawn once its module is loaded. With neither, a category is drawn here.
  *
- * Note the asymmetry, which is not decoration: the fully-explicit branch must NOT
- * touch `rng`. Drawing there would shift the sequence, so the same `?seed=` would
- * deal a different grid with and without `?subject=`, and the determinism the e2e
- * suite rests on would quietly stop holding.
+ * `categories` arrives as a parameter rather than an import of catalog.js: this
+ * module stays dependency-free so it can be unit-tested with a tiny fixture list.
  *
- * An id that is not in the catalog falls through to a random pick rather than
+ * Note the asymmetry, which is not decoration: an explicit `?subject=` or
+ * `?category=` must NOT touch `rng`. Drawing there would shift the sequence, so the
+ * same `?seed=` would deal a different grid with and without the parameter, and the
+ * determinism the e2e suite rests on would quietly stop holding.
+ *
+ * An id that names no known category falls through to a random pick rather than
  * throwing — a stale bookmark should still give you a game.
  *
- * @param {string} search @param {import('./catalog.js').Category[]} categories
- * @param {Rng} rng @returns {string}
+ * @param {string} search @param {CategoryRef[]} categories
+ * @param {Rng} rng @returns {Target}
  */
-export function resolveSubject(search, categories, rng) {
+export function resolveTarget(search, categories, rng) {
   const p = new URLSearchParams(search);
-  const all = categories.flatMap(c => c.subjects);
-  const wanted = p.get('subject');
-  if (wanted !== null && all.some(s => s.id === wanted)) return wanted;
-  const cat = p.get('category');
-  if (cat !== null) {
-    const c = categories.find(x => x.id === cat);
-    if (c && c.subjects.length) return c.subjects[rng.int(c.subjects.length)].id;
+  const ids = new Set(categories.map(c => c.id));
+
+  const subject = p.get('subject');
+  if (subject !== null) {
+    const slash = subject.indexOf('/');
+    if (slash > 0) {
+      const category = subject.slice(0, slash);
+      const slug = subject.slice(slash + 1);
+      if (slug.length > 0 && ids.has(category)) return { subject, category };
+    }
   }
-  return all[rng.int(all.length)].id;
+
+  const category = p.get('category');
+  if (category !== null && ids.has(category)) return { subject: null, category };
+
+  return { subject: null, category: categories[rng.int(categories.length)].id };
 }
