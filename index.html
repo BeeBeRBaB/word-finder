@@ -33,12 +33,13 @@
 <body>
 <div id="app">
   <div id="hdr">
-    <!-- "Topic:" is a sibling of #topic, not a ::before on it, for two reasons: #topic's
-         textContent has to stay the bare topic name (gameplay.spec.js compares it across
-         two loads of one seed), and the per-topic underline is set on #topic so it marks
-         the name only — a ::before would drag the rule under the label too. -->
+    <!-- The category is a sibling of #subject, not a ::before on it, for two reasons:
+         #subject's textContent has to stay the bare subject name (gameplay.spec.js
+         compares it across two loads of one seed), and the per-subject underline is
+         set on #subject so it marks the name only — a ::before would drag the rule
+         under the category too. The separator is a ::after in CSS for the same reason. -->
     <div><div id="kicker">WORD FINDER</div>
-      <div id="topicline"><span id="topiclbl">Topic:</span><span id="topic">Loading…</span></div></div>
+      <div id="subjectline"><span id="category"></span><span id="subject">Loading…</span></div></div>
     <div id="actions">
       <button id="appearance" type="button" data-pref="system" title="Appearance: System" aria-label="Appearance: System">
         <svg class="i-system" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path class="solid" d="M12 3a9 9 0 0 0 0 18z"/></svg>

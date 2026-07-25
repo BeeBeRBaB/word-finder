@@ -11,8 +11,8 @@ import { cap, lineIndices } from './puzzle.js';
  * @typedef {{
  *   app:HTMLElement, gridbox:HTMLElement, pills:HTMLElement, letters:HTMLElement, fx:HTMLElement,
  *   list:HTMLElement, main:HTMLElement, side:HTMLElement, count:HTMLElement,
- *   topic:HTMLElement, win:HTMLElement, winmsg:HTMLElement, confirm:HTMLElement, winclose:HTMLElement,
- *   appearance:HTMLElement, solved:HTMLElement,
+ *   subject:HTMLElement, category:HTMLElement, win:HTMLElement, winmsg:HTMLElement,
+ *   confirm:HTMLElement, winclose:HTMLElement, appearance:HTMLElement, solved:HTMLElement,
  * }} Els
  */
 
@@ -34,7 +34,7 @@ export function applyLayout(els, dims) {
   // Landscape: the rail is its own grid column and #hdr already fills it, so both start
   // on the same x. Portrait: #hdr is the full app width while the grid is centred and
   // narrower, so pinning the rail to the grid's width left the word list indented from
-  // the kicker and topic above it. Full width instead puts the list, "Topic:" and
+  // the kicker and subject above it. Full width instead puts the list, the category and
   // "WORD FINDER" on one edge. The grid stays centred — it is a separate object, and
   // shrinking the header to its width wraps the buttons onto a second row on a 390px
   // phone, costing 48px of the height the grid needs.

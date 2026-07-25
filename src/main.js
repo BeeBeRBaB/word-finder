@@ -1,10 +1,11 @@
 // Word Finder — wiring. This is the only module that owns mutable game
 // state, reads the URL, or listens for events; everything it calls is either pure
-// (rng, puzzle, layout) or a stateless renderer (view, effects).
-import { TOPICS } from './topics.js';
-import { makeRng, resolveSeed, resolveTopicIndex } from './rng.js';
+// (rng, puzzle, layout, catalog) or a stateless renderer (view, effects).
+import { CATEGORIES } from './catalog.js';
+import { loadCategory, loadSubject, SubjectLoadError } from './subjects.js';
+import { makeRng, resolveSeed, resolveTarget } from './rng.js';
 import { buildPuzzle, cap, matchWord, readLine, snap } from './puzzle.js';
-import { computeLayout } from './layout.js';
+import { computeLayout, pickPreset, PRESETS } from './layout.js';
 import { applyLayout, renderGrid, renderList, renderPills, renderFoundCells, renderSolvedShape } from './view.js';
 import { burst, pop } from './effects.js';
 import { makeStorage } from './storage.js';
@@ -14,10 +15,12 @@ import { makeAppearance, appearanceLabel } from './appearance.js';
  * @typedef {import('./puzzle.js').Puzzle} Puzzle
  * @typedef {import('./puzzle.js').Selection} Selection
  * @typedef {import('./layout.js').LayoutDims} LayoutDims
+ * @typedef {import('./layout.js').Preset} Preset
  * @typedef {import('./view.js').Els} Els
  * @typedef {import('./view.js').FoundEntry} FoundEntry
  * @typedef {{
  *   puzzle: Puzzle|null,
+ *   size: number,
  *   found: Record<string, FoundEntry>,
  *   foundOrder: string[],
  *   sel: Selection|null,
@@ -28,7 +31,11 @@ import { makeAppearance, appearanceLabel } from './appearance.js';
  * }} State
  */
 
-const N = 13, COUNT = 12, PAD = 10;
+const PAD = 10;
+// Which board THIS DEVICE deals. Resolved once, from screen rather than the viewport,
+// so resizing a window or rotating a phone never changes it. It governs new games
+// only — a restored board is rendered at the size it was saved at, whatever this says.
+const PRESET = pickPreset({ screenW: screen.width, screenH: screen.height });
 // How long a freshly found word glows green before it strikes through. Kept in
 // sync with the `foundGlow` animation duration in styles.css.
 const GLOW_MS = 900;
@@ -49,7 +56,7 @@ function must(id) {
 const els = {
   app: must('app'), gridbox: must('gridbox'), pills: must('pills'), letters: must('letters'), fx: must('fx'),
   list: must('list'), main: must('main'), side: must('side'), count: must('count'),
-  topic: must('topic'), win: must('win'), winmsg: must('winmsg'),
+  subject: must('subject'), category: must('category'), win: must('win'), winmsg: must('winmsg'),
   confirm: must('confirm'), winclose: must('winclose'), appearance: must('appearance'),
   solved: must('solved'),
 };
@@ -62,6 +69,7 @@ const els = {
 /** @type {State} */
 const state = {
   puzzle: null,
+  size: PRESET.size,
   found: {},
   foundOrder: [],
   sel: null,
@@ -74,18 +82,20 @@ const state = {
 const store = makeStorage();
 /** @type {number} */
 let currentSeed;
+/** @type {string} */
+let subjectId;
 /** @type {number} */
-let topicIdx;
+let boardCount;
 // The word (if any) currently mid-glow in the list. `list()` renders it with the
 // green-glow class instead of the struck-through one; a timer clears it back to
 // null so it strikes through. Only ever set by a live find, never by a restore.
 /** @type {string|null} */
 let justFound = null;
 
-/** Which of the four pill hues a topic underlines its name with. Hashed from the
- * name rather than drawn from the rng so a topic keeps the same colour every time it
- * comes up, and rather than from `topicIdx` so reordering TOPICS doesn't reshuffle
- * all 100. Reuses the pill tokens; it introduces no colour of its own.
+/** Which of the four pill hues a subject underlines its name with. Hashed from the
+ * name rather than drawn from the rng so a subject keeps the same colour every time it
+ * comes up, and rather than from its position so reordering the catalog doesn't
+ * reshuffle all 600. Reuses the pill tokens; it introduces no colour of its own.
  * @param {string} name @returns {number} */
 function accentSlot(name) {
   let h = 0;
@@ -108,16 +118,28 @@ function sweep() {
  * shared/advanced one — that's what lets a single stored seed reproduce an
  * identical grid later (see `restore`), and what makes `newGame` safe to
  * call repeatedly without drifting out of sync with what was last saved.
- * @param {number} seed @param {number} idx @returns {void} */
-function newPuzzle(seed, idx) {
+ *
+ * The board's shape arrives as an argument rather than being read off PRESET: a
+ * restored save may have been dealt at a different size, and the board on screen is
+ * the one that has to be rendered.
+ * @param {number} seed @param {import('./subjects.js').Subject} subject
+ * @param {{size:number, count:number, mix:import('./puzzle.js').Bucket[]}} shape
+ * @returns {void} */
+function newPuzzle(seed, subject, shape) {
   currentSeed = seed;
-  topicIdx = idx;
+  subjectId = subject.id;
+  boardCount = shape.count;
+  state.size = shape.size;
   const rng = makeRng(seed);
   justFound = null;
   state.found = {}; state.foundOrder = []; state.sel = null; state.miss = null; state.drag = null;
-  state.puzzle = buildPuzzle({ topics: TOPICS, topicIdx: idx, rng, size: N, count: COUNT });
-  els.topic.textContent = cap(state.puzzle.name);
-  els.topic.dataset.accent = String(accentSlot(state.puzzle.name));
+  state.puzzle = buildPuzzle({
+    name: subject.name, pool: subject.words, rng,
+    size: shape.size, count: shape.count, mix: shape.mix,
+  });
+  els.subject.textContent = cap(state.puzzle.name);
+  els.subject.dataset.accent = String(accentSlot(state.puzzle.name));
+  els.category.textContent = subject.categoryName;
   // Cancel any pending win reveal; otherwise starting a new puzzle within the
   // 700ms delay lets the stale timer drop the overlay over a fresh grid, where
   // it swallows every pointer event and makes the game unplayable.
@@ -129,14 +151,16 @@ function newPuzzle(seed, idx) {
   persist();
 }
 
-/** Save just enough to regenerate the identical grid on reload: the seed and
- * topic (from which `buildPuzzle` reproduces the same cells) plus each found
- * word's selection — not the 169 cells themselves.
+/** Save just enough to regenerate the identical grid on reload: the seed, the subject
+ * and the board's shape (from which `buildPuzzle` reproduces the same cells) plus each
+ * found word's selection — not the cells themselves.
  * @returns {void} */
 function persist() {
   store.save({
     seed: currentSeed,
-    topicIdx,
+    subjectId,
+    size: state.size,
+    count: boardCount,
     found: state.foundOrder.map(w => ({ word: w, ...state.found[w].sel })),
   });
 }
@@ -150,13 +174,13 @@ function layout() {
   state.dims = computeLayout({
     vw: window.innerWidth - padX,
     vh: window.innerHeight - padY,
-    size: N, pad: PAD,
+    size: state.size, pad: PAD, count: boardCount,
   });
   applyLayout(els, state.dims);
-  renderGrid(els, state.puzzle, state.dims, N, PAD);
+  renderGrid(els, state.puzzle, state.dims, state.size, PAD);
   // renderGrid rebuilds every cell from scratch, so found-ness has to be reapplied
   // after it or a resize would wipe the grid's record of what you've already found.
-  renderFoundCells(els, state, N);
+  renderFoundCells(els, state, state.size);
   pills();
 }
 
@@ -184,7 +208,7 @@ function cellXY(e) {
   };
 }
 /** @param {number} v @returns {number} */
-const clampI = (v) => Math.max(0, Math.min(N - 1, Math.round(v)));
+const clampI = (v) => Math.max(0, Math.min(state.size - 1, Math.round(v)));
 
 els.gridbox.addEventListener('pointerdown', (e) => {
   if (!state.puzzle) return;
@@ -197,7 +221,7 @@ els.gridbox.addEventListener('pointerdown', (e) => {
 
 els.gridbox.addEventListener('pointermove', (e) => {
   if (!state.drag) return;
-  const p = cellXY(e), r = snap(state.drag.x, state.drag.y, p.fx, p.fy, N);
+  const p = cellXY(e), r = snap(state.drag.x, state.drag.y, p.fx, p.fy, state.size);
   if (!state.sel || state.sel.x1 !== r.x1 || state.sel.y1 !== r.y1) {
     state.sel = { x0: state.drag.x, y0: state.drag.y, x1: r.x1, y1: r.y1 };
     pills();
@@ -213,12 +237,12 @@ function endDrag() {
   // Aliased to a local so the narrowing to non-null survives inside the
   // `setTimeout` closures below, the same reason `effects.js` aliases `ac`.
   const puzzle = state.puzzle;
-  const hit = matchWord(puzzle.words, state.found, readLine(puzzle.cells, N, s));
+  const hit = matchWord(puzzle.words, state.found, readLine(puzzle.cells, state.size, s));
   state.sel = null;
   if (hit) {
     state.found[hit] = { sel: s };
     state.foundOrder.push(hit);
-    renderFoundCells(els, state, N);
+    renderFoundCells(els, state, state.size);
     const won = state.foundOrder.length === puzzle.words.length;
     burst(els.fx, s, won ? 90 : 34, state.dims, PAD);
     pop(won);
@@ -239,7 +263,7 @@ function endDrag() {
     if (won) state.winTimer = setTimeout(() => {
       state.winTimer = null;
       els.winmsg.textContent = 'You found every ' + cap(puzzle.name) + ' word.';
-      renderSolvedShape(els, state, N);
+      renderSolvedShape(els, state, state.size);
       els.win.style.display = 'flex';
     }, 700);
   } else if (!(s.x0 === s.x1 && s.y0 === s.y1)) {
@@ -253,32 +277,22 @@ function endDrag() {
 els.gridbox.addEventListener('pointerup', endDrag);
 els.gridbox.addEventListener('pointercancel', endDrag);
 
-// A fresh topic is a player-facing surprise, so it stays on Math.random() rather
+// A fresh subject is a player-facing surprise, so it stays on Math.random() rather
 // than the seeded sequence — `?seed=` pins the puzzle you land on, not every one after.
-// It also gets a fresh seed (not the old `currentSeed`): `newPuzzle` builds its own
-// rng from scratch each time, so reusing the same seed here would reproduce the
-// exact same word/placement choices for the new topic too.
-/** @returns {void} */
-function newGame() {
-  /** @type {number} */
-  let i;
-  do { i = Math.floor(Math.random() * TOPICS.length); } while (i === topicIdx);
-  newPuzzle(Date.now() >>> 0, i);
+// It also gets a fresh seed: `newPuzzle` builds its own rng from scratch each time, so
+// reusing `currentSeed` would reproduce the same word and placement choices verbatim.
+/** @param {string|null} [categoryId] restrict the pick to one category
+ * @returns {Promise<void>} */
+async function newGame(categoryId) {
+  const id = categoryId ?? CATEGORIES[Math.floor(Math.random() * CATEGORIES.length)].id;
+  const cat = await loadCategory(id);
+  // Avoid dealing the subject already on screen, unless it is the only one there is.
+  const fresh = cat.subjectIds.filter(s => s !== subjectId);
+  const pool = fresh.length ? fresh : cat.subjectIds;
+  const pick = pool[Math.floor(Math.random() * pool.length)];
+  newPuzzle(Date.now() >>> 0, await loadSubject(pick), PRESET);
 }
-/** Mid-puzzle, an accidental tap on "New game" would silently wipe progress, so
- * confirm first; a fresh or fully-solved board has nothing to lose, so skip the
- * dialog and start immediately.
- * @returns {void} */
-function requestNewGame() {
-  const inProgress = state.puzzle && state.foundOrder.length > 0
-    && state.foundOrder.length < state.puzzle.words.length;
-  if (inProgress) { els.confirm.style.display = 'flex'; return; }
-  newGame();
-}
-must('newbtn').addEventListener('click', requestNewGame);
-must('confirm-cancel').addEventListener('click', () => { els.confirm.style.display = 'none'; });
-must('confirm-ok').addEventListener('click', () => { els.confirm.style.display = 'none'; newGame(); });
-must('winbtn').addEventListener('click', newGame);
+must('winbtn').addEventListener('click', () => { void newGame(); });
 els.winclose.addEventListener('click', () => { els.win.style.display = 'none'; });
 els.win.addEventListener('click', (e) => { if (e.target === els.win) els.win.style.display = 'none'; });
 
@@ -306,32 +320,59 @@ document.addEventListener('keydown', (e) => {
 });
 window.addEventListener('resize', layout);
 
-// Explicit `?seed=`/`?topic=` in the URL always wins (it's what the spec-1
-// determinism e2e test relies on), even over a saved game — that's the whole
-// point of pinning a puzzle by URL. Otherwise, prefer a saved game; only fall
-// back to a fresh random puzzle when there's nothing to restore.
-const params = new URLSearchParams(location.search);
-if (params.has('seed') || params.has('topic')) {
-  const seed = resolveSeed(location.search);
-  newPuzzle(seed, resolveTopicIndex(location.search, TOPICS.length, makeRng(seed)));
-} else {
-  const saved = store.load();
-  if (saved) restore(saved);
-  else newPuzzle(Date.now() >>> 0, Math.floor(Math.random() * TOPICS.length));
+// Explicit `?seed=` / `?subject=` / `?category=` in the URL always wins (it is what the
+// determinism e2e test relies on), even over a saved game — that is the whole point of
+// pinning a puzzle by URL. Otherwise prefer a saved game; only fall back to a fresh
+// random puzzle when there is nothing to restore.
+/** @returns {Promise<void>} */
+async function boot() {
+  const params = new URLSearchParams(location.search);
+  try {
+    if (params.has('seed') || params.has('subject') || params.has('category')) {
+      const seed = resolveSeed(location.search);
+      // One rng for the whole resolution. resolveTarget draws from it only when the
+      // URL did not pin a category, and the subject draw below uses the same stream,
+      // so a given ?seed= always lands on the same subject.
+      const rng = makeRng(seed);
+      const target = resolveTarget(location.search, CATEGORIES, rng);
+      const cat = await loadCategory(target.category);
+      const id = target.subject && cat.words[target.subject]
+        ? target.subject
+        : cat.subjectIds[rng.int(cat.subjectIds.length)];
+      newPuzzle(seed, await loadSubject(id), PRESET);
+      return;
+    }
+    const saved = store.load();
+    if (saved) { await restore(saved); return; }
+    await newGame();
+  } catch (err) {
+    // Offline with an uncached category, or a save naming a subject since removed. A
+    // blank grid with no explanation is the worst outcome available, so say what
+    // happened and leave the board empty rather than half-built.
+    els.subject.textContent = err instanceof SubjectLoadError && err.reason === 'unavailable'
+      ? 'Offline' : 'Unavailable';
+    els.category.textContent = '';
+  }
 }
 
-/** Regenerate the exact grid a save came from (same seed -> same fresh rng ->
- * same puzzle, per `newPuzzle`), then replay the found words on top of it.
- * Guards against a stale/corrupt save: a word the regenerated puzzle doesn't
- * contain, or one already replayed, is skipped rather than crashing.
- * @param {import('./storage.js').SaveData} saved @returns {void} */
-function restore(saved) {
-  newPuzzle(saved.seed, saved.topicIdx); // regenerates the identical grid, empty found
+/** Regenerate the exact grid a save came from (same seed + same subject + same shape
+ * -> same fresh rng -> same puzzle, per `newPuzzle`), then replay the found words on
+ * top of it. The saved shape wins over this device's preset: a board is not something
+ * a resize gets to discard. Guards against a stale/corrupt save: a word the
+ * regenerated puzzle doesn't contain, or one already replayed, is skipped rather
+ * than crashing.
+ * @param {import('./storage.js').SaveData} saved @returns {Promise<void>} */
+async function restore(saved) {
+  const shape = saved.size === PRESETS.compact.size ? PRESETS.compact : PRESETS.full;
+  newPuzzle(saved.seed, await loadSubject(saved.subjectId), {
+    size: saved.size, count: saved.count, mix: shape.mix,
+  });
   for (const f of saved.found) {
     if (!state.puzzle || !state.puzzle.words.includes(f.word) || state.found[f.word]) continue;
     state.found[f.word] = { sel: { x0: f.x0, y0: f.y0, x1: f.x1, y1: f.y1 } };
     state.foundOrder.push(f.word);
   }
+  renderFoundCells(els, state, state.size);
   pills();
   list(); // redraw pills + cross out; deliberately does NOT pop the win overlay
   // `newPuzzle()` above already called `persist()` with an empty `found` (it
@@ -340,6 +381,14 @@ function restore(saved) {
   // though the first one looked fine. Re-save now that `found` is populated.
   persist();
 }
+
+// Top-level await, not `void boot()`: a module script with a pending top-level await
+// keeps the document's `load` event from firing until it settles (same mechanism a
+// classic deferred script gets from running synchronously). Letting `load` fire before
+// the category/subject fetch resolves would mean `page.goto()` — and a real "the app is
+// ready" moment for anyone else waiting on `load`, including the service worker
+// registration below — arrives while the grid is still empty.
+await boot();
 // './sw.js' stays relative to the DOCUMENT, not to this module — register()
 // resolves against the page's base URL. Writing '../sw.js' because the script
 // now lives in src/ would resolve to the domain root and break the project-path

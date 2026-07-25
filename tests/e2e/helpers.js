@@ -3,17 +3,20 @@
  * @typedef {import('../../src/puzzle.js').Selection} Selection
  */
 
-export const N = 13;
 export const PAD = 10;
 
-/** Grid origin and cell size, read from the live DOM.
- * @param {Page} page @returns {Promise<{left:number, top:number, cell:number, pad:number}>} */
+/** Grid origin, cell size and board size, read from the live DOM. The board is 13x13
+ * or 10x10 depending on the device, so nothing here may assume a size — `.cell` count
+ * is the source of truth, and it is a perfect square by construction.
+ * @param {Page} page @returns {Promise<{left:number, top:number, cell:number, pad:number, n:number}>} */
 export async function gridGeometry(page) {
   return page.evaluate(() => {
     const gb = document.getElementById('gridbox');
     if (!gb) throw new Error('missing #gridbox');
+    const n = Math.round(Math.sqrt(document.querySelectorAll('.cell').length));
+    if (!n) throw new Error('grid has not rendered yet');
     const r = gb.getBoundingClientRect();
-    return { left: r.left, top: r.top, cell: (gb.offsetWidth - 20) / 13, pad: 10 };
+    return { left: r.left, top: r.top, cell: (gb.offsetWidth - 20) / n, pad: 10, n };
   });
 }
 
@@ -26,8 +29,8 @@ export async function gridGeometry(page) {
  */
 export async function findWordInGrid(page, word) {
   const found = await page.evaluate((target) => {
-    const N = 13;
     const letters = [...document.querySelectorAll('.cell')].map(e => e.textContent);
+    const N = Math.round(Math.sqrt(letters.length));
     const words = target
       ? [target]
       // Every `.w` chip's textContent is set from a word string in view.js, so it is

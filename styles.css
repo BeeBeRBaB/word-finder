@@ -4,7 +4,7 @@
    palettes — tokens.test.js locates it as the file's first root-level block, and there
    is a test asserting exactly that, so moving it will fail loudly rather than silently.
    Hyperlegible does all the actual reading — the grid and the word list — and is never
-   overridden there. Space Grotesk is the display voice, on the topic name and the win
+   overridden there. Space Grotesk is the display voice, on the subject name and the win
    heading only. Space Mono carries the tracked labels and the live count, where a
    monospace keeps the digits from shifting as the score climbs. Both fall back to
    Hyperlegible, which is loaded either way. */
@@ -86,7 +86,7 @@ a{color:var(--accent-text)}a:hover{color:var(--accent-hover)}
    which keeps the list directly under the header instead of floating at the
    grid's vertical centre. Without explicit rows both are `auto`, and the grid
    spanning both rows pushes half its height into each — centring the rail. */
-/* row-gap is the vertical breathing room between the topic block and the word list —
+/* row-gap is the vertical breathing room between the subject block and the word list —
    they are stacked rows of the same column here, and at 4px they read as one blob. */
 #app[data-landscape]{grid-template-areas:"grid hdr" "grid side";grid-template-rows:min-content 1fr;align-content:start;justify-items:start;column-gap:20px;row-gap:14px}
 /* Landscape phones give ~280-320px of total height for the whole right rail
@@ -96,7 +96,7 @@ a{color:var(--accent-text)}a:hover{color:var(--accent-hover)}
    it's the first thing to go; the list also loses a little internal breathing
    room. Neither guard assertion (words visible, nothing clipped) needs it. */
 #app[data-landscape] #hint{display:none}
-/* row-gap above does the separating between the topic block and the list here, so this
+/* row-gap above does the separating between the subject block and the list here, so this
    only needs its own bottom breathing room. */
 #app[data-landscape] #listhdr{margin:2px 2px 6px 0}
 /* Tracks the reduced .w padding below — the pull-back has to equal the padding exactly
@@ -108,23 +108,25 @@ a{color:var(--accent-text)}a:hover{color:var(--accent-hover)}
 #app[data-landscape] .w{padding:2px 10px}
 #hdr{grid-area:hdr;width:100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
 #kicker{font-family:var(--utility);font-weight:700;font-size:13px;letter-spacing:.18em;color:var(--label);margin-bottom:2px}
-/* Baseline-aligned so the small label sits on the topic's baseline and adds no height
-   of its own — the landscape rail has none spare (see the #hdr notes below). */
-#topicline{display:flex;align-items:baseline;gap:8px}
-#topiclbl{font-family:var(--utility);font-size:13px;color:var(--muted);flex:none}
-/* The topic underlines itself in one of the four pill hues, picked by hashing its name
-   (see accentSlot in main.js) so all 100 topics don't render identically. Deliberately
-   an underline rather than a rule element: text-decoration draws inside the line box,
-   so it adds no height — and the landscape rail has none to give (see #hdr notes below).
-   Font-size stays at 28px for the same reason; Space Grotesk changes the voice without
-   changing the metrics. */
-#topic{font-family:var(--display);font-weight:700;font-size:28px;line-height:1.1;color:var(--text-strong);
+#subjectline{display:flex;align-items:baseline;gap:8px}
+/* The category reads as a label, and earns its separator in CSS rather than in the
+   markup so #subject's textContent stays the bare name the tests compare. `:empty`
+   guards the first paint, before boot has resolved a subject to name. */
+#category{font-family:var(--utility);font-size:13px;color:var(--muted);flex:none}
+#category:not(:empty)::after{content:' ·';color:var(--muted)}
+/* The subject underlines itself in one of the four pill hues, picked by hashing its
+   name (see accentSlot in main.js) so all 600 subjects don't render identically.
+   Deliberately an underline rather than a rule element: text-decoration draws inside
+   the line box, so it adds no height — and the landscape rail has none to give (see
+   the #hdr notes below). Font-size stays at 28px for the same reason; Space Grotesk
+   changes the voice without changing the metrics. */
+#subject{font-family:var(--display);font-weight:700;font-size:28px;line-height:1.1;color:var(--text-strong);
   letter-spacing:-.015em;text-decoration:underline;text-decoration-thickness:3px;
-  text-underline-offset:6px;text-decoration-color:var(--topic-accent,var(--pill-sel))}
-#topic[data-accent="1"]{--topic-accent:var(--pill-1)}
-#topic[data-accent="2"]{--topic-accent:var(--pill-2)}
-#topic[data-accent="3"]{--topic-accent:var(--pill-3)}
-#topic[data-accent="4"]{--topic-accent:var(--pill-4)}
+  text-underline-offset:6px;text-decoration-color:var(--subject-accent,var(--pill-sel))}
+#subject[data-accent="1"]{--subject-accent:var(--pill-1)}
+#subject[data-accent="2"]{--subject-accent:var(--pill-2)}
+#subject[data-accent="3"]{--subject-accent:var(--pill-3)}
+#subject[data-accent="4"]{--subject-accent:var(--pill-4)}
 #newbtn{border:1.5px solid var(--accent);color:var(--accent-text);background:transparent;border-radius:999px;padding:9px 16px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;min-height:44px}
 #newbtn:hover{background:var(--accent-wash)}
 #actions{display:flex;align-items:center;gap:8px}
@@ -173,12 +175,12 @@ a{color:var(--accent-text)}a:hover{color:var(--accent-hover)}
 /* The count sits directly after WORDS rather than being pushed to the far edge:
    space-between parked it hundreds of px away in landscape, where the rail is every
    pixel left over after the grid. */
-/* Everything in the rail lines up on one edge: the kicker, "Topic:", WORDS and the word
-   text itself. The words are the awkward one — .w carries 12px of pill padding for the
-   found-glow, so its TEXT starts 12px in from wherever #list sits. #list is pulled back
-   by exactly that padding below, which puts the glyphs on the rail's left edge and lets
-   the header and hint sit at plain 0 rather than being nudged to chase them.
-   margin-top is the breathing room between the topic block and the list. */
+/* Everything in the rail lines up on one edge: the kicker, the category, WORDS and the
+   word text itself. The words are the awkward one — .w carries 12px of pill padding for
+   the found-glow, so its TEXT starts 12px in from wherever #list sits. #list is pulled
+   back by exactly that padding below, which puts the glyphs on the rail's left edge and
+   lets the header and hint sit at plain 0 rather than being nudged to chase them.
+   margin-top is the breathing room between the subject block and the list. */
 #listhdr{display:flex;justify-content:flex-start;align-items:baseline;gap:9px;margin:6px 2px 8px 0}
 #listhdr b{font-family:var(--utility);font-weight:700;font-size:13px;letter-spacing:.16em;color:var(--label)}
 /* Monospace here is functional, not decorative: this string rewrites on every find and

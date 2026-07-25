@@ -14,6 +14,12 @@ export default defineConfig({
     reuseExistingServer: true,   // Playwright still owns and kills the one it starts
     stdout: 'ignore',
   },
+  // pickPreset reads window.screen, which in headless Chromium always mirrors the
+  // viewport — Playwright's `screen` option is accepted and then ignored. So each
+  // project's viewport is what selects its preset: desktop gets the 13x13 board,
+  // mobile the 10x10 one. The production behaviour this cannot reach — a real
+  // desktop screen staying 1440px wide while its window is dragged narrow — is
+  // covered by pickPreset's unit tests instead.
   projects: [
     {
       name: 'desktop',

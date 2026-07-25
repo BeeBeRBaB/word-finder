@@ -15,7 +15,7 @@ test.use({ serviceWorkers: 'block' });
 // renders transparent means the class/variable wiring broke, which no existing
 // test would notice — they all assert on the word list, not the grid overlay.
 test('a found word paints a pill coloured by the stylesheet', async ({ page }) => {
-  await page.goto('/?seed=1&topic=0');
+  await page.goto('/?seed=1&subject=nature/birds');
   const first = /** @type {string} */ (await page.locator('.w').first().textContent()).toUpperCase();
   await dragCells(page, await findWordInGrid(page, first));
 
@@ -34,7 +34,7 @@ test('a found word paints a pill coloured by the stylesheet', async ({ page }) =
 // Custom properties are not colour-normalised by getComputedStyle, so what comes
 // back is the authored text — which is exactly what needs pinning here.
 test('the dark palette still resolves to the colours the game shipped with', async ({ page }) => {
-  await page.goto('/?seed=1&topic=0');
+  await page.goto('/?seed=1&subject=nature/birds');
   await page.evaluate(() => { document.documentElement.dataset.appearance = 'dark'; });
   const seen = await page.evaluate(() => {
     const cs = getComputedStyle(document.documentElement);
@@ -76,7 +76,7 @@ test('a throwing localStorage.getItem falls through to the OS, it does not abort
     window.localStorage.getItem = () => { throw new Error('blocked'); };
   });
   await page.route('**/src/main.js', route => route.abort());
-  await page.goto('/?seed=1&topic=0');
+  await page.goto('/?seed=1&subject=nature/birds');
   expect(await page.evaluate(() => document.documentElement.getAttribute('data-appearance'))).toBe('light');
   const seen = await page.evaluate(() => {
     const cs = getComputedStyle(document.documentElement);
@@ -98,7 +98,7 @@ test('when matchMedia is missing, the app still renders dark, not white', async 
     window.matchMedia = undefined;
   });
   await page.route('**/src/main.js', route => route.abort());
-  await page.goto('/?seed=1&topic=0');
+  await page.goto('/?seed=1&subject=nature/birds');
   expect(await page.evaluate(() => document.documentElement.hasAttribute('data-appearance'))).toBe(false);
   const bg = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--bg').trim());
   expect(bg).toBe('#100a05');
@@ -133,7 +133,7 @@ test('an invalid stored preference resolves through the allowlist, never verbati
   // Isolate what the pre-paint inline script alone produces, with the deferred
   // module blocked so nothing else can set the attribute.
   await page.route('**/src/main.js', route => route.abort());
-  await page.goto('/?seed=1&topic=0');
+  await page.goto('/?seed=1&subject=nature/birds');
   const painted = await modeOf(page);
   expect(['light', 'dark']).toContain(painted);       // never 'banana' verbatim
   const paintedBg = await bgOf(page);
@@ -171,7 +171,7 @@ test('a throwing localStorage falls through to the OS instead of flipping on hyd
       }
     });
   });
-  await page.goto('/?seed=1&topic=0');
+  await page.goto('/?seed=1&subject=nature/birds');
   await expect(page.locator('.cell').first()).toBeVisible(); // src/main.js really did hydrate
 
   const prePaint = await page.evaluate(() => /** @type {any} */ (window).__prePaint);
@@ -196,7 +196,7 @@ const CYCLE = [
 
 test('the button cycles system -> light -> dark, repainting and relabelling each step', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'dark' });
-  await page.goto('/?seed=1&topic=0');
+  await page.goto('/?seed=1&subject=nature/birds');
   /** @type {Record<string, string>} */
   const darkPaint = { bg: await bgOf(page), ink: await inkOf(page) };
 
