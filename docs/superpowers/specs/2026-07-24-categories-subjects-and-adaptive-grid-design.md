@@ -262,7 +262,12 @@ The 3–4 letter bucket is the binding constraint — short on-topic words are t
 - Offline: an uncached category reports inline, is disabled, and the dialog survives it.
 - The existing determinism, layout, appearance and service-worker suites, updated for `?subject=`.
 
-**One Playwright config change is load-bearing.** The `mobile` project sets `viewport` but not `screen`, so `screen.width` would report the desktop default and the mobile project would silently test the *full* preset. It must gain `screen: {width: 390, height: 844}` alongside its viewport. Without it, the compact preset has no e2e coverage at all — and the failure is silent, which is the dangerous kind.
+**How `screen` behaves under Playwright, measured rather than assumed.** In headless Chromium `window.screen` always mirrors the viewport, and Playwright's `screen` option is accepted and then ignored — at project level and via `test.use` alike. Two consequences:
+
+- Each project's **viewport** selects its preset, so `desktop` (1440×900 → min 900) exercises the full board and `mobile` (390×664 → min 390) the compact one, with no config change needed.
+- `layout.spec.js` must set each device's viewport via `test.use`, not `page.setViewportSize()` after `goto`, or every phone in its table boots at the default size and gets measured against a 13×13 board.
+
+The production invariant that a resized window leaves the preset alone is therefore **not observable in e2e** and must not be asserted there. `pickPreset`'s unit tests cover it.
 
 ## Spec B — content (follow-on)
 

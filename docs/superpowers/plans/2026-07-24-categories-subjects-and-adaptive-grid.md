@@ -1335,7 +1335,7 @@ This unbreaks the app. Rename topic → subject everywhere, boot asynchronously,
 - Modify: `src/view.js:11-17` (the `Els` typedef)
 - Modify: `src/main.js` (imports, `els`, `state`, `newPuzzle`, `persist`, `layout`, `endDrag`, `newGame`, boot, `restore`)
 - Modify: `tests/e2e/helpers.js:6-18, 27-55` (derive the grid size from the DOM)
-- Modify: `playwright.config.js:17-35` (pin `screen` on both projects)
+- Modify: `playwright.config.js:16` (one explanatory comment only — see Step 2)
 - Modify: `tests/e2e/*.spec.js` (`?topic=0` → `?subject=nature/birds`, `#topic` → `#subject`, fixed word counts → derived)
 
 **Interfaces:**
@@ -1376,31 +1376,26 @@ Then in `findWordInGrid`, replace the hardcoded `const N = 13;` inside the `page
 
 and delete the old `const N = 13;` line above it.
 
-- [ ] **Step 2: Pin `screen` on both Playwright projects**
+- [ ] **Step 2: Leave `playwright.config.js` alone, and record why**
 
-In `playwright.config.js`, both projects must state `screen` explicitly. Without it the preset depends on a Playwright default rather than on the test's intent, and the mobile project could silently exercise the desktop board — a green suite proving nothing about the compact preset.
+**Do not add a `screen` option.** It was measured before this plan was executed and it does not work: in headless Chromium `window.screen` always mirrors the viewport, and Playwright's `screen` option — at project level or via `test.use` — is silently ignored. A pinned `screen` would read as a guarantee that is not there.
+
+What that means for the suite, and it is convenient rather than a problem:
+
+| Project | viewport | `window.screen` | `min` | Preset |
+|---|---|---|---|---|
+| `desktop` | 1440 × 900 | 1440 × 900 | 900 | full |
+| `mobile` | 390 × 664 | 390 × 664 | 390 | compact |
+
+Both projects therefore exercise the preset they are named for, with no config change at all. Add only this comment above the `projects` array so the next reader does not try to add `screen` again:
 
 ```js
-    {
-      name: 'desktop',
-      use: {
-        ...devices['Desktop Chrome'],
-        viewport: { width: 1440, height: 900 },
-        // pickPreset reads screen, not viewport. Pinned so a spec that calls
-        // setViewportSize() cannot change which board it is testing.
-        screen: { width: 1440, height: 900 },
-      },
-    },
-    {
-      name: 'mobile',
-      testMatch: /(gameplay|smoke)\.spec\.js/,
-      use: {
-        ...devices['Desktop Chrome'],
-        viewport: { width: 390, height: 664 },
-        screen: { width: 390, height: 844 },
-        hasTouch: true,
-      },
-    },
+  // pickPreset reads window.screen, which in headless Chromium always mirrors the
+  // viewport — Playwright's `screen` option is accepted and then ignored. So each
+  // project's viewport is what selects its preset: desktop gets the 13x13 board,
+  // mobile the 10x10 one. The production behaviour this cannot reach — a real
+  // desktop screen staying 1440px wide while its window is dragged narrow — is
+  // covered by pickPreset's unit tests instead.
 ```
 
 - [ ] **Step 3: Update `index.html`**
@@ -1748,31 +1743,19 @@ In `regressions.spec.js`, the precache test asserts `toHaveCount(169)` — repla
 
 `ux.spec.js`'s first test (`New game mid-game asks to confirm`) and the copy-guard test both drive `#newbtn` and `#confirm`, which this task leaves unwired. Mark both `test.fixme(...)` with the note `# unwired until the picker lands in Task 7`, and Task 7 rewrites them.
 
-- [ ] **Step 8: Update the layout spec to set a screen per device**
+- [ ] **Step 8: Set each layout-spec device's viewport before the page exists**
 
-`layout.spec.js` iterates phone viewports inside the `desktop` project, which now pins `screen` at 1440×900 — so every device would be measured against the full board, including the phones the compact preset exists for. Give each device its real screen, via a `describe` block per device so `test.use` applies:
+`layout.spec.js` currently calls `page.setViewportSize()` **after** `page.goto('/')`. That used to be harmless. It is not any more: the app now picks its preset during boot, so every phone in the table would boot at the default 1440×900 and be measured with a 13×13 board — exactly the board the compact preset exists to replace, and the measurement would be meaningless.
 
-```js
-// Real Safari innerHeight (browser chrome subtracted) — what players actually get.
-// `screen` is the device's own, because pickPreset reads it: measuring an iPhone
-// viewport against a desktop screen would test a 13x13 board no iPhone ever deals.
-const DEVICES = [
-  { name: 'iPhone 13 portrait',      w: 390,  h: 664,  sw: 390,  sh: 844 },
-  { name: 'iPhone 13 landscape',     w: 844,  h: 300,  sw: 390,  sh: 844 },
-  { name: 'iPhone Pro Max portrait', w: 430,  h: 752,  sw: 430,  sh: 932 },
-  { name: 'iPhone Pro Max landscape',w: 932,  h: 340,  sw: 430,  sh: 932 },
-  { name: 'iPad Mini portrait',      w: 744,  h: 1053, sw: 744,  sh: 1133 },
-  { name: 'iPad Mini landscape',     w: 1133, h: 664,  sw: 744,  sh: 1133 },
-  { name: 'Desktop',                 w: 1440, h: 900,  sw: 1440, sh: 900 },
-];
-```
-
-and replace the `for` loop at the bottom of the file:
+Move the viewport into `test.use`, which applies before the page is created. A `describe` per device is what lets `test.use` vary in a loop. Leave `DEVICES` exactly as it is — no `screen` fields, per Step 2.
 
 ```js
 for (const d of DEVICES) {
   test.describe(`${d.name} (${d.w}x${d.h})`, () => {
-    test.use({ viewport: { width: d.w, height: d.h }, screen: { width: d.sw, height: d.sh } });
+    // Set here, not with setViewportSize() inside the test: the preset is resolved
+    // during boot, and a viewport applied after goto() would measure every phone
+    // against a desktop board.
+    test.use({ viewport: { width: d.w, height: d.h } });
 
     test('layout fits', async ({ page }, testInfo) => {
       test.skip(testInfo.project.name !== 'desktop', 'viewport is set explicitly');
@@ -1790,25 +1773,23 @@ for (const d of DEVICES) {
 }
 ```
 
-The `setViewportSize` call is gone — `test.use` sets it before the page exists, which is also what makes `screen` take effect.
+Each device now boots at its own viewport, and since `window.screen` mirrors it under Playwright, each gets the preset it would really get: the four phone rows deal 10×10, the two iPad rows and Desktop deal 13×13.
 
-- [ ] **Step 9: Add the preset e2e guard**
+- [ ] **Step 9: Assert each device gets the board it should**
 
-Append to `tests/e2e/layout.spec.js`:
+Step 8 makes the right board get measured but does not prove which board that was, so a preset regression would show up only as a layout that happens to still fit. Append to `tests/e2e/layout.spec.js`, inside the same `describe` as the fits test:
 
 ```js
-// The rule the whole screen-vs-viewport decision exists to protect. A desktop player
-// dragging their window narrow must keep the board they were playing.
-test('narrowing the window does not change the board', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name !== 'desktop', 'needs the desktop screen');
-  await page.goto('/?seed=1&subject=nature/birds');
-  const before = await page.locator('.cell').count();
-  expect(before).toBe(169);
-  await page.setViewportSize({ width: 380, height: 700 });
-  await page.waitForTimeout(250);
-  expect(await page.locator('.cell').count()).toBe(169);
-});
+    // min(viewport) under 480 is the compact board. Asserted per device because
+    // "the layout fits" passes just as well when the wrong board is on screen.
+    test('deals the board this device should get', async ({ page }, testInfo) => {
+      test.skip(testInfo.project.name !== 'desktop', 'viewport is set explicitly');
+      await page.goto('/');
+      await expect(page.locator('.cell')).toHaveCount(Math.min(d.w, d.h) < 480 ? 100 : 169);
+    });
 ```
+
+The production invariant this cannot reach — a real desktop `screen` staying 1440px wide while its window is dragged narrow — is unobservable in Playwright, because `window.screen` follows the viewport there. It is covered by `pickPreset`'s unit tests in Task 2 instead, and no e2e test should claim otherwise.
 
 - [ ] **Step 10: Run everything**
 
@@ -1827,9 +1808,9 @@ Board size comes from the preset for a new game and from the save for a
 restored one, so state carries its own size rather than reading a constant.
 
 e2e helpers derive the board size from the rendered cell count instead of
-assuming 13, and both Playwright projects pin screen so the mobile project
-genuinely exercises the compact board. #newbtn is unwired until the picker
-lands; the two specs that drive it are marked fixme."
+assuming 13, and layout.spec.js sets each device's viewport before the page
+exists so a phone is no longer measured against a desktop board. #newbtn is
+unwired until the picker lands; the two specs that drive it are marked fixme."
 ```
 
 ---
