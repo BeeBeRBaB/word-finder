@@ -3,6 +3,14 @@ import { findWordInGrid, dragCells } from './helpers.js';
 
 /** @typedef {import('@playwright/test').Page} Page */
 
+// No service worker for this file. `sw.js` serves code stale-while-revalidate, so a
+// cached `main.js` is handed back from `caches.match()` without ever touching the
+// network — which silently defeats the `page.route(...).abort()` in the module-blocked
+// test below, and would let it pass while proving nothing. The appearance tests are
+// about the inline resolver and the palette, never about caching; `regressions.spec.js`
+// owns the service worker's behaviour and keeps its own workers.
+test.use({ serviceWorkers: 'block' });
+
 // The pill colours moved out of view.js's PAL and into the palette. A pill that
 // renders transparent means the class/variable wiring broke, which no existing
 // test would notice — they all assert on the word list, not the grid overlay.
