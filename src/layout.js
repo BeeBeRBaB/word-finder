@@ -7,9 +7,8 @@
  * @typedef {{size:number, count:number, mix:Bucket[]}} Preset
  */
 
-// The two board shapes the game deals. A mix only means anything next to the size and
-// count it was tuned for — a 9-12 letter bucket is nonsense on a 10x10 grid, whose
-// longest placeable word is 9 — so all three travel together as one preset.
+// A mix only means anything next to the size it was tuned for — a 9-12 letter bucket is
+// nonsense on a 10x10 grid, whose longest placeable word is 9 — so the three travel together.
 /** @type {{full:Preset, compact:Preset}} */
 export const PRESETS = {
   full: {
@@ -35,33 +34,31 @@ export function pickPreset({ screenW, screenH }) {
   return Math.min(screenW, screenH) < 480 ? PRESETS.compact : PRESETS.full;
 }
 
-// Portrait non-grid chrome, in px, split into the part that does not depend on the
-// word list (header, gaps, list header, hint) and the part that does. The list is a
-// fixed-height block laid out in two columns, so every row it does not draw is a row
-// the grid can have. BASE and ROW are pinned so that reservePortrait(12) is exactly
-// 366 — the measured value this file shipped with — which makes the full preset a
-// provable no-op and confines all of this change's risk to the compact board.
+// Portrait non-grid chrome in px, split into the part that does not depend on the word
+// list (header, gaps, list header, hint) and the part that does — every list row not
+// drawn is a row the grid can have. Pinned so reservePortrait(12) is exactly 366, the
+// measured value this file shipped with: that makes the full preset a provable no-op
+// and confines this change's risk to the compact board.
 const RESERVE_BASE = 162;
 const ROW_H = 34;
 /** @param {number} count @returns {number} */
 export const reservePortrait = (count) => RESERVE_BASE + Math.ceil(count / 2) * ROW_H;
 
 const GAP = 20; // the #main column gap between grid and list rail in landscape
-// #gridbox keeps its pre-existing content-box border (1px each side, per styles.css),
-// so its rendered box is BORDER px larger than the width/height we set on it. Budgeted
-// here rather than folded into the reserve so that stays purely "non-grid chrome" and
-// this stays a fixed, well-understood 2px account for the actual CSS box model.
+// #gridbox keeps a content-box border (1px each side, per styles.css), so its rendered
+// box is 2px larger than the size set on it. Kept out of the reserve above so that stays
+// purely non-grid chrome and this stays the CSS box model.
 const BORDER = 2;
-// Both word-list columns hug their content. See the note at the landscape return below
-// for why this is not `1fr 1fr`; portrait shares it so the two orientations cannot drift.
+// Both columns hug their content — see the landscape return for why this is not `1fr 1fr`.
+// Portrait shares it so the two orientations cannot drift.
 const LIST_COLUMNS = 'max-content max-content';
 
 /**
  * Viewport arithmetic. Pure so it can be unit-tested across a device table.
- * vw/vh are the space available INSIDE #app (the caller subtracts #app's padding, which
- * includes the resolved safe-area insets). The grid is sized to the scarce dimension:
- * height in landscape, min(width, height-under-the-chrome) in portrait. No floor forces
- * the grid larger than its space, which is what used to clip it.
+ * vw/vh are the space INSIDE #app — the caller subtracts #app's padding, which includes
+ * the resolved safe-area insets. The grid is sized to the scarce dimension: height in
+ * landscape, min(width, height-under-the-chrome) in portrait. No floor forces the grid
+ * larger than its space, which is what used to clip it.
  * @param {{vw:number, vh:number, size:number, pad:number, count:number}} opts
  * @returns {LayoutDims}
  */
@@ -73,11 +70,10 @@ export function computeLayout({ vw, vh, size, pad, count }) {
     cell = Math.max(16, cell);
     const gridSize = size * cell + 2 * pad;
     sideWidth = Math.max(160, vw - gridSize - GAP);
-    // `1fr 1fr` split the WHOLE rail, and in landscape the rail is every pixel left over
-    // after the grid — so the second column sat hundreds of px away on a wide window and
-    // slid every time the window resized. Sizing both columns to their content pins them
-    // next to each other and makes the list's width a function of the words, not the
-    // viewport. LIST_COLUMNS is shared with portrait so the two never drift apart.
+    // `1fr 1fr` split the WHOLE rail, which in landscape is every pixel left over after
+    // the grid — so the second column sat hundreds of px away on a wide window and slid
+    // on every resize. Content-sized columns make the list's width a function of the
+    // words rather than the viewport.
     return { landscape, cell, gridSize, sideWidth, listColumns: LIST_COLUMNS };
   }
   const availW = vw - 2 * pad - BORDER;

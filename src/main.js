@@ -62,11 +62,9 @@ const els = {
   solved: must('solved'),
 };
 
-// The single home of every mutable value in the game. Renderers receive it and
-// read from it; nothing else writes to it.
-// `dims` starts as a placeholder — `newPuzzle()` below calls `layout()`
-// synchronously before any event can fire, replacing it wholesale, so these
-// numbers are never actually read.
+// The single home of every mutable value in the game. `dims` starts as a placeholder:
+// `newPuzzle()` calls `layout()` synchronously before any event can fire, replacing it
+// wholesale, so these numbers are never actually read.
 /** @type {State} */
 const state = {
   puzzle: null,
@@ -87,9 +85,9 @@ let currentSeed;
 let subjectId;
 /** @type {number} */
 let boardCount;
-// The word (if any) currently mid-glow in the list. `list()` renders it with the
-// green-glow class instead of the struck-through one; a timer clears it back to
-// null so it strikes through. Only ever set by a live find, never by a restore.
+// The word currently mid-glow in the list, rendered with the green-glow class instead
+// of the struck-through one until a timer clears it. Only ever set by a live find,
+// never by a restore.
 /** @type {string|null} */
 let justFound = null;
 
@@ -116,9 +114,8 @@ function sweep() {
 }
 
 /** Every puzzle is built from its own fresh rng seeded by `seed`, never the
- * shared/advanced one — that's what lets a single stored seed reproduce an
- * identical grid later (see `restore`), and what makes `newGame` safe to
- * call repeatedly without drifting out of sync with what was last saved.
+ * shared/advanced one — that's what lets a stored seed reproduce an identical grid
+ * later (see `restore`), and makes `newGame` safe to call repeatedly.
  *
  * The board's shape arrives as an argument rather than being read off PRESET: a
  * restored save may have been dealt at a different size, and the board on screen is
@@ -186,18 +183,12 @@ function layout() {
 }
 
 let resizeFrame = 0;
-/** Coalesce a burst of resize events into one relayout per frame. `layout()` tears
- * down and rebuilds all 100-169 cells, and dragging a desktop window edge fires
- * resize continuously; without this that is a full rebuild per event. The size is
- * read inside `layout()` at frame time, so the collapsed burst lays out at the
- * newest dimensions rather than the first event's.
- *
- * Cancel-and-reschedule rather than an `if (pending) return` flag: a callback
- * scheduled in a hidden tab is not delivered until the tab is shown, and a flag
- * that only clears inside the callback would latch shut for good if one were ever
- * dropped instead of deferred. Replacing the handle each time cannot get stuck.
- * `cancelAnimationFrame(0)` is a no-op, so the initial value is safe.
- * @returns {void} */
+/** One relayout per frame while resizing. `layout()` rebuilds all 100-169 cells and
+ * dragging a window edge fires resize continuously, so unthrottled this is a full
+ * rebuild per event. Cancel-and-reschedule rather than a pending flag: a flag that
+ * only clears inside the callback would latch shut for good if a frame scheduled in
+ * a hidden tab were ever dropped rather than deferred. `cancelAnimationFrame(0)` is
+ * a no-op, so the initial value is safe. @returns {void} */
 function onResize() {
   cancelAnimationFrame(resizeFrame);
   resizeFrame = requestAnimationFrame(layout);

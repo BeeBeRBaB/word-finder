@@ -31,11 +31,10 @@ function distanceTo(len, b) {
  * words would otherwise deal twelve nine-letter words as readily as twelve
  * four-letter ones, and neither makes a good board.
  *
- * A bucket short of candidates does not shrink the board: the shortfall is
- * backfilled from whatever is left, nearest length first, so the caller always
- * gets `count` words or an exception. Backfilling rather than throwing matters
- * because the scarce bucket is always the short words, and a subject with only
- * two three-letter words is still worth playing.
+ * A bucket short of candidates does not shrink the board: the shortfall is backfilled
+ * from what is left, nearest length first. Backfilling rather than throwing matters
+ * because the scarce bucket is always the short words, and a subject with only two
+ * three-letter words is still worth playing.
  *
  * @param {string[]} pool @param {import('./rng.js').Rng} rng
  * @param {{count:number, mix:Bucket[]}} opts
@@ -72,10 +71,8 @@ export function pickWords(pool, rng, { count, mix }) {
   return out;
 }
 
-// How many times a single word may be swapped for another of the same length before
-// the puzzle gives up. Each swap costs a full 400-attempt placement pass, and with a
-// 100-word pool a board that cannot be filled in eight swaps is a broken subject, not
-// an unlucky seed.
+// Each swap costs a full 400-attempt placement pass, and a board that cannot be filled
+// in eight swaps is a broken subject, not an unlucky seed.
 const MAX_SWAPS = 8;
 
 /**
@@ -83,9 +80,9 @@ const MAX_SWAPS = 8;
  * actually landed, so a test can assert the grid really contains what the word list
  * claims.
  *
- * This function knows nothing about categories, subjects or the catalog — it is
- * handed a name and a bag of words. That is what lets `pickWords` and the placement
- * logic be tested against a synthetic pool with no content module loaded.
+ * Knows nothing about categories, subjects or the catalog — it is handed a name and a
+ * bag of words, which is what lets the placement logic be tested against a synthetic
+ * pool with no content module loaded.
  *
  * @param {{name:string, pool:string[], rng:Rng, size:number, count:number, mix:Bucket[]}} opts
  * @returns {Puzzle}
