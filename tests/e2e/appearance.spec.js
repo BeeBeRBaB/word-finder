@@ -180,44 +180,39 @@ test('a throwing localStorage falls through to the OS instead of flipping on hyd
   expect(hydrated).toBe('light');
 });
 
-test('the button cycles system -> light -> dark and repaints the page', async ({ page }) => {
+// One pass over the whole cycle, asserting everything the button owns at each step:
+// the stored pref, the resolved mode, the repaint (background AND a grid letter — the
+// page background alone would still pass if a token were declared in only one palette),
+// the visible icon, and the accessible name. These were three separate tests that each
+// reloaded the page and re-clicked the same cycle to check one extra fact.
+// The OS is emulated dark, so `system` resolves to dark and step 3 must repaint to the
+// exact colours step 0 captured.
+const CYCLE = [
+  { pref: 'system', mode: 'dark', icon: 'i-system', label: 'Appearance: System (Dark)' },
+  { pref: 'light', mode: 'light', icon: 'i-light', label: 'Appearance: Light' },
+  { pref: 'dark', mode: 'dark', icon: 'i-dark', label: 'Appearance: Dark' },
+  { pref: 'system', mode: 'dark', icon: 'i-system', label: 'Appearance: System (Dark)' },
+];
+
+test('the button cycles system -> light -> dark, repainting and relabelling each step', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.goto('/?seed=1&topic=0');
-  expect(await prefOf(page)).toBe('system');
-  expect(await modeOf(page)).toBe('dark');
-  const darkBg = await bgOf(page), darkInk = await inkOf(page);
+  /** @type {Record<string, string>} */
+  const darkPaint = { bg: await bgOf(page), ink: await inkOf(page) };
 
-  await page.locator('#appearance').click();
-  expect(await prefOf(page)).toBe('light');
-  expect(await modeOf(page)).toBe('light');
-  expect(await bgOf(page)).not.toBe(darkBg);
-  expect(await inkOf(page)).not.toBe(darkInk);
-
-  await page.locator('#appearance').click();
-  expect(await prefOf(page)).toBe('dark');
-  expect(await bgOf(page)).toBe(darkBg);
-  expect(await inkOf(page)).toBe(darkInk);
-
-  await page.locator('#appearance').click();
-  expect(await prefOf(page)).toBe('system');
-  expect(await modeOf(page)).toBe('dark');       // the emulated OS is dark
-});
-
-test('exactly one icon is visible at a time', async ({ page }) => {
-  await page.goto('/');
-  for (const pref of ['system', 'light', 'dark']) {
-    expect(await prefOf(page)).toBe(pref);
+  for (const [i, step] of CYCLE.entries()) {
+    expect(await prefOf(page), `step ${i} pref`).toBe(step.pref);
+    expect(await modeOf(page), `step ${i} mode`).toBe(step.mode);
+    await expect(page.locator(`#appearance svg.${step.icon}`)).toBeVisible();
     await expect(page.locator('#appearance svg:visible')).toHaveCount(1);
+    await expect(page.locator('#appearance')).toHaveAttribute('aria-label', step.label);
+
+    const paint = { bg: await bgOf(page), ink: await inkOf(page) };
+    if (step.mode === 'dark') expect(paint, `step ${i} paint`).toEqual(darkPaint);
+    else expect(paint, `step ${i} paint`).not.toEqual(darkPaint);
+
     await page.locator('#appearance').click();
   }
-});
-
-test('the button announces the current appearance', async ({ page }) => {
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await page.goto('/');
-  await expect(page.locator('#appearance')).toHaveAttribute('aria-label', 'Appearance: System (Dark)');
-  await page.locator('#appearance').click();
-  await expect(page.locator('#appearance')).toHaveAttribute('aria-label', 'Appearance: Light');
 });
 
 test('System follows the OS live; a pinned preference ignores it', async ({ page }) => {

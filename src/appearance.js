@@ -4,6 +4,7 @@
 //
 // This module deliberately knows nothing about the header button or the theme-color
 // meta tag — those are page shape, and reach it through the `onApply` callback.
+import { defaultStore } from './storage.js';
 
 export const PREF_KEY = 'wordfinder-appearance';
 /** The three settings, in the order the header button cycles through them. */
@@ -25,9 +26,7 @@ const title = (s) => s.charAt(0).toUpperCase() + s.slice(1);
  * setting from a future build — falls back to `system` rather than propagating.
  * @param {string|null|undefined} pref @returns {Pref} */
 export function normalizePref(pref) {
-  return /** @type {readonly string[]} */ (PREFS).includes(/** @type {string} */ (pref))
-    ? /** @type {Pref} */ (pref)
-    : 'system';
+  return PREFS.some(p => p === pref) ? /** @type {Pref} */ (pref) : 'system';
 }
 
 /** The next step in the System -> Light -> Dark -> System cycle.
@@ -89,10 +88,7 @@ function systemQuery() {
  * @param {{store?:PrefStore|null, root?:Root, query?:DarkQuery|null, onApply?:(pref:Pref, mode:Mode)=>void}} [deps]
  */
 export function makeAppearance(deps = {}) {
-  let store = deps.store;
-  if (store === undefined) {
-    try { store = globalThis.localStorage; } catch { store = null; }
-  }
+  const store = deps.store === undefined ? defaultStore() : deps.store;
   const root = deps.root || document.documentElement;
   const query = deps.query === undefined ? systemQuery() : deps.query;
   const onApply = deps.onApply || (() => {});

@@ -30,15 +30,11 @@ function revalidate(req){
   return fetch(req);
 }
 
-// A bare `addAll(ASSETS)` is a plain fetch per asset, which the max-age=600 HTTP
-// cache above can answer without ever hitting the network -- so the freshly-bumped
-// CACHE gets filled with whatever build the browser last cached, not this one. That
-// was survivable while every deploy was purely additive; it stopped being survivable
-// the moment a deploy could delete a file (src/themes.js, this deploy): a stale
-// main.js importing a path the server no longer has 404s, the module graph never
-// resolves, and the grid stays blank forever, offline included, with no reload that
-// fixes it. Request every asset in reload mode, the same fix `revalidate()` above
-// already applies to the fetch handler for the identical reason.
+// A bare `addAll(ASSETS)` is a plain fetch, which the max-age=600 HTTP cache can
+// answer -- filling the freshly-bumped CACHE with the build the browser last saw.
+// Harmless while deploys only add files; fatal once one deletes a file, because the
+// stale main.js then imports a path the server no longer has and the grid stays blank
+// forever, offline included. Reload mode is the same fix `revalidate()` above applies.
 sw.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS.map(u=>new Request(u,{cache:'reload'})))).then(()=>sw.skipWaiting()))});
 sw.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>sw.clients.claim()))});
 

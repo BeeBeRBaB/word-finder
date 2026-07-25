@@ -3,25 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<!-- Resolves the appearance before first paint. src/main.js is a module and therefore
-     deferred, so without this a dark-mode player gets a flash of the light palette on
-     every single load. There is no module-based equivalent that runs early enough, so
-     this has to duplicate the decision inline -- but only the decision, not a verbatim
-     read-through: the allowlist below (only 'light' or 'dark' pass; anything else,
-     including a hand-edited, stale, or future-build value, falls through to the OS
-     query) is exactly resolveAppearance(normalizePref(p), prefersDark) from
-     src/appearance.js, which is why data-appearance can only ever hold a resolved
-     light/dark value -- see styles.css's header comment for that invariant.
-     The localStorage read gets its OWN inner try, separate from the outer one: iOS
-     Safari's "Block All Cookies" and Chrome with site data blocked (storage.test.js's
-     "Safari private mode" case) throw on getItem, and src/appearance.js degrades that
-     exact failure to pref='system' and asks the OS. If the outer try caught it instead,
-     this script would exit before data-appearance was ever set, the bare :root dark
-     default would paint, and the module would then resolve against the OS and repaint
-     on hydration -- a flip, the same bug class the allowlist above exists to prevent,
-     just reached through the storage read instead of the stored value. Keep the two
-     sites in step; the "module blocked entirely" and "allowlist, never verbatim" tests
-     in tests/e2e/appearance.spec.js guard this one. -->
+<!-- Resolves the appearance before first paint; module scripts are deferred, so
+     src/main.js would land after a flash. Must stay equivalent to
+     resolveAppearance(normalizePref(p), prefersDark) in src/appearance.js: only
+     'light'/'dark' pass, anything else asks the OS, so data-appearance can only ever
+     hold a resolved value. The storage read needs its own inner try -- a throwing
+     getItem (iOS "Block All Cookies") must fall through to the OS query, not abort
+     the script, or the module resolves differently on hydration and the page flips.
+     Guarded by the "module blocked entirely" and "allowlist" tests in appearance.spec.js. -->
 <script>try{var p=null;try{p=localStorage.getItem('wordfinder-appearance')}catch(e){}if(p!=='light'&&p!=='dark')p=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.appearance=p}catch(e){}</script>
 <title>Word Finder</title>
 <link rel="manifest" href="manifest.webmanifest">

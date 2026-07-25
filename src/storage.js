@@ -10,11 +10,18 @@ const KEY = 'wordfinder-save-v1';
  * @typedef {SaveData & {themeIdx?:number}} StoredSave
  */
 
+/** The real `localStorage`, or `null` if it is unavailable. Merely *reading* the
+ * property throws on Safari with "Block All Cookies" and in some private modes —
+ * which once broke app boot — so the access itself has to be guarded, not just the
+ * calls on it. Shared with `appearance.js` so that guard exists in exactly one place.
+ * @returns {Storage|null} */
+export function defaultStore() {
+  try { return globalThis.localStorage; } catch { return null; }
+}
+
 /** @param {Pick<Storage,'getItem'|'setItem'|'removeItem'>|null} [store] */
 export function makeStorage(store) {
-  if (store === undefined) {
-    try { store = globalThis.localStorage; } catch { store = null; }
-  }
+  if (store === undefined) store = defaultStore();
   return {
     /** @param {SaveData} data @returns {void} */
     save(data) { if (!store) return; try { store.setItem(KEY, JSON.stringify(data)); } catch { /* no persistence */ } },

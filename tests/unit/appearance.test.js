@@ -3,11 +3,8 @@ import assert from 'node:assert/strict';
 import {
   PREFS, PREF_KEY, normalizePref, nextPref, resolveAppearance, appearanceLabel, makeAppearance,
 } from '../../src/appearance.js';
+import { memStore } from './helpers.js';
 
-function memStore() {
-  const m = new Map();
-  return { getItem: k => m.has(k) ? m.get(k) : null, setItem: (k, v) => m.set(k, v) };
-}
 /** A stand-in for the narrowed prefers-color-scheme query. `flipTo` is the test's
  * handle on an OS appearance change; the module only ever sees matches/subscribe. */
 function fakeQuery(matches = false) {
