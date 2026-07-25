@@ -1,7 +1,7 @@
 // Word Finder — wiring. This is the only module that owns mutable game
 // state, reads the URL, or listens for events; everything it calls is either pure
 // (rng, puzzle, layout, catalog) or a stateless renderer (view, effects).
-import { CATEGORIES } from './catalog.js';
+import { CATEGORIES, categoryOf } from './catalog.js';
 import { loadCategory, loadSubject, SubjectLoadError } from './subjects.js';
 import { makeRng, resolveSeed, resolveTarget } from './rng.js';
 import { buildPuzzle, cap, matchWord, readLine, snap } from './puzzle.js';
@@ -294,8 +294,16 @@ els.gridbox.addEventListener('pointercancel', endDrag);
  * its own wording.
  * @param {unknown} err @returns {void} */
 function reportLoadFailure(err) {
-  els.subject.textContent = err instanceof SubjectLoadError && err.reason === 'unavailable'
-    ? 'Offline' : 'Unavailable';
+  const offline = err instanceof SubjectLoadError && err.reason === 'unavailable';
+  // Record it here, not just in newGame. boot()'s ?subject=/?category= path and
+  // restore() call the loader directly, so a failure on either used to be shown to the
+  // player and then forgotten -- the picker went on offering that category as enabled
+  // and Surprise me went on drawing it, each attempt failing the same way. `err.id` is
+  // whichever id the caller asked for, and categoryOf leaves a bare category id alone,
+  // so this covers both entry points. Only 'unavailable': 'unknown' means an id that is
+  // not in the catalog, which nothing offers in the first place.
+  if (offline && err instanceof SubjectLoadError) unavailableCategories.add(categoryOf(err.id));
+  els.subject.textContent = offline ? 'Offline' : 'Unavailable';
   els.category.textContent = '';
 }
 
@@ -331,7 +339,10 @@ async function newGame(categoryId) {
     throw err;
   }
   // A category that failed before but loads now (cache warmed, network back) is no
-  // longer a reason to skip it.
+  // longer a reason to skip it. Reached when something attempts it again despite the
+  // record: the fallback above once everything is marked, or an explicit ?category=.
+  // The loader retries on a fresh URL precisely so that attempt can succeed -- the
+  // module map remembers a rejected specifier for the life of the page.
   unavailableCategories.delete(id);
   // Avoid dealing the subject already on screen, unless it is the only one there is.
   const fresh = cat.subjectIds.filter(s => s !== subjectId);

@@ -12,6 +12,43 @@ test('New game opens the picker, and Cancel leaves the board alone', async ({ pa
   expect((await page.locator('.cell').allTextContents()).join('')).toBe(before.join(''));
 });
 
+// Cancel has to mean cancel even while a deal is in flight. `onStart` is async, so on a
+// slow connection the dialog sits open with every control live for as long as the module
+// fetch takes; before the busy guard, Cancel closed over the pending deal, which landed
+// seconds later and replaced the board -- and persist() then overwrote the save of the
+// game the player had just chosen to keep, past recovering by reload.
+test('Cancel during a slow deal leaves the board alone, and Start cannot deal twice', async ({ page }) => {
+  // Route, not the SW: once the worker claims the page a dynamic import is fetched from
+  // inside its context where page.route cannot see it. Registration is removed before
+  // any script runs, so the import goes over the wire this test controls.
+  await page.addInitScript(() => { delete Object.getPrototypeOf(navigator).serviceWorker; });
+  /** @type {() => void} */
+  let release = () => {};
+  /** @type {Promise<void>} */
+  const held = new Promise((r) => { release = () => r(); });
+  await page.route('**/src/subjects/food.js', async (route) => { await held; await route.continue(); });
+
+  await page.goto('/?seed=1&subject=nature/birds');
+  const before = (await page.locator('.cell').allTextContents()).join('');
+
+  await page.locator('#newbtn').click();
+  await page.locator('#picker-select').selectOption('food');
+  await page.locator('#picker-start').click();
+
+  // Mid-flight: both controls are disabled, so neither a second Start nor a Cancel can
+  // reach the handler, and the dialog refuses to close on a promise it cannot recall.
+  await expect(page.locator('#picker-start')).toBeDisabled();
+  await expect(page.locator('#picker-cancel')).toBeDisabled();
+  await page.locator('#picker-cancel').click({ force: true });
+  await expect(page.locator('#picker')).toBeVisible();
+  expect((await page.locator('.cell').allTextContents()).join('')).toBe(before);
+
+  // Once it lands the dialog closes itself, having dealt exactly one puzzle.
+  release();
+  await expect(page.locator('#picker')).toBeHidden();
+  await expect(page.locator('#category')).toHaveText('Food & Drink');
+});
+
 test('the picker offers Surprise me first, then every category', async ({ page }) => {
   await page.goto('/?seed=1&subject=nature/birds');
   await page.locator('#newbtn').click();

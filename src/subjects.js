@@ -30,23 +30,38 @@ export class SubjectLoadError extends Error {
  * @returns {{loadCategory:(id:string) => Promise<CategoryData>, loadSubject:(id:string) => Promise<Subject>}}
  */
 export function makeSubjectLoader(importFn) {
-  /** @type {(category:string) => Promise<{WORDS:Record<string,string>}>} */
-  const load = importFn ?? ((category) => import(`./subjects/${category}.js`));
+  /** @type {(category:string, attempt:number) => Promise<{WORDS:Record<string,string>}>} */
+  const load = importFn ?? ((category, attempt) =>
+    // The query string is what makes a retry possible at all. A dynamic import that
+    // fails is recorded as failed in the module map for the life of the page, so the
+    // same specifier keeps rejecting from memory even once the network is back --
+    // measured: offline import -> reject, network restored -> reject again from cache,
+    // same file with `?retry=1` -> resolves. A retry therefore has to ask for a URL the
+    // page has not already failed on. Costs a second module instance for that category
+    // in the rare case it happens, which for a file of nothing but words is a few KB.
+    import(attempt === 0 ? `./subjects/${category}.js` : `./subjects/${category}.js?retry=${attempt}`));
   /** @type {Map<string, Record<string,string>>} */
   const cache = new Map();
+  /** @type {Map<string, number>} */
+  const failures = new Map();
 
   /** One import per category id, memoised, regardless of whether it was reached via
-   * loadCategory or loadSubject.
+   * loadCategory or loadSubject. A failed category is not memoised: a player who was
+   * offline when they first reached for it can get it on the next try.
    * @param {string} category @param {string} idForError @returns {Promise<Record<string,string>>} */
   async function fetchWords(category, idForError) {
-    let words = cache.get(category);
-    if (!words) {
-      words = await load(category).then(
-        (m) => m.WORDS,
-        () => { throw new SubjectLoadError('unavailable', idForError); },
-      );
-      cache.set(category, words);
-    }
+    const cached = cache.get(category);
+    if (cached) return cached;
+    const attempt = failures.get(category) ?? 0;
+    const words = await load(category, attempt).then(
+      (m) => m.WORDS,
+      () => {
+        failures.set(category, attempt + 1);
+        throw new SubjectLoadError('unavailable', idForError);
+      },
+    );
+    cache.set(category, words);
+    failures.delete(category);
     return words;
   }
 

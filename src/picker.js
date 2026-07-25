@@ -24,7 +24,23 @@ export function makePicker({ root, select, warning, error, start, cancel, catego
     select.appendChild(o);
   }
 
-  const close = () => { root.style.display = 'none'; };
+  // True while a deal is in flight. `onStart` is async and can take as long as a
+  // module fetch on a slow connection, during which the dialog stays open and every
+  // control still works. Without this, two ways to lose a game in progress: tapping
+  // Start twice deals two puzzles from one dialog, and tapping Cancel closes over a
+  // pending deal that lands seconds later, replacing the board and overwriting the
+  // save of the game the player just chose to keep. Cancel means cancel, so the
+  // dialog refuses to close rather than closing on a promise it cannot recall.
+  let pending = false;
+  /** @param {boolean} on @returns {void} */
+  function setBusy(on) {
+    pending = on;
+    start.toggleAttribute('disabled', on);
+    cancel.toggleAttribute('disabled', on);
+    root.setAttribute('aria-busy', String(on));
+  }
+
+  const close = () => { if (!pending) root.style.display = 'none'; };
 
   // Disabled state is derived from main.js's shared failure record on every call,
   // never tracked here — main.js's random draw (used by both Surprise me and the win
@@ -48,13 +64,17 @@ export function makePicker({ root, select, warning, error, start, cancel, catego
   }
 
   start.addEventListener('click', async () => {
+    if (pending) return;
     const chosen = select.value || null;
     /** @type {HTMLOptionElement} */
     const option = select.selectedOptions[0];
+    setBusy(true);
     try {
       await onStart(chosen);
+      setBusy(false);
       close();
     } catch {
+      setBusy(false);
       // Offline with an uncached category, or a Surprise me draw that lost the race
       // with the network. Stay open, say so, and resync every option's disabled state
       // from the record main.js's newGame() just updated — closing on failure would
