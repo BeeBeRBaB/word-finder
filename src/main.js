@@ -10,6 +10,7 @@ import { applyLayout, renderGrid, renderList, renderPills, renderFoundCells, ren
 import { burst, pop } from './effects.js';
 import { makeStorage } from './storage.js';
 import { makeAppearance, appearanceLabel } from './appearance.js';
+import { makePicker } from './picker.js';
 
 /**
  * @typedef {import('./puzzle.js').Puzzle} Puzzle
@@ -57,7 +58,7 @@ const els = {
   app: must('app'), gridbox: must('gridbox'), pills: must('pills'), letters: must('letters'), fx: must('fx'),
   list: must('list'), main: must('main'), side: must('side'), count: must('count'),
   subject: must('subject'), category: must('category'), win: must('win'), winmsg: must('winmsg'),
-  confirm: must('confirm'), winclose: must('winclose'), appearance: must('appearance'),
+  picker: must('picker'), winclose: must('winclose'), appearance: must('appearance'),
   solved: must('solved'),
 };
 
@@ -304,6 +305,25 @@ async function newGame(categoryId) {
   const pick = pool[Math.floor(Math.random() * pool.length)];
   newPuzzle(Date.now() >>> 0, await loadSubject(pick), PRESET);
 }
+// `newGame` rejects when a category cannot be fetched; the picker catches that to
+// keep itself open, so the rejection must survive rather than being swallowed here.
+const picker = makePicker({
+  root: els.picker,
+  select: /** @type {HTMLSelectElement} */ (must('picker-select')),
+  warning: must('picker-warning'),
+  error: must('picker-error'),
+  start: must('picker-start'),
+  cancel: must('picker-cancel'),
+  categories: CATEGORIES,
+  onStart: (categoryId) => newGame(categoryId),
+});
+// Unconditional, unlike the confirm dialog it replaces: the dialog is now how a game
+// is started, and the warning is one line inside it rather than a reason to show it.
+must('newbtn').addEventListener('click', () => {
+  const inProgress = !!state.puzzle && state.foundOrder.length > 0
+    && state.foundOrder.length < state.puzzle.words.length;
+  picker.open(inProgress);
+});
 must('winbtn').addEventListener('click', () => {
   newGame().catch((err) => {
     // An offline network, an evicted cache, or (right now) a category the parallel
@@ -339,7 +359,7 @@ const appearance = makeAppearance({
 appearance.start();
 els.appearance.addEventListener('click', () => appearance.cycle());
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') { els.win.style.display = 'none'; els.confirm.style.display = 'none'; }
+  if (e.key === 'Escape') { els.win.style.display = 'none'; picker.close(); }
 });
 window.addEventListener('resize', layout);
 

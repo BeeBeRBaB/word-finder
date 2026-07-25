@@ -4,14 +4,20 @@ import { findWordInGrid, dragCells } from './helpers.js';
 // Regression for 43c8402. Winning schedules the overlay on a 700ms timer. Starting
 // a new puzzle inside that window used to let the stale timer drop the overlay over
 // a fresh grid, where it swallowed every pointer event and made the game unplayable.
-// unwired until the picker lands in Task 7 -- #newbtn currently does nothing, so this
-// can no longer exercise "starting a new game inside the delay" at all.
-test.fixme('starting a new game during the win delay leaves the board playable', async ({ page }) => {
-  await page.goto('/');
+// #newbtn now opens the picker rather than dealing directly, so "starting a new game"
+// goes through it: pick a category explicitly (nature, the same one already on
+// screen) rather than Surprise me, so this does not depend on which of the 25
+// categories happen to have a subjects/ module on disk yet (see ux.spec.js's reload
+// test for the same caveat) -- and pinned to nature/birds rather than an unseeded
+// load for the same reason.
+test('starting a new game during the win delay leaves the board playable', async ({ page }) => {
+  await page.goto('/?seed=1&subject=nature/birds');
   const words = await page.locator('.w').allTextContents();
   for (const w of words) await dragCells(page, await findWordInGrid(page, w.toUpperCase()));
 
   await page.locator('#newbtn').click();   // inside the 700ms window
+  await page.locator('#picker-select').selectOption('nature');
+  await page.locator('#picker-start').click();
   await page.waitForTimeout(1200);         // let any stale timer fire
 
   const total = await page.locator('.w').count();

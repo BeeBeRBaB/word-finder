@@ -67,10 +67,18 @@
   <div id="solved" aria-hidden="true"></div><h2>Puzzle solved!</h2><p id="winmsg"></p>
   <button id="winbtn" type="button">Play a new game &#8594;</button>
 </div></div>
-<div id="confirm"><div id="confirmcard">
-  <p>Start a new game? Your progress will be lost.</p>
-  <div><button id="confirm-cancel" type="button">Cancel</button>
-  <button id="confirm-ok" type="button">New game</button></div>
+<div id="picker"><div id="pickercard">
+  <h2>New game</h2>
+  <p id="picker-warning">Start a new game? Your progress will be lost.</p>
+  <label for="picker-select">Category</label>
+  <!-- A native select rather than a grid of chips: 25 categories is eight to twelve
+       rows on a phone, while this is one control at any count, renders as a wheel
+       picker on iOS, and brings keyboard and screen-reader support with it. The
+       empty value is "Surprise me" so the default needs no special-casing. -->
+  <select id="picker-select"></select>
+  <p id="picker-error" hidden></p>
+  <div><button id="picker-cancel" type="button">Cancel</button>
+  <button id="picker-start" type="button">Start</button></div>
 </div></div>
 <script type="module" src="src/main.js"></script>
 </body>

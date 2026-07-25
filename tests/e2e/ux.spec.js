@@ -2,21 +2,6 @@ import { test, expect } from '@playwright/test';
 import { findWordInGrid, dragCells } from './helpers.js';
 import { CATEGORIES } from '../../src/catalog.js';
 
-// unwired until the picker lands in Task 7
-test.fixme('New game mid-game asks to confirm; cancel keeps the board', async ({ page }) => {
-  await page.goto('/?seed=1&subject=nature/birds');
-  // Every `.w` chip's textContent is set from a word string in view.js, so it is
-  // never actually null; see helpers.js's findWordInGrid for the same cast.
-  const first = /** @type {string} */ (await page.locator('.w').first().textContent()).toUpperCase();
-  await dragCells(page, await findWordInGrid(page, first));
-  await expect(page.locator('.w.done')).toHaveCount(1);
-  await page.locator('#newbtn').click();
-  await expect(page.locator('#confirm')).toBeVisible();
-  await page.locator('#confirm-cancel').click();
-  await expect(page.locator('#confirm')).toBeHidden();
-  await expect(page.locator('.w.done')).toHaveCount(1);          // board intact
-});
-
 test('the win overlay can be dismissed, leaving the solved board', async ({ page }) => {
   await page.goto('/?seed=1&subject=nature/birds');
   for (const el of await page.locator('.w').all()) {
@@ -93,14 +78,14 @@ test('progress and puzzle survive a reload', async ({ page }) => {
   await expect(page.locator('.w.done')).toHaveCount(1);   // still crossed out
 });
 
-// "New theme" named an internal concept; "New game" names what the button does.
-// Pinned as a test because the same word now means the UI's appearance elsewhere.
-// unwired until the picker lands in Task 7
-test.fixme('the visible copy talks about games, never themes', async ({ page }) => {
+// "Topic" named the internal concept twice over: once for the word list, once for
+// the UI's appearance. Pinned as a test because both meanings have now moved on.
+test('the visible copy talks about games and subjects, never topics or themes', async ({ page }) => {
   await page.goto('/?seed=1&subject=nature/birds');
   await expect(page.locator('#newbtn')).toHaveText(/New game/);
   await expect(page.locator('#winbtn')).toHaveText(/Play a new game/);
-  await expect(page.locator('#confirm p')).toHaveText(/Start a new game\?/);
-  await expect(page.locator('#confirm-ok')).toHaveText('New game');
+  await expect(page.locator('#picker-start')).toHaveText('Start');
+  await expect(page.locator('#picker-cancel')).toHaveText('Cancel');
   await expect(page.locator('body')).not.toContainText(/theme/i);
+  await expect(page.locator('body')).not.toContainText(/topic/i);
 });
