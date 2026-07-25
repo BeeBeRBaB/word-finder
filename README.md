@@ -7,7 +7,7 @@ The old single-file `index.html` has been split into focused modules — same ze
 
 | File | Purpose |
 | --- | --- |
-| `index.html` | Markup only — the app shell. |
+| `index.html` | Markup, plus a short inline script that resolves the appearance before first paint. |
 | `styles.css` | All styling. |
 | `sw.js` | Service worker for offline caching. Must stay at the served root for its scope. |
 | `manifest.webmanifest` | PWA manifest. |
@@ -25,6 +25,7 @@ have no DOM access at all, which is what makes them cheap to unit-test:
 | `src/effects.js` | Confetti and the WebAudio chime. | DOM |
 | `src/main.js` | Entry point: owns game state, wires events, registers the SW. | DOM |
 | `src/topics.js` | The 100 topic word lists (content, not logic). Add a topic here. | data |
+| `src/appearance.js` | Light / dark / system preference: resolve, persist, follow the OS. | DOM |
 
 ### Reproducible puzzles
 

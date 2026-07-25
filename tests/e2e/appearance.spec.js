@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { findWordInGrid, dragCells } from './helpers.js';
 
+/** @typedef {import('@playwright/test').Page} Page */
+
 // The pill colours moved out of view.js's PAL and into the palette. A pill that
 // renders transparent means the class/variable wiring broke, which no existing
 // test would notice — they all assert on the word list, not the grid overlay.
@@ -47,22 +49,114 @@ test('the dark palette still resolves to the colours the game shipped with', asy
   });
 });
 
-// Nothing sets data-appearance until Task 6's inline script. A visitor with JS
-// disabled — or one whose resolver threw — must still get the appearance the game
-// has always shipped, not a white page. Regression guard for the selector swap:
-// with `:root` hanging off the light palette, this rendered #eef3f1.
-//
-// NOTE for Task 6: once the inline <head> script lands, it sets data-appearance
-// on every load, which will break the `hasAttribute(...) === false` assertion
-// below. That is an intentional supersession of this test, not a regression —
-// Task 6's brief should update or replace this test accordingly.
-test('with no data-appearance set at all, the app renders dark', async ({ page }) => {
+// Task 6's inline <head> script now sets data-appearance on every normal load, so the
+// pre-Task-6 "nothing ever sets the attribute" world no longer exists — this
+// supersedes that version of the test (see its old comment, and correction 3 in
+// task-6-report.md). The underlying guarantee is unchanged: a visitor for whom the
+// resolver genuinely cannot run — localStorage.getItem throws, matchMedia is gone,
+// and (to rule out the module papering over it) src/main.js itself is blocked from
+// even loading — must still get the dark palette this game has always shipped with,
+// never an unstyled/white page. Regression guard for the selector swap: with `:root`
+// hanging off the light palette, this rendered #eef3f1.
+test('when the resolver cannot run at all, the app still renders dark, not white', async ({ page }) => {
+  await page.addInitScript(() => {
+    // @ts-ignore - deliberately breaking the resolver's own inputs
+    window.matchMedia = undefined;
+    window.localStorage.getItem = () => { throw new Error('blocked'); };
+  });
+  await page.route('**/src/main.js', route => route.abort());
   await page.goto('/?seed=1&topic=0');
   expect(await page.evaluate(() => document.documentElement.hasAttribute('data-appearance'))).toBe(false);
-  const seen = await page.evaluate(() => {
-    const cs = getComputedStyle(document.documentElement);
-    return { bg: cs.getPropertyValue('--bg').trim(), surface: cs.getPropertyValue('--surface').trim() };
-  });
-  expect(seen).toEqual({ bg: '#16262f', surface: '#1d2f3a' });
-  expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe('rgb(22, 38, 47)');
+  const bg = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--bg').trim());
+  expect(bg).toBe('#16262f');
+});
+
+/** @param {Page} page */
+const modeOf = (page) => page.evaluate(() => document.documentElement.dataset.appearance);
+/** @param {Page} page */
+const prefOf = (page) => page.locator('#appearance').getAttribute('data-pref');
+/** @param {Page} page */
+const bgOf = (page) => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+// The page background alone would still pass if a token were declared in only one
+// palette; sampling a grid letter too covers the content, not just the canvas.
+/** @param {Page} page */
+const inkOf = (page) => page.locator('.cell').first().evaluate(el => getComputedStyle(el).color);
+
+test('the button cycles system -> light -> dark and repaints the page', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.goto('/?seed=1&topic=0');
+  expect(await prefOf(page)).toBe('system');
+  expect(await modeOf(page)).toBe('dark');
+  const darkBg = await bgOf(page), darkInk = await inkOf(page);
+
+  await page.locator('#appearance').click();
+  expect(await prefOf(page)).toBe('light');
+  expect(await modeOf(page)).toBe('light');
+  expect(await bgOf(page)).not.toBe(darkBg);
+  expect(await inkOf(page)).not.toBe(darkInk);
+
+  await page.locator('#appearance').click();
+  expect(await prefOf(page)).toBe('dark');
+  expect(await bgOf(page)).toBe(darkBg);
+  expect(await inkOf(page)).toBe(darkInk);
+
+  await page.locator('#appearance').click();
+  expect(await prefOf(page)).toBe('system');
+  expect(await modeOf(page)).toBe('dark');       // the emulated OS is dark
+});
+
+test('exactly one icon is visible at a time', async ({ page }) => {
+  await page.goto('/');
+  for (const pref of ['system', 'light', 'dark']) {
+    expect(await prefOf(page)).toBe(pref);
+    await expect(page.locator('#appearance svg:visible')).toHaveCount(1);
+    await page.locator('#appearance').click();
+  }
+});
+
+test('the button announces the current appearance', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.goto('/');
+  await expect(page.locator('#appearance')).toHaveAttribute('aria-label', 'Appearance: System (Dark)');
+  await page.locator('#appearance').click();
+  await expect(page.locator('#appearance')).toHaveAttribute('aria-label', 'Appearance: Light');
+});
+
+test('System follows the OS live; a pinned preference ignores it', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.goto('/');
+  expect(await modeOf(page)).toBe('light');
+
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await expect.poll(() => modeOf(page)).toBe('dark');
+
+  await page.locator('#appearance').click();                 // pin to light
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.waitForTimeout(150);
+  expect(await modeOf(page)).toBe('light');
+});
+
+// The inline <head> script is the whole reason a dark-mode player doesn't see a
+// white flash on every load. Blocking the module proves the resolution happened
+// before any deferred script ran, which a plain reload assertion cannot.
+test('a stored preference applies with the module blocked entirely', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.goto('/');
+  await page.locator('#appearance').click();                 // stores 'light'
+  expect(await modeOf(page)).toBe('light');
+
+  await page.route('**/src/main.js', route => route.abort());
+  await page.reload();
+  await expect(page.locator('.cell')).toHaveCount(0);         // the module really did not run
+  expect(await modeOf(page)).toBe('light');
+});
+
+test('the status bar colour tracks the page background', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.goto('/');
+  const meta = page.locator('meta[name="theme-color"]');
+  await expect(meta).toHaveAttribute('content', '#16262f');
+  await page.locator('#appearance').click();
+  await expect(meta).toHaveAttribute('content', '#eef3f1');
 });

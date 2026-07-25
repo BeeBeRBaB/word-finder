@@ -67,6 +67,17 @@ a{color:var(--accent-text)}a:hover{color:var(--accent-hover)}
 #topic{font-weight:700;font-size:28px;line-height:1.1;color:var(--text-strong)}
 #newbtn{border:1.5px solid var(--accent);color:var(--accent-text);background:transparent;border-radius:999px;padding:9px 16px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;min-height:44px}
 #newbtn:hover{background:var(--accent-wash)}
+#actions{display:flex;align-items:center;gap:8px}
+#appearance{flex:none;width:44px;height:44px;padding:0;display:flex;align-items:center;justify-content:center;
+  border:1.5px solid var(--accent);border-radius:999px;background:transparent;color:var(--accent-text);cursor:pointer}
+#appearance:hover{background:var(--accent-wash)}
+/* All three icons ship in the markup; the button's data-pref picks one. Doing it in
+   CSS keeps main.js from assembling HTML strings on every click. */
+#appearance svg{display:none;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#appearance svg .solid{fill:currentColor;stroke:none}
+#appearance[data-pref="system"] .i-system,
+#appearance[data-pref="light"] .i-light,
+#appearance[data-pref="dark"] .i-dark{display:block}
 #main{display:contents}
 #gridbox{grid-area:grid;position:relative;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);touch-action:none;cursor:pointer;flex:none}
 #pills,#fx{position:absolute;inset:0;pointer-events:none}

@@ -3,6 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!-- Resolves the appearance before first paint. src/main.js is a module and therefore
+     deferred, so without this a dark-mode player gets a flash of the light palette on
+     every single load. This deliberately duplicates the rule in src/appearance.js
+     (resolveAppearance, and the 'wordfinder-appearance' key) — there is no module-based
+     equivalent that runs early enough. Keep the two in step; the "module blocked
+     entirely" test in tests/e2e/appearance.spec.js guards this one. -->
+<script>try{var p=localStorage.getItem('wordfinder-appearance')||'system';document.documentElement.dataset.appearance=p==='system'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):p}catch(e){}</script>
 <title>Word Finder</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#1d2f3a">
@@ -18,7 +25,14 @@
 <div id="app">
   <div id="hdr">
     <div><div id="kicker">WORD FINDER</div><div id="topic">Loading…</div></div>
-    <button id="newbtn" type="button">&#8635; New game</button>
+    <div id="actions">
+      <button id="appearance" type="button" data-pref="system" title="Appearance: System" aria-label="Appearance: System">
+        <svg class="i-system" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path class="solid" d="M12 3a9 9 0 0 0 0 18z"/></svg>
+        <svg class="i-light" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.6"/><path d="M12 2v2.6M12 19.4V22M2 12h2.6M19.4 12H22M4.9 4.9l1.9 1.9M17.2 17.2l1.9 1.9M19.1 4.9l-1.9 1.9M6.8 17.2l-1.9 1.9"/></svg>
+        <svg class="i-dark" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1z"/></svg>
+      </button>
+      <button id="newbtn" type="button">&#8635; New game</button>
+    </div>
   </div>
   <div id="main">
     <div id="gridbox"><div id="pills"></div><div id="letters"></div><div id="fx"></div></div>

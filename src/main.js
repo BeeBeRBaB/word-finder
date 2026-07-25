@@ -8,6 +8,7 @@ import { computeLayout } from './layout.js';
 import { applyLayout, renderGrid, renderList, renderPills } from './view.js';
 import { burst, pop } from './effects.js';
 import { makeStorage } from './storage.js';
+import { makeAppearance, appearanceLabel } from './appearance.js';
 
 /**
  * @typedef {import('./puzzle.js').Puzzle} Puzzle
@@ -49,7 +50,7 @@ const els = {
   app: must('app'), gridbox: must('gridbox'), pills: must('pills'), letters: must('letters'), fx: must('fx'),
   list: must('list'), main: must('main'), side: must('side'), count: must('count'),
   topic: must('topic'), win: must('win'), winmsg: must('winmsg'),
-  confirm: must('confirm'), winclose: must('winclose'),
+  confirm: must('confirm'), winclose: must('winclose'), appearance: must('appearance'),
 };
 
 // The single home of every mutable value in the game. Renderers receive it and
@@ -250,6 +251,26 @@ must('confirm-ok').addEventListener('click', () => { els.confirm.style.display =
 must('winbtn').addEventListener('click', newGame);
 els.winclose.addEventListener('click', () => { els.win.style.display = 'none'; });
 els.win.addEventListener('click', (e) => { if (e.target === els.win) els.win.style.display = 'none'; });
+
+// Appearance. `appearance.js` owns the preference and resolves it onto <html>; this
+// callback is the page-shaped half — the button's icon and label, and the status-bar
+// colour. The colour is read back off the resolved palette rather than duplicated
+// here, so a future palette edit has exactly one home.
+const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+const appearance = makeAppearance({
+  onApply(pref, mode) {
+    els.appearance.dataset.pref = pref;
+    const label = appearanceLabel(pref, mode);
+    els.appearance.title = label;
+    els.appearance.setAttribute('aria-label', label);
+    if (themeColorMeta) {
+      const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+      themeColorMeta.setAttribute('content', bg);
+    }
+  },
+});
+appearance.start();
+els.appearance.addEventListener('click', () => appearance.cycle());
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { els.win.style.display = 'none'; els.confirm.style.display = 'none'; }
 });

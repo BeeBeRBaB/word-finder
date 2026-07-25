@@ -12,6 +12,7 @@ import { cap } from './puzzle.js';
  *   app:HTMLElement, gridbox:HTMLElement, pills:HTMLElement, letters:HTMLElement, fx:HTMLElement,
  *   list:HTMLElement, main:HTMLElement, side:HTMLElement, count:HTMLElement,
  *   topic:HTMLElement, win:HTMLElement, winmsg:HTMLElement, confirm:HTMLElement, winclose:HTMLElement,
+ *   appearance:HTMLElement,
  * }} Els
  */
 
