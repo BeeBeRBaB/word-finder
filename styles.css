@@ -29,11 +29,14 @@
    is a deliberate change that has to update that spec and the spec's token table
    together. Do not tune a value without re-running the contrast check. */
 :root, :root[data-appearance="dark"]{
-  --bg:#1a1310; --surface:#241a15; --border:#3d2b21;
+  /* Near-black, warm-tinted: R>G>B keeps an orange cast at a luminance this low.
+     --surface stays put deliberately — dropping the ground without moving the panel
+     is what widens the grid's lift off the page (1.16:1, up from 1.09:1). */
+  --bg:#100a05; --surface:#241a15; --border:#3d2b21;
   --text:#f0e0d2; --text-strong:#fdf4ea; --muted:#bfa694; --label:#e0913f; --hint:#a89283;
   --accent:#ff8c3a; --accent-text:#ffa869; --accent-hover:#ffc79a; --accent-ink:#2b1508;
   --accent-wash:rgba(255,140,58,.12);
-  --scrim:rgba(16,10,7,.72);
+  --scrim:rgba(8,5,3,.75);
   --shadow:0 6px 20px rgba(12,6,3,.40); --card-shadow:0 10px 40px rgba(0,0,0,.5);
   --found-text:#fff1e0; --done-text:rgba(240,224,210,.6); --glow:rgba(255,140,58,.42);
   --pill-1:rgba(255,183,77,.34); --pill-2:rgba(120,205,200,.30);

@@ -49,7 +49,7 @@ test('the dark palette still resolves to the colours the game shipped with', asy
     };
   });
   expect(seen).toEqual({
-    bg: '#1a1310', surface: '#241a15', border: '#3d2b21',
+    bg: '#100a05', surface: '#241a15', border: '#3d2b21',
     text: '#f0e0d2', textStrong: '#fdf4ea', muted: '#bfa694',
     label: '#e0913f', hint: '#a89283',
     accent: '#ff8c3a', accentText: '#ffa869', accentInk: '#2b1508',
@@ -101,7 +101,7 @@ test('when matchMedia is missing, the app still renders dark, not white', async 
   await page.goto('/?seed=1&topic=0');
   expect(await page.evaluate(() => document.documentElement.hasAttribute('data-appearance'))).toBe(false);
   const bg = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--bg').trim());
-  expect(bg).toBe('#1a1310');
+  expect(bg).toBe('#100a05');
 });
 
 /** @param {Page} page */
@@ -249,7 +249,7 @@ test('the status bar colour tracks the page background', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.goto('/');
   const meta = page.locator('meta[name="theme-color"]');
-  await expect(meta).toHaveAttribute('content', '#1a1310');
+  await expect(meta).toHaveAttribute('content', '#100a05');
   await page.locator('#appearance').click();
   await expect(meta).toHaveAttribute('content', '#f2e3d5');
 });

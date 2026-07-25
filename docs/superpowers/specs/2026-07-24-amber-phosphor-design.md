@@ -29,7 +29,7 @@ against `--bg` unless noted.
 
 | Token | Dark | Light | Used by |
 | --- | --- | --- | --- |
-| `--bg` | `#1a1310` | `#f2e3d5` | page background |
+| `--bg` | `#100a05` | `#f2e3d5` | page background |
 | `--surface` | `#241a15` | `#fffaf5` | grid box, win card, confirm card |
 | `--border` | `#3d2b21` | `#dfc9b5` | grid box border |
 | `--text` | `#f0e0d2` | `#3a2418` | grid letters, word list |
@@ -42,7 +42,7 @@ against `--bg` unless noted.
 | `--accent-hover` | `#ffc79a` | `#7d3406` | link hover |
 | `--accent-ink` | `#2b1508` | `#ffffff` | text on a filled accent button |
 | `--accent-wash` | `rgba(255,140,58,.12)` | `rgba(184,78,13,.10)` | outlined button hover |
-| `--scrim` | `rgba(16,10,7,.72)` | `rgba(45,25,14,.45)` | overlay backdrops |
+| `--scrim` | `rgba(8,5,3,.75)` | `rgba(45,25,14,.45)` | overlay backdrops |
 | `--shadow` | `0 6px 20px rgba(12,6,3,.40)` | `0 6px 20px rgba(90,55,30,.16)` | grid box |
 | `--card-shadow` | `0 10px 40px rgba(0,0,0,.5)` | `0 10px 40px rgba(90,55,30,.24)` | win/confirm cards |
 | `--found-text` | `#fff1e0` | `#3d1c06` | word mid-glow, **and now found grid letters** |
@@ -75,6 +75,11 @@ stop being distinguishable from each other, which is the one job the pill palett
   rejected; `#9e4a0c` clears at 4.86.
 - **`--done-text`** clears 4.5:1 in both modes while still reading as visibly struck out
   next to `--text` (dark 5.75 vs 14.24; light 5.85 vs 11.57).
+- **Dark `--bg` is near-black, not brown.** Revised from `#1a1310` after review. `R>G>B`
+  is what keeps an orange cast readable at that luminance. Everything on the page ground
+  gains contrast (`--text` 15.27, `--done-text` 5.85), and `--surface` deliberately did
+  *not* move with it — dropping only the ground widens the grid panel's lift from 1.09:1
+  to 1.16:1, which is the separation the layout wanted anyway.
 - **Letters over pills.** Letters paint on top of pills, so every pill tint becomes an
   effective background for a grid letter. Worst case is 5.80:1 (dark, `--pill-1`) and
   7.93:1 (light, `--pill-miss`). Every pill also stays visible against bare `--surface`,
