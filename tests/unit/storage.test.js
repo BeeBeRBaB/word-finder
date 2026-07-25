@@ -5,7 +5,7 @@ import { memStore } from './helpers.js';
 
 test('save/load round-trips', () => {
   const s = makeStorage(memStore());
-  const data = { seed: 42, topicIdx: 3, found: [{ word: 'BEACH', x0: 0, y0: 0, x1: 4, y1: 0 }] };
+  const data = { seed: 42, subjectId: 'nature/birds', size: 12, count: 3, found: [{ word: 'BEACH', x0: 0, y0: 0, x1: 4, y1: 0 }] };
   s.save(data);
   assert.deepEqual(s.load(), data);
 });
@@ -17,14 +17,14 @@ test('load returns null when empty', () => {
 test('a throwing store degrades to null / no throw', () => {
   const bad = { getItem() { throw new Error('nope'); }, setItem() { throw new Error('nope'); }, removeItem() {} };
   const s = makeStorage(bad);
-  assert.doesNotThrow(() => s.save({ seed: 1, topicIdx: 0, found: [] }));
+  assert.doesNotThrow(() => s.save({ seed: 1, subjectId: 'nature/birds', size: 10, count: 0, found: [] }));
   assert.equal(s.load(), null);
 });
 
 test('clear removes the saved entry', () => {
   const store = memStore();
   const s = makeStorage(store);
-  s.save({ seed: 1, topicIdx: 0, found: [] });
+  s.save({ seed: 1, subjectId: 'nature/birds', size: 10, count: 0, found: [] });
   s.clear();
   assert.equal(s.load(), null);
 });
@@ -43,7 +43,7 @@ test('default store resolution survives a throwing localStorage getter (Safari p
   try {
     let s;
     assert.doesNotThrow(() => { s = makeStorage(); });
-    assert.doesNotThrow(() => s.save({ seed: 1, topicIdx: 0, found: [] }));
+    assert.doesNotThrow(() => s.save({ seed: 1, subjectId: 'nature/birds', size: 10, count: 0, found: [] }));
     assert.equal(s.load(), null);
   } finally {
     if (orig) Object.defineProperty(globalThis, 'localStorage', orig);
@@ -51,33 +51,44 @@ test('default store resolution survives a throwing localStorage getter (Safari p
   }
 });
 
-// Saves written before the theme -> topic rename carry `themeIdx`. Dropping them
-// would not merely lose the migration, it would hand `undefined` to buildPuzzle and
-// crash on reload for anyone mid-game at deploy time.
-test('a legacy save written with themeIdx loads as topicIdx', () => {
+// A save written before deep pools shipped is unreproducible, not merely stale: its
+// board was dealt by taking twelve words from a twelve-word list, and that list no
+// longer exists. Absence of `size` is the whole detection rule, so there is no
+// migration code and no frozen legacy pool to carry forever.
+test('a legacy save with no size field is discarded, not half-read', () => {
   const store = memStore();
-  store.setItem('wordfinder-save-v1', JSON.stringify({ seed: 7, themeIdx: 5, found: [] }));
-  assert.deepEqual(makeStorage(store).load(), { seed: 7, topicIdx: 5, found: [] });
+  store.setItem('wordfinder-save-v1', JSON.stringify({ seed: 7, topicIdx: 5, found: [] }));
+  assert.equal(makeStorage(store).load(), null);
 });
 
-test('topicIdx wins when a save somehow carries both keys', () => {
+test('a save with a non-numeric size is discarded', () => {
   const store = memStore();
-  store.setItem('wordfinder-save-v1', JSON.stringify({ seed: 7, themeIdx: 5, topicIdx: 9, found: [] }));
-  assert.deepEqual(makeStorage(store).load(), { seed: 7, topicIdx: 9, found: [] });
+  store.setItem('wordfinder-save-v1', JSON.stringify({ seed: 7, subjectId: 'nature/birds', size: '13', count: 12, found: [] }));
+  assert.equal(makeStorage(store).load(), null);
 });
 
-// The "both keys" case above uses topicIdx: 9, which `||` would also let through --
-// nothing yet distinguishes `??` from `||`. Topic 0 is reachable (`?topic=0` is used
-// throughout the e2e suite), and `topicIdx: 0 || themeIdx` would silently substitute
-// the legacy themeIdx, handing the player a different grid than the one they saved.
-test('a save carrying topicIdx: 0 keeps 0, never falling back to themeIdx', () => {
+test('a save missing its subject id is discarded', () => {
   const store = memStore();
-  store.setItem('wordfinder-save-v1', JSON.stringify({ seed: 7, themeIdx: 5, topicIdx: 0, found: [] }));
-  assert.equal(makeStorage(store).load().topicIdx, 0);
+  store.setItem('wordfinder-save-v1', JSON.stringify({ seed: 7, size: 13, count: 12, found: [] }));
+  assert.equal(makeStorage(store).load(), null);
 });
 
-test('a save missing both index keys loads as topic 0, never undefined', () => {
+test('a complete save round-trips including its board shape', () => {
   const store = memStore();
-  store.setItem('wordfinder-save-v1', JSON.stringify({ seed: 7, found: [] }));
-  assert.equal(makeStorage(store).load().topicIdx, 0);
+  const data = {
+    seed: 42, subjectId: 'nature/birds', size: 10, count: 8,
+    found: [{ word: 'OWL', x0: 1, y0: 2, x1: 3, y1: 2 }],
+  };
+  makeStorage(store).save(data);
+  assert.deepEqual(makeStorage(store).load(), data);
+});
+
+// The board shape is recorded so restore never has to ask the device what size to
+// rebuild at. A 13x13 save reopened where the preset says 10x10 still comes back as
+// the board that was saved — progress is not something a resize gets to destroy.
+test('a save whose size does not match any current preset still loads', () => {
+  const store = memStore();
+  const data = { seed: 1, subjectId: 'nature/birds', size: 11, count: 9, found: [] };
+  makeStorage(store).save(data);
+  assert.equal(makeStorage(store).load()?.size, 11);
 });

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { makeRng, resolveSeed, resolveTopicIndex } from '../../src/rng.js';
+import { makeRng, resolveSeed, resolveSubject } from '../../src/rng.js';
 
 test('the same seed reproduces the same sequence', () => {
   const a = makeRng(42), b = makeRng(42);
@@ -36,22 +36,43 @@ test('resolveSeed honours ?seed= and falls back to the clock', () => {
   assert.ok(resolveSeed('') > 0);
 });
 
-test('resolveTopicIndex clamps ?topic= into range', () => {
-  const rng = makeRng(1);
-  assert.equal(resolveTopicIndex('?topic=5', 100, rng), 5);
-  assert.equal(resolveTopicIndex('?topic=999', 100, rng), 99);
-  assert.equal(resolveTopicIndex('?topic=-4', 100, rng), 0);
+const CATS = [
+  { id: 'nature', name: 'Nature', subjects: [
+    { id: 'nature/birds', name: 'Birds' }, { id: 'nature/trees', name: 'Trees' }] },
+  { id: 'food', name: 'Food & Drink', subjects: [
+    { id: 'food/pizza', name: 'Pizza' }, { id: 'food/candy', name: 'Candy' }] },
+];
+
+test('resolveSubject honours an explicit ?subject=', () => {
+  assert.equal(resolveSubject('?subject=food/candy', CATS, makeRng(1)), 'food/candy');
 });
 
-test('resolveTopicIndex does not consume rng when ?topic= is explicit', () => {
-  const rngA = makeRng(5), rngB = makeRng(5);
-  resolveTopicIndex('?topic=3', 100, rngA);
-  assert.equal(rngA.int(50), rngB.int(50), 'explicit ?topic= must not draw from rng');
+test('resolveSubject picks inside an explicit ?category=', () => {
+  const id = resolveSubject('?category=food', CATS, makeRng(1));
+  assert.ok(['food/pizza', 'food/candy'].includes(id), `got ${id}`);
 });
 
-// `?theme=` was the old name for this parameter and is deliberately NOT aliased —
-// keeping it alive would reintroduce the ambiguity the rename removes.
-test('the retired ?theme= parameter is ignored, not honoured', () => {
-  const rng = makeRng(1);
-  assert.equal(resolveTopicIndex('?theme=5', 100, rng), makeRng(1).int(100));
+test('resolveSubject picks from the whole catalog when neither is given', () => {
+  const id = resolveSubject('', CATS, makeRng(1));
+  assert.ok(CATS.flatMap(c => c.subjects).some(s => s.id === id), `got ${id}`);
+});
+
+// The asymmetry is not decoration. If pinning a subject drew from rng, the same
+// ?seed= would deal a different grid with and without ?subject=, and the determinism
+// the e2e suite rests on would quietly stop holding.
+test('an explicit ?subject= does not consume rng', () => {
+  const a = makeRng(5), b = makeRng(5);
+  resolveSubject('?subject=food/candy', CATS, a);
+  assert.equal(a.int(50), b.int(50));
+});
+
+test('an unknown ?subject= falls back to a random one rather than throwing', () => {
+  const id = resolveSubject('?subject=nope/nope', CATS, makeRng(1));
+  assert.ok(CATS.flatMap(c => c.subjects).some(s => s.id === id), `got ${id}`);
+});
+
+// ?topic=N was the old parameter and is deliberately NOT aliased: indices no longer
+// identify anything stable, so honouring one would silently deal the wrong subject.
+test('the retired ?topic= parameter is ignored, not honoured', () => {
+  assert.equal(resolveSubject('?topic=0', CATS, makeRng(1)), resolveSubject('', CATS, makeRng(1)));
 });
