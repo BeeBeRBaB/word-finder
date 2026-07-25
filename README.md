@@ -18,29 +18,54 @@ have no DOM access at all, which is what makes them cheap to unit-test:
 
 | File | Purpose | |
 | --- | --- | --- |
-| `src/rng.js` | Seeded PRNG and `?seed=` / `?topic=` resolution. | pure |
+| `src/rng.js` | Seeded PRNG and `?seed=` / `?subject=` / `?category=` resolution. | pure |
 | `src/puzzle.js` | Word placement, grid fill, drag snapping, hit-detection. | pure |
-| `src/layout.js` | Viewport arithmetic → grid dimensions. | pure |
+| `src/layout.js` | Screen arithmetic → grid dimensions. | pure |
 | `src/view.js` | Renders cells, selection pills and the word list. | DOM |
 | `src/effects.js` | Confetti and the WebAudio chime. | DOM |
+| `src/picker.js` | The category dialog. Reports a category id; owns no game state. | DOM |
 | `src/main.js` | Entry point: owns game state, wires events, registers the SW. | DOM |
-| `src/topics.js` | The 100 topic word lists (content, not logic). Add a topic here. | data |
+| `src/catalog.js` | Category and subject names. No words — loads on every visit. | data |
+| `src/subjects/*.js` | One category's word pools, 40+ words per subject. Lazily imported. | data |
+| `src/subjects.js` | Resolves a subject id to its pool, memoising each category module. | pure-ish |
 | `src/appearance.js` | Light / dark / system preference: resolve, persist, follow the OS. | DOM |
 
 ### Reproducible puzzles
 
-`?seed=N` pins the puzzle, `?topic=N` pins the topic — e.g. `/?seed=1&topic=0`. With
-neither, the clock seeds it and a random topic is chosen.
+`?seed=N` pins the puzzle, `?subject=<id>` pins the subject, `?category=<id>` pins the
+category and picks a subject inside it — e.g. `/?seed=1&subject=nature/birds`. With
+none of them, the clock seeds it and a random subject is chosen.
 
-### Adding a topic
+### Board sizes
 
-Append `["Name","WORD1,WORD2,..."]` to the array in `src/topics.js`. Words should be uppercase and ≤ 12 letters; 12 are drawn per puzzle.
+Two presets, chosen from `screen` rather than the viewport so a device always plays one
+board: **13×13 with 12 words**, or **10×10 with 8 words** when the screen's smaller edge
+is under 480px. Resizing a window or rotating a phone never changes it. A saved board is
+always restored at the size it was saved at.
+
+### Adding a subject
+
+1. Add `{ id: '<category>/<slug>', name: '<Name>' }` to that category's `subjects` in
+   `src/catalog.js`. The slug is the name lowercased with non-alphanumerics replaced by `-`.
+2. Add `'<category>/<slug>': 'WORD1,WORD2,...'` to `src/subjects/<category>.js`.
+
+The word list must hold **40+ words**, bare uppercase A–Z, 3–12 letters, no duplicates,
+with at least 6 words of 3–4 letters and 8 in each of 3–5, 5–6, 6–8, 7–9 and 9–12.
+`npm run test:unit` enforces all of it and names the subject and bucket that failed.
+
+Short words are the scarce ones — write those first.
+
+### Adding a category
+
+Add the entry to `CATEGORIES` in `src/catalog.js`, create `src/subjects/<id>.js`
+exporting a `WORDS` record, and add **nothing** to `sw.js` — word modules are cached at
+runtime by directory, not listed. The picker reads its options from the catalog.
 
 ## Tests
 
 | Path | Purpose |
 | --- | --- |
-| `tests/unit/` | `node:test` specs for the pure `src/` modules (`rng`, `puzzle`, `layout`, `storage`, `appearance`), a token-parity check on the stylesheet (`tokens`), and a static assertion on the service worker (`sw`). No browser. |
+| `tests/unit/` | `node:test` specs for the pure `src/` modules (`rng`, `puzzle`, `layout`, `storage`, `appearance`, `catalog`, `subjects`), the word-list contract every subject must meet (`content`) and a deal of every subject at both presets (`deal`), a token-parity check on the stylesheet (`tokens`), and a static assertion on the service worker (`sw`). No browser. |
 | `tests/e2e/` | Playwright specs (`smoke`, `gameplay`, `layout`, `regressions`, `ux`, `appearance`) against a local static server (`tests/server.mjs`), on `desktop` and `mobile` viewport projects. |
 | `tests/live/` | Playwright smoke test against the real deployed GitHub Pages site — see [Development](#development). |
 
@@ -65,8 +90,8 @@ takes control there, and that every asset the service worker precaches actually
 resolves on the live site. Run it manually after `git push`, once the Pages
 build has finished (usually 1–3 minutes); it is never invoked by `npm test`.
 
-See [Reproducible puzzles](#reproducible-puzzles) above for `?seed=` / `?topic=`
-— the same URL parameters the tests pin puzzles with.
+See [Reproducible puzzles](#reproducible-puzzles) above for `?seed=` / `?subject=` /
+`?category=` — the same URL parameters the tests pin puzzles with.
 
 ## Host on GitHub Pages
 
