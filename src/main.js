@@ -185,6 +185,24 @@ function layout() {
   pills();
 }
 
+let resizeFrame = 0;
+/** Coalesce a burst of resize events into one relayout per frame. `layout()` tears
+ * down and rebuilds all 100-169 cells, and dragging a desktop window edge fires
+ * resize continuously; without this that is a full rebuild per event. The size is
+ * read inside `layout()` at frame time, so the collapsed burst lays out at the
+ * newest dimensions rather than the first event's.
+ *
+ * Cancel-and-reschedule rather than an `if (pending) return` flag: a callback
+ * scheduled in a hidden tab is not delivered until the tab is shown, and a flag
+ * that only clears inside the callback would latch shut for good if one were ever
+ * dropped instead of deferred. Replacing the handle each time cannot get stuck.
+ * `cancelAnimationFrame(0)` is a no-op, so the initial value is safe.
+ * @returns {void} */
+function onResize() {
+  cancelAnimationFrame(resizeFrame);
+  resizeFrame = requestAnimationFrame(layout);
+}
+
 const pills = () => renderPills(els, state, state.dims, PAD);
 /** @returns {void} */
 function list() {
@@ -387,7 +405,7 @@ els.appearance.addEventListener('click', () => appearance.cycle());
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { els.win.style.display = 'none'; picker.close(); }
 });
-window.addEventListener('resize', layout);
+window.addEventListener('resize', onResize);
 
 // Explicit `?seed=` / `?subject=` / `?category=` in the URL always wins (it is what the
 // determinism e2e test relies on), even over a saved game — that is the whole point of
