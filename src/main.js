@@ -277,6 +277,18 @@ function endDrag() {
 els.gridbox.addEventListener('pointerup', endDrag);
 els.gridbox.addEventListener('pointercancel', endDrag);
 
+/** Say why a deal failed, in the one place a subject name would otherwise sit.
+ * Shared by every caller that can hit a rejected `loadCategory`/`loadSubject` —
+ * `boot()` below, and the win card's "Play a new game" button — so a failure looks
+ * and reads identically wherever it happens, rather than each call site inventing
+ * its own wording.
+ * @param {unknown} err @returns {void} */
+function reportLoadFailure(err) {
+  els.subject.textContent = err instanceof SubjectLoadError && err.reason === 'unavailable'
+    ? 'Offline' : 'Unavailable';
+  els.category.textContent = '';
+}
+
 // A fresh subject is a player-facing surprise, so it stays on Math.random() rather
 // than the seeded sequence — `?seed=` pins the puzzle you land on, not every one after.
 // It also gets a fresh seed: `newPuzzle` builds its own rng from scratch each time, so
@@ -292,7 +304,18 @@ async function newGame(categoryId) {
   const pick = pool[Math.floor(Math.random() * pool.length)];
   newPuzzle(Date.now() >>> 0, await loadSubject(pick), PRESET);
 }
-must('winbtn').addEventListener('click', () => { void newGame(); });
+must('winbtn').addEventListener('click', () => {
+  newGame().catch((err) => {
+    // An offline network, an evicted cache, or (right now) a category the parallel
+    // content authoring hasn't reached yet: `newGame()` rejects before `newPuzzle()`
+    // ever runs, so the just-solved board and win card are still on screen with
+    // nothing telling the player their tap did nothing. Hide the stale overlay so
+    // the header's failure text (the same `reportLoadFailure` boot() uses) is what
+    // they actually see, rather than reporting it somewhere the win card covers.
+    els.win.style.display = 'none';
+    reportLoadFailure(err);
+  });
+});
 els.winclose.addEventListener('click', () => { els.win.style.display = 'none'; });
 els.win.addEventListener('click', (e) => { if (e.target === els.win) els.win.style.display = 'none'; });
 
@@ -349,9 +372,7 @@ async function boot() {
     // Offline with an uncached category, or a save naming a subject since removed. A
     // blank grid with no explanation is the worst outcome available, so say what
     // happened and leave the board empty rather than half-built.
-    els.subject.textContent = err instanceof SubjectLoadError && err.reason === 'unavailable'
-      ? 'Offline' : 'Unavailable';
-    els.category.textContent = '';
+    reportLoadFailure(err);
   }
 }
 
@@ -382,13 +403,9 @@ async function restore(saved) {
   persist();
 }
 
-// Top-level await, not `void boot()`: a module script with a pending top-level await
-// keeps the document's `load` event from firing until it settles (same mechanism a
-// classic deferred script gets from running synchronously). Letting `load` fire before
-// the category/subject fetch resolves would mean `page.goto()` — and a real "the app is
-// ready" moment for anyone else waiting on `load`, including the service worker
-// registration below — arrives while the grid is still empty.
-await boot();
+// boot() never rejects — its own try/catch (above) reports any failure into the DOM
+// itself via reportLoadFailure — so there is nothing here for `void` to discard.
+void boot();
 // './sw.js' stays relative to the DOCUMENT, not to this module — register()
 // resolves against the page's base URL. Writing '../sw.js' because the script
 // now lives in src/ would resolve to the domain root and break the project-path

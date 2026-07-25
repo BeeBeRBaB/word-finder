@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { findWordInGrid, dragCells } from './helpers.js';
+import { CATEGORIES } from '../../src/catalog.js';
 
 // unwired until the picker lands in Task 7
 test.fixme('New game mid-game asks to confirm; cancel keeps the board', async ({ page }) => {
@@ -26,6 +27,38 @@ test('the win overlay can be dismissed, leaving the solved board', async ({ page
   await page.locator('#winclose').click();
   await expect(page.locator('#win')).toBeHidden();
   await expect(page.locator('.w.done')).toHaveCount(12);         // board still there
+});
+
+// Regression: the win card's button used to call newGame() with no error handling,
+// so a rejected loadCategory()/loadSubject() became a silent unhandled rejection --
+// the win overlay stayed open, #subject/#category never changed, and the player was
+// simply stuck. Forces that exact rejection deterministically: pins Math.random() so
+// newGame()'s category pick lands on a specific, known category, then aborts that
+// category's module request the same way an offline network or an evicted cache
+// would. The seeded initial puzzle (nature/birds) is unaffected -- its module is
+// fetched before the route is even relevant, and boot()'s own subject resolution
+// never touches Math.random() (it draws from the seeded rng instead).
+test('a failed deal from the win card tells the player, rather than leaving a stale overlay', async ({ page }) => {
+  const target = CATEGORIES[CATEGORIES.length - 1].id;
+  await page.addInitScript((n) => {
+    // Math.floor(r * n) === n - 1 for any r in [(n-1)/n, 1); 1 - 1/(2n) sits safely
+    // inside that range regardless of n, so this always picks the LAST category.
+    Math.random = () => 1 - 1 / (2 * n);
+  }, CATEGORIES.length);
+  await page.route(`**/src/subjects/${target}.js`, route => route.abort());
+
+  await page.goto('/?seed=1&subject=nature/birds');
+  for (const el of await page.locator('.w').all()) {
+    const w = /** @type {string} */ (await el.textContent()).toUpperCase();
+    await dragCells(page, await findWordInGrid(page, w));
+  }
+  await expect(page.locator('#win')).toBeVisible();
+
+  await page.locator('#winbtn').click();
+
+  await expect(page.locator('#win')).toBeHidden();
+  await expect(page.locator('#subject')).toHaveText('Offline');
+  await expect(page.locator('#category')).toHaveText('');
 });
 
 test('progress and puzzle survive a reload', async ({ page }) => {
