@@ -53,43 +53,14 @@ esac
 
 cd "$root" || fail "verify.sh: could not enter $root"
 
-# The service worker's precache list, checked in BOTH directions. Each half fails
-# silently in its own way and neither is covered by a unit test.
+# The unit suite. Fast, no browser, and it owns the invariants that are easiest to
+# break by hand: light/dark palette parity (tokens.test.js), the service worker's
+# reload-mode install, and the ASSETS precache list in both directions (sw.test.js).
 #
-#  - a module missing from ASSETS works online and breaks only offline
-#  - a stale ASSETS entry pointing at a deleted file is worse: Cache.addAll is
-#    atomic, so one 404 rejects the whole install and NOTHING is cached, disabling
-#    offline support entirely. main.js swallows the registration error, so nothing
-#    surfaces anywhere. Renaming a module used to trip only the first check.
-#  - src/subjects/*.js must be ABSENT: precaching word pools would pull all 25
-#    categories into the installed shell and defeat the lazy load.
-problems=$(node -e '
-  const fs = require("fs");
-  const sw = fs.readFileSync("sw.js", "utf8");
-  const m = sw.match(/const ASSETS=(\[[^\]]*\])/);
-  if (!m) { console.log("sw.js: could not find the ASSETS array"); process.exit(0); }
-  const assets = JSON.parse(m[1].replace(/'"'"'/g, "\""));
-  const out = [];
-  for (const f of fs.readdirSync("src").filter(f => f.endsWith(".js")))
-    if (!assets.includes("./src/" + f)) out.push(`  missing from ASSETS: src/${f}`);
-  for (const a of assets) {
-    const p = a.replace(/^\.\//, "");
-    if (p === "" || p.endsWith("/")) continue;             // "./" is the document
-    if (!fs.existsSync(p)) out.push(`  listed in ASSETS but not on disk: ${a}`);
-    if (p.startsWith("src/subjects/")) out.push(`  word pool must NOT be precached: ${a}`);
-  }
-  console.log(out.join("\n"));
-')
-if [ -n "$problems" ]; then
-  fail "sw.js ASSETS is out of sync:
-$problems
-Every src/*.js must be listed, every listed path must exist (addAll is atomic — one
-404 caches nothing at all), and no src/subjects/ word pool may be listed."
-fi
-
-# The unit suite. Fast, no browser, and it owns the two invariants that are
-# easiest to break by hand: light/dark palette parity (tokens.test.js) and the
-# service worker's reload-mode install (sw.test.js).
+# That last one used to be re-implemented here, parsing sw.js a second time. It is a
+# test's job: sw.test.js already read the same file and already owned one of the three
+# rules, and as a test it also runs under `npm test` and `/ship` — which is what
+# catches a module deleted with `rm`, something this hook never sees.
 if ! out=$(npm run test:unit --silent 2>&1); then
   fail "npm run test:unit failed:
 

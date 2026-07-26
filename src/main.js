@@ -29,6 +29,7 @@ import { makePicker } from './picker.js';
  *   drag: {x:number, y:number}|null,
  *   dims: LayoutDims,
  *   winTimer: ReturnType<typeof setTimeout>|null,
+ *   rendered: {puzzle: Puzzle|null, cell: number, size: number},
  * }} State
  */
 
@@ -76,6 +77,10 @@ const state = {
   drag: null,
   dims: { landscape: false, cell: 34, gridSize: 0, sideWidth: 0, listColumns: '1fr 1fr' },
   winTimer: null,
+  // What the cells currently on screen were built from, so `layout()` can skip a
+  // rebuild that would produce an identical grid. `cell: 0` matches no real layout,
+  // so the first pass always renders.
+  rendered: { puzzle: null, cell: 0, size: 0 },
 };
 
 const store = makeStorage();
@@ -183,16 +188,15 @@ function layout() {
   // leaves it identical on all but one frame of a drag. Keyed on the puzzle object too,
   // not just its shape, or dealing a new board at the same size would skip the redraw
   // and leave the previous puzzle's letters on screen.
-  if (rendered.puzzle === state.puzzle && rendered.cell === state.dims.cell && rendered.size === state.size) return;
-  rendered = { puzzle: state.puzzle, cell: state.dims.cell, size: state.size };
+  const r = state.rendered;
+  if (r.puzzle === state.puzzle && r.cell === state.dims.cell && r.size === state.size) return;
+  state.rendered = { puzzle: state.puzzle, cell: state.dims.cell, size: state.size };
   renderGrid(els, state.puzzle, state.dims, state.size, PAD);
   // renderGrid rebuilds every cell from scratch, so found-ness has to be reapplied
   // after it or a resize would wipe the grid's record of what you've already found.
   renderFoundCells(els, state, state.size);
   pills();
 }
-/** @type {{puzzle: Puzzle|null, cell: number, size: number}} */
-let rendered = { puzzle: null, cell: 0, size: 0 };
 
 let resizeFrame = 0;
 /** One relayout per frame while resizing. Cancel-and-reschedule rather than a pending
@@ -316,7 +320,7 @@ function reportLoadFailure(err) {
   // whichever id the caller asked for, and categoryOf leaves a bare category id alone,
   // so this covers both entry points. Only 'unavailable': 'unknown' means an id that is
   // not in the catalog, which nothing offers in the first place.
-  if (offline && err instanceof SubjectLoadError) unavailableCategories.add(categoryOf(err.id));
+  if (offline) unavailableCategories.add(categoryOf(err.id));
   els.subject.textContent = offline ? 'Offline' : 'Unavailable';
   els.category.textContent = '';
 }

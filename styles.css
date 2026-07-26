@@ -120,10 +120,17 @@ a{color:var(--accent-text)}a:hover{color:var(--accent-hover)}
    are the flex item that absorbs the squeeze, and "New game" breaks across two lines
    — which grows the header again, the very thing the nowrap above is preventing. */
 #app[data-landscape] #actions{flex:none}
-#app[data-landscape] #newbtn{white-space:nowrap}
-#app[data-landscape] #hdr > :first-child{min-width:0}
-#app[data-landscape] #subjectline{min-width:0}
-#app[data-landscape] #subject{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* #titles is the flex item that has to be allowed to shrink; min-width:auto on a flex
+   item refuses to go below its content, so without this the ellipsis never engages.
+   It is named rather than matched as `> :first-child`, which silently stopped working
+   the moment anything was reordered ahead of it. */
+#app[data-landscape] #titles{min-width:0}
+/* The category yields before the name does, and the name keeps a floor. Letting both
+   collapse freely rendered #subject at ZERO px in a band of narrow landscape windows
+   (700x640, 600x400, 560x320): not truncated, entirely invisible, while the category
+   prefix kept its full 72px. Whatever room there is belongs to the name. */
+#app[data-landscape] #category{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#app[data-landscape] #subject{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1 1 auto;min-width:5ch}
 /* row-gap above does the separating between the subject block and the list here, so this
    only needs its own bottom breathing room. */
 #app[data-landscape] #listhdr{margin:2px 2px 6px 0}

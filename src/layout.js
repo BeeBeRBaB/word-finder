@@ -45,7 +45,8 @@ const ROW_H = 34;
 export const reservePortrait = (count) => RESERVE_BASE + Math.ceil(count / 2) * ROW_H;
 
 const GAP = 20; // the #main column gap between grid and list rail in landscape
-// Widest the landscape word-list rail may get. See the note at its use below.
+// Narrowest and widest the landscape word-list rail may get. See the notes at their uses.
+const MIN_SIDE = 160;
 const LIST_MAX = 380;
 // #gridbox keeps a content-box border (1px each side, per styles.css), so its rendered
 // box is 2px larger than the size set on it. Kept out of the reserve above so that stays
@@ -68,8 +69,17 @@ export function computeLayout({ vw, vh, size, pad, count }) {
   const landscape = vw > vh * 1.08;
   let cell, sideWidth;
   if (landscape) {
-    cell = Math.min(54, Math.floor((vh - 2 * pad - BORDER) / size));
-    cell = Math.max(16, cell);
+    // Bound by BOTH axes. Height is what usually binds in landscape, but sizing on it
+    // alone let the grid claim so much width that the rail hit its 160px floor and the
+    // tracks together exceeded the viewport — at 700x640 they totalled 811px against
+    // 700. That overflow had to be swept up in CSS, and a bare `center` put half of it
+    // past the start edge, which cannot be scrolled to: the board's whole first column
+    // sat off-screen, unreachable in a game played by dragging across cells. Leaving
+    // room for the rail here makes the tracks fit by construction, which is a property
+    // this pure module can be tested on rather than a rule CSS has to rescue.
+    const byHeight = Math.floor((vh - 2 * pad - BORDER) / size);
+    const byWidth = Math.floor((vw - GAP - MIN_SIDE - 2 * pad) / size);
+    cell = Math.max(16, Math.min(54, byHeight, byWidth));
     const gridSize = size * cell + 2 * pad;
     // Capped, not "whatever is left". The rail holds two content-sized columns of
     // words, so extra width does not make it more useful — it just spreads the same
@@ -80,7 +90,7 @@ export function computeLayout({ vw, vh, size, pad, count }) {
     // chrome, the grid gets its full height back, and the same code looked fine —
     // which is why this only ever showed up in the browser. 380 is the width the list
     // already proves it needs in portrait, where it is the full content width.
-    sideWidth = Math.min(Math.max(160, vw - gridSize - GAP), LIST_MAX);
+    sideWidth = Math.min(Math.max(MIN_SIDE, vw - gridSize - GAP), LIST_MAX);
     // `1fr 1fr` split the WHOLE rail, which in landscape is every pixel left over after
     // the grid — so the second column sat hundreds of px away on a wide window and slid
     // on every resize. Content-sized columns make the list's width a function of the

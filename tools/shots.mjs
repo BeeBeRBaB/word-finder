@@ -28,11 +28,9 @@ const PORT = 5273;                       // not 5173: never fight a dev server a
 const DEFAULT_SUBJECT = 'history/industrial-revolution';
 
 const args = process.argv.slice(2);
-const flag = (name) => args.some((a) => a === `--${name}`);
-const opt = (name, fallback) => {
-  const hit = args.find((a) => a.startsWith(`--${name}=`));
-  return hit ? hit.slice(name.length + 3) : fallback;
-};
+const dark = args.includes('--dark');
+const measure = args.includes('--measure');
+const subject = args.find((a) => a.startsWith('--subject='))?.slice('--subject='.length) ?? DEFAULT_SUBJECT;
 const filters = args.filter((a) => !a.startsWith('--')).map((a) => a.toLowerCase());
 const shapes = filters.length
   ? DEVICES.filter((d) => filters.some((f) => d.name.toLowerCase().includes(f)))
@@ -58,7 +56,6 @@ for (let i = 0; i < 100; i++) {
 rmSync(OUT, { recursive: true, force: true });
 mkdirSync(OUT, { recursive: true });
 
-const subject = opt('subject', DEFAULT_SUBJECT);
 const url = `${base}/index.html?seed=1&subject=${subject}`;
 const browser = await chromium.launch();
 
@@ -68,14 +65,14 @@ for (const d of shapes) {
   // Set the stored preference before any script runs — index.html's inline resolver
   // reads it before first paint, so setting it after load would render the wrong
   // palette first and repaint.
-  if (flag('dark')) await page.addInitScript(() => localStorage.setItem('wordfinder-appearance', 'dark'));
+  if (dark) await page.addInitScript(() => localStorage.setItem('wordfinder-appearance', 'dark'));
   await page.goto(url);
   await page.waitForSelector('#letters .cell');
   const file = new URL(`${d.name.replace(/\s+/g, '-').toLowerCase()}.png`, OUT);
   await page.screenshot({ path: file.pathname });
 
   let note = '';
-  if (flag('measure')) {
+  if (measure) {
     const m = await page.evaluate(() => {
       const box = (sel) => document.querySelector(sel)?.getBoundingClientRect();
       const g = box('#gridbox'), l = box('#list');

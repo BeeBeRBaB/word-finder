@@ -22,6 +22,28 @@ export class SubjectLoadError extends Error {
   }
 }
 
+/** The real dynamic import, plus the retry the module map makes necessary. A dynamic
+ * import that fails is remembered as failed for the life of the page, so the same
+ * specifier keeps rejecting from memory even once the network is back -- measured:
+ * offline import rejects, network restored rejects again from cache, the same file
+ * with `?retry=1` resolves. Each attempt therefore has to name a URL the page has not
+ * already failed on, which is why this counts rather than flags: once `?retry=1` has
+ * failed it is poisoned too.
+ *
+ * All of it lives in here so `fetchWords` keeps one job (ask, memoise on success) and
+ * the injected-importer contract stays one argument -- a test double, or any future
+ * importer, should not have to accept a counter that means nothing to it.
+ * @returns {(category:string) => Promise<{WORDS:Record<string,string>}>} */
+function realImport() {
+  /** @type {Map<string, number>} */
+  const failures = new Map();
+  return (category) => {
+    const n = failures.get(category) ?? 0;
+    return import(n === 0 ? `./subjects/${category}.js` : `./subjects/${category}.js?retry=${n}`)
+      .catch((err) => { failures.set(category, n + 1); throw err; });
+  };
+}
+
 /**
  * The importer is injected so a unit test can fail one without a network, and so the
  * memoisation can be observed. The default is the real dynamic import — a runtime
@@ -30,20 +52,9 @@ export class SubjectLoadError extends Error {
  * @returns {{loadCategory:(id:string) => Promise<CategoryData>, loadSubject:(id:string) => Promise<Subject>}}
  */
 export function makeSubjectLoader(importFn) {
-  /** @type {(category:string, attempt:number) => Promise<{WORDS:Record<string,string>}>} */
-  const load = importFn ?? ((category, attempt) =>
-    // The query string is what makes a retry possible at all. A dynamic import that
-    // fails is recorded as failed in the module map for the life of the page, so the
-    // same specifier keeps rejecting from memory even once the network is back --
-    // measured: offline import -> reject, network restored -> reject again from cache,
-    // same file with `?retry=1` -> resolves. A retry therefore has to ask for a URL the
-    // page has not already failed on. Costs a second module instance for that category
-    // in the rare case it happens, which for a file of nothing but words is a few KB.
-    import(attempt === 0 ? `./subjects/${category}.js` : `./subjects/${category}.js?retry=${attempt}`));
+  const load = importFn ?? realImport();
   /** @type {Map<string, Record<string,string>>} */
   const cache = new Map();
-  /** @type {Map<string, number>} */
-  const failures = new Map();
 
   /** One import per category id, memoised, regardless of whether it was reached via
    * loadCategory or loadSubject. A failed category is not memoised: a player who was
@@ -52,16 +63,11 @@ export function makeSubjectLoader(importFn) {
   async function fetchWords(category, idForError) {
     const cached = cache.get(category);
     if (cached) return cached;
-    const attempt = failures.get(category) ?? 0;
-    const words = await load(category, attempt).then(
+    const words = await load(category).then(
       (m) => m.WORDS,
-      () => {
-        failures.set(category, attempt + 1);
-        throw new SubjectLoadError('unavailable', idForError);
-      },
+      () => { throw new SubjectLoadError('unavailable', idForError); },
     );
     cache.set(category, words);
-    failures.delete(category);
     return words;
   }
 

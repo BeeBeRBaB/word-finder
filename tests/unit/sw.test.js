@@ -1,8 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync } from 'node:fs';
 
-const sw = readFileSync(new URL('../../sw.js', import.meta.url), 'utf8');
+const ROOT = new URL('../../', import.meta.url);
+const sw = readFileSync(new URL('sw.js', ROOT), 'utf8');
+
+/** @returns {string[]} */
+function assets() {
+  const m = sw.match(/const ASSETS=(\[[^\]]*\])/);
+  assert.ok(m, 'could not find ASSETS in sw.js');
+  return JSON.parse(m[1].replace(/'/g, '"'));
+}
 
 // GitHub Pages serves code with `cache-control: max-age=600` (see sw.js:21-26, where
 // `revalidate()` already documents and works around this for the fetch handler). A
@@ -31,17 +39,39 @@ test("the install handler forces reload-mode requests, not a bare addAll(ASSETS)
 });
 
 test('the shell precache lists catalog.js and every src module, but no word pool', () => {
-  const m = sw.match(/const ASSETS=(\[[^\]]*\])/);
-  assert.ok(m, 'could not find ASSETS in sw.js');
-  /** @type {string[]} */
-  const assets = JSON.parse(m[1].replace(/'/g, '"'));
-  assert.ok(assets.includes('./src/catalog.js'), 'the picker needs names on every visit');
-  assert.ok(assets.includes('./src/subjects.js'), 'the loader is shell code, not content');
-  assert.ok(assets.includes('./src/picker.js'));
+  const list = assets();
+  assert.ok(list.includes('./src/catalog.js'), 'the picker needs names on every visit');
+  assert.ok(list.includes('./src/subjects.js'), 'the loader is shell code, not content');
+  assert.ok(list.includes('./src/picker.js'));
   assert.ok(
-    !assets.some(a => a.startsWith('./src/subjects/')),
+    !list.some(a => a.startsWith('./src/subjects/')),
     'word pools must not be precached: they are the whole reason the catalog is separate',
   );
+});
+
+// Both directions, because each fails silently and differently. A module missing from
+// the list works online and breaks only offline. A listed path that no longer exists is
+// worse: Cache.addAll is atomic, so one 404 rejects the whole install and caches
+// NOTHING, disabling offline support entirely -- and main.js swallows the registration
+// error, so nothing surfaces anywhere. Renaming a module trips exactly that.
+//
+// This lives here rather than in the PostToolUse hook, which used to re-parse ASSETS
+// itself: as a test it also runs under `npm test` and `/ship`, which is what catches a
+// module deleted with `rm` or moved with `git mv` -- neither of which the hook sees,
+// since it only fires on edits Claude makes through Edit/Write.
+test('every src module is precached and every precached path exists', () => {
+  const list = assets();
+  /** @type {string[]} */
+  const problems = [];
+  for (const f of readdirSync(new URL('src/', ROOT)).filter(f => f.endsWith('.js'))) {
+    if (!list.includes(`./src/${f}`)) problems.push(`src/${f} is not in ASSETS (breaks offline)`);
+  }
+  for (const a of list) {
+    const rel = a.replace(/^\.\//, '');
+    if (rel === '' || rel.endsWith('/')) continue;              // './' is the document
+    if (!existsSync(new URL(rel, ROOT))) problems.push(`${a} is in ASSETS but not on disk (addAll is atomic — this caches nothing)`);
+  }
+  assert.deepEqual(problems, []);
 });
 
 // The cost of getting this wrong is invisible until a deploy: the shell sweep would
