@@ -353,6 +353,7 @@ const picker = makePicker({
   warning: must('picker-warning'),
   error: must('picker-error'),
   start: must('picker-start'),
+  surprise: must('picker-surprise'),
   cancel: must('picker-cancel'),
   categories: CATEGORIES,
   isUnavailable: (id) => unavailableCategories.has(id),

@@ -266,9 +266,13 @@ a{color:var(--accent-text)}a:hover{color:var(--accent-hover)}
 #picker-select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 #picker-error{font-size:13px;color:var(--pill-miss);margin:-12px 0 16px;max-width:260px}
 #pickercard div{display:flex;gap:12px;justify-content:center}
-#picker-cancel,#picker-start{border:none;border-radius:999px;padding:12px 22px;font-family:inherit;font-weight:700;font-size:15px;cursor:pointer;min-height:44px}
-#picker-cancel{background:transparent;border:1.5px solid var(--accent);color:var(--accent-text)}
+/* Three buttons wrap on a narrow card rather than shrinking below the 44px touch
+   target; Start sits last so it keeps the primary position on either layout. */
+#picker-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end}
+#picker-cancel,#picker-surprise,#picker-start{border:none;border-radius:999px;padding:12px 22px;font-family:inherit;font-weight:700;font-size:15px;cursor:pointer;min-height:44px}
+#picker-cancel,#picker-surprise{background:transparent;border:1.5px solid var(--accent);color:var(--accent-text)}
 #picker-start{background:var(--accent);color:var(--accent-ink)}
+#picker-start[disabled]{opacity:.45;cursor:not-allowed}
 @media (prefers-reduced-motion: reduce){
   #wincard{animation:none}
   .pill{transition:none}

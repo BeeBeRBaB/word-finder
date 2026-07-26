@@ -73,11 +73,11 @@
   <label for="picker-select">Category</label>
   <!-- A native select rather than a grid of chips: 25 categories is eight to twelve
        rows on a phone, while this is one control at any count, renders as a wheel
-       picker on iOS, and brings keyboard and screen-reader support with it. The
-       empty value is "Surprise me" so the default needs no special-casing. -->
+       picker on iOS, and brings keyboard and screen-reader support with it. -->
   <select id="picker-select"></select>
   <p id="picker-error" hidden></p>
-  <div><button id="picker-cancel" type="button">Cancel</button>
+  <div id="picker-actions"><button id="picker-cancel" type="button">Cancel</button>
+  <button id="picker-surprise" type="button">Surprise me</button>
   <button id="picker-start" type="button">Start</button></div>
 </div></div>
 <script type="module" src="src/main.js"></script>

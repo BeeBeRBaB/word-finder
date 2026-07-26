@@ -35,6 +35,7 @@ test('Cancel during a slow deal leaves the board alone, and Start cannot deal tw
   // Mid-flight: both controls are disabled, so neither a second Start nor a Cancel can
   // reach the handler, and the dialog refuses to close on a promise it cannot recall.
   await expect(page.locator('#picker-start')).toBeDisabled();
+  await expect(page.locator('#picker-surprise')).toBeDisabled();
   await expect(page.locator('#picker-cancel')).toBeDisabled();
   await page.locator('#picker-cancel').click({ force: true });
   await expect(page.locator('#picker')).toBeVisible();
@@ -46,15 +47,20 @@ test('Cancel during a slow deal leaves the board alone, and Start cannot deal tw
   await expect(page.locator('#category')).toHaveText('Food & Drink');
 });
 
-test('the picker offers Surprise me first, then every category', async ({ page }) => {
+test('the picker lists every category behind a placeholder, with Start held back', async ({ page }) => {
   await page.goto('/?seed=1&subject=nature/birds');
   await page.locator('#newbtn').click();
   const opts = await page.locator('#picker-select option').allTextContents();
-  expect(opts[0]).toBe('Surprise me');
+  expect(opts[0]).toBe('Choose a category…');
   expect(opts).toContain('Nature');
   expect(opts).toContain('Food & Drink');
-  expect(opts).toContain('Sports & Games');
-  expect(await page.locator('#picker-select').inputValue()).toBe('');
+  expect(opts).toHaveLength(CATEGORIES.length + 1);
+  // Random is its own button, so the list holds only choosable things and Start has
+  // nothing to start until one is picked.
+  await expect(page.locator('#picker-start')).toBeDisabled();
+  await expect(page.locator('#picker-surprise')).toBeEnabled();
+  await page.locator('#picker-select').selectOption('food');
+  await expect(page.locator('#picker-start')).toBeEnabled();
 });
 
 test('choosing a category deals a subject from it', async ({ page }) => {
@@ -66,14 +72,12 @@ test('choosing a category deals a subject from it', async ({ page }) => {
   await expect(page.locator('#category')).toHaveText('Food & Drink');
 });
 
-test('Surprise me deals a game', async ({ page }) => {
-  // Truly random now. This used to pin Math.random because the catalog listed
-  // categories with no module on disk, which made an unpinned draw flake -- and that
-  // pin meant the one test named for the random draw never exercised it. content.test.js
-  // now guarantees all 25 have a module, so the draw can be what it says it is.
+test('Surprise me deals a game in one tap, without choosing a category', async ({ page }) => {
+  // Truly random: content.test.js guarantees all 25 categories have a module, so the
+  // draw can be what it says it is rather than a pinned Math.random.
   await page.goto('/?seed=1&subject=nature/birds');
   await page.locator('#newbtn').click();
-  await page.locator('#picker-start').click();
+  await page.locator('#picker-surprise').click();
   await expect(page.locator('#picker')).toBeHidden();
   await expect(page.locator('#subject')).not.toHaveText('Loading…');
   await expect(page.locator('#count')).toContainText('found');
