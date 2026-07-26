@@ -63,22 +63,15 @@ test('progress and puzzle survive a reload', async ({ page }) => {
   // localStorage -- pinning a subject here would defeat the test, since the pin
   // would still be in the URL on reload and boot() would take the URL branch
   // again instead of the restore-from-save branch this test exists to exercise.
-  // Retried rather than waited-out: the catalog currently lists more categories
-  // than have a subjects/ module on disk (parallel content authoring), so a random
-  // pick sometimes 404s straight to "Offline" -- a state a wait cannot recover
-  // from, only a fresh attempt (a new Math.random() draw) can. Once every category
-  // has a module this loop exits on the first attempt.
-  // 50 attempts, not a handful: only a few categories have a module on disk right
-  // now, so a single-digit retry budget still fails often enough to flake this test.
-  const MAX_ATTEMPTS = 50;
-  /** @type {string|null} */
-  let subject = null;
-  for (let attempt = 0; attempt < MAX_ATTEMPTS && (subject === null || subject === 'Offline' || subject === 'Unavailable'); attempt++) {
-    await page.goto('/');
-    subject = await page.locator('#subject').textContent();
-  }
-  const booted = subject !== null && subject !== 'Offline' && subject !== 'Unavailable';
-  expect(booted, `could not boot to a real puzzle after ${MAX_ATTEMPTS} attempts`).toBe(true);
+  // One attempt, no retry. This used to loop up to 50 times because the catalog
+  // listed more categories than had a module on disk, so a random draw could 404 to
+  // "Offline". content.test.js now fails if any of the 25 lacks a module, so that
+  // cannot happen -- and the loop had become actively harmful: an unpinned boot
+  // failing half the time would be retried away into a green tick, which is exactly
+  // the regression this test is positioned to catch, since it is the only one that
+  // exercises the default path a real visitor takes.
+  await page.goto('/');
+  await expect(page.locator('#subject')).not.toHaveText(/^(Offline|Unavailable|Loading…)$/);
   const grid1 = await page.locator('.cell').allTextContents();
   const first = /** @type {string} */ (await page.locator('.w').first().textContent()).toUpperCase();
   await dragCells(page, await findWordInGrid(page, first));

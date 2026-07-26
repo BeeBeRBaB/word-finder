@@ -83,8 +83,6 @@ const store = makeStorage();
 let currentSeed;
 /** @type {string} */
 let subjectId;
-/** @type {number} */
-let boardCount;
 // The word currently mid-glow in the list, rendered with the green-glow class instead
 // of the struck-through one until a timer clears it. Only ever set by a live find,
 // never by a restore.
@@ -126,7 +124,6 @@ function sweep() {
 function newPuzzle(seed, subject, shape) {
   currentSeed = seed;
   subjectId = subject.id;
-  boardCount = shape.count;
   state.size = shape.size;
   const rng = makeRng(seed);
   justFound = null;
@@ -154,11 +151,15 @@ function newPuzzle(seed, subject, shape) {
  * found word's selection — not the cells themselves.
  * @returns {void} */
 function persist() {
+  if (!state.puzzle) return;   // nothing to save before the first deal
   store.save({
     seed: currentSeed,
     subjectId,
     size: state.size,
-    count: boardCount,
+    // buildPuzzle returns exactly the count it was asked for (puzzle.test.js asserts
+    // it never returns a short board), so the board's own word list IS the count --
+    // no need for a second copy of it living outside `state`.
+    count: state.puzzle.words.length,
     found: state.foundOrder.map(w => ({ word: w, ...state.found[w].sel })),
   });
 }
@@ -172,7 +173,7 @@ function layout() {
   state.dims = computeLayout({
     vw: window.innerWidth - padX,
     vh: window.innerHeight - padY,
-    size: state.size, pad: PAD, count: boardCount,
+    size: state.size, pad: PAD, count: state.puzzle.words.length,
   });
   applyLayout(els, state.dims);
   // What the cells currently on screen were built from. Everything below derives from
@@ -438,7 +439,11 @@ async function boot() {
       const rng = makeRng(seed);
       const target = resolveTarget(location.search, CATEGORIES, rng);
       const cat = await loadCategory(target.category);
-      const id = target.subject && cat.words[target.subject]
+      // `subjectIds.includes`, not `words[id]`: asking the list of subjects whether it
+      // has one is the same question without reaching through the loader into the raw
+      // pool record. Nothing outside subjects.js needs `words` now, so the loader is
+      // free to stop materialising every pool up front if it ever wants to.
+      const id = target.subject && cat.subjectIds.includes(target.subject)
         ? target.subject
         : cat.subjectIds[rng.int(cat.subjectIds.length)];
       newPuzzle(seed, await loadSubject(id), PRESET);

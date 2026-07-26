@@ -103,7 +103,7 @@ export function buildPuzzle({ name, pool, rng, size, count, mix }) {
 
   for (let i = 0; i < words.length; i++) {
     let placed = false;
-    for (let swap = 0; !placed; swap++) {
+    while (!placed) {
       const w = words[i];
       for (let attempt = 0; attempt < 400; attempt++) {
         const [dx, dy] = DIRS[rng.int(8)];
@@ -127,7 +127,7 @@ export function buildPuzzle({ name, pool, rng, size, count, mix }) {
       // A word that will not fit is swapped for another of the same length rather
       // than dropped. Dropping is what the old generator did, and it produced boards
       // that were quietly one word short with nothing anywhere saying so.
-      if (placed) break;
+      if (placed) break;   // `while (!placed)` would catch it, but this skips the swap below
       const alt = spare.findIndex(s => s.length === w.length);
       if (alt === -1 || ++swaps > MAX_SWAPS) {
         throw new Error(`could not place ${w} in a ${size}x${size} grid for "${name}"`);
