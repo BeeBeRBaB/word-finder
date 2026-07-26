@@ -8,7 +8,7 @@
 
 /** Small fast PRNG. Same seed, same sequence — the basis of reproducible puzzles.
  * @param {number} a @returns {() => number} */
-export function mulberry32(a) {
+function mulberry32(a) {
   return function () {
     a |= 0; a = a + 0x6D2B79F5 | 0;
     let t = Math.imul(a ^ a >>> 15, 1 | a);
@@ -49,13 +49,9 @@ export function resolveSeed(search) {
 
 /**
  * What to deal, from the URL. `?subject=` is accepted on shape alone; whether the slug
- * exists is only knowable once the module loads, and loadSubject reports that.
- *
- * The pinned branches must NOT touch `rng`: drawing there would shift the sequence, so
- * one `?seed=` would deal different grids with and without the parameter. An unknown id
- * falls through to a random pick — a stale bookmark should still give you a game.
- * `categories` is a parameter, not an import, so this stays testable with a fixture.
- *
+ * exists is only knowable once the module loads, and loadSubject reports that. The
+ * pinned branches must NOT touch `rng`, or one `?seed=` would deal different grids with
+ * and without the parameter. An unknown id falls through to a random pick.
  * @param {string} search @param {CategoryRef[]} categories
  * @param {Rng} rng @returns {Target}
  */

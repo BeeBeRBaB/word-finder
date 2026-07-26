@@ -3,14 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<!-- Resolves the appearance before first paint; module scripts are deferred, so
-     src/main.js would land after a flash. Must stay equivalent to
-     resolveAppearance(normalizePref(p), prefersDark) in src/appearance.js: only
-     'light'/'dark' pass, anything else asks the OS, so data-appearance can only ever
-     hold a resolved value. The storage read needs its own inner try -- a throwing
-     getItem (iOS "Block All Cookies") must fall through to the OS query, not abort
-     the script, or the module resolves differently on hydration and the page flips.
-     Guarded by the "module blocked entirely" and "allowlist" tests in appearance.spec.js. -->
+<!-- Resolves the appearance before first paint; module scripts are deferred, so main.js
+     would land after a flash. Must stay equivalent to resolveAppearance(normalizePref(p),
+     prefersDark) in src/appearance.js. The storage read needs its own inner try: a
+     throwing getItem (iOS "Block All Cookies") must fall through to the OS query, not
+     abort the script. Covered by appearance.spec.js. -->
 <script>try{var p=null;try{p=localStorage.getItem('wordfinder-appearance')}catch(e){}if(p!=='light'&&p!=='dark')p=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.appearance=p}catch(e){}</script>
 <title>Word Finder</title>
 <link rel="manifest" href="manifest.webmanifest">
@@ -20,24 +17,18 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- Three faces, one request. Atkinson Hyperlegible keeps the grid and the word list:
-     it is the Braille Institute's legibility face and disambiguating I/l/1 and O/0 at
-     a glance is exactly the job the grid asks of it. Space Grotesk (display) and Space
-     Mono (utility) are a designed pair from one superfamily, so the header reads as
-     one voice rather than two borrowed ones. Cross-origin, so sw.js cannot precache
-     them at install -- they land in the cache on first load like Hyperlegible always
-     has, and `display=swap` keeps first paint on the fallback rather than blank. -->
+<!-- Three faces, one request. Atkinson Hyperlegible reads the grid and the list —
+     disambiguating I/l/1 and O/0 is exactly the job. Cross-origin, so sw.js cannot
+     precache them; `display=swap` keeps first paint on the fallback rather than blank. -->
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Space+Grotesk:wght@500;700&family=Space+Mono&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <div id="app">
   <div id="hdr">
-    <!-- The category is a sibling of #subject, not a ::before on it, for two reasons:
-         #subject's textContent has to stay the bare subject name (gameplay.spec.js
-         compares it across two loads of one seed), and the per-subject underline is
-         set on #subject so it marks the name only — a ::before would drag the rule
-         under the category too. The separator is a ::after in CSS for the same reason. -->
+    <!-- The category is a sibling of #subject, not a ::before on it: #subject's
+         textContent has to stay the bare name (gameplay.spec.js compares it across two
+         loads of one seed), and its underline must mark the name only. -->
     <div id="titles"><div id="kicker">WORD FINDER</div>
       <div id="subjectline"><span id="category"></span><span id="subject">Loading…</span></div></div>
     <div id="actions">
@@ -49,21 +40,17 @@
       <button id="newbtn" type="button">&#8635; New game</button>
     </div>
   </div>
-  <div id="main">
-    <div id="gridbox"><div id="pills"></div><div id="letters"></div><div id="fx"></div></div>
-    <div id="side">
-      <div id="listhdr"><b>WORDS</b><span id="count"></span></div>
-      <div id="list"></div>
-      <div id="hint">Drag across a word in the grid to find it, then tap it here to cross it out.</div>
-    </div>
+  <div id="gridbox"><div id="pills"></div><div id="letters"></div><div id="fx"></div></div>
+  <div id="side">
+    <div id="listhdr"><b>WORDS</b><span id="count"></span></div>
+    <div id="list"></div>
+    <div id="hint">Drag across a word in the grid to find it, then tap it here to cross it out.</div>
   </div>
 </div>
 <div id="win"><div id="wincard">
   <button id="winclose" type="button" aria-label="Close">&times;</button>
-  <!-- The strokes of the puzzle you just solved, letters stripped. Seeded puzzles make
-       this a different mark every game, which is the whole point of it replacing the
-       party-popper emoji that used to sit here. Decorative restatement of the grid, so
-       it is aria-hidden; #winmsg below carries the same news in words. -->
+  <!-- The strokes of the puzzle you just solved, letters stripped: a different mark
+       every game. Decorative, so aria-hidden; #winmsg carries the same news in words. -->
   <div id="solved" aria-hidden="true"></div><h2>Puzzle solved!</h2><p id="winmsg"></p>
   <button id="winbtn" type="button">Play a new game &#8594;</button>
 </div></div>
@@ -71,10 +58,10 @@
   <h2>New game</h2>
   <p id="picker-warning">Start a new game? Your progress will be lost.</p>
   <label for="picker-select">Category</label>
-  <!-- A native select rather than a grid of chips: 25 categories is eight to twelve
-       rows on a phone, while this is one control at any count, renders as a wheel
-       picker on iOS, and brings keyboard and screen-reader support with it. -->
-  <select id="picker-select"></select>
+  <!-- A native select rather than a grid of chips: 25 categories is one control at any
+       count, renders as the system wheel picker on iOS, and brings keyboard and
+       screen-reader support with it. -->
+  <div id="picker-field"><select id="picker-select"></select></div>
   <p id="picker-error" hidden></p>
   <div id="picker-actions"><button id="picker-cancel" type="button">Cancel</button>
   <button id="picker-surprise" type="button">Surprise me</button>

@@ -19,17 +19,15 @@ export function defaultStore() {
   try { return globalThis.localStorage; } catch { return null; }
 }
 
-/** @param {Pick<Storage,'getItem'|'setItem'|'removeItem'>|null} [store] */
+/** @param {Pick<Storage,'getItem'|'setItem'>|null} [store] */
 export function makeStorage(store) {
   if (store === undefined) store = defaultStore();
   return {
     /** @param {SaveData} data @returns {void} */
     save(data) { if (!store) return; try { store.setItem(KEY, JSON.stringify(data)); } catch { /* no persistence */ } },
-    /** A save is either complete or it is not a save. `size` and `count` were added
-     * when word pools grew past twelve, and a board written before that cannot be
-     * rebuilt at all — its twelve words came from a twelve-word list that no longer
-     * exists. So the missing field is not migrated, it is the detection rule, and the
-     * board is discarded rather than half-restored onto a grid it does not match.
+    /** A save is either complete or it is not a save. A board written before `size` and
+     * `count` existed cannot be rebuilt at all, so the missing field is not migrated —
+     * it is the detection rule.
      * @returns {SaveData|null} */
     load() {
       if (!store) return null;
@@ -44,7 +42,5 @@ export function makeStorage(store) {
         return d;
       } catch { return null; }
     },
-    /** @returns {void} */
-    clear() { if (!store) return; try { store.removeItem(KEY); } catch { /* ignore */ } },
   };
 }

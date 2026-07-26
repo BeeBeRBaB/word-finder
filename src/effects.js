@@ -45,15 +45,12 @@ let ac = null;
  * @param {boolean} win @returns {void} */
 export function pop(win) {
   try {
-    // `webkitAudioContext` is the pre-standard Safari global; it isn't part of
-    // TypeScript's DOM lib, so the fallback lookup is typed by hand rather than
-    // widened to `any`.
+    // `webkitAudioContext` is the pre-standard Safari global and is not in TS's DOM lib,
+    // so the fallback is typed by hand rather than widened to `any`.
     const AudioCtor = window.AudioContext ||
       /** @type {{webkitAudioContext?: typeof AudioContext}} */ (window).webkitAudioContext;
     ac = ac || new AudioCtor();
-    // Aliased to a `const` so the narrowing to non-null survives inside the
-    // `forEach` closure below — TS re-widens a captured mutable `let` back to its
-    // declared (nullable) type inside nested functions.
+    // Aliased to a const so the narrowing to non-null survives inside the forEach below.
     const ctx = ac;
     if (ctx.state === 'suspended') ctx.resume();
     const notes = win ? [523, 659, 784, 1047] : [523, 784];
@@ -66,5 +63,5 @@ export function pop(win) {
       g.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
       o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t + 0.4);
     });
-  } catch (e) {}
+  } catch { /* no audio available */ }
 }

@@ -10,7 +10,7 @@ import { cap, lineIndices } from './puzzle.js';
  * @typedef {{found:Record<string, FoundEntry>, foundOrder:string[], sel:Selection|null, miss:Selection|null}} GameState
  * @typedef {{
  *   app:HTMLElement, gridbox:HTMLElement, pills:HTMLElement, letters:HTMLElement, fx:HTMLElement,
- *   list:HTMLElement, main:HTMLElement, side:HTMLElement, count:HTMLElement,
+ *   list:HTMLElement, side:HTMLElement, count:HTMLElement,
  *   subject:HTMLElement, category:HTMLElement, win:HTMLElement, winmsg:HTMLElement,
  *   picker:HTMLElement, winclose:HTMLElement, appearance:HTMLElement, solved:HTMLElement,
  * }} Els

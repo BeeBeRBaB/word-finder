@@ -134,7 +134,7 @@ test('a category that fails to load stays open, reports the failure inline, and 
   await expect(page.locator('#picker')).toBeVisible();
   await expect(page.locator('#picker-error')).toBeVisible();
   await expect(page.locator('#picker-error')).toHaveText("Food & Drink isn't available offline yet. Try another category.");
-  // Reset to Surprise me rather than left pointing at the option that just failed.
+  // Reset to the placeholder rather than left pointing at the option that just failed.
   await expect(page.locator('#picker-select')).toHaveValue('');
   await expect(page.locator('#picker-select option[value="food"]')).toBeDisabled();
 

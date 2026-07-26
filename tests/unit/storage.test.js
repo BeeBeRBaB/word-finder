@@ -15,17 +15,9 @@ test('load returns null when empty', () => {
 });
 
 test('a throwing store degrades to null / no throw', () => {
-  const bad = { getItem() { throw new Error('nope'); }, setItem() { throw new Error('nope'); }, removeItem() {} };
+  const bad = { getItem() { throw new Error('nope'); }, setItem() { throw new Error('nope'); } };
   const s = makeStorage(bad);
   assert.doesNotThrow(() => s.save({ seed: 1, subjectId: 'nature/birds', size: 10, count: 0, found: [] }));
-  assert.equal(s.load(), null);
-});
-
-test('clear removes the saved entry', () => {
-  const store = memStore();
-  const s = makeStorage(store);
-  s.save({ seed: 1, subjectId: 'nature/birds', size: 10, count: 0, found: [] });
-  s.clear();
   assert.equal(s.load(), null);
 });
 

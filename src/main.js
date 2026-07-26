@@ -1,6 +1,6 @@
-// Word Finder — wiring. This is the only module that owns mutable game
-// state, reads the URL, or listens for events; everything it calls is either pure
-// (rng, puzzle, layout, catalog) or a stateless renderer (view, effects).
+// Word Finder — wiring. The only module that owns mutable game state, reads the URL, or
+// listens for events; everything it calls is either pure (rng, puzzle, layout, catalog)
+// or a stateless renderer (view, effects).
 import { CATEGORIES, categoryOf } from './catalog.js';
 import { loadCategory, loadSubject, SubjectLoadError } from './subjects.js';
 import { makeRng, resolveSeed, resolveTarget } from './rng.js';
@@ -35,19 +35,18 @@ import { makePicker } from './picker.js';
  */
 
 const PAD = 10;
-// Which board THIS DEVICE deals. Resolved once, from screen rather than the viewport,
-// so resizing a window or rotating a phone never changes it. It governs new games
-// only — a restored board is rendered at the size it was saved at, whatever this says.
+// Which board THIS DEVICE deals, resolved once from `screen` so a resize or rotation
+// never changes it. Governs new games only; a restored board keeps the size it was
+// saved at.
 const PRESET = pickPreset({ screenW: screen.width, screenH: screen.height });
-// How long a freshly found word glows green before it strikes through. Kept in
-// sync with the `foundGlow` animation duration in styles.css.
+// How long a found word glows before it strikes through. Matches the `foundGlow`
+// animation duration in styles.css.
 const GLOW_MS = 900;
 /** @returns {boolean} */
 const prefersReducedMotion = () =>
   !!(globalThis.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 
-/** Every id below is present in index.html's static markup, so this never throws
- * in practice; it makes a missing element fail at startup, not as a null deref later.
+/** Makes a missing element fail at startup rather than as a null deref later.
  * @param {string} id @returns {HTMLElement} */
 function must(id) {
   const el = document.getElementById(id);
@@ -57,7 +56,7 @@ function must(id) {
 /** @type {Els} */
 const els = {
   app: must('app'), gridbox: must('gridbox'), pills: must('pills'), letters: must('letters'), fx: must('fx'),
-  list: must('list'), main: must('main'), side: must('side'), count: must('count'),
+  list: must('list'), side: must('side'), count: must('count'),
   subject: must('subject'), category: must('category'), win: must('win'), winmsg: must('winmsg'),
   picker: must('picker'), winclose: must('winclose'), appearance: must('appearance'),
   solved: must('solved'),
@@ -91,9 +90,8 @@ let subjectId;
 /** @type {string|null} */
 let justFound = null;
 
-/** Which of the four pill hues a subject underlines its name with. Hashed from the
- * name, not the rng or its position, so a subject keeps its colour and reordering the
- * catalog does not reshuffle all 600. Reuses the pill tokens.
+/** Which of the four pill hues a subject underlines its name with. Hashed from the name
+ * rather than its position, so reordering the catalog does not reshuffle all 600.
  * @param {string} name @returns {number} */
 function accentSlot(name) {
   let h = 0;
@@ -103,7 +101,7 @@ function accentSlot(name) {
 
 /** One phosphor pass across the grid as a puzzle appears. Restarting a CSS animation
  * needs the class gone, a forced reflow, then the class back — without the reflow the
- * browser coalesces remove+add into no change at all and a second new game is still.
+ * browser coalesces remove+add into no change at all.
  * @returns {void} */
 function sweep() {
   if (prefersReducedMotion()) return;
@@ -112,9 +110,9 @@ function sweep() {
   els.gridbox.classList.add('sweep');
 }
 
-/** Every puzzle is built from its own fresh rng seeded by `seed`, never the
- * shared one, so a stored seed reproduces its grid. `shape` is an argument, not PRESET:
- * a restored save may have been dealt at a different size.
+/** Every puzzle is built from its own fresh rng seeded by `seed`, so a stored seed
+ * reproduces its grid. `shape` is an argument, not PRESET: a restored save may have been
+ * dealt at a different size.
  * @param {number} seed @param {import('./subjects.js').Subject} subject
  * @param {Preset} shape
  * @returns {void} */
@@ -142,9 +140,8 @@ function newPuzzle(seed, subject, shape) {
   persist();
 }
 
-/** Save just enough to regenerate the identical grid on reload: the seed, the subject
- * and the board's shape (from which `buildPuzzle` reproduces the same cells) plus each
- * found word's selection — not the cells themselves.
+/** Just enough to regenerate the identical grid on reload: the seed, the subject, the
+ * board's shape and each found word's selection — not the cells themselves.
  * @returns {void} */
 function persist() {
   if (!state.puzzle) return;   // nothing to save before the first deal
@@ -170,9 +167,9 @@ function layout() {
     size: state.size, pad: PAD, count: state.puzzle.words.length, minCell: state.minCell,
   });
   applyLayout(els, state.dims);
-  // Everything below derives from these three, so unchanged means the rebuild would be
-  // byte-identical — true on nearly every resize frame. Keyed on the puzzle object, not
-  // just its shape, or a new board at the same size would keep the old letters.
+  // Unchanged means the rebuild would be byte-identical — true on nearly every resize
+  // frame. Keyed on the puzzle object, not just its shape, or a new board at the same
+  // size would keep the old letters.
   const r = state.rendered;
   if (r.puzzle === state.puzzle && r.cell === state.dims.cell && r.size === state.size) return;
   state.rendered = { puzzle: state.puzzle, cell: state.dims.cell, size: state.size };
@@ -183,10 +180,10 @@ function layout() {
 }
 
 let resizeFrame = 0;
-/** One relayout per frame while resizing. Cancel-and-reschedule rather than a pending
- * flag, which would latch shut for good if a frame scheduled in a hidden tab were
- * dropped rather than deferred. The real saving is layout()'s guard, not this — a
- * browser already fires resize about once per frame. @returns {void} */
+/** One relayout per frame. Cancel-and-reschedule rather than a pending flag, which would
+ * latch shut for good if a frame scheduled in a hidden tab were dropped. The real saving
+ * is layout()'s guard — a browser already fires resize about once per frame.
+ * @returns {void} */
 function onResize() {
   cancelAnimationFrame(resizeFrame);
   resizeFrame = requestAnimationFrame(layout);
@@ -242,8 +239,8 @@ function endDrag() {
   state.drag = null;
   if (!state.sel || !state.puzzle) { state.sel = null; pills(); return; }
   const s = state.sel;
-  // Aliased to a local so the narrowing to non-null survives inside the
-  // `setTimeout` closures below, the same reason `effects.js` aliases `ac`.
+  // Aliased to a local so the narrowing to non-null survives inside the setTimeout
+  // closures below, the same reason effects.js aliases `ac`.
   const puzzle = state.puzzle;
   const hit = matchWord(puzzle.words, state.found, readLine(puzzle.cells, state.size, s));
   state.sel = null;
@@ -264,8 +261,8 @@ function endDrag() {
     }
     list();
     persist();
-    // `newPuzzle()` cancels `state.winTimer` before replacing `state.puzzle`, so
-    // by the time this fires `puzzle` is still the one that was just won.
+    // newPuzzle() cancels state.winTimer before replacing state.puzzle, so by the time
+    // this fires `puzzle` is still the one that was just won.
     if (won) state.winTimer = setTimeout(() => {
       state.winTimer = null;
       els.winmsg.textContent = 'You found every ' + cap(puzzle.name) + ' word.';
@@ -273,8 +270,7 @@ function endDrag() {
       els.win.style.display = 'flex';
     }, 700);
   } else if (!(s.x0 === s.x1 && s.y0 === s.y1)) {
-    // Flash the miss red — but not for a plain tap, whose 1-cell selection can never
-    // match anything.
+    // A plain tap's 1-cell selection can never match, so it is not a miss.
     flashMiss(s);
   }
   pills();
@@ -282,46 +278,34 @@ function endDrag() {
 els.gridbox.addEventListener('pointerup', endDrag);
 els.gridbox.addEventListener('pointercancel', endDrag);
 
-/** Say why a deal failed, in the one place a subject name would otherwise sit.
- * Shared by every caller that can hit a rejected `loadCategory`/`loadSubject` —
- * `boot()` below, and the win card's "Play a new game" button — so a failure looks
- * and reads identically wherever it happens, rather than each call site inventing
- * its own wording.
+/** Say why a deal failed, in the one place a subject name would otherwise sit. Shared by
+ * every caller that can hit a rejected load, so a failure reads identically wherever it
+ * happens.
  * @param {unknown} err @returns {void} */
 function reportLoadFailure(err) {
   const offline = err instanceof SubjectLoadError && err.reason === 'unavailable';
-  // Record it here, not just in newGame. boot()'s ?subject=/?category= path and
-  // restore() call the loader directly, so a failure on either used to be shown to the
-  // player and then forgotten -- the picker went on offering that category as enabled
-  // and Surprise me went on drawing it, each attempt failing the same way. `err.id` is
-  // whichever id the caller asked for, and categoryOf leaves a bare category id alone,
-  // so this covers both entry points. Only 'unavailable': 'unknown' means an id that is
-  // not in the catalog, which nothing offers in the first place.
+  // Recorded here, not just in newGame: boot()'s ?subject=/?category= path and restore()
+  // call the loader directly, and a failure on either used to be shown and then
+  // forgotten. Only 'unavailable' — 'unknown' means an id nothing offers anyway.
   if (offline) unavailableCategories.add(categoryOf(err.id));
   els.subject.textContent = offline ? 'Offline' : 'Unavailable';
   els.category.textContent = '';
 }
 
-// Category ids whose module has failed to load this session. Read by newGame's random
-// draw just below (so Surprise me never re-picks a category already known not to
-// work) and by the picker's `isUnavailable` (so it can disable that option) — one
-// shared record rather than two, so the win card, which bypasses the picker's own
-// dialog entirely, still never repeats a draw already proven to fail.
+// Category ids whose module has failed to load this session. One shared record, read by
+// newGame's random draw and by the picker's `isUnavailable`, so the win card — which
+// bypasses the dialog entirely — still never repeats a draw already proven to fail.
 /** @type {Set<string>} */
 const unavailableCategories = new Set();
 
-// A fresh subject is a player-facing surprise, so it stays on Math.random() rather
-// than the seeded sequence — `?seed=` pins the puzzle you land on, not every one after.
-// It also gets a fresh seed: `newPuzzle` builds its own rng from scratch each time, so
-// reusing `currentSeed` would reproduce the same word and placement choices verbatim.
-/** @param {string|null} [categoryId] restrict the pick to one category
+/** A fresh subject is a player-facing surprise, so it stays on Math.random() rather than
+ * the seeded sequence: `?seed=` pins the puzzle you land on, not every one after. It also
+ * gets a fresh seed, or newPuzzle would reproduce the same choices verbatim.
+ * @param {string|null} [categoryId] restrict the pick to one category
  * @returns {Promise<void>} */
 async function newGame(categoryId) {
-  // The exclusion only narrows the RANDOM draw — an explicit categoryId (the picker
-  // only ever offers one that isn't disabled, but this stays honest either way) is
-  // attempted regardless. Falls back to the full catalog if somehow everything in it
-  // is currently marked unavailable, the same "unless it's the only one" shape as the
-  // subject pick below.
+  // The exclusion narrows the RANDOM draw only; an explicit categoryId is attempted
+  // regardless. Falls back to the full catalog if everything is somehow marked bad.
   const candidates = CATEGORIES.filter(c => !unavailableCategories.has(c.id));
   const drawPool = candidates.length ? candidates : CATEGORIES;
   const id = categoryId ?? drawPool[Math.floor(Math.random() * drawPool.length)].id;
@@ -333,11 +317,8 @@ async function newGame(categoryId) {
     unavailableCategories.add(id);
     throw err;
   }
-  // A category that failed before but loads now (cache warmed, network back) is no
-  // longer a reason to skip it. Reached when something attempts it again despite the
-  // record: the fallback above once everything is marked, or an explicit ?category=.
-  // The loader retries on a fresh URL precisely so that attempt can succeed -- the
-  // module map remembers a rejected specifier for the life of the page.
+  // A category that failed before but loads now (cache warmed, network back) is no longer
+  // a reason to skip it. The loader retries on a fresh URL precisely so this can succeed.
   unavailableCategories.delete(id);
   // Avoid dealing the subject already on screen, unless it is the only one there is.
   const fresh = cat.subjectIds.filter(s => s !== subjectId);
@@ -345,8 +326,8 @@ async function newGame(categoryId) {
   const pick = subjectPool[Math.floor(Math.random() * subjectPool.length)];
   newPuzzle(Date.now() >>> 0, await loadSubject(pick), PRESET);
 }
-// `newGame` rejects when a category cannot be fetched; the picker catches that to
-// keep itself open, so the rejection must survive rather than being swallowed here.
+// newGame rejects when a category cannot be fetched; the picker catches that to keep
+// itself open, so the rejection must survive rather than being swallowed here.
 const picker = makePicker({
   root: els.picker,
   select: /** @type {HTMLSelectElement} */ (must('picker-select')),
@@ -359,8 +340,8 @@ const picker = makePicker({
   isUnavailable: (id) => unavailableCategories.has(id),
   onStart: (categoryId) => newGame(categoryId),
 });
-// Unconditional, unlike the confirm dialog it replaces: the dialog is now how a game
-// is started, and the warning is one line inside it rather than a reason to show it.
+// Unconditional, unlike the confirm it replaces: the dialog is now how a game is started,
+// and the warning is one line inside it rather than a reason to show it.
 must('newbtn').addEventListener('click', () => {
   const inProgress = !!state.puzzle && state.foundOrder.length > 0
     && state.foundOrder.length < state.puzzle.words.length;
@@ -368,12 +349,9 @@ must('newbtn').addEventListener('click', () => {
 });
 must('winbtn').addEventListener('click', () => {
   newGame().catch((err) => {
-    // An offline network, an evicted cache, or (right now) a category the parallel
-    // content authoring hasn't reached yet: `newGame()` rejects before `newPuzzle()`
-    // ever runs, so the just-solved board and win card are still on screen with
-    // nothing telling the player their tap did nothing. Hide the stale overlay so
-    // the header's failure text (the same `reportLoadFailure` boot() uses) is what
-    // they actually see, rather than reporting it somewhere the win card covers.
+    // newGame rejects before newPuzzle runs, so the solved board and win card are still
+    // up with nothing saying the tap did nothing. Hide the overlay so the header's
+    // failure text is what the player actually sees.
     els.win.style.display = 'none';
     reportLoadFailure(err);
   });
@@ -381,10 +359,9 @@ must('winbtn').addEventListener('click', () => {
 els.winclose.addEventListener('click', () => { els.win.style.display = 'none'; });
 els.win.addEventListener('click', (e) => { if (e.target === els.win) els.win.style.display = 'none'; });
 
-// Appearance. `appearance.js` owns the preference and resolves it onto <html>; this
-// callback is the page-shaped half — the button's icon and label, and the status-bar
-// colour. The colour is read back off the resolved palette rather than duplicated
-// here, so a future palette edit has exactly one home.
+// appearance.js owns the preference and resolves it onto <html>; this callback is the
+// page-shaped half. The status-bar colour is read back off the resolved palette rather
+// than duplicated here, so a palette edit has exactly one home.
 const themeColorMeta = document.querySelector('meta[name="theme-color"]');
 const appearance = makeAppearance({
   onApply(pref, mode) {
@@ -405,26 +382,21 @@ document.addEventListener('keydown', (e) => {
 });
 window.addEventListener('resize', onResize);
 
-// Explicit `?seed=` / `?subject=` / `?category=` in the URL always wins (it is what the
-// determinism e2e test relies on), even over a saved game — that is the whole point of
-// pinning a puzzle by URL. Otherwise prefer a saved game; only fall back to a fresh
-// random puzzle when there is nothing to restore.
-/** @returns {Promise<void>} */
+/** Explicit `?seed=` / `?subject=` / `?category=` always wins, even over a saved game —
+ * that is the point of pinning a puzzle by URL. Otherwise prefer the save, and only deal
+ * fresh when there is nothing to restore.
+ * @returns {Promise<void>} */
 async function boot() {
   const params = new URLSearchParams(location.search);
   try {
     if (params.has('seed') || params.has('subject') || params.has('category')) {
       const seed = resolveSeed(location.search);
-      // One rng for the whole resolution. resolveTarget draws from it only when the
-      // URL did not pin a category, and the subject draw below uses the same stream,
-      // so a given ?seed= always lands on the same subject.
+      // One rng for the whole resolution, so a given ?seed= always lands on the same
+      // subject: resolveTarget draws from it only when the URL did not pin a category,
+      // and the subject draw below continues the same stream.
       const rng = makeRng(seed);
       const target = resolveTarget(location.search, CATEGORIES, rng);
       const cat = await loadCategory(target.category);
-      // `subjectIds.includes`, not `words[id]`: asking the list of subjects whether it
-      // has one is the same question without reaching through the loader into the raw
-      // pool record. Nothing outside subjects.js needs `words` now, so the loader is
-      // free to stop materialising every pool up front if it ever wants to.
       const id = target.subject && cat.subjectIds.includes(target.subject)
         ? target.subject
         : cat.subjectIds[rng.int(cat.subjectIds.length)];
@@ -435,19 +407,16 @@ async function boot() {
     if (saved) { await restore(saved); return; }
     await newGame();
   } catch (err) {
-    // Offline with an uncached category, or a save naming a subject since removed. A
-    // blank grid with no explanation is the worst outcome available, so say what
+    // A blank grid with no explanation is the worst outcome available, so say what
     // happened and leave the board empty rather than half-built.
     reportLoadFailure(err);
   }
 }
 
-/** Regenerate the exact grid a save came from (same seed + same subject + same shape
- * -> same fresh rng -> same puzzle, per `newPuzzle`), then replay the found words on
- * top of it. The saved shape wins over this device's preset: a board is not something
- * a resize gets to discard. Guards against a stale/corrupt save: a word the
- * regenerated puzzle doesn't contain, or one already replayed, is skipped rather
- * than crashing.
+/** Regenerate the exact grid a save came from, then replay the found words on top. The
+ * saved shape wins over this device's preset — a board is not something a resize gets to
+ * discard. A word the regenerated puzzle doesn't contain, or one already replayed, is
+ * skipped rather than crashing.
  * @param {import('./storage.js').SaveData} saved @returns {Promise<void>} */
 async function restore(saved) {
   const shape = saved.size === PRESETS.compact.size ? PRESETS.compact : PRESETS.full;
@@ -462,18 +431,14 @@ async function restore(saved) {
   renderFoundCells(els, state, state.size);
   pills();
   list(); // redraw pills + cross out; deliberately does NOT pop the win overlay
-  // `newPuzzle()` above already called `persist()` with an empty `found` (it
-  // always saves a fresh puzzle), so without this the just-replayed progress
-  // would only live in memory — a second reload would silently lose it even
-  // though the first one looked fine. Re-save now that `found` is populated.
+  // newPuzzle above already saved an empty `found`, so without this the replayed
+  // progress would only live in memory and a second reload would lose it.
   persist();
 }
 
-// boot() never rejects — its own try/catch (above) reports any failure into the DOM
-// itself via reportLoadFailure — so there is nothing here for `void` to discard.
+// boot() never rejects — it reports any failure into the DOM itself.
 void boot();
-// './sw.js' stays relative to the DOCUMENT, not to this module — register()
-// resolves against the page's base URL. Writing '../sw.js' because the script
-// now lives in src/ would resolve to the domain root and break the project-path
+// './sw.js' resolves against the DOCUMENT, not this module. Writing '../sw.js' because
+// the script lives in src/ would resolve to the domain root and break the project-path
 // deploy on GitHub Pages, where the app is served from /word-finder/.
 if ('serviceWorker' in navigator) window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(() => {}); });

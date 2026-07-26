@@ -65,11 +65,9 @@ function systemQuery() {
   const mq = matchMedia('(prefers-color-scheme: dark)');
   return {
     get matches() { return mq.matches; },
-    // Subscribing is best-effort. MediaQueryList.addEventListener needs Safari 14+,
-    // ABOVE this app's ~13.1 floor (Element.animate in effects.js), so 13.x has only
-    // the older addListener spelling. Neither must ever throw: start() runs at module
-    // scope, so an escape here is a blank page, not a missing feature. Worst case the
-    // System setting stops tracking the OS until the next load.
+    // Best-effort. addEventListener needs Safari 14+, above this app's ~13.1 floor, so
+    // 13.x has only addListener. Neither may throw: start() runs at module scope, so an
+    // escape here is a blank page rather than a setting that stops following the OS.
     subscribe(listener) {
       const on = () => listener();
       try {

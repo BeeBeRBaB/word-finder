@@ -1,37 +1,22 @@
-/* Type roles, and the only tokens in this file that are not colours — which is why they
-   sit in their own block rather than being duplicated into both palettes: a typeface
-   does not change with the appearance setting. This block must stay FIRST, above the
-   palettes — tokens.test.js locates it as the file's first root-level block, and there
-   is a test asserting exactly that, so moving it will fail loudly rather than silently.
-   Hyperlegible does all the actual reading — the grid and the word list — and is never
-   overridden there. Space Grotesk is the display voice, on the subject name and the win
-   heading only. Space Mono carries the tracked labels and the live count, where a
-   monospace keeps the digits from shifting as the score climbs. Both fall back to
-   Hyperlegible, which is loaded either way. */
+/* Type roles — the only non-colour tokens here, so they sit outside both palettes: a
+   typeface does not change with the appearance setting. This block must stay FIRST;
+   tokens.test.js locates it as the file's first root-level block. Hyperlegible does all
+   the reading (grid and word list); Space Grotesk is the display voice and Space Mono
+   the tracked labels, where monospace keeps the digits from shifting. */
 :root{
   --display:'Space Grotesk','Atkinson Hyperlegible',sans-serif;
   --utility:'Space Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
 }
 
-/* Two palettes, each written exactly once. `data-appearance` on <html> is always a
-   RESOLVED value — `light` or `dark`, never `system`; src/appearance.js does the
-   resolving. Doing it in JS rather than in a prefers-color-scheme media query is what
-   keeps this to two blocks instead of four, with no chance of the copies drifting.
-   Bare `:root` hangs off DARK, not light: nothing sets `data-appearance` until the
-   inline resolver in <head> runs, so a visitor with JavaScript disabled, or one whose
-   resolver threw before it could set the attribute, gets the game's own appearance
-   instead of an unstyled/white page.
-
-   AMBER PHOSPHOR. The game shipped on a deep-water teal; this is the warm
-   re-palette. Every value below was checked against WCAG AA (4.5:1) rather than
-   picked by eye — see the ratio table in the spec named at the foot of this block.
-   Both palettes are asserted value-for-value by appearance.spec.js, so any edit here
-   is a deliberate change that has to update that spec and the spec's token table
-   together. Do not tune a value without re-running the contrast check. */
+/* Two palettes, each written once. `data-appearance` on <html> is always resolved to
+   `light` or `dark` by src/appearance.js, which is what keeps this to two blocks.
+   The attribute-less default hangs off DARK so a visitor with JS disabled gets the
+   game's own look rather than an unstyled page.
+   Every value is WCAG AA checked and asserted value-for-value by appearance.spec.js —
+   do not tune one without re-running the contrast check. */
 :root, :root[data-appearance="dark"]{
-  /* Near-black, warm-tinted: R>G>B keeps an orange cast at a luminance this low.
-     --surface stays put deliberately — dropping the ground without moving the panel
-     is what widens the grid's lift off the page (1.16:1, up from 1.09:1). */
+  /* R>G>B keeps an orange cast at this luminance; --surface stays put so the grid's
+     lift off the ground widens rather than narrows. */
   --bg:#100a05; --surface:#241a15; --border:#3d2b21;
   --text:#f0e0d2; --text-strong:#fdf4ea; --muted:#bfa694; --label:#e0913f; --hint:#a89283;
   --accent:#ff8c3a; --accent-text:#ffa869; --accent-hover:#ffc79a; --accent-ink:#2b1508;
@@ -46,17 +31,9 @@
   --confetti-1:#ff8c3a; --confetti-2:#ffc14d; --confetti-3:#78cdc8;
   --confetti-4:#ff828c; --confetti-5:#c89bff; --confetti-6:#fdf4ea;
 }
-/* The light side is where warm palettes go wrong: an orange light enough to feel warm
-   on paper is too light to carry white button text. So --accent is measured as the
-   white --accent-ink sits on it (filled buttons, 5.08:1), not against --bg, since
-   that is the pairing it is actually read against; the same value then does duty as
-   the outlined-button and card border. --label is the 11px kicker, well under the
-   18.66px-bold large-text threshold, so it needs the full 4.5:1 and a first pass at
-   #a8500e (4.38) was rejected for it. --done-text's alpha is set to clear 4.5:1
-   against --bg while still reading as visibly struck-out next to --text, matching how
-   the dark side's own --done-text sits relative to its --text rather than scraping
-   the floor. Keep this in step with the token table in
-   docs/superpowers/specs/2026-07-24-amber-phosphor-design.md. */
+/* An orange light enough to feel warm on paper cannot carry white button text, so
+   --accent is measured against the white --accent-ink it is actually read on (5.08:1),
+   not against --bg. Token table: docs/superpowers/specs/2026-07-24-amber-phosphor-design.md */
 :root[data-appearance="light"]{
   --bg:#f2e3d5; --surface:#fffaf5; --border:#dfc9b5;
   --text:#3a2418; --text-strong:#24140b; --muted:#775b47; --label:#9e4a0c; --hint:#725847;
@@ -75,97 +52,56 @@
 
 /* Lock the viewport: no page scroll or rubber-band on iPad / iOS standalone. */
 html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);font-family:'Atkinson Hyperlegible',sans-serif;overscroll-behavior:none;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
-/* touch-action is not inherited, but the effective value for a touch is intersected up
-   the ancestor chain — so `none` on body suppresses iOS's default tap handling for
-   every control inside it, and a <select> never opens its wheel picker. Give the
-   interactive controls their gesture back; the lock above still covers the board. */
+/* touch-action is not inherited, but a touch intersects it up the ancestor chain, so
+   `none` above stopped iOS ever opening a <select>'s wheel. Give the controls it back. */
 button,select,label{touch-action:manipulation;-webkit-user-select:auto;user-select:auto}
 body{position:fixed;inset:0;width:100%;height:100%}
 a{color:var(--accent-text)}a:hover{color:var(--accent-hover)}
-/* overflow:hidden is the default because at every real device shape the board is sized
-   to fit, and a scrollbar there would be noise. `data-scroll` is set by applyLayout
-   only when the board's legibility floor makes it larger than the window — a laptop
-   dragged very small. Scrolling to a readable board beats an unreadable one that fits,
-   and beats overflow:hidden, which would put cells where nothing can reach them. */
+/* Set by applyLayout only when the board's legibility floor makes it larger than the
+   window. A readable board you can scroll beats an unreadable one that fits, and beats
+   overflow:hidden, which would put cells where nothing can reach them. */
 #app[data-scroll]{overflow:auto}
 #app{height:100%;display:grid;box-sizing:border-box;overflow:hidden;
   padding:calc(10px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));
   grid-template-columns:1fr;grid-template-areas:"hdr" "grid" "side";
   justify-items:center;align-content:start;gap:10px}
-/* Rows: header hugs its own height (min-content) so its text sits at the top
-   next to the grid's top edge; the list row takes all remaining height (1fr),
-   which keeps the list directly under the header instead of floating at the
-   grid's vertical centre. Without explicit rows both are `auto`, and the grid
-   spanning both rows pushes half its height into each — centring the rail. */
-/* row-gap is the vertical breathing room between the subject block and the word list —
-   they are stacked rows of the same column here, and at 4px they read as one blob. */
-/* `safe center`, never a bare `center`. The rail is capped in layout.js, so the grid
-   and list sit together in the middle instead of stretching to both edges with the
-   list swollen. But the 160px rail floor can still make the tracks wider than the
-   viewport (pre-existing, in a band of narrow landscape windows), and a bare `center`
-   splits that overflow across BOTH edges — overflow past the start edge is not
-   scrollable and not counted in scrollWidth, so it is unreachable. Measured at
-   700x640: the board sat at x=-49 with its entire first column of 13 cells off the
-   left of the screen, unrecoverable. `safe` falls back to `start` exactly when the
-   content overflows, which puts it back on the right where it can at least be
-   scrolled to. */
+/* Rows are explicit so the header hugs its own height and the list takes the rest: left
+   as `auto`, the grid spans both and pushes half its height into each, centring the rail.
+   `safe center`, never bare `center` — the 160px rail floor can still make the tracks
+   wider than the viewport, and bare `center` splits that overflow across both edges,
+   where the start-edge half is unreachable (not scrollable, not in scrollWidth). */
 #app[data-landscape]{grid-template-areas:"grid hdr" "grid side";grid-template-rows:min-content 1fr;align-content:start;justify-items:start;justify-content:safe center;column-gap:20px;row-gap:14px}
-/* Landscape phones give ~280-320px of total height for the whole right rail
-   (header + list + hint), which the desktop/portrait chrome above doesn't fit
-   into — measured directly: iPhone-class landscape overflowed #app by ~19-38px
-   with the untrimmed rail. The hint is instructional, not gameplay-critical, so
-   it's the first thing to go; the list also loses a little internal breathing
-   room. Neither guard assertion (words visible, nothing clipped) needs it. */
+/* A landscape phone leaves ~300px of height for the whole rail. The hint is
+   instructional rather than gameplay, so it is the first thing to go. */
 #app[data-landscape] #hint{display:none}
-/* The rail is 380px in landscape, and 230 of the 600 subject names are long enough
-   that the title plus the buttons no longer fit on one line — `flex-wrap:wrap` then
-   dropped the buttons to a second row, doubling the header from 53px to 107px. In a
-   ~300px-tall landscape viewport that 54px comes straight out of the word list, and
-   measurably pushed words off the bottom. Vertical space is the scarce one here, so
-   the title gives way instead: it stays on one line and truncates, which costs the
-   tail of a long name rather than the words themselves. min-width:0 is required —
-   a flex item's default min-width:auto refuses to shrink below its content and the
-   ellipsis would never engage. */
+/* The header stays on one line and the title truncates instead. Wrapping dropped the
+   buttons to a second row, doubling the header to 107px and pushing words off the
+   bottom; vertical space is the scarce axis here. flex:none keeps the buttons from
+   being the item that absorbs the squeeze, and min-width:0 is what lets the ellipsis
+   engage at all — a flex item's default min-width:auto refuses to shrink. */
 #app[data-landscape] #hdr{flex-wrap:nowrap}
-/* The buttons keep their shape and the title yields. Without flex:none the actions
-   are the flex item that absorbs the squeeze, and "New game" breaks across two lines
-   — which grows the header again, the very thing the nowrap above is preventing. */
 #app[data-landscape] #actions{flex:none}
-/* #titles is the flex item that has to be allowed to shrink; min-width:auto on a flex
-   item refuses to go below its content, so without this the ellipsis never engages.
-   It is named rather than matched as `> :first-child`, which silently stopped working
-   the moment anything was reordered ahead of it. */
 #app[data-landscape] #titles{min-width:0}
-/* The category yields before the name does, and the name keeps a floor. Letting both
-   collapse freely rendered #subject at ZERO px in a band of narrow landscape windows
-   (700x640, 600x400, 560x320): not truncated, entirely invisible, while the category
-   prefix kept its full 72px. Whatever room there is belongs to the name. */
+/* The category yields before the name, and the name keeps a floor: letting both
+   collapse freely rendered #subject at zero width, invisible rather than truncated. */
 #app[data-landscape] #category{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #app[data-landscape] #subject{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1 1 auto;min-width:5ch}
-/* row-gap above does the separating between the subject block and the list here, so this
-   only needs its own bottom breathing room. */
 #app[data-landscape] #listhdr{margin:2px 2px 6px 0}
-/* Tracks the reduced .w padding below — the pull-back has to equal the padding exactly
-   or the word text stops sitting on the rail's left edge. */
+/* The pull-back has to equal .w's padding below exactly, or the text leaves the rail edge. */
 #app[data-landscape] #list{gap:4px 14px;margin-left:-10px}
-/* The words keep their larger size in landscape and give up vertical padding instead:
-   at 6 rows, 2px off each side is 24px back, which is the difference between the rail
-   fitting an iPhone-class landscape and overflowing it. */
+/* Words keep their size and give up vertical padding: 2px off each of 6 rows is 24px,
+   the difference between fitting an iPhone landscape and overflowing it. */
 #app[data-landscape] .w{padding:2px 10px}
 #hdr{grid-area:hdr;width:100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
 #kicker{font-family:var(--utility);font-weight:700;font-size:13px;letter-spacing:.18em;color:var(--label);margin-bottom:2px}
 #subjectline{display:flex;align-items:baseline;gap:8px}
-/* The category reads as a label, and earns its separator in CSS rather than in the
-   markup so #subject's textContent stays the bare name the tests compare. `:empty`
-   guards the first paint, before boot has resolved a subject to name. */
+/* The separator is generated here so #subject's textContent stays the bare name the
+   tests compare; `:empty` guards the first paint, before boot has resolved a subject. */
 #category{font-family:var(--utility);font-size:13px;color:var(--muted);flex:none}
 #category:not(:empty)::after{content:' ·';color:var(--muted)}
-/* The subject underlines itself in one of the four pill hues, picked by hashing its
-   name (see accentSlot in main.js) so all 600 subjects don't render identically.
-   Deliberately an underline rather than a rule element: text-decoration draws inside
-   the line box, so it adds no height — and the landscape rail has none to give (see
-   the #hdr notes below). Font-size stays at 28px for the same reason; Space Grotesk
-   changes the voice without changing the metrics. */
+/* Underlined in one of the four pill hues, hashed from the name by accentSlot in
+   main.js, so all 600 subjects don't render identically. An underline draws inside the
+   line box and adds no height — which the landscape rail has none to give. */
 #subject{font-family:var(--display);font-weight:700;font-size:28px;line-height:1.1;color:var(--text-strong);
   letter-spacing:-.015em;text-decoration:underline;text-decoration-thickness:3px;
   text-underline-offset:6px;text-decoration-color:var(--subject-accent,var(--pill-sel))}
@@ -179,19 +115,17 @@ a{color:var(--accent-text)}a:hover{color:var(--accent-hover)}
 #appearance{flex:none;width:44px;height:44px;padding:0;display:flex;align-items:center;justify-content:center;
   border:1.5px solid var(--accent);border-radius:999px;background:transparent;color:var(--accent-text);cursor:pointer}
 #appearance:hover{background:var(--accent-wash)}
-/* All three icons ship in the markup; the button's data-pref picks one. Doing it in
-   CSS keeps main.js from assembling HTML strings on every click. */
+/* All three icons ship in the markup and data-pref picks one, so main.js never
+   assembles HTML on a click. */
 #appearance svg{display:none;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 #appearance svg .solid{fill:currentColor;stroke:none}
 #appearance[data-pref="system"] .i-system,
 #appearance[data-pref="light"] .i-light,
 #appearance[data-pref="dark"] .i-dark{display:block}
-#main{display:contents}
 #gridbox{grid-area:grid;position:relative;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);touch-action:none;cursor:pointer;flex:none}
 #pills,#fx{position:absolute;inset:0;pointer-events:none}
-/* Pill colours are class-driven so they live in the palette with everything else.
-   They used to be rgba literals in view.js's PAL, tuned for a dark surface — at
-   ~35% alpha on white paper they were all but invisible. */
+/* Pill colours are class-driven so they live in the palette; as rgba literals in JS
+   they were tuned for a dark surface and all but invisible on paper. */
 .pill{position:absolute;border-radius:999px;box-shadow:inset 0 0 0 1px var(--pill-edge)}
 .pill.p1{background:var(--pill-1)}
 .pill.p2{background:var(--pill-2)}
@@ -200,55 +134,38 @@ a{color:var(--accent-text)}a:hover{color:var(--accent-hover)}
 .pill.sel{background:var(--pill-sel)}
 .pill.miss{background:var(--pill-miss)}
 .cell{position:absolute;text-align:center;font-weight:700;color:var(--text);pointer-events:none}
-/* A found letter lights up. Until this existed a found word was marked only by the pill
-   behind it and its letters read exactly like the filler around them. The colour shift
-   alone turned out to be nearly invisible -- on light, --found-text and --text are both
-   dark browns a hair apart -- so the halo is what actually carries the state, and it is
-   the one place the phosphor idea is stated outright. Costs no layout: text-shadow does
-   not reflow, so cells cannot shift as words are found. */
+/* The halo is what carries the found state — on light, --found-text and --text are two
+   dark browns a hair apart. text-shadow doesn't reflow, so cells cannot shift. */
 .cell.found{color:var(--found-text);text-shadow:0 0 10px var(--glow)}
-/* One phosphor pass across the grid as a puzzle appears — the page-load moment, and the
-   only motion added here. Animating background-position rather than a transform keeps
-   the gradient inside the element, so #gridbox needs no overflow:hidden that could clip
-   a pill. It paints above the letters (a generated ::after is last in paint order) and
-   is pointer-events:none, so it cannot swallow the first drag. */
+/* One phosphor pass as a puzzle appears. Animating background-position keeps the
+   gradient inside the element, so #gridbox needs no overflow:hidden that would clip a
+   pill; ::after paints above the letters and cannot swallow the first drag. */
 #gridbox::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;
   background:linear-gradient(105deg,transparent 40%,var(--glow) 50%,transparent 60%);
   background-size:300% 100%;background-position:100% 0}
 #gridbox.sweep::after{animation:sweep .9s ease-out}
 @keyframes sweep{0%{opacity:0;background-position:100% 0}20%{opacity:1}80%{opacity:1}100%{opacity:0;background-position:-50% 0}}
 #side{grid-area:side;flex:none}
-/* The count sits directly after WORDS rather than being pushed to the far edge:
-   space-between parked it hundreds of px away in landscape, where the rail is every
-   pixel left over after the grid. */
-/* Everything in the rail lines up on one edge: the kicker, the category, WORDS and the
-   word text itself. The words are the awkward one — .w carries 12px of pill padding for
-   the found-glow, so its TEXT starts 12px in from wherever #list sits. #list is pulled
-   back by exactly that padding below, which puts the glyphs on the rail's left edge and
-   lets the header and hint sit at plain 0 rather than being nudged to chase them.
-   margin-top is the breathing room between the subject block and the list. */
+/* Everything in the rail lines up on one edge. .w carries 12px of pill padding for the
+   found-glow, so #list is pulled back by exactly that below and the header sits at 0. */
 #listhdr{display:flex;justify-content:flex-start;align-items:baseline;gap:9px;margin:6px 2px 8px 0}
 #listhdr b{font-family:var(--utility);font-weight:700;font-size:13px;letter-spacing:.16em;color:var(--label)}
-/* Monospace here is functional, not decorative: this string rewrites on every find and
-   proportional digits make it jitter sideways as the count climbs. */
+/* Monospace is functional here: this string rewrites on every find, and proportional
+   digits make it jitter sideways as the count climbs. */
 #count{font-family:var(--utility);font-size:14px;color:var(--muted)}
-/* Delimiter lives in CSS so #count's textContent stays the bare "n of 12 found" the
-   gameplay and smoke specs match on. */
+/* Delimiter in CSS so #count's textContent stays the bare "n of 12 found" the specs match. */
 #count::before{content:'— ';opacity:.55}
 #list{display:grid;gap:6px 14px;margin-left:-12px}
 .w{justify-self:start;font-weight:700;font-size:19px;line-height:1.2;padding:4px 12px;border-radius:999px;cursor:default;color:var(--text)}
 .w.done{text-decoration:line-through;color:var(--done-text)}
-/* On find, the word glows (fade in/out) for one beat, then main.js swaps
-   this class for `.done` and it strikes through. Duration matches GLOW_MS.
-   The 0%/100% stops are `transparent` rather than a token: the animation fades one
-   colour between two alphas, and a second token would carry no extra information. */
+/* Glows for one beat, then main.js swaps in `.done`. Duration matches GLOW_MS. */
 .w.glow{color:var(--found-text);animation:foundGlow .9s ease}
 @keyframes foundGlow{0%{background:transparent}45%{background:var(--glow)}100%{background:transparent}}
 #hint{margin:10px 0 0;font-size:13px;line-height:1.4;color:var(--hint);max-width:280px}
 #win{position:fixed;inset:0;background:var(--scrim);display:none;align-items:center;justify-content:center;z-index:50}
 #wincard{position:relative;background:var(--surface);border:1px solid var(--accent);border-radius:20px;padding:34px 42px;text-align:center;animation:popIn .45s ease;box-shadow:var(--card-shadow)}
-/* The solved puzzle's own strokes, drawn by renderSolvedShape. Sized in px to match
-   SOLVED_BOX in view.js — the two have to agree or the mark is cropped or floats. */
+/* Sized in px to match SOLVED_BOX in view.js — the two have to agree or the mark is
+   cropped or floats. */
 #solved{position:relative;width:148px;height:148px;margin:0 auto 16px;
   border-radius:14px;background:var(--bg);border:1px solid var(--border);overflow:hidden}
 #wincard h2{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:-.015em;
@@ -264,25 +181,29 @@ a{color:var(--accent-text)}a:hover{color:var(--accent-hover)}
 #picker-warning{font-size:14.5px;color:var(--muted);margin:0 0 18px;max-width:260px}
 #pickercard label{display:block;font-family:var(--utility);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--label);margin-bottom:6px;text-align:left}
 /* appearance:none so the control takes the card's palette rather than the platform's
-   white; min-height 44px is the touch target the rest of the dialogs already keep. */
-#picker-select{appearance:none;-webkit-appearance:none;width:100%;box-sizing:border-box;
+   white; 44px is the touch target the rest of the dialogs keep. It also strips the
+   native chevron, so the wrapper draws one back — without it the control reads as a
+   text input and nothing says it opens. */
+#picker-field{position:relative;margin-bottom:20px}
+#picker-field::after{content:'';position:absolute;right:18px;top:50%;width:9px;height:9px;margin-top:-7px;
+  border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);pointer-events:none}
+#picker-select{appearance:none;-webkit-appearance:none;width:100%;box-sizing:border-box;display:block;
   background:var(--bg);color:var(--text);border:1.5px solid var(--border);border-radius:12px;
-  padding:11px 14px;font-family:inherit;font-size:15px;min-height:44px;cursor:pointer;margin-bottom:20px}
+  padding:11px 40px 11px 14px;font-family:inherit;font-size:15px;min-height:44px;cursor:pointer}
 #picker-select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 #picker-error{font-size:13px;color:var(--pill-miss);margin:-12px 0 16px;max-width:260px}
-#pickercard div{display:flex;gap:12px;justify-content:center}
-/* Three buttons wrap on a narrow card rather than shrinking below the 44px touch
-   target; Start sits last so it keeps the primary position on either layout. */
-#picker-actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end}
+/* Wraps rather than shrinking below the 44px touch target; Start sits last so it keeps
+   the primary position on either layout. */
+#picker-actions{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
 #picker-cancel,#picker-surprise,#picker-start{border:none;border-radius:999px;padding:12px 22px;font-family:inherit;font-weight:700;font-size:15px;cursor:pointer;min-height:44px}
 #picker-cancel,#picker-surprise{background:transparent;border:1.5px solid var(--accent);color:var(--accent-text)}
 #picker-start{background:var(--accent);color:var(--accent-ink)}
-#picker-start[disabled]{opacity:.45;cursor:not-allowed}
+/* All three go disabled together while a deal is in flight, so all three have to look it. */
+#picker-actions button[disabled]{opacity:.45;cursor:not-allowed}
 @media (prefers-reduced-motion: reduce){
   #wincard{animation:none}
   .pill{transition:none}
   .w.glow{animation:none}
-  /* main.js already skips calling sweep() under reduced motion; this is the belt to
-     that braces, so the animation cannot run even if the class is somehow present. */
+  /* main.js already skips sweep() under reduced motion; this is the belt to that braces. */
   #gridbox.sweep::after{animation:none}
 }
