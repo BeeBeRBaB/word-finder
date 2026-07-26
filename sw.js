@@ -55,11 +55,21 @@ sw.addEventListener('fetch',e=>{
   // learn nothing. A miss falls through to the network and stores the result, which
   // is what "cache the categories you actually play" means.
   if(url.origin===sw.location.origin&&isSubject(url)){
+    // Keyed on the path, ignoring the query. subjects.js retries a failed import as
+    // `?retry=N`, because the module map remembers a rejected specifier for the life
+    // of the page and will not re-request the bare URL. Matching on the full URL made
+    // every retry its own cache entry that nothing could ever hit again: measured, a
+    // category first fetched on a retry sat in the cache as `food.js?retry=1` while
+    // `cache.match('./src/subjects/food.js')` returned undefined, so the next page
+    // load refetched ~9KB it already had -- and offline the import failed outright
+    // with byte-identical content in the cache. Normalising on put keeps it to one
+    // entry per category however many attempts it took.
+    const key=url.origin+url.pathname;
     e.respondWith(caches.open(SUBJECT_CACHE).then(async cache=>{
-      const hit=await cache.match(e.request);
+      const hit=await cache.match(key);
       if(hit)return hit;
       const res=await fetch(e.request);
-      if(res&&res.ok)cache.put(e.request,res.clone());
+      if(res&&res.ok)cache.put(key,res.clone());
       return res;
     }));
     return;
