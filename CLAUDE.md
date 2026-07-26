@@ -57,7 +57,7 @@ the 600 subjects — pushing words off the bottom of a landscape phone — passe
 plus one spec is genuinely enough.
 
 **For anything visual, `npm run shots` beats describing it.** It renders every shape
-in `tests/e2e/devices.js` to `.shots/`, and `--measure` prints the geometry and
+in `tests/viewport.js` to `.shots/`, and `--measure` prints the geometry and
 shouts about off-screen cells or words below the fold:
 
 ```bash

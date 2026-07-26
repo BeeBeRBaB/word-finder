@@ -77,7 +77,7 @@ runtime by directory, not listed. The picker reads its options from the catalog.
 | `tests/unit/` | `node:test` specs for the pure `src/` modules (`rng`, `puzzle`, `layout`, `storage`, `appearance`, `catalog`, `subjects`), the word-list and overlap contract every subject must meet (`content`), a token-parity check on the stylesheet (`tokens`), and a static assertion on the service worker (`sw`). No browser. |
 | `tests/e2e/` | Playwright specs (`smoke`, `gameplay`, `layout`, `picker`, `regressions`, `ux`, `appearance`) against a local static server (`tests/server.mjs`), on `desktop` and `mobile` viewport projects. |
 | `tests/live/` | Playwright smoke test against the real deployed GitHub Pages site — see [Development](#development). |
-| `tests/e2e/devices.js` | The screen shapes the app is judged against, shared by `layout.spec.js` and `npm run shots`. |
+| `tests/viewport.js` | The screen shapes the app is judged against, and the one geometry measurement that decides whether it fits at them. Shared by `playwright.config.js`, `layout.spec.js` and `npm run shots`. |
 | `tools/` | Dev-only, nothing imports them: `words-db.mjs` (`npm run words`) queries the corpus as SQLite, `shots.mjs` (`npm run shots`) renders every device shape to `.shots/`. |
 
 ## Development
