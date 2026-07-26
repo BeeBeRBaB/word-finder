@@ -69,6 +69,12 @@ npm run shots -- --dark --subject=sports/golf
 Its default subject is deliberately a long name, because a short one hides exactly
 the header-wrapping class of bug the suite already misses.
 
+**Measuring a viewport by hand needs `?subject=` or a cleared save.** `pickPreset`
+reads `screen`, but a restored board is rebuilt at the size it was *saved* at — so a
+desktop save reopened at a phone viewport shows a 13x13 board with cells clipped, and
+looks exactly like a layout bug that isn't there. `npm run shots` is immune (it always
+pins a subject); a bare `page.goto('/')` is not. Clear `wordfinder-save-v1` first.
+
 ## Verifying a change
 
 **A normal browser reload lies to you.** The service worker serves code

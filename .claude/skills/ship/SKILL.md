@@ -50,19 +50,21 @@ git push origin main
 git rev-parse HEAD
 ```
 
-Then poll until the Pages build reports the commit you just pushed:
+**Do not poll `pages/builds/latest` for the commit.** Its `commit` field lags badly
+and is not a deploy signal: observed naming a SHA *six commits* behind while the
+origin was already serving every new file, and once naming the previous SHA on a
+build logged the same second as the push. Waiting on a match that never arrives
+burns minutes for nothing.
+
+Use the Actions run for the SHA you pushed, which does track it:
 
 ```bash
-gh api repos/BeeBeRBaB/word-finder/pages/builds/latest \
-  --jq '{status,commit:.commit,created:.created_at}'
+gh run list --workflow=pages-build-deployment --limit 3 \
+  --json headSha,status,conclusion,createdAt
 ```
 
-Wait for `status: built`. A `built` status on the *previous* commit usually means
-the deploy has not landed yet — but **do not treat the commit field as the final
-word**, because it also lags: observed a build logged at the same second as a push
-still naming the previous SHA, while the origin was already serving the new files.
-Waiting on a match that never arrives burns minutes for nothing. If it reports
-`errored`, stop and report.
+Look for your SHA with `conclusion: success`. If it reports `failure`, stop and
+report.
 
 **The authoritative check is what the origin serves, not what the API says it
 built.** Hash a few files against your working tree:
