@@ -44,9 +44,13 @@ Check every one of these:
   new rule that relies on source order to beat it will not.
 - **New colours are tokens, not literals.** A hard-coded hex works in the palette it
   was picked for and is wrong in the other one.
-- **Anything that changes size or position**: check it against the viewports the
-  suite actually runs — desktop 1440×900 and mobile 390×664, per
-  [playwright.config.js](playwright.config.js).
+- **Anything that changes size or position**: check it against the shapes the suite
+  actually drives. `playwright.config.js` has two *projects* (desktop 1440×900 and
+  mobile 390×664), but `tests/e2e/layout.spec.js` walks seven device shapes, and the
+  short landscape ones are where layout bugs hide: iPhone 13 portrait 390×664 and
+  landscape 844×300, Pro Max portrait 430×752 and landscape 932×340, iPad Mini
+  portrait 744×1053 and landscape 1133×664, Desktop 1440×900. A 300px-tall viewport
+  is the case that breaks first.
 
 ## sw.js — cache freshness
 
@@ -65,9 +69,14 @@ failure. Verify the change respects all of them:
   both directions.
 - **Only `res.ok` or `res.type === 'opaque'` responses are cached.** Caching a
   deploy-time 404 or 500 poisons the cache for every later load.
-- **Every module in `src/` appears in `ASSETS`.** A missing entry works online and
-  breaks offline. (The PostToolUse hook checks this too — flag it anyway if you see
-  it, since the hook only fires on edits Claude makes.)
+- **Every module in `src/` appears in `ASSETS` — except `src/subjects/*.js`.** A
+  missing entry works online and breaks offline. Word pools are the exception and
+  must stay out: precaching them pulls all 25 categories into the installed shell
+  and defeats the lazy load, which is why `sw.js` gives that directory its own
+  runtime cache. A stale entry is worse than a missing one — `addAll` is atomic, so
+  one path that 404s caches *nothing* and silently disables offline entirely.
+  (The PostToolUse hook checks all three directions; flag anyway, since it only
+  fires on edits Claude makes and not on a file deleted via `rm`.)
 - **`CACHE` version bumps** are a hard reset, no longer required for a normal
   deploy. Flag both a bump that was not needed and a change that genuinely needs one.
 

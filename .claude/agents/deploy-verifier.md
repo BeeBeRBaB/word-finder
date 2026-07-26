@@ -69,7 +69,24 @@ async () => {
 }
 ```
 
-Then navigate again (this is the load that tells the truth) and take a screenshot.
+Clearing the service worker is only half of it. GitHub Pages sends
+`cache-control: max-age=600`, so the *browser's own* HTTP cache can still answer the
+next navigation with the previous build for ten minutes — the same confident wrong
+answer this subagent exists to prevent, arrived at by a different route. Navigate to
+a cache-busted URL so the document and its module graph are refetched:
+
+```js
+// browser_navigate — the query string defeats the HTTP cache; the modules it pulls
+// in are new URLs to the cache too, so the whole graph comes from the origin.
+`https://beeberbab.github.io/word-finder/?cb=${Date.now()}`
+```
+
+Then confirm you are on the deployed origin and not a leftover localhost tab — check
+`location.href` in the same call as any measurement you report. A stale `localhost:5173`
+tab has silently hijacked these checks before, and its old palette read as a real
+regression until the URL was asserted.
+
+That is the load that tells the truth. Take a screenshot.
 For appearance work, check both palettes — the stored preference is read by the
 inline resolver in [index.html](index.html) before first paint, so a wrong value
 shows up as a flash, not a steady-state bug. Set it explicitly and reload rather

@@ -26,7 +26,10 @@ without causing that.
 ## Deploying
 
 Push to `main` and it is live. No CI, no PRs, no feature branches — the local
-suite is the only gate. Use the **`/ship`** skill rather than doing it by hand; it
+suite is the only gate. **`/ship` is user-invoked** — Claude cannot launch it (the
+skill sets `disable-model-invocation`, deliberately: deploying is the user's call).
+Ask the user to run it, or follow its steps in `.claude/skills/ship/SKILL.md` by
+hand and say that is what you did. It
 sequences the steps and waits for the Pages build to actually serve your commit.
 
 `npm test` is deploy-independent and proves nothing about the deployed site.
