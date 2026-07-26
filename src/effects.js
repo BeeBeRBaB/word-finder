@@ -6,9 +6,8 @@
  */
 
 /**
- * Confetti from the middle of a found selection. The Math.random() calls are
- * deliberate and must NOT be routed through the seeded rng: a reproducible puzzle
- * means a reproducible GRID, not identical confetti.
+ * Confetti from the middle of a found selection. Math.random on purpose — a reproducible
+ * puzzle means a reproducible grid, not identical confetti.
  * @param {HTMLElement} fxEl @param {Selection} s @param {number} count
  * @param {LayoutDims} dims @param {number} pad
  * @returns {void}

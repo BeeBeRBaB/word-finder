@@ -1,22 +1,11 @@
-// The screen shapes this app is judged against, and the one measurement that decides
-// whether it fits at them. Shared by playwright.config.js (which picks its two project
-// viewports from here), tests/e2e/layout.spec.js (which asserts nothing clips at any
-// shape) and tools/shots.mjs (which renders them).
+// The shapes this app is judged against, and the one measurement that decides whether
+// it fits at them. Shared by playwright.config.js, layout.spec.js and npm run shots —
+// separate copies had already drifted, letting cells sit off the unscrollable left edge
+// while the suite stayed green.
 //
-// One list and one measurement, deliberately. The list and the renderer used to hold
-// separate copies of "is anything off-screen", and they had already drifted: the spec
-// checked bottom and right, the tool checked all four edges. So `npm run shots` could
-// print clean at a viewport where the spec failed, and — worse — the spec could pass
-// while cells sat off the LEFT edge, which is what happened when a centring change put
-// a board's first column out of reach. Start-edge overflow is not scrollable and is
-// not counted by scrollWidth, so it is invisible to every check except this one.
-//
-// Heights are real Safari innerHeight with the browser chrome already subtracted —
-// what a player actually gets, not the spec sheet. That is why the landscape entries
-// are so short: an iPhone 13 is 390px tall in landscape on paper and ~300px in a
-// browser, and the missing 90px is where layout breaks. Installed as a PWA there is no
-// chrome and the device has its full height, which is why bugs here show up in the
-// browser and not in the installed app.
+// Heights are real Safari innerHeight, chrome already subtracted: an iPhone 13 is 390px
+// tall in landscape on paper and ~300px in a browser, and that gap is where layout
+// breaks. A PWA has no chrome, which is why these bugs are browser-only.
 
 /** @typedef {import('@playwright/test').Page} Page */
 /** @typedef {{name:string, w:number, h:number}} Device */
@@ -56,12 +45,9 @@ export function measure(page) {
     };
     const gb = q('gridbox').getBoundingClientRect();
     const app = q('app');
-    // Two different questions, deliberately not one predicate. A word pill may sit a
-    // couple of px past the left edge — `.w` carries a negative inset so its text lines
-    // up with the header above it, measured at left:-2 in portrait — and that is
-    // design, not clipping. A CELL past any edge is a different matter: the game is
-    // played by dragging across cells, and past the start edge nothing can even scroll
-    // to it.
+    // Two questions, not one. `.w` carries a deliberate ~2px negative inset to line its
+    // text up with the header, so words are judged on bottom/right only. A cell past any
+    // edge is a real fault — past the start edge nothing can even scroll to it.
     const past = (/** @type {DOMRect} */ r) =>
       r.right > innerWidth + 0.5 || r.bottom > innerHeight + 0.5;
     const anyEdge = (/** @type {DOMRect} */ r) =>

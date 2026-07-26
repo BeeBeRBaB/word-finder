@@ -1,13 +1,7 @@
-// Category names only. No words live here, and neither do subject ids or names --
-// those are derived rather than listed, which is the whole point of this file: the
-// picker never shows a subject name (you choose a category and a subject is drawn
-// inside it), so the eagerly-loaded, precached payload needs category names only.
-//
-// A subject's category is its slug prefix (categoryOf), its display name is its
-// slug title-cased (subjectName), and the subjects that exist in a category are
-// simply Object.keys() of that category's loaded word module -- see loadCategory
-// and loadSubject in src/subjects.js. Pure data and pure string helpers only: no
-// DOM, no network, no imports of other src modules.
+// Category names only — this is the payload every visit precaches, and the picker never
+// shows a subject name. Everything else is derived: a subject's category is its slug
+// prefix, its name is the slug title-cased, and a category's subjects are the keys of
+// its word module. No DOM, no network, no imports.
 
 /** @typedef {{id:string, name:string}} Category */
 

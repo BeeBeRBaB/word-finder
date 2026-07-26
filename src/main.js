@@ -47,8 +47,7 @@ const prefersReducedMotion = () =>
   !!(globalThis.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 
 /** Every id below is present in index.html's static markup, so this never throws
- * in practice — it exists so a genuinely missing element fails loudly at startup
- * instead of as a silent `null` deref deep inside a renderer.
+ * in practice; it makes a missing element fail at startup, not as a null deref later.
  * @param {string} id @returns {HTMLElement} */
 function must(id) {
   const el = document.getElementById(id);
@@ -64,9 +63,8 @@ const els = {
   solved: must('solved'),
 };
 
-// The single home of every mutable value in the game. `dims` starts as a placeholder:
-// `newPuzzle()` calls `layout()` synchronously before any event can fire, replacing it
-// wholesale, so these numbers are never actually read.
+// The single home of every mutable value. `dims` is a placeholder newPuzzle() replaces
+// before any event can fire.
 /** @type {State} */
 const state = {
   puzzle: null,
@@ -79,9 +77,8 @@ const state = {
   drag: null,
   dims: { landscape: false, cell: 34, gridSize: 0, sideWidth: 0, listColumns: '1fr 1fr', scroll: false },
   winTimer: null,
-  // What the cells currently on screen were built from, so `layout()` can skip a
-  // rebuild that would produce an identical grid. `cell: 0` matches no real layout,
-  // so the first pass always renders.
+  // What the on-screen cells were built from; cell:0 matches nothing, so the first
+  // layout() always renders.
   rendered: { puzzle: null, cell: 0, size: 0 },
 };
 
@@ -90,16 +87,13 @@ const store = makeStorage();
 let currentSeed;
 /** @type {string} */
 let subjectId;
-// The word currently mid-glow in the list, rendered with the green-glow class instead
-// of the struck-through one until a timer clears it. Only ever set by a live find,
-// never by a restore.
+// The word mid-glow in the list. Only ever set by a live find, never by a restore.
 /** @type {string|null} */
 let justFound = null;
 
 /** Which of the four pill hues a subject underlines its name with. Hashed from the
- * name rather than drawn from the rng so a subject keeps the same colour every time it
- * comes up, and rather than from its position so reordering the catalog doesn't
- * reshuffle all 600. Reuses the pill tokens; it introduces no colour of its own.
+ * name, not the rng or its position, so a subject keeps its colour and reordering the
+ * catalog does not reshuffle all 600. Reuses the pill tokens.
  * @param {string} name @returns {number} */
 function accentSlot(name) {
   let h = 0;
@@ -119,12 +113,8 @@ function sweep() {
 }
 
 /** Every puzzle is built from its own fresh rng seeded by `seed`, never the
- * shared/advanced one — that's what lets a stored seed reproduce an identical grid
- * later (see `restore`), and makes `newGame` safe to call repeatedly.
- *
- * The board's shape arrives as an argument rather than being read off PRESET: a
- * restored save may have been dealt at a different size, and the board on screen is
- * the one that has to be rendered.
+ * shared one, so a stored seed reproduces its grid. `shape` is an argument, not PRESET:
+ * a restored save may have been dealt at a different size.
  * @param {number} seed @param {import('./subjects.js').Subject} subject
  * @param {Preset} shape
  * @returns {void} */
@@ -143,9 +133,7 @@ function newPuzzle(seed, subject, shape) {
   els.subject.textContent = cap(state.puzzle.name);
   els.subject.dataset.accent = String(accentSlot(state.puzzle.name));
   els.category.textContent = subject.categoryName;
-  // Cancel any pending win reveal; otherwise starting a new puzzle within the
-  // 700ms delay lets the stale timer drop the overlay over a fresh grid, where
-  // it swallows every pointer event and makes the game unplayable.
+  // Or a stale timer drops the win overlay over the fresh grid, swallowing every tap.
   if (state.winTimer) { clearTimeout(state.winTimer); state.winTimer = null; }
   els.win.style.display = 'none';
   layout();
@@ -164,9 +152,7 @@ function persist() {
     seed: currentSeed,
     subjectId,
     size: state.size,
-    // buildPuzzle returns exactly the count it was asked for (puzzle.test.js asserts
-    // it never returns a short board), so the board's own word list IS the count --
-    // no need for a second copy of it living outside `state`.
+    // buildPuzzle never returns a short board, so the word list IS the count.
     count: state.puzzle.words.length,
     found: state.foundOrder.map(w => ({ word: w, ...state.found[w].sel })),
   });
@@ -184,32 +170,23 @@ function layout() {
     size: state.size, pad: PAD, count: state.puzzle.words.length, minCell: state.minCell,
   });
   applyLayout(els, state.dims);
-  // What the cells currently on screen were built from. Everything below derives from
-  // exactly these three, so when none has changed the rebuild would produce a
-  // byte-identical grid -- and most resize frames change none of them: the landscape
-  // branch caps `cell` and derives it from height alone, so dragging a window's width
-  // leaves it identical on all but one frame of a drag. Keyed on the puzzle object too,
-  // not just its shape, or dealing a new board at the same size would skip the redraw
-  // and leave the previous puzzle's letters on screen.
+  // Everything below derives from these three, so unchanged means the rebuild would be
+  // byte-identical — true on nearly every resize frame. Keyed on the puzzle object, not
+  // just its shape, or a new board at the same size would keep the old letters.
   const r = state.rendered;
   if (r.puzzle === state.puzzle && r.cell === state.dims.cell && r.size === state.size) return;
   state.rendered = { puzzle: state.puzzle, cell: state.dims.cell, size: state.size };
   renderGrid(els, state.puzzle, state.dims, state.size, PAD);
-  // renderGrid rebuilds every cell from scratch, so found-ness has to be reapplied
-  // after it or a resize would wipe the grid's record of what you've already found.
+  // renderGrid rebuilds every cell, so found-ness has to be reapplied after it.
   renderFoundCells(els, state, state.size);
   pills();
 }
 
 let resizeFrame = 0;
 /** One relayout per frame while resizing. Cancel-and-reschedule rather than a pending
- * flag: a flag that only clears inside the callback would latch shut for good if a
- * frame scheduled in a hidden tab were ever dropped rather than deferred.
- * `cancelAnimationFrame(0)` is a no-op, so the initial value is safe.
- *
- * This coalesces a burst into one call, but a real browser already fires resize at most
- * once per frame, so on its own it saves little -- the guard in `layout()` above is what
- * actually removes the work. @returns {void} */
+ * flag, which would latch shut for good if a frame scheduled in a hidden tab were
+ * dropped rather than deferred. The real saving is layout()'s guard, not this — a
+ * browser already fires resize about once per frame. @returns {void} */
 function onResize() {
   cancelAnimationFrame(resizeFrame);
   resizeFrame = requestAnimationFrame(layout);
@@ -277,10 +254,8 @@ function endDrag() {
     const won = state.foundOrder.length === puzzle.words.length;
     burst(els.fx, s, won ? 90 : 34, state.dims, PAD);
     pop(won);
-    // Glow the word for one beat, then strike it through. The timer only
-    // clears the glow if `hit` is still the one glowing — finding a second word
-    // meanwhile resets `justFound`, and that word's own timer strikes it. Under
-    // reduced motion, skip the glow and strike immediately.
+    // Glow, then strike through. The timer only clears if `hit` is still the one
+    // glowing; a second find resets justFound and that word's own timer strikes it.
     if (prefersReducedMotion()) {
       justFound = null;
     } else {
@@ -298,9 +273,8 @@ function endDrag() {
       els.win.style.display = 'flex';
     }, 700);
   } else if (!(s.x0 === s.x1 && s.y0 === s.y1)) {
-    // Wrong guess: flash the attempted selection red, then clear it. A plain tap
-    // (pointerdown with no movement) produces a 1-cell selection that can never
-    // match a word, so skip the flash for it rather than flashing red on every tap.
+    // Flash the miss red — but not for a plain tap, whose 1-cell selection can never
+    // match anything.
     flashMiss(s);
   }
   pills();

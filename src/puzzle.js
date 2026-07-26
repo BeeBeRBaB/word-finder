@@ -27,14 +27,10 @@ function distanceTo(len, b) {
 }
 
 /**
- * Draw `count` words, spread across the length buckets in `mix`. A pool of 100+
- * words would otherwise deal twelve nine-letter words as readily as twelve
- * four-letter ones, and neither makes a good board.
- *
- * A bucket short of candidates does not shrink the board: the shortfall is backfilled
- * from what is left, nearest length first. Backfilling rather than throwing matters
- * because the scarce bucket is always the short words, and a subject with only two
- * three-letter words is still worth playing.
+ * Draw `count` words spread across the length buckets in `mix`, or a deal is as likely
+ * to be twelve nine-letter words as twelve four-letter ones. A short bucket is
+ * backfilled nearest-length-first rather than throwing — the scarce bucket is always
+ * the short words, and that subject is still worth playing.
  *
  * @param {string[]} pool @param {import('./rng.js').Rng} rng
  * @param {{count:number, mix:Bucket[]}} opts
@@ -58,10 +54,8 @@ export function pickWords(pool, rng, { count, mix }) {
     if (cands.length < b.take) unfilled.push(b);
   }
   if (out.length < count) {
-    // Nearest-length first, so a missing long word is replaced by the longest thing
-    // left rather than by whatever the shuffle happened to surface. Shuffle before
-    // sorting so ties inside one distance are still random; Array#sort is stable in
-    // every engine this ships to, so the shuffled order survives the tie.
+    // Nearest length first. Shuffled before sorting so ties stay random — sort is
+    // stable in every engine this ships to.
     const rest = rng.shuffle(eligible.filter(w => !used.has(w)))
       .sort((a, b2) =>
         Math.min(...unfilled.map(u => distanceTo(a.length, u))) -
@@ -76,13 +70,9 @@ export function pickWords(pool, rng, { count, mix }) {
 const MAX_SWAPS = 8;
 
 /**
- * Generate a puzzle from a resolved word pool. `placements` records where each word
- * actually landed, so a test can assert the grid really contains what the word list
- * claims.
- *
- * Knows nothing about categories, subjects or the catalog — it is handed a name and a
- * bag of words, which is what lets the placement logic be tested against a synthetic
- * pool with no content module loaded.
+ * Generate a puzzle from a resolved pool. `placements` records where each word landed so
+ * a test can assert the grid contains what the list claims. Knows nothing about
+ * categories or the catalog, so it can be tested against a synthetic pool.
  *
  * @param {{name:string, pool:string[], rng:Rng, size:number, count:number, mix:Bucket[]}} opts
  * @returns {Puzzle}
@@ -124,10 +114,8 @@ export function buildPuzzle({ name, pool, rng, size, count, mix }) {
         placed = true;
         break;
       }
-      // A word that will not fit is swapped for another of the same length rather
-      // than dropped. Dropping is what the old generator did, and it produced boards
-      // that were quietly one word short with nothing anywhere saying so.
-      if (placed) break;   // `while (!placed)` would catch it, but this skips the swap below
+      // Swap, never drop: dropping produced boards quietly one word short.
+      if (placed) break;   // skips the swap below; the while alone would not
       const alt = spare.findIndex(s => s.length === w.length);
       if (alt === -1 || ++swaps > MAX_SWAPS) {
         throw new Error(`could not place ${w} in a ${size}x${size} grid for "${name}"`);
@@ -145,9 +133,8 @@ export function buildPuzzle({ name, pool, rng, size, count, mix }) {
 }
 
 /**
- * Snap a free pointer offset to the nearest of 8 directions and a whole number of
- * cells. Length is the PROJECTION of the offset onto the snapped direction: using
- * raw Euclidean distance overshoots, because a k-cell diagonal spans k*sqrt(2).
+ * Snap a pointer offset to one of 8 directions and a whole number of cells. Length is
+ * the PROJECTION onto that direction; raw distance overshoots on diagonals.
  * @param {number} sx @param {number} sy @param {number} fx @param {number} fy
  * @param {number} size
  * @returns {{x1:number, y1:number}}
@@ -162,9 +149,8 @@ export function snap(sx, sy, fx, fy, size) {
   return { x1: sx + ux * L, y1: sy + uy * L };
 }
 
-/** Flat `cells` indices under a selection, start to end inclusive. Reading the
- * letters and colouring the found ones both walk a selection the same way, so the
- * stepping lives here once rather than being re-derived per caller.
+/** Flat `cells` indices under a selection. Shared so reading letters and colouring
+ * found ones cannot walk a selection differently.
  * @param {number} size @param {Selection} sel @returns {number[]} */
 export function lineIndices(size, sel) {
   const dx = Math.sign(sel.x1 - sel.x0), dy = Math.sign(sel.y1 - sel.y0);

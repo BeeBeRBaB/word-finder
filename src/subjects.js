@@ -1,17 +1,13 @@
-// Resolving a category or a subject id to its words. The one place that knows word
-// pools are fetched rather than merely read, and the boundary where a network
-// failure becomes something the picker can act on.
+// Resolves a category or subject id to its words. The only place that knows pools are
+// fetched rather than read, and where a network failure becomes actionable.
 
 import { findCategory, categoryOf, subjectName } from './catalog.js';
 
 /** @typedef {{id:string, name:string, subjectIds:string[], words:Record<string,string>}} CategoryData */
 /** @typedef {{id:string, name:string, category:string, categoryName:string, words:string[]}} Subject */
 
-/**
- * Why the failures are typed: offline with an uncached category and a typo'd
- * `?subject=` / `?category=` are the same rejected promise otherwise, and the
- * picker needs to disable an option for the first while ignoring the second.
- */
+/** Typed so the header can say "Offline" for a fetch failure and "Unavailable" for an
+ * id that is not in the catalog — otherwise both are one rejected promise. */
 export class SubjectLoadError extends Error {
   /** @param {'unknown'|'unavailable'} reason @param {string} id */
   constructor(reason, id) {
@@ -22,17 +18,10 @@ export class SubjectLoadError extends Error {
   }
 }
 
-/** The real dynamic import, plus the retry the module map makes necessary. A dynamic
- * import that fails is remembered as failed for the life of the page, so the same
- * specifier keeps rejecting from memory even once the network is back -- measured:
- * offline import rejects, network restored rejects again from cache, the same file
- * with `?retry=1` resolves. Each attempt therefore has to name a URL the page has not
- * already failed on, which is why this counts rather than flags: once `?retry=1` has
- * failed it is poisoned too.
- *
- * All of it lives in here so `fetchWords` keeps one job (ask, memoise on success) and
- * the injected-importer contract stays one argument -- a test double, or any future
- * importer, should not have to accept a counter that means nothing to it.
+/** The real import, plus a retry. A failed dynamic import is remembered as failed for
+ * the life of the page, so a retry must name a URL the page has not already failed on
+ * — hence a counter, not a flag: `?retry=1` is poisoned once it fails too. Kept in here
+ * so the injected-importer contract stays one argument.
  * @returns {(category:string) => Promise<{WORDS:Record<string,string>}>} */
 function realImport() {
   /** @type {Map<string, number>} */
@@ -56,10 +45,9 @@ export function makeSubjectLoader(importFn) {
   /** @type {Map<string, Record<string,string>>} */
   const cache = new Map();
 
-  /** One import per category id, memoised, regardless of whether it was reached via
-   * loadCategory or loadSubject. A failed category is not memoised: a player who was
-   * offline when they first reached for it can get it on the next try.
-   * @param {string} category @param {string} idForError @returns {Promise<Record<string,string>>} */
+  /** One import per category, memoised. Failures are not cached, so a player who was
+   * offline can retry. @param {string} category @param {string} idForError
+   * @returns {Promise<Record<string,string>>} */
   async function fetchWords(category, idForError) {
     const cached = cache.get(category);
     if (cached) return cached;

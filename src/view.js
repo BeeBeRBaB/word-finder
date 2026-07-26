@@ -31,18 +31,12 @@ export function applyLayout(els, dims) {
     els.app.removeAttribute('data-landscape');
     els.app.style.gridTemplateColumns = '1fr';
   }
-  // Landscape: the rail is its own grid column and #hdr already fills it, so both start
-  // on the same x. Portrait: #hdr is the full app width while the grid is centred and
-  // narrower, so pinning the rail to the grid's width left the word list indented from
-  // the kicker and subject above it. Full width instead puts the list, the category and
-  // "WORD FINDER" on one edge. The grid stays centred — it is a separate object, and
-  // shrinking the header to its width wraps the buttons onto a second row on a 390px
-  // phone, costing 48px of the height the grid needs.
+  // Portrait: full width, so the list lines up with the kicker above it rather than
+  // with the narrower centred grid. Landscape: the rail is its own column.
   els.side.style.width = dims.landscape ? dims.sideWidth + 'px' : '100%';
   els.list.style.gridTemplateColumns = dims.listColumns;
-  // The board has a legibility floor, so in a window too small to honour it the layout
-  // is deliberately bigger than the space. Scroll rather than clip: #app is
-  // overflow:hidden by default, which would cut cells off where nothing can reach them.
+  // minCell won and the board is bigger than its space: scroll, or #app's
+  // overflow:hidden would put cells where nothing can reach them.
   els.app.toggleAttribute('data-scroll', dims.scroll);
 }
 
@@ -70,10 +64,8 @@ export function renderGrid(els, puzzle, dims, size, pad) {
 // styles.css so they can follow the appearance setting; this module now holds none.
 const PILL_CLASS = ['p1', 'p2', 'p3', 'p4'];
 
-/** One rounded highlight bar laid over the cells of a selection. `thick` is the bar's
- * height as a fraction of the cell: the grid wants a bar wide enough to sit under a
- * letter, the solved shape wants a finer stroke so twelve of them in a 148px box read
- * as separate marks instead of one blob.
+/** One rounded bar over a selection. `thick` is its height as a fraction of the cell —
+ * finer for the solved shape, where twelve bars in a 148px box would otherwise blur.
  * @param {Selection} s @param {string} variant @param {number} cell @param {number} pad
  * @param {number} [thick]
  * @returns {HTMLDivElement} */
@@ -102,12 +94,8 @@ export function renderPills(els, state, dims, pad) {
   if (state.miss) els.pills.appendChild(pillDiv(state.miss, 'miss', dims.cell, pad));
 }
 
-/** Colour the letters that belong to a found word. Until now a found word was
- * marked only by the pill behind it, so the letters themselves read exactly like the
- * surrounding filler — the grid never showed its own progress. Cells are rebuilt
- * wholesale by `renderGrid`, so this reapplies from `state` rather than tracking
- * anything, and it is deliberately NOT folded into `renderPills`: that runs on every
- * pointermove during a drag, and found-ness only changes on a find.
+/** Colour the letters of a found word. Reapplied from `state` because renderGrid
+ * rebuilds cells wholesale. Kept out of renderPills, which runs on every pointermove.
  * @param {Els} els @param {GameState} state @param {number} size @returns {void} */
 export function renderFoundCells(els, state, size) {
   const cells = els.letters.children;
@@ -117,16 +105,13 @@ export function renderFoundCells(els, state, size) {
       if (cells[i]) cells[i].className = 'cell found';
 }
 
-// Edge of the square the solved shape is drawn into, in px. Matches #solved in
-// styles.css; the pills are laid out against this rather than the live grid size so
-// the mark is the same size whatever viewport the puzzle was solved on. SOLVED_INSET
-// keeps the outermost strokes off the plate's edge — a word along row 0 or column 12
-// otherwise runs right into the border and reads as clipped rather than composed.
+// The solved-shape plate, matching #solved in styles.css. Laid out against this rather
+// than the live grid so the mark is identical whatever viewport solved it; the inset
+// keeps edge words off the border.
 const SOLVED_BOX = 148, SOLVED_INSET = 9;
 
-/** The finished puzzle as its bare strokes — every found word's pill, no letters.
- * Because puzzles are seeded, the same seed always draws the same mark and different
- * seeds draw different ones, which is what makes it worth showing on the win card.
+/** The finished puzzle as bare strokes, no letters. Seeded puzzles make this a stable
+ * per-seed mark, which is what makes it worth showing.
  * @param {Els} els @param {GameState} state @param {number} size @returns {void} */
 export function renderSolvedShape(els, state, size) {
   els.solved.innerHTML = '';
@@ -136,11 +121,8 @@ export function renderSolvedShape(els, state, size) {
 }
 
 /**
- * The word list. A word's presence in `state.found` means found-and-done;
- * this module keeps no state of its own. `justFound` is the single word (if any)
- * that was found this instant: it renders with class `glow` — a brief warm
- * fade — instead of `done`, so it animates before it is struck through. Every
- * other found word, including all of them after a restore, renders `done`.
+ * The word list; this module keeps no state of its own. `justFound` renders `glow`
+ * instead of `done` so it animates before being struck through.
  * @param {Els} els @param {Puzzle} puzzle @param {GameState} state @param {string|null} [justFound]
  * @returns {void}
  */

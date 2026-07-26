@@ -1,69 +1,44 @@
-// `self` in a service worker is a ServiceWorkerGlobalScope, but tsconfig's `lib`
-// must also include `DOM` for the rest of the project (src/ touches `window`,
-// `HTMLElement`, ...), and TypeScript's DOM and WebWorker libs both declare a
-// global `self` with incompatible types — the DOM one wins. There is no JSDoc-only
-// way to make `self.skipWaiting()` etc. type-check without this one cast; routing
-// through `unknown` (never `any`) is the standard, narrowly-scoped idiom for it.
+// TS's DOM and WebWorker libs both declare `self` and the DOM one wins, so this cast
+// is the only way to type `skipWaiting()` while src/ still needs the DOM lib.
 const sw = /** @type {ServiceWorkerGlobalScope} */ (/** @type {unknown} */ (self));
 
 const CACHE='wordfinder-v8';
-// Word pools are deliberately NOT versioned with the shell. They are large, they
-// change only when their own file does, and the activate sweep below would otherwise
-// discard every category a player had downloaded on every single deploy.
+// Unversioned on purpose: versioning it would make the activate sweep throw away every
+// downloaded category on every deploy.
 const SUBJECT_CACHE='wordfinder-subjects';
 const ASSETS=['./','./index.html','./styles.css','./src/main.js','./src/rng.js','./src/puzzle.js','./src/layout.js','./src/view.js','./src/effects.js','./src/catalog.js','./src/subjects.js','./src/storage.js','./src/appearance.js','./src/picker.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 
-/** A lazily-imported word pool, as opposed to shell code. Matched on the directory
- * rather than a list, because the catalog grows and sw.js must not have to grow with it.
- * @param {URL} u @returns {boolean} */
+/** A lazily-imported word pool. Matched by directory so the catalog can grow without
+ * sw.js growing with it. @param {URL} u @returns {boolean} */
 const isSubject=u=>u.pathname.includes('/src/subjects/');
 
-// Code changes on every deploy; icons and fonts only change when they are renamed.
-// Serving code cache-first pinned every visitor to the last cached build until CACHE
-// was bumped by hand — a rule you have to remember forever, with no error when you
-// forget. So code is now stale-while-revalidate: the cached copy still answers
-// instantly, and the network copy quietly replaces it for the next load. The version
-// string stays useful for forcing a hard reset, but is no longer load-bearing.
+// Code is stale-while-revalidate; icons and fonts are cache-first. Serving code
+// cache-first pinned visitors to the last build until CACHE was bumped by hand.
 /** @param {URL} u @returns {boolean} */
 const isCode=u=>/\.(html|css|js|webmanifest)$/.test(u.pathname)||u.pathname.endsWith('/');
 
-// Pages serves code with `max-age=600`, so a plain fetch() can be answered by the
-// browser's own HTTP cache and re-store the same stale build for ten more minutes.
-// `no-cache` forces an origin revalidation; unchanged files come back 304, near-free.
-// Re-issue from the URL rather than `new Request(req,{...})`, which throws outright
-// on a navigation request — and leave cross-origin requests (fonts) alone, since
-// re-issuing those would drop their no-cors mode and fail.
+// Pages sends max-age=600, so a plain fetch can re-store a stale build from the HTTP
+// cache. Re-issued from the URL (new Request throws on navigations); cross-origin is
+// left alone or it loses no-cors mode.
 /** @param {Request} req @returns {Promise<Response>} */
 function revalidate(req){
   if(new URL(req.url).origin===sw.location.origin)return fetch(req.url,{cache:'no-cache'});
   return fetch(req);
 }
 
-// A bare `addAll(ASSETS)` is a plain fetch, which the max-age=600 HTTP cache can
-// answer -- filling the freshly-bumped CACHE with the build the browser last saw.
-// Harmless while deploys only add files; fatal once one deletes a file, because the
-// stale main.js then imports a path the server no longer has and the grid stays blank
-// forever, offline included. Reload mode is the same fix `revalidate()` above applies.
+// {cache:'reload'} per asset, not a bare addAll: the same max-age=600 trap, which turns
+// fatal the first time a deploy deletes a file a stale main.js still imports.
 sw.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS.map(u=>new Request(u,{cache:'reload'})))).then(()=>sw.skipWaiting()))});
 sw.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE&&k!==SUBJECT_CACHE).map(k=>caches.delete(k)))).then(()=>sw.clients.claim()))});
 
 sw.addEventListener('fetch',e=>{
   if(e.request.method!=='GET')return;
   const url=new URL(e.request.url);
-  // Word pools are strictly cache-first out of their own cache: they are large, they
-  // never change in place, and a revalidation on every deal would spend a request to
-  // learn nothing. A miss falls through to the network and stores the result, which
-  // is what "cache the categories you actually play" means.
+  // Word pools: cache-first, own cache. They never change in place, so revalidating
+  // would spend a request to learn nothing.
   if(url.origin===sw.location.origin&&isSubject(url)){
-    // Keyed on the path, ignoring the query. subjects.js retries a failed import as
-    // `?retry=N`, because the module map remembers a rejected specifier for the life
-    // of the page and will not re-request the bare URL. Matching on the full URL made
-    // every retry its own cache entry that nothing could ever hit again: measured, a
-    // category first fetched on a retry sat in the cache as `food.js?retry=1` while
-    // `cache.match('./src/subjects/food.js')` returned undefined, so the next page
-    // load refetched ~9KB it already had -- and offline the import failed outright
-    // with byte-identical content in the cache. Normalising on put keeps it to one
-    // entry per category however many attempts it took.
+    // Path only. subjects.js retries as `?retry=N`, and keying on the full URL made
+    // every retry an entry nothing could hit again.
     const key=url.origin+url.pathname;
     e.respondWith(caches.open(SUBJECT_CACHE).then(async cache=>{
       const hit=await cache.match(key);
@@ -77,23 +52,17 @@ sw.addEventListener('fetch',e=>{
   const req=e.request;
   e.respondWith(caches.open(CACHE).then(async cache=>{
     const cached=await cache.match(req,{ignoreSearch:true});
-    // Icons and fonts stay strictly cache-first — never spend a request
-    // revalidating something that only changes when it gets renamed.
+    // Icons and fonts only change when renamed, so never revalidate them.
     if(cached&&!isCode(new URL(req.url)))return cached;
     const fresh=revalidate(req).then(res=>{
-      // Never let a deploy-time 404 or a 500 poison the cache: a background
-      // revalidation that stored one would serve it on every later load.
-      // Opaque responses (cross-origin fonts) report status 0 but are still cacheable.
+      // Never cache a deploy-time 404/500. Opaque (cross-origin font) responses report
+      // status 0 but are cacheable.
       if(res&&(res.ok||res.type==='opaque'))cache.put(req,res.clone());
       return res;
     });
     if(cached){e.waitUntil(fresh.catch(()=>{}));return cached}
-    // Cache-miss fallback: `./index.html` is precached in ASSETS at install, so this
-    // branch only ever misses if cache storage was cleared out from under us — and
-    // per the Fetch spec, respondWith() resolving to `undefined` already network-
-    // errors the request, the same outcome as the explicit Response.error() branch.
-    // The assertion below encodes that invariant for the type checker; it changes
-    // nothing at runtime.
+    // Only reachable if cache storage was cleared under us. The cast is for tsc; per
+    // spec, resolving undefined already network-errors the request.
     return /** @type {Promise<Response>} */ (fresh.catch(()=>req.mode==='navigate'?cache.match('./index.html'):Response.error()));
   }));
 });

@@ -1,10 +1,6 @@
-// Seeding. Pure: no DOM, no `location` — the query string arrives as an argument
-// so the same functions can be exercised from a plain unit test.
-//
-// Deterministic PRNG so a puzzle can be reproduced exactly. `?seed=N` pins the
-// sequence, `?subject=` / `?category=` pin what is dealt; with none of them, the
-// clock seeds it and a random subject is chosen. This is the shipped path, not a
-// test-only branch.
+// Seeding. Pure — the query string arrives as an argument, not read from `location`.
+// `?seed=N` pins the sequence and `?subject=`/`?category=` pin what is dealt; with
+// neither, the clock seeds it. This is the shipped path, not a test-only branch.
 
 /**
  * @typedef {{random:()=>number, int:(n:number)=>number, shuffle:<T>(a:T[])=>T[]}} Rng
@@ -52,22 +48,13 @@ export function resolveSeed(search) {
 /** @typedef {{subject:string|null, category:string}} Target */
 
 /**
- * What to deal, from the URL: `?subject=<cat>/<slug>` pins a subject by shape alone
- * — whether that slug is really in the category's module is only knowable after the
- * module loads, so `loadSubject` (src/subjects.js) is what reports `unknown` for a
- * key that is not there. `?category=<id>` pins the category and leaves the subject
- * to be drawn once its module is loaded. With neither, a category is drawn here.
+ * What to deal, from the URL. `?subject=` is accepted on shape alone; whether the slug
+ * exists is only knowable once the module loads, and loadSubject reports that.
  *
- * `categories` arrives as a parameter rather than an import of catalog.js: this
- * module stays dependency-free so it can be unit-tested with a tiny fixture list.
- *
- * Note the asymmetry, which is not decoration: an explicit `?subject=` or
- * `?category=` must NOT touch `rng`. Drawing there would shift the sequence, so the
- * same `?seed=` would deal a different grid with and without the parameter, and the
- * determinism the e2e suite rests on would quietly stop holding.
- *
- * An id that names no known category falls through to a random pick rather than
- * throwing — a stale bookmark should still give you a game.
+ * The pinned branches must NOT touch `rng`: drawing there would shift the sequence, so
+ * one `?seed=` would deal different grids with and without the parameter. An unknown id
+ * falls through to a random pick — a stale bookmark should still give you a game.
+ * `categories` is a parameter, not an import, so this stays testable with a fixture.
  *
  * @param {string} search @param {CategoryRef[]} categories
  * @param {Rng} rng @returns {Target}

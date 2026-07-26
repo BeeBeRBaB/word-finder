@@ -36,13 +36,9 @@ export function nextPref(pref) {
   return PREFS[(i + 1) % PREFS.length];
 }
 
-/** The concrete appearance a preference resolves to; only `system` consults the OS.
- * `prefersDark` is `null` when there is no OS to ask at all (`matchMedia` missing) --
- * that is a different claim from "the OS says light", and conflating the two used to
- * resolve a missing query to `light`, disagreeing with styles.css's bare `:root`
- * default and with what the inline resolver in index.html paints when its own
- * `matchMedia` call is unavailable. No query now falls back to `dark`, matching both.
- * The return values are exactly the `data-appearance` values styles.css selects on.
+/** What a preference resolves to; only `system` consults the OS. `prefersDark: null`
+ * means there is no OS to ask, which is not "the OS says light" — it falls back to dark,
+ * matching styles.css's bare `:root` and index.html's inline resolver.
  * @param {Pref} pref @param {boolean|null} prefersDark @returns {Mode} */
 export function resolveAppearance(pref, prefersDark) {
   if (pref === 'light' || pref === 'dark') return pref;

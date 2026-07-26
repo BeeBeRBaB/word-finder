@@ -1,11 +1,7 @@
 #!/usr/bin/env node
-// Renders the app at every screen shape in tests/e2e/devices.js and writes a PNG per
-// shape, so "how does this look in landscape?" is one command instead of a throwaway
-// Playwright script. Starts and stops its own static server, so nothing has to be
-// running first.
-//
-// Dev tool only. Playwright is already a devDependency; this adds nothing to
-// package.json and nothing under src/ imports it.
+// Renders the app at every shape in tests/viewport.js, one PNG each, so "how does this
+// look in landscape?" is one command. Starts and stops its own server. Dev tool only:
+// nothing under src/ imports it and it adds no dependency.
 //
 // Usage:
 //   npm run shots                      Every shape.
