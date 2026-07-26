@@ -75,6 +75,11 @@
 
 /* Lock the viewport: no page scroll or rubber-band on iPad / iOS standalone. */
 html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);font-family:'Atkinson Hyperlegible',sans-serif;overscroll-behavior:none;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+/* touch-action is not inherited, but the effective value for a touch is intersected up
+   the ancestor chain — so `none` on body suppresses iOS's default tap handling for
+   every control inside it, and a <select> never opens its wheel picker. Give the
+   interactive controls their gesture back; the lock above still covers the board. */
+button,select,label{touch-action:manipulation;-webkit-user-select:auto;user-select:auto}
 body{position:fixed;inset:0;width:100%;height:100%}
 a{color:var(--accent-text)}a:hover{color:var(--accent-hover)}
 /* overflow:hidden is the default because at every real device shape the board is sized
