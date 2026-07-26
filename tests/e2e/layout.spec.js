@@ -2,16 +2,7 @@ import { test, expect } from '@playwright/test';
 
 /** @typedef {import('@playwright/test').Page} Page */
 
-// Real Safari innerHeight (browser chrome subtracted) — what players actually get.
-const DEVICES = [
-  { name: 'iPhone 13 portrait',      w: 390,  h: 664 },
-  { name: 'iPhone 13 landscape',     w: 844,  h: 300 },
-  { name: 'iPhone Pro Max portrait', w: 430,  h: 752 },
-  { name: 'iPhone Pro Max landscape',w: 932,  h: 340 },
-  { name: 'iPad Mini portrait',      w: 744,  h: 1053 },
-  { name: 'iPad Mini landscape',     w: 1133, h: 664 },
-  { name: 'Desktop',                 w: 1440, h: 900 },
-];
+import { DEVICES } from './devices.js';
 
 /**
  * @param {Page} page

@@ -35,6 +35,40 @@ sequences the steps and waits for the Pages build to actually serve your commit.
 `npm test` is deploy-independent and proves nothing about the deployed site.
 `npm run test:live` runs against the real thing and only makes sense after a push.
 
+## How much to check
+
+Match the check to what the change can break. The hook already covers the cheap
+ground continuously, so re-running everything after every edit buys nothing and is
+the main way a small change turns into a long session.
+
+| When | Run | Cost |
+| --- | --- | --- |
+| Every edit | the PostToolUse hook — automatic, nothing to type | 0.7s |
+| Before committing | the one e2e spec covering what you touched | ~5s |
+| Before pushing | `npm test` in full, **once** | ~50s |
+| After pushing | `npm run test:live` | ~4s |
+| Reviewer subagents | on request, **or** any change to `styles.css` / `sw.js` | minutes |
+
+The last row is not padding. Those two files are the ones that fail silently (see
+below), and the suite structurally cannot catch some of it: `layout.spec.js` pins
+one short subject name, so a rail-width change that wrapped the header for 230 of
+the 600 subjects — pushing words off the bottom of a landscape phone — passed all
+59 e2e tests. A reviewer found it. Everywhere else, failures are loud and the hook
+plus one spec is genuinely enough.
+
+**For anything visual, `npm run shots` beats describing it.** It renders every shape
+in `tests/e2e/devices.js` to `.shots/`, and `--measure` prints the geometry and
+shouts about off-screen cells or words below the fold:
+
+```bash
+npm run shots -- --measure          # all shapes, with numbers
+npm run shots -- landscape          # just the short-landscape ones
+npm run shots -- --dark --subject=sports/golf
+```
+
+Its default subject is deliberately a long name, because a short one hides exactly
+the header-wrapping class of bug the suite already misses.
+
 ## Verifying a change
 
 **A normal browser reload lies to you.** The service worker serves code
