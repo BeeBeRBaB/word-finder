@@ -411,6 +411,10 @@ async function boot() {
     // A blank grid with no explanation is the worst outcome available, so say what
     // happened and leave the board empty rather than half-built.
     reportLoadFailure(err);
+  } finally {
+    // Reveal whatever we ended up with — a board, or the failure text. Runs after the
+    // DOM writes above and before the next paint, so the first frame is the final one.
+    document.documentElement.removeAttribute('data-booting');
   }
 }
 

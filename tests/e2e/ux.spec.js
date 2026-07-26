@@ -84,3 +84,30 @@ test('the visible copy talks about games and subjects, never topics or themes', 
   await expect(page.locator('body')).not.toContainText(/theme/i);
   await expect(page.locator('body')).not.toContainText(/topic/i);
 });
+
+// The boot gate holds the first paint until the board is laid out, which took CLS from
+// 0.66 to 0.002 — the shell used to paint portrait with a 0-size grid, then JS flipped
+// orientation and sized it, moving #gridbox, #hdr and #side at once. The gate is only
+// safe if it opens even when main.js never arrives, or a degraded page becomes a blank
+// one. The inline script's own timeout is what guarantees that, so pin it here.
+test('the boot gate opens even when the module never loads', async ({ page }) => {
+  await blockServiceWorker(page);
+  await page.route('**/src/main.js', route => route.abort());
+  await page.goto('/?seed=1&subject=nature/birds');
+  await expect(page.locator('#app')).toBeHidden();
+  await expect(page.locator('#app')).toBeVisible({ timeout: 8000 });
+  await expect(page.locator('#subject')).toHaveText('Loading…');
+});
+
+// The same gate must open on a failed deal too — that path goes through boot()'s catch,
+// and the reveal lives in its finally precisely so the failure text is seen at once.
+// The timeout here is deliberately well under the inline script's 3s fallback: without
+// it this passed on the fallback alone, in 3.1s instead of 276ms, proving nothing about
+// the finally it is supposed to guard.
+test('the boot gate opens when the deal fails, showing the reason', async ({ page }) => {
+  await blockServiceWorker(page);
+  await page.route('**/src/subjects/nature.js', route => route.abort());
+  await page.goto('/?seed=1&subject=nature/birds');
+  await expect(page.locator('#app')).toBeVisible({ timeout: 1500 });
+  await expect(page.locator('#subject')).toHaveText('Offline');
+});

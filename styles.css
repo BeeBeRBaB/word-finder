@@ -59,6 +59,9 @@ body{position:fixed;inset:0;width:100%;height:100%}
 /* One ring for every control rather than per-element rules, so a keyboard reaches
    nothing that shows only the UA default against this palette. */
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+/* Set by the inline script in <head>, cleared once boot() has laid the board out.
+   Without it the shell paints in the wrong orientation with a 0-size grid. */
+:root[data-booting] #app{visibility:hidden}
 /* Set by applyLayout only when the board's legibility floor makes it larger than the
    window. A readable board you can scroll beats an unreadable one that fits, and beats
    overflow:hidden, which would put cells where nothing can reach them. */

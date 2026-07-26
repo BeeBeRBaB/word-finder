@@ -9,6 +9,12 @@
      throwing getItem (iOS "Block All Cookies") must fall through to the OS query, not
      abort the script. Covered by appearance.spec.js. -->
 <script>try{var p=null;try{p=localStorage.getItem('wordfinder-appearance')}catch(e){}if(p!=='light'&&p!=='dark')p=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.appearance=p}catch(e){}</script>
+<!-- Hold the first paint until main.js has laid the board out. The shell paints
+     portrait with an unsized grid, and JS then flips orientation and sizes it, which
+     measured CLS 0.66 — one shift moving #gridbox, #hdr and #side at once. Its own
+     try, so an appearance failure above cannot strand the page, and its own timeout,
+     so a main.js that never arrives degrades to the old shell rather than a blank. -->
+<script>try{var d=document.documentElement;d.dataset.booting='1';setTimeout(function(){d.removeAttribute('data-booting')},3000)}catch(e){}</script>
 <title>Word Finder</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#100a05">
