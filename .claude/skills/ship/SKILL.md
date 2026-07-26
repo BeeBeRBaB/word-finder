@@ -57,9 +57,26 @@ gh api repos/BeeBeRBaB/word-finder/pages/builds/latest \
   --jq '{status,commit:.commit,created:.created_at}'
 ```
 
-Wait for `status: built` **and** `commit` equal to local `HEAD`. A `built` status
-on the *previous* commit is the trap — it looks like success and means the deploy
-has not landed. Typically under a minute. If it reports `errored`, stop and report.
+Wait for `status: built`. A `built` status on the *previous* commit usually means
+the deploy has not landed yet — but **do not treat the commit field as the final
+word**, because it also lags: observed a build logged at the same second as a push
+still naming the previous SHA, while the origin was already serving the new files.
+Waiting on a match that never arrives burns minutes for nothing. If it reports
+`errored`, stop and report.
+
+**The authoritative check is what the origin serves, not what the API says it
+built.** Hash a few files against your working tree:
+
+```bash
+for f in sw.js src/main.js styles.css index.html; do
+  a=$(curl -s "https://beeberbab.github.io/word-finder/$f?cb=$(date +%s)" | shasum | cut -d' ' -f1)
+  b=$(shasum "$f" | cut -d' ' -f1)
+  [ "$a" = "$b" ] && echo "$f: live" || echo "$f: STALE"
+done
+```
+
+All `live` means the deploy is there whatever the build record claims. Any `STALE`
+means give it another minute and re-run — that, not the commit field, is the signal.
 
 ## 5. Verify the deployed site
 
