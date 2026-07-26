@@ -37,7 +37,7 @@ const ROW_H = 34;
 /** @param {number} count @returns {number} */
 export const reservePortrait = (count) => RESERVE_BASE + Math.ceil(count / 2) * ROW_H;
 
-const GAP = 20;        // #main's column gap between grid and rail, landscape only
+const GAP = 20;        // must equal #app[data-landscape]'s column-gap; tokens.test.js pins it
 const MIN_SIDE = 160;  // rail floor
 const LIST_MAX = 380;  // rail ceiling: two content-sized columns need no more
 const BORDER = 2;      // #gridbox's content-box border, 1px each side

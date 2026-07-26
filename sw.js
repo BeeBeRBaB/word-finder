@@ -2,7 +2,10 @@
 // is the only way to type `skipWaiting()` while src/ still needs the DOM lib.
 const sw = /** @type {ServiceWorkerGlobalScope} */ (/** @type {unknown} */ (self));
 
-const CACHE='wordfinder-v8';
+// Bump when a change couples markup, styles and modules. Code is stale-while-revalidate
+// and each entry refreshes independently, so a torn pair can ship; install's atomic
+// addAll into a fresh cache is the only thing that swaps them as one set.
+const CACHE='wordfinder-v9';
 // Unversioned on purpose: versioning it would make the activate sweep throw away every
 // downloaded category on every deploy.
 const SUBJECT_CACHE='wordfinder-subjects';
