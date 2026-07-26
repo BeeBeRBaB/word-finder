@@ -85,3 +85,15 @@ export async function dragCells(page, sel) {
   await page.mouse.move(b.x, b.y, { steps: 12 });
   await page.mouse.up();
 }
+
+/** Remove service-worker registration before any page script runs.
+ *
+ * Needed by any test that intercepts a lazily imported word pool with `page.route`.
+ * Once the worker calls `clients.claim()` it controls the page, and a dynamic
+ * `import()` is then fetched from inside the worker's context where `page.route`
+ * cannot see it — the request simply never reaches the handler and the test's
+ * interception silently does nothing.
+ * @param {Page} page @returns {Promise<void>} */
+export async function blockServiceWorker(page) {
+  await page.addInitScript(() => { delete Object.getPrototypeOf(navigator).serviceWorker; });
+}

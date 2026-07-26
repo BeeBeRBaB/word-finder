@@ -61,16 +61,20 @@ cd "$root" || fail "verify.sh: could not enter $root"
 # test's job: sw.test.js already read the same file and already owned one of the three
 # rules, and as a test it also runs under `npm test` and `/ship` — which is what
 # catches a module deleted with `rm`, something this hook never sees.
-if ! out=$(npm run test:unit --silent 2>&1); then
-  fail "npm run test:unit failed:
+# node/tsc directly, not `npm run`: the npm wrapper costs ~150ms of the ~700ms this
+# takes, on a hook that fires after every edit. The scripts in package.json stay the
+# documented entry points for humans; this is the same two commands without the shell
+# npm spawns to reach them.
+if ! out=$(node --test 2>&1); then
+  fail "unit tests failed (npm run test:unit):
 
 $out"
 fi
 
 # Types. The project is plain JS checked through JSDoc, so tsc is the only
 # thing standing between a typo and a runtime error in the browser.
-if ! out=$(npm run typecheck --silent 2>&1); then
-  fail "npm run typecheck failed:
+if ! out=$(./node_modules/.bin/tsc --noEmit 2>&1); then
+  fail "typecheck failed (npm run typecheck):
 
 $out"
 fi

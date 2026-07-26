@@ -21,7 +21,7 @@
 import { chromium } from '@playwright/test';
 import { spawn } from 'node:child_process';
 import { mkdirSync, rmSync } from 'node:fs';
-import { DEVICES } from '../tests/e2e/devices.js';
+import { DEVICES, measure } from '../tests/viewport.js';
 
 const OUT = new URL('../.shots/', import.meta.url);
 const PORT = 5273;                       // not 5173: never fight a dev server already up
@@ -29,7 +29,7 @@ const DEFAULT_SUBJECT = 'history/industrial-revolution';
 
 const args = process.argv.slice(2);
 const dark = args.includes('--dark');
-const measure = args.includes('--measure');
+const withGeometry = args.includes('--measure');
 const subject = args.find((a) => a.startsWith('--subject='))?.slice('--subject='.length) ?? DEFAULT_SUBJECT;
 const filters = args.filter((a) => !a.startsWith('--')).map((a) => a.toLowerCase());
 const shapes = filters.length
@@ -53,7 +53,10 @@ for (let i = 0; i < 100; i++) {
   try { await fetch(`${base}/index.html`); break; } catch { await new Promise((r) => setTimeout(r, 50)); }
 }
 
-rmSync(OUT, { recursive: true, force: true });
+// Only wipe when rendering everything. A filtered run used to delete the other shots
+// too, so `npm run shots -- landscape` cost a full re-run to get them back — exactly
+// the iteration this tool exists to make cheap.
+if (!filters.length) rmSync(OUT, { recursive: true, force: true });
 mkdirSync(OUT, { recursive: true });
 
 const url = `${base}/index.html?seed=1&subject=${subject}`;
@@ -72,19 +75,11 @@ for (const d of shapes) {
   await page.screenshot({ path: file.pathname });
 
   let note = '';
-  if (measure) {
-    const m = await page.evaluate(() => {
-      const box = (sel) => document.querySelector(sel)?.getBoundingClientRect();
-      const g = box('#gridbox'), l = box('#list');
-      const off = [...document.querySelectorAll('.cell')].filter((c) => {
-        const b = c.getBoundingClientRect();
-        return b.left < -0.5 || b.right > innerWidth + 0.5 || b.top < -0.5 || b.bottom > innerHeight + 0.5;
-      }).length;
-      const words = [...document.querySelectorAll('.w')].filter((e) => e.getBoundingClientRect().bottom > innerHeight + 0.5).length;
-      return { cell: Math.round(box('.cell').width), grid: Math.round(g.width), list: Math.round(l.width), off, words };
-    });
+  if (withGeometry) {
+    const m = await measure(page);
     note = `  cell=${m.cell}px grid=${m.grid} list=${m.list} ratio=1:${(m.list / m.grid).toFixed(2)}`
-      + `${m.off ? `  ** ${m.off} CELLS OFF-SCREEN **` : ''}${m.words ? `  ** ${m.words} WORDS BELOW FOLD **` : ''}`;
+      + `${m.offscreenCells ? `  ** ${m.offscreenCells} CELLS OFF-SCREEN **` : ''}`
+      + `${m.offscreenWords.length ? `  ** ${m.offscreenWords.length} WORDS OFF-SCREEN **` : ''}`;
   }
   console.log(`${d.name.padEnd(26)} ${String(d.w).padStart(4)}x${String(d.h).padEnd(4)}${note}`);
   await ctx.close();

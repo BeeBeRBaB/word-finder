@@ -1,10 +1,11 @@
 /**
- * @typedef {{landscape:boolean, cell:number, gridSize:number, sideWidth:number, listColumns:string}} LayoutDims
+ * @typedef {{landscape:boolean, cell:number, gridSize:number, sideWidth:number,
+ *   listColumns:string, scroll:boolean}} LayoutDims
  */
 
 /**
  * @typedef {import('./puzzle.js').Bucket} Bucket
- * @typedef {{size:number, count:number, mix:Bucket[]}} Preset
+ * @typedef {{size:number, count:number, minCell:number, mix:Bucket[]}} Preset
  */
 
 // A mix only means anything next to the size it was tuned for — a 9-12 letter bucket is
@@ -12,11 +13,20 @@
 /** @type {{full:Preset, compact:Preset}} */
 export const PRESETS = {
   full: {
-    size: 13, count: 12,
+    // minCell 30, not 16. The full board is what a laptop or tablet plays, and its
+    // window is draggable to any size: at 600x400 the old floor gave 27px cells and
+    // at 520x300 it gave 19px, small enough to be unpleasant to read and to drag
+    // across with a mouse. Below the floor the board keeps its size and #app scrolls
+    // instead — a grid you have to scroll beats a grid you cannot read. Phones never
+    // reach it, because a phone-sized SCREEN gets the compact board, not this one.
+    size: 13, count: 12, minCell: 30,
     mix: [{ min: 3, max: 5, take: 3 }, { min: 6, max: 8, take: 5 }, { min: 9, max: 12, take: 4 }],
   },
   compact: {
-    size: 10, count: 8,
+    // 16 stays for the compact board: a phone screen is genuinely small, the board is
+    // already 10x10 to compensate, and forcing a scroll there would cost more than the
+    // few pixels it bought.
+    size: 10, count: 8, minCell: 16,
     mix: [{ min: 3, max: 4, take: 2 }, { min: 5, max: 6, take: 3 }, { min: 7, max: 9, take: 3 }],
   },
 };
@@ -62,10 +72,12 @@ const LIST_COLUMNS = 'max-content max-content';
  * the resolved safe-area insets. The grid is sized to the scarce dimension: height in
  * landscape, min(width, height-under-the-chrome) in portrait. No floor forces the grid
  * larger than its space, which is what used to clip it.
- * @param {{vw:number, vh:number, size:number, pad:number, count:number}} opts
+ * `minCell` is a legibility floor, so the returned `gridSize` CAN exceed the space
+ * available. `scroll` says so, and the caller lets #app scroll rather than clipping.
+ * @param {{vw:number, vh:number, size:number, pad:number, count:number, minCell?:number}} opts
  * @returns {LayoutDims}
  */
-export function computeLayout({ vw, vh, size, pad, count }) {
+export function computeLayout({ vw, vh, size, pad, count, minCell = 16 }) {
   const landscape = vw > vh * 1.08;
   let cell, sideWidth;
   if (landscape) {
@@ -79,7 +91,7 @@ export function computeLayout({ vw, vh, size, pad, count }) {
     // this pure module can be tested on rather than a rule CSS has to rescue.
     const byHeight = Math.floor((vh - 2 * pad - BORDER) / size);
     const byWidth = Math.floor((vw - GAP - MIN_SIDE - 2 * pad) / size);
-    cell = Math.max(16, Math.min(54, byHeight, byWidth));
+    cell = Math.max(minCell, Math.min(54, byHeight, byWidth));
     const gridSize = size * cell + 2 * pad;
     // Capped, not "whatever is left". The rail holds two content-sized columns of
     // words, so extra width does not make it more useful — it just spreads the same
@@ -95,12 +107,20 @@ export function computeLayout({ vw, vh, size, pad, count }) {
     // the grid — so the second column sat hundreds of px away on a wide window and slid
     // on every resize. Content-sized columns make the list's width a function of the
     // words rather than the viewport.
-    return { landscape, cell, gridSize, sideWidth, listColumns: LIST_COLUMNS };
+    // The floor can make the board taller than its space, or push the tracks past the
+    // width. Say so rather than let #app clip: overflow:hidden puts cells where nothing
+    // can reach them. Compared against the same quantities the sizing used, so a board
+    // that merely fits exactly does not claim to overflow.
+    const scroll = size * cell + 2 * pad + BORDER > vh || gridSize + GAP + sideWidth > vw;
+    return { landscape, cell, gridSize, sideWidth, listColumns: LIST_COLUMNS, scroll };
   }
   const availW = vw - 2 * pad - BORDER;
   const availH = vh - reservePortrait(count) - 2 * pad - BORDER;
   cell = Math.min(54, Math.floor(Math.min(availW, availH) / size));
-  cell = Math.max(16, cell);
+  cell = Math.max(minCell, cell);
   const gridSize = size * cell + 2 * pad;
-  return { landscape, cell, gridSize, sideWidth: gridSize, listColumns: LIST_COLUMNS };
+  // availW/availH already have the padding, border and word-list reserve taken out, so
+  // the raw run of cells is what has to fit inside them.
+  const scroll = size * cell > availW || size * cell > availH;
+  return { landscape, cell, gridSize, sideWidth: gridSize, listColumns: LIST_COLUMNS, scroll };
 }

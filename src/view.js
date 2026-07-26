@@ -40,6 +40,10 @@ export function applyLayout(els, dims) {
   // phone, costing 48px of the height the grid needs.
   els.side.style.width = dims.landscape ? dims.sideWidth + 'px' : '100%';
   els.list.style.gridTemplateColumns = dims.listColumns;
+  // The board has a legibility floor, so in a window too small to honour it the layout
+  // is deliberately bigger than the space. Scroll rather than clip: #app is
+  // overflow:hidden by default, which would cut cells off where nothing can reach them.
+  els.app.toggleAttribute('data-scroll', dims.scroll);
 }
 
 /** Rebuild every letter cell at the current cell size.

@@ -29,6 +29,7 @@ import { makePicker } from './picker.js';
  *   drag: {x:number, y:number}|null,
  *   dims: LayoutDims,
  *   winTimer: ReturnType<typeof setTimeout>|null,
+ *   minCell: number,
  *   rendered: {puzzle: Puzzle|null, cell: number, size: number},
  * }} State
  */
@@ -70,12 +71,13 @@ const els = {
 const state = {
   puzzle: null,
   size: PRESET.size,
+  minCell: PRESET.minCell,
   found: {},
   foundOrder: [],
   sel: null,
   miss: null,
   drag: null,
-  dims: { landscape: false, cell: 34, gridSize: 0, sideWidth: 0, listColumns: '1fr 1fr' },
+  dims: { landscape: false, cell: 34, gridSize: 0, sideWidth: 0, listColumns: '1fr 1fr', scroll: false },
   winTimer: null,
   // What the cells currently on screen were built from, so `layout()` can skip a
   // rebuild that would produce an identical grid. `cell: 0` matches no real layout,
@@ -124,12 +126,13 @@ function sweep() {
  * restored save may have been dealt at a different size, and the board on screen is
  * the one that has to be rendered.
  * @param {number} seed @param {import('./subjects.js').Subject} subject
- * @param {{size:number, count:number, mix:import('./puzzle.js').Bucket[]}} shape
+ * @param {Preset} shape
  * @returns {void} */
 function newPuzzle(seed, subject, shape) {
   currentSeed = seed;
   subjectId = subject.id;
   state.size = shape.size;
+  state.minCell = shape.minCell;
   const rng = makeRng(seed);
   justFound = null;
   state.found = {}; state.foundOrder = []; state.sel = null; state.miss = null; state.drag = null;
@@ -178,7 +181,7 @@ function layout() {
   state.dims = computeLayout({
     vw: window.innerWidth - padX,
     vh: window.innerHeight - padY,
-    size: state.size, pad: PAD, count: state.puzzle.words.length,
+    size: state.size, pad: PAD, count: state.puzzle.words.length, minCell: state.minCell,
   });
   applyLayout(els, state.dims);
   // What the cells currently on screen were built from. Everything below derives from
@@ -474,7 +477,7 @@ async function boot() {
 async function restore(saved) {
   const shape = saved.size === PRESETS.compact.size ? PRESETS.compact : PRESETS.full;
   newPuzzle(saved.seed, await loadSubject(saved.subjectId), {
-    size: saved.size, count: saved.count, mix: shape.mix,
+    size: saved.size, count: saved.count, mix: shape.mix, minCell: shape.minCell,
   });
   for (const f of saved.found) {
     if (!state.puzzle || !state.puzzle.words.includes(f.word) || state.found[f.word]) continue;

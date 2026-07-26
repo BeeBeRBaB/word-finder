@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { device } from './tests/viewport.js';
 
 const BASE = 'http://localhost:5173';
 
@@ -23,7 +24,7 @@ export default defineConfig({
   projects: [
     {
       name: 'desktop',
-      use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
+      use: { ...devices['Desktop Chrome'], viewport: { width: device('Desktop').w, height: device('Desktop').h } },
     },
     // Only the specs whose behaviour actually depends on the viewport or on touch.
     // `gameplay` is the real reason this project exists — `hasTouch` routes drags
@@ -35,7 +36,7 @@ export default defineConfig({
     {
       name: 'mobile',
       testMatch: /(gameplay|smoke)\.spec\.js/,
-      use: { ...devices['Desktop Chrome'], viewport: { width: 390, height: 664 }, hasTouch: true },
+      use: { ...devices['Desktop Chrome'], viewport: { width: device('iPhone 13 portrait').w, height: device('iPhone 13 portrait').h }, hasTouch: true },
     },
   ],
 });

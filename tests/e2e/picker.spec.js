@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { findWordInGrid, dragCells } from './helpers.js';
+import { findWordInGrid, dragCells, blockServiceWorker } from './helpers.js';
 import { CATEGORIES } from '../../src/catalog.js';
 
 test('New game opens the picker, and Cancel leaves the board alone', async ({ page }) => {
@@ -18,10 +18,7 @@ test('New game opens the picker, and Cancel leaves the board alone', async ({ pa
 // seconds later and replaced the board -- and persist() then overwrote the save of the
 // game the player had just chosen to keep, past recovering by reload.
 test('Cancel during a slow deal leaves the board alone, and Start cannot deal twice', async ({ page }) => {
-  // Route, not the SW: once the worker claims the page a dynamic import is fetched from
-  // inside its context where page.route cannot see it. Registration is removed before
-  // any script runs, so the import goes over the wire this test controls.
-  await page.addInitScript(() => { delete Object.getPrototypeOf(navigator).serviceWorker; });
+  await blockServiceWorker(page);
   /** @type {() => void} */
   let release = () => {};
   /** @type {Promise<void>} */
@@ -70,14 +67,10 @@ test('choosing a category deals a subject from it', async ({ page }) => {
 });
 
 test('Surprise me deals a game', async ({ page }) => {
-  // Pinned rather than truly random: the catalog currently lists more categories than
-  // have a subjects/ module on disk (parallel content authoring, see the retry loop in
-  // ux.spec.js's reload test), so an unpinned draw would flake against the ones that
-  // 404. `(i + 0.5) / n` always resolves Math.floor(Math.random() * n) to index i,
-  // whatever n is — pin it to 'nature', which is guaranteed to exist because the
-  // seeded initial puzzle below already depends on it.
-  const i = CATEGORIES.findIndex(c => c.id === 'nature');
-  await page.addInitScript(([idx, n]) => { Math.random = () => (idx + 0.5) / n; }, [i, CATEGORIES.length]);
+  // Truly random now. This used to pin Math.random because the catalog listed
+  // categories with no module on disk, which made an unpinned draw flake -- and that
+  // pin meant the one test named for the random draw never exercised it. content.test.js
+  // now guarantees all 25 have a module, so the draw can be what it says it is.
   await page.goto('/?seed=1&subject=nature/birds');
   await page.locator('#newbtn').click();
   await page.locator('#picker-start').click();
@@ -122,24 +115,11 @@ test('the win card deals a game without opening the picker', async ({ page }) =>
   await expect(page.locator('#win')).toBeHidden();
 });
 
-// Real, not hypothetical: the catalog lists 25 categories but only some have a
-// subjects/ module on disk yet (parallel content authoring), so a category whose
-// module 404s is the everyday case, not an edge case. Aborted via page.route rather
-// than picking a category known to be missing today, so this stays valid once every
-// category has a module.
-//
-// Service worker registration is disabled for this page: main.js's own `if
-// ('serviceWorker' in navigator)` guard (see the end of main.js) is false once the
-// prototype accessor is gone, so it never registers here, matching how the app
-// itself would skip it. This is load-bearing, not incidental — sw.js's fetch handler
-// calls clients.claim() in its activate handler, so once installed it starts
-// intercepting every fetch (including a category's dynamic import) from *inside the
-// service worker's own execution context*, a separate target page.route cannot see.
-// Left enabled, this test would pass or fail depending on whether the service worker
-// had already claimed the page by the time Start was clicked, not on the picker's
-// actual behaviour.
+// A category whose module cannot be fetched is the offline case, forced here with
+// page.route rather than by naming a category that happens to lack a file — so this
+// stays honest now that every category has one.
 test('a category that fails to load stays open, reports the failure inline, and disables the option', async ({ page }) => {
-  await page.addInitScript(() => { delete Object.getPrototypeOf(navigator).serviceWorker; });
+  await blockServiceWorker(page);
   await page.goto('/?seed=1&subject=nature/birds');
   await page.route('**/src/subjects/food.js', route => route.abort());
 
