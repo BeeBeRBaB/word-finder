@@ -88,12 +88,17 @@ a{color:var(--accent-text)}a:hover{color:var(--accent-hover)}
    spanning both rows pushes half its height into each — centring the rail. */
 /* row-gap is the vertical breathing room between the subject block and the word list —
    they are stacked rows of the same column here, and at 4px they read as one blob. */
-/* justify-content centres the two columns as a pair. The rail is capped in
-   layout.js, so on a wide-but-short landscape phone the grid and list no longer
-   stretch to both edges with the list swollen — they sit together in the middle
-   and the leftover splits evenly. Without this the capped rail would just leave
-   all the reclaimed space in one lump on the right. */
-#app[data-landscape]{grid-template-areas:"grid hdr" "grid side";grid-template-rows:min-content 1fr;align-content:start;justify-items:start;justify-content:center;column-gap:20px;row-gap:14px}
+/* `safe center`, never a bare `center`. The rail is capped in layout.js, so the grid
+   and list sit together in the middle instead of stretching to both edges with the
+   list swollen. But the 160px rail floor can still make the tracks wider than the
+   viewport (pre-existing, in a band of narrow landscape windows), and a bare `center`
+   splits that overflow across BOTH edges — overflow past the start edge is not
+   scrollable and not counted in scrollWidth, so it is unreachable. Measured at
+   700x640: the board sat at x=-49 with its entire first column of 13 cells off the
+   left of the screen, unrecoverable. `safe` falls back to `start` exactly when the
+   content overflows, which puts it back on the right where it can at least be
+   scrolled to. */
+#app[data-landscape]{grid-template-areas:"grid hdr" "grid side";grid-template-rows:min-content 1fr;align-content:start;justify-items:start;justify-content:safe center;column-gap:20px;row-gap:14px}
 /* Landscape phones give ~280-320px of total height for the whole right rail
    (header + list + hint), which the desktop/portrait chrome above doesn't fit
    into — measured directly: iPhone-class landscape overflowed #app by ~19-38px
@@ -101,6 +106,24 @@ a{color:var(--accent-text)}a:hover{color:var(--accent-hover)}
    it's the first thing to go; the list also loses a little internal breathing
    room. Neither guard assertion (words visible, nothing clipped) needs it. */
 #app[data-landscape] #hint{display:none}
+/* The rail is 380px in landscape, and 230 of the 600 subject names are long enough
+   that the title plus the buttons no longer fit on one line — `flex-wrap:wrap` then
+   dropped the buttons to a second row, doubling the header from 53px to 107px. In a
+   ~300px-tall landscape viewport that 54px comes straight out of the word list, and
+   measurably pushed words off the bottom. Vertical space is the scarce one here, so
+   the title gives way instead: it stays on one line and truncates, which costs the
+   tail of a long name rather than the words themselves. min-width:0 is required —
+   a flex item's default min-width:auto refuses to shrink below its content and the
+   ellipsis would never engage. */
+#app[data-landscape] #hdr{flex-wrap:nowrap}
+/* The buttons keep their shape and the title yields. Without flex:none the actions
+   are the flex item that absorbs the squeeze, and "New game" breaks across two lines
+   — which grows the header again, the very thing the nowrap above is preventing. */
+#app[data-landscape] #actions{flex:none}
+#app[data-landscape] #newbtn{white-space:nowrap}
+#app[data-landscape] #hdr > :first-child{min-width:0}
+#app[data-landscape] #subjectline{min-width:0}
+#app[data-landscape] #subject{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* row-gap above does the separating between the subject block and the list here, so this
    only needs its own bottom breathing room. */
 #app[data-landscape] #listhdr{margin:2px 2px 6px 0}
