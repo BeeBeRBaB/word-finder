@@ -88,7 +88,12 @@ a{color:var(--accent-text)}a:hover{color:var(--accent-hover)}
    spanning both rows pushes half its height into each — centring the rail. */
 /* row-gap is the vertical breathing room between the subject block and the word list —
    they are stacked rows of the same column here, and at 4px they read as one blob. */
-#app[data-landscape]{grid-template-areas:"grid hdr" "grid side";grid-template-rows:min-content 1fr;align-content:start;justify-items:start;column-gap:20px;row-gap:14px}
+/* justify-content centres the two columns as a pair. The rail is capped in
+   layout.js, so on a wide-but-short landscape phone the grid and list no longer
+   stretch to both edges with the list swollen — they sit together in the middle
+   and the leftover splits evenly. Without this the capped rail would just leave
+   all the reclaimed space in one lump on the right. */
+#app[data-landscape]{grid-template-areas:"grid hdr" "grid side";grid-template-rows:min-content 1fr;align-content:start;justify-items:start;justify-content:center;column-gap:20px;row-gap:14px}
 /* Landscape phones give ~280-320px of total height for the whole right rail
    (header + list + hint), which the desktop/portrait chrome above doesn't fit
    into — measured directly: iPhone-class landscape overflowed #app by ~19-38px

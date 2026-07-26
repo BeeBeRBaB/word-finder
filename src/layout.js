@@ -45,6 +45,8 @@ const ROW_H = 34;
 export const reservePortrait = (count) => RESERVE_BASE + Math.ceil(count / 2) * ROW_H;
 
 const GAP = 20; // the #main column gap between grid and list rail in landscape
+// Widest the landscape word-list rail may get. See the note at its use below.
+const LIST_MAX = 380;
 // #gridbox keeps a content-box border (1px each side, per styles.css), so its rendered
 // box is 2px larger than the size set on it. Kept out of the reserve above so that stays
 // purely non-grid chrome and this stays the CSS box model.
@@ -69,7 +71,16 @@ export function computeLayout({ vw, vh, size, pad, count }) {
     cell = Math.min(54, Math.floor((vh - 2 * pad - BORDER) / size));
     cell = Math.max(16, cell);
     const gridSize = size * cell + 2 * pad;
-    sideWidth = Math.max(160, vw - gridSize - GAP);
+    // Capped, not "whatever is left". The rail holds two content-sized columns of
+    // words, so extra width does not make it more useful — it just spreads the same
+    // words over a wider box. That is what looked wrong in landscape on a phone: the
+    // browser's chrome leaves roughly 300px of height, the grid is height-bound down
+    // to ~270px, and the rail then took the remaining 544px, making the word list
+    // twice the width of the board it belongs to. Installed as a PWA there is no
+    // chrome, the grid gets its full height back, and the same code looked fine —
+    // which is why this only ever showed up in the browser. 380 is the width the list
+    // already proves it needs in portrait, where it is the full content width.
+    sideWidth = Math.min(Math.max(160, vw - gridSize - GAP), LIST_MAX);
     // `1fr 1fr` split the WHOLE rail, which in landscape is every pixel left over after
     // the grid — so the second column sat hundreds of px away on a wide window and slid
     // on every resize. Content-sized columns make the list's width a function of the
