@@ -94,7 +94,11 @@ one class of visitor, or serves a stale build, with no error anywhere:
   holds type tokens and must stay first in the file; `:root, :root[data-appearance="dark"]`
   is the default-and-dark palette; `:root[data-appearance="light"]` is light. Both
   palettes must declare identical token names, and new colours must be tokens
-  rather than literals.
+  rather than literals. **A palette edit also repaints the app icon** — `icon-*.png`
+  are rendered from the dark palette by `npm run icons`, and `npm run icons -- --check`
+  exits non-zero when the committed pair no longer matches. The icons went a full
+  re-palette wearing the old teal because nothing checked. They are also cache-first
+  in `sw.js`, so changing them needs a `CACHE` bump or installed copies keep the old art.
 - **[sw.js](sw.js)** — code is stale-while-revalidate, icons and fonts are
   cache-first, requests are re-issued with `no-cache` to defeat Pages' `max-age=600`,
   and install uses `{cache:'reload'}`. Each of those exists because of a specific

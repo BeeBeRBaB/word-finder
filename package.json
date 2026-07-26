@@ -9,7 +9,8 @@
     "test:live": "LIVE=1 playwright test --config playwright.live.config.js",
     "typecheck": "tsc --noEmit",
     "words": "node tools/words-db.mjs",
-    "shots": "node tools/shots.mjs"
+    "shots": "node tools/shots.mjs",
+    "icons": "node tools/icons.mjs"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.0",
