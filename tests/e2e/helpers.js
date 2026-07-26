@@ -3,13 +3,11 @@
  * @typedef {import('../../src/puzzle.js').Selection} Selection
  */
 
-export const PAD = 10;
-
 /** Grid origin, cell size and board size, read from the live DOM. The board is 13x13
  * or 10x10 depending on the device, so nothing here may assume a size — `.cell` count
  * is the source of truth, and it is a perfect square by construction.
  * @param {Page} page @returns {Promise<{left:number, top:number, cell:number, pad:number, n:number}>} */
-export async function gridGeometry(page) {
+async function gridGeometry(page) {
   return page.evaluate(() => {
     const gb = document.getElementById('gridbox');
     if (!gb) throw new Error('missing #gridbox');

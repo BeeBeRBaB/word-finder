@@ -18,9 +18,9 @@ const MIME = {
   '.png': 'image/png',
 };
 
-// How many times each path was actually served from this process. A request that
-// the service worker answered from its cache never arrives here — which is exactly
-// what the cache-first assertions in Task 4 measure.
+// How many times each path was actually served from this process. A request the
+// service worker answered from its cache never arrives here, which is what the
+// cache-first assertions in regressions.spec.js measure.
 const hits = Object.create(null);
 let probeCounter = 0;
 

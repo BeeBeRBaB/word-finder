@@ -16,32 +16,28 @@ payload=$(cat)
 
 fail() { printf '%s\n' "$1" >&2; exit 2; }
 
-# node, not jq: this is a Node project, so node is already required to run anything
-# here, while jq was an undeclared dependency whose absence made `file` empty and
-# sent every edit down the "not a shipped file" path — reporting success having
-# checked nothing. Resolve the path through realpath too, so a relative file_path,
-# a trailing slash on CLAUDE_PROJECT_DIR, an embedded "./", or macOS's
-# /tmp -> /private/tmp symlink all land on the same repo-relative string. Before
-# this, three of five spellings skipped silently with a real violation planted.
+# node, not jq: this is a Node project, so node is already required, while jq was an
+# undeclared dependency whose absence made `file` empty and sent every edit down the
+# "not a shipped file" path — reporting success having checked nothing. realpath
+# normalises a relative file_path, a trailing slash on CLAUDE_PROJECT_DIR, an embedded
+# "./" and macOS's /tmp -> /private/tmp symlink onto one repo-relative string; before
+# it, three of five spellings skipped silently with a real violation planted.
+#
+# Empty output means the payload named no file, which is not our business. A non-zero
+# exit means we could not tell, and that is a hard failure rather than a skip.
 rel=$(printf '%s' "$payload" | node -e '
   const path = require("path"), fs = require("fs");
   let s = "";
   process.stdin.on("data", d => s += d).on("end", () => {
     let file;
-    try { file = JSON.parse(s)?.tool_input?.file_path; }
-    catch { process.exit(3); }
-    if (!file) process.exit(4);          // no path in the payload: not our business
+    try { file = JSON.parse(s)?.tool_input?.file_path; } catch { process.exit(1); }
+    if (!file) return;
     const real = (p) => { try { return fs.realpathSync(p); } catch { return path.resolve(p); } };
     const root = real(process.argv[1]);
     process.stdout.write(path.relative(root, real(path.resolve(root, file))));
   });
-' "$root")
-case $? in
-  0) ;;
-  3) fail "verify.sh: could not parse the hook payload as JSON. Refusing to report success without running the checks." ;;
-  4) exit 0 ;;
-  *) fail "verify.sh: could not resolve the edited file path. Refusing to report success without running the checks." ;;
-esac
+' "$root") || fail "verify.sh: could not read a file path from the hook payload. Refusing to report success without running the checks."
+[ -n "$rel" ] || exit 0
 
 # Only the files that ship. Editing a test, a spec, or a doc skips all of this.
 # `*` matches slashes in a case pattern, so src/subjects/<cat>.js lands here too —

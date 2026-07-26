@@ -30,7 +30,7 @@ import { makePicker } from './picker.js';
  *   dims: LayoutDims,
  *   winTimer: ReturnType<typeof setTimeout>|null,
  *   minCell: number,
- *   rendered: {puzzle: Puzzle|null, cell: number, size: number},
+ *   rendered: {puzzle: Puzzle|null, cell: number},
  * }} State
  */
 
@@ -78,7 +78,7 @@ const state = {
   winTimer: null,
   // What the on-screen cells were built from; cell:0 matches nothing, so the first
   // layout() always renders.
-  rendered: { puzzle: null, cell: 0, size: 0 },
+  rendered: { puzzle: null, cell: 0 },
 };
 
 const store = makeStorage();
@@ -169,10 +169,11 @@ function layout() {
   applyLayout(els, state.dims);
   // Unchanged means the rebuild would be byte-identical — true on nearly every resize
   // frame. Keyed on the puzzle object, not just its shape, or a new board at the same
-  // size would keep the old letters.
+  // size would keep the old letters. Size needs no check of its own: only newPuzzle
+  // changes it, and it replaces state.puzzle in the same breath.
   const r = state.rendered;
-  if (r.puzzle === state.puzzle && r.cell === state.dims.cell && r.size === state.size) return;
-  state.rendered = { puzzle: state.puzzle, cell: state.dims.cell, size: state.size };
+  if (r.puzzle === state.puzzle && r.cell === state.dims.cell) return;
+  state.rendered = { puzzle: state.puzzle, cell: state.dims.cell };
   renderGrid(els, state.puzzle, state.dims, state.size, PAD);
   // renderGrid rebuilds every cell, so found-ness has to be reapplied after it.
   renderFoundCells(els, state, state.size);
