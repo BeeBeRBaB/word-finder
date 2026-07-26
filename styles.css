@@ -19,7 +19,7 @@
      lift off the ground widens rather than narrows. */
   --bg:#100a05; --surface:#241a15; --border:#3d2b21;
   --text:#f0e0d2; --text-strong:#fdf4ea; --muted:#bfa694; --label:#e0913f; --hint:#a89283;
-  --accent:#ff8c3a; --accent-text:#ffa869; --accent-hover:#ffc79a; --accent-ink:#2b1508;
+  --accent:#ff8c3a; --accent-text:#ffa869; --accent-ink:#2b1508;
   --accent-wash:rgba(255,140,58,.12);
   --scrim:rgba(8,5,3,.75);
   --shadow:0 6px 20px rgba(12,6,3,.40); --card-shadow:0 10px 40px rgba(0,0,0,.5);
@@ -37,7 +37,7 @@
 :root[data-appearance="light"]{
   --bg:#f2e3d5; --surface:#fffaf5; --border:#dfc9b5;
   --text:#3a2418; --text-strong:#24140b; --muted:#775b47; --label:#9e4a0c; --hint:#725847;
-  --accent:#b84e0d; --accent-text:#a3450b; --accent-hover:#7d3406; --accent-ink:#ffffff;
+  --accent:#b84e0d; --accent-text:#a3450b; --accent-ink:#ffffff;
   --accent-wash:rgba(184,78,13,.10);
   --scrim:rgba(45,25,14,.45);
   --shadow:0 6px 20px rgba(90,55,30,.16); --card-shadow:0 10px 40px rgba(90,55,30,.24);
@@ -56,7 +56,6 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);font-family:
    `none` above stopped iOS ever opening a <select>'s wheel. Give the controls it back. */
 button,select,label{touch-action:manipulation;-webkit-user-select:auto;user-select:auto}
 body{position:fixed;inset:0;width:100%;height:100%}
-a{color:var(--accent-text)}a:hover{color:var(--accent-hover)}
 /* One ring for every control rather than per-element rules, so a keyboard reaches
    nothing that shows only the UA default against this palette. */
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
