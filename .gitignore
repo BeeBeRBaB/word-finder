@@ -4,9 +4,14 @@ node_modules/
 test-results/
 playwright-report/
 .shots/
-# agent/tool scratch that must never be committed
+
+# Agent and tool scratch must never be committed: an 85KB screenshot and a
+# 602-line JSON dump once rode in on a git add -A. Root .png/.json is denied by
+# default and every file that genuinely belongs there is listed back in.
 /*.png
 /*.json
-!/package.json
+!/icon-192.png
+!/icon-512.png
 !/package-lock.json
-!/manifest.webmanifest
+!/package.json
+!/tsconfig.json
