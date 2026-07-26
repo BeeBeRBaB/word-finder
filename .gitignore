@@ -4,3 +4,9 @@ node_modules/
 test-results/
 playwright-report/
 .shots/
+# agent/tool scratch that must never be committed
+/*.png
+/*.json
+!/package.json
+!/package-lock.json
+!/manifest.webmanifest
