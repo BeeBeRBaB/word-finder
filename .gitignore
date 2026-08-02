@@ -1,5 +1,6 @@
 .playwright-mcp/
 .superpowers/
+.serena/
 node_modules/
 test-results/
 playwright-report/
