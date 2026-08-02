@@ -78,7 +78,7 @@ runtime by directory, not listed. The picker reads its options from the catalog.
 | `tests/e2e/` | Playwright specs (`smoke`, `gameplay`, `layout`, `picker`, `regressions`, `ux`, `appearance`) against a local static server (`tests/server.mjs`), on `desktop` and `mobile` viewport projects. |
 | `tests/live/` | Playwright smoke test against the real deployed GitHub Pages site — see [Development](#development). |
 | `tests/viewport.js` | The screen shapes the app is judged against, and the one geometry measurement that decides whether it fits at them. Shared by `playwright.config.js`, `layout.spec.js` and `npm run shots`. |
-| `tools/` | Dev-only, nothing imports them: `words-db.mjs` (`npm run words`) queries the corpus as SQLite, `shots.mjs` (`npm run shots`) renders every device shape to `.shots/`, `icons.mjs` (`npm run icons`) redraws the app icons from the palette, with `--check` to catch a stale pair. |
+| `tools/` | Dev-only, nothing imports them: `words-db.mjs` (`npm run words`) queries the corpus as SQLite, `shots.mjs` (`npm run shots`) renders every device shape to `.shots/`, `icons.mjs` (`npm run icons`) redraws the app icons from the palette, with `--check` to catch a stale pair, `coverage.mjs` (`npm run test:unit`) runs the suite and enforces a **per-file** 90% floor — Node's own `--test-coverage-*` flags are aggregate, so one weak file hides behind well-covered ones. |
 
 ## Development
 
@@ -87,7 +87,7 @@ No build step. The files in this repo are exactly what GitHub Pages serves.
 ```bash
 npm install                 # one-time; also run: npx playwright install chromium
 npm test                    # unit + end-to-end, against a local server
-npm run test:unit           # fast, no browser
+npm run test:unit           # fast, no browser; fails under 90% coverage of the pure modules
 npm run test:e2e            # Playwright, against a local server started for you
 npm run typecheck           # JSDoc types via tsc --noEmit; emits nothing
 npm run test:live           # against the deployed site, AFTER pushing

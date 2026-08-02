@@ -25,3 +25,11 @@ test('categoryOf reads the prefix', () => {
   assert.equal(categoryOf('nature/birds'), 'nature');
   assert.equal(categoryOf('sports/card-games'), 'sports');
 });
+
+test('a malformed id yields an empty name rather than throwing', () => {
+  // subjectName is called on whatever a save or a ?subject= supplied, so an id with no
+  // slash has to fall through to '' rather than crash the boot on a missing slug.
+  assert.equal(subjectName('nature'), '');
+  assert.equal(subjectName(''), '');
+  assert.equal(categoryOf('nature'), 'nature', 'a bare id is its own prefix');
+});

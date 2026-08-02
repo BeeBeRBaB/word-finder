@@ -49,6 +49,28 @@ test('an unknown subject id rejects as "unknown", without importing anything', a
   assert.equal(calls, 0, 'a bad id must not cost a network request');
 });
 
+test('an unknown category id rejects as "unknown", without importing anything', async () => {
+  let calls = 0;
+  const { loadCategory: load } = makeSubjectLoader(async () => { calls++; return { WORDS: {} }; });
+  await assert.rejects(() => load('not-a-category'), (/** @type {SubjectLoadError} */ e) => {
+    assert.ok(e instanceof SubjectLoadError);
+    assert.equal(e.reason, 'unknown');
+    return true;
+  });
+  assert.equal(calls, 0, 'a bad category must not cost a network request');
+});
+
+// A real category whose module loads but has no such key. content.test.js catches this
+// before it ships, so at runtime it is treated as unknown rather than crashing the boot.
+test('a subject missing from a loaded category rejects as "unknown"', async () => {
+  const { loadSubject: load } = makeSubjectLoader(async () => ({ WORDS: {} }));
+  await assert.rejects(() => load('nature/no-such-subject'), (/** @type {SubjectLoadError} */ e) => {
+    assert.ok(e instanceof SubjectLoadError);
+    assert.equal(e.reason, 'unknown');
+    return true;
+  });
+});
+
 // Offline with an uncached category is the shipped failure mode, and the picker has
 // to tell it apart from a typo'd URL to know whether to disable the option.
 test('a failed import rejects as "unavailable", not as a raw import error', async () => {

@@ -3,7 +3,7 @@
 # exit 2, which feeds stderr back to Claude as a blocking error it has to fix —
 # rather than exit 1, which only shows the user a red line Claude never sees.
 #
-# Cost is ~0.7s (unit tests 0.2s, tsc 0.5s), which is why this can afford to run
+# Cost is ~0.7s (unit tests 0.2s incl. coverage, tsc 0.5s), which is why this can afford to run
 # on every edit rather than being something you remember to run at the end.
 #
 # The one thing this script must never do is exit 0 without having run its checks.
@@ -61,8 +61,8 @@ cd "$root" || fail "verify.sh: could not enter $root"
 # takes, on a hook that fires after every edit. The scripts in package.json stay the
 # documented entry points for humans; this is the same two commands without the shell
 # npm spawns to reach them.
-if ! out=$(node --test 2>&1); then
-  fail "unit tests failed (npm run test:unit):
+if ! out=$(node tools/coverage.mjs 2>&1); then
+  fail "unit tests failed or coverage fell below 90% (npm run test:unit):
 
 $out"
 fi
