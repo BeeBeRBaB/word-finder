@@ -393,8 +393,8 @@ exercises this path for `storage.js` and `appearance.js`.
   PostToolUse hook blocks on ASSETS parity; `tests/live/smoke.spec.js` catches a bad path
   after deploy. `src/subjects/*` stays out, as always.
 - **`README.md`** — a `src/progress.js` row (`pure`), the `src/appearance.js` row from commit
-  1, and a note in the reproducible-puzzles section that a pinned `?seed=` reproduces a grid
-  only for a player whose bag state matches.
+  1, and a note in the reproducible-puzzles section that a pinned `?seed=` bypasses the coverage
+  bag, so it still reproduces a grid identically for every player.
 - **`tsconfig.json`** — nothing; the `src/**/*.js` glob picks it up.
 
 ---
