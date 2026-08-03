@@ -36,7 +36,30 @@ have no DOM access at all, which is what makes them cheap to unit-test:
 
 `?seed=N` pins the puzzle, `?subject=<id>` pins the subject, `?category=<id>` pins the
 category and picks a subject inside it — e.g. `/?seed=1&subject=nature/birds`. With
-none of them, the clock seeds it and a random subject is chosen.
+none of them, the clock seeds it and a subject is chosen by coverage (below).
+
+**A pinned `?seed=` bypasses the coverage bag entirely**, so it reproduces the same grid
+for every player regardless of what they have already seen, and consumes nothing. Without
+that, one seed would deal different grids to different people and the pinned-puzzle
+contract the e2e suite rests on would not hold.
+
+### Word coverage
+
+A subject's pool holds 40–105 words and a puzzle draws 12, so one win shows about a
+quarter of a subject. `src/progress.js` gives each subject a **shuffle bag** of the words
+not yet drawn this cycle; `pickWords` prefers those, and emptying the bag refills it and
+counts a cycle. Seeing every word of a median subject takes 4 plays rather than ~24, and
+no word can repeat until every word has been used once.
+
+The subject you are dealt is the least-covered one in its category, which walks you
+through all 24 before deepening any of them. The picker's *Favour subjects I've seen
+least* checkbox turns that off; with it off the draw is uniform. There is no exhaustion
+case to handle — a minimum always exists, so the pool can never empty.
+
+Progress lives in `localStorage` under `wordfinder-progress-v1`, separate from the board
+save. Validation is **merge-tolerant**, the opposite of `storage.js`'s all-or-nothing
+rule: one bad field or one bad bag is discarded and everything else survives, because one
+corrupt counter must not cost 600 bags. Worst case is 28.7 KB.
 
 ### Board sizes
 
@@ -75,8 +98,8 @@ runtime by directory, not listed. The picker reads its options from the catalog.
 
 | Path | Purpose |
 | --- | --- |
-| `tests/unit/` | `node:test` specs for the pure `src/` modules (`rng`, `puzzle`, `layout`, `storage`, `appearance`, `catalog`, `subjects`), the word-list and overlap contract every subject must meet (`content`), a token-parity check on the stylesheet (`tokens`), and a static assertion on the service worker (`sw`). No browser. |
-| `tests/e2e/` | Playwright specs (`smoke`, `gameplay`, `layout`, `picker`, `regressions`, `ux`, `appearance`) against a local static server (`tests/server.mjs`), on `desktop` and `mobile` viewport projects. |
+| `tests/unit/` | `node:test` specs for the pure `src/` modules (`rng`, `puzzle`, `layout`, `storage`, `progress`, `appearance`, `catalog`, `subjects`), the word-list and overlap contract every subject must meet (`content`), a token-parity check on the stylesheet (`tokens`), and a static assertion on the service worker (`sw`). No browser. |
+| `tests/e2e/` | Playwright specs (`smoke`, `gameplay`, `layout`, `picker`, `regressions`, `ux`, `appearance`, `progress`) against a local static server (`tests/server.mjs`), on `desktop` and `mobile` viewport projects. |
 | `tests/live/` | Playwright smoke test against the real deployed GitHub Pages site — see [Development](#development). |
 | `tests/viewport.js` | The screen shapes the app is judged against, and the one geometry measurement that decides whether it fits at them. Shared by `playwright.config.js`, `layout.spec.js` and `npm run shots`. |
 | `tools/` | Dev-only, nothing imports them: `words-db.mjs` (`npm run words`) queries the corpus as SQLite, `shots.mjs` (`npm run shots`) renders every device shape to `.shots/`, `icons.mjs` (`npm run icons`) redraws the app icons from the palette, with `--check` to catch a stale pair, `coverage.mjs` (`npm run test:unit`) runs the suite and enforces a **per-file** 90% floor — Node's own `--test-coverage-*` flags are aggregate, so one weak file hides behind well-covered ones. |
