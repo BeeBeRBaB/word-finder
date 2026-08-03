@@ -38,8 +38,20 @@ const ROW_H = 34;
 export const reservePortrait = (count) => RESERVE_BASE + Math.ceil(count / 2) * ROW_H;
 
 const GAP = 20;        // must equal #app[data-landscape]'s column-gap; tokens.test.js pins it
-const MIN_SIDE = 160;  // rail floor
-const LIST_MAX = 380;  // rail ceiling: two content-sized columns need no more
+// Rail floor. 320, not the 160 this shipped with: 160 is less than half what the list
+// actually needs, so between roughly 725 and 950 CSS px the rail was squeezed to 167-279
+// and the second column was clipped OUTSIDE it — up to 113px of words, with `scroll`
+// unset because the TRACKS fit even though their contents did not. Silently unreachable.
+// 320 is measured, not guessed: rendering the 12 longest words of all 600 subjects as two
+// content-sized columns, the widest is 316px (sports/archery), median 275.
+const MIN_SIDE = 320;
+// Rail ceiling. 580, not 380: in landscape the header shares this track with the two
+// action buttons (168px), so a 380px rail left the title ~200px and ellipsised the subject
+// name at EVERY width — still truncating at 1700px with 659px of the window sitting empty.
+// The widest title in the corpus is 375px ("Artificial Intelligence"), so 580 leaves 402
+// after the buttons and the gap. Above this the rail stops growing and the spare width
+// stays margin, which is what keeps an ultrawide from stretching the list to the horizon.
+const LIST_MAX = 580;
 const BORDER = 2;      // #gridbox's content-box border, 1px each side
 // Content-sized, not `1fr 1fr`: a fr split puts the second column wherever the viewport
 // ends. Portrait shares it so the orientations cannot drift.

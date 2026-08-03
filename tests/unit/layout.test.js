@@ -46,7 +46,7 @@ test('grid fits within the available space on every in-scope device', () => {
     if (landscape) {
       // ...and in landscape, grid + gap + list fit the width, with a usable rail.
       assert.ok(gridSize + 20 + sideWidth <= d.vw + 0.5, `${d.name}: grid+list ${gridSize + 20 + sideWidth} > vw ${d.vw}`);
-      assert.ok(sideWidth >= 160, `${d.name}: list rail ${sideWidth} too narrow`);
+      assert.ok(sideWidth >= 320, `${d.name}: list rail ${sideWidth} too narrow for two columns`);
     } else {
       // ...in portrait the grid fits the width too (list sits under it).
       assert.ok(gridSize <= d.vw + 0.5, `${d.name}: grid ${gridSize} > vw ${d.vw}`);
@@ -123,4 +123,49 @@ test('a shorter list gives the portrait grid its rows back', () => {
   const small = computeLayout({ vw: 370, vh: 644, size: 10, pad: 10, count: 8 });
   assert.equal(big.cell, 19);
   assert.ok(small.cell >= 30, `compact cell is ${small.cell}px, expected 30+`);
+});
+
+// Measured, not guessed: the 12 longest words of each of the 600 subjects rendered as two
+// content-sized columns peak at 316px (sports/archery), median 275. The rail shipped with
+// a 160px floor, so between roughly 725 and 950 CSS px it was squeezed to 167-279 and the
+// second column was clipped outside it — and `scroll` stayed unset, because the TRACKS fit
+// even though their contents did not, so those words were unreachable rather than merely
+// off-screen.
+const WIDEST_TWO_COLUMN_LIST = 316;
+
+test('the rail is never narrower than the widest word list needs', () => {
+  for (let vw = 400; vw <= 2400; vw += 1) {
+    const d = at(vw, 664);
+    if (!d.landscape) continue;
+    assert.ok(d.sideWidth >= WIDEST_TWO_COLUMN_LIST,
+      `vw ${vw}: rail ${d.sideWidth} cannot show a ${WIDEST_TWO_COLUMN_LIST}px list`);
+  }
+});
+
+test('when the rail and grid cannot both fit, the layout scrolls rather than clipping', () => {
+  // The pairing that made the old bug invisible: tracks that fit while their contents did
+  // not. If the tracks overflow, `scroll` must say so.
+  for (let vw = 400; vw <= 2400; vw += 1) {
+    const d = at(vw, 664);
+    if (!d.landscape) continue;
+    const tracks = d.gridSize + 20 + d.sideWidth;
+    if (tracks > vw) {
+      assert.ok(d.scroll, `vw ${vw}: tracks ${tracks} exceed ${vw} but scroll is false`);
+    }
+  }
+});
+
+test('the rail stops growing, so an ultrawide does not stretch the list to the horizon', () => {
+  assert.equal(at(2400, 900).sideWidth, at(3400, 900).sideWidth,
+    'the rail must reach a ceiling rather than tracking the viewport');
+});
+
+test('the rail leaves room for the longest subject title beside the action buttons', () => {
+  // The header shares the rail track with #actions (168px) plus a 10px gap. The widest
+  // title in the corpus is 375px ("Artificial Intelligence"), and a rail that cannot seat
+  // it ellipsises the subject name on a window with hundreds of spare pixels.
+  const ACTIONS = 168, GAP_TO_TITLE = 10, WIDEST_TITLE = 375;
+  const roomy = at(1492, 850);            // a 1512px window, insets removed
+  assert.ok(roomy.sideWidth - ACTIONS - GAP_TO_TITLE >= WIDEST_TITLE,
+    `rail ${roomy.sideWidth} leaves only ${roomy.sideWidth - ACTIONS - GAP_TO_TITLE}px for a ${WIDEST_TITLE}px title`);
 });
