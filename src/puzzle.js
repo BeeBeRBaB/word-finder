@@ -26,17 +26,33 @@ function distanceTo(len, b) {
   return 0;
 }
 
+/** Move the words a player has not seen this cycle to the front, keeping the shuffled
+ * order within each half. Ordering, not filtering: the caller still takes the first N, so
+ * a bag too small to fill a bucket is topped up from seen words instead of shipping a
+ * board a word short. `undefined` returns the list untouched.
+ * @template {string} T
+ * @param {T[]} shuffled @param {Set<string>|undefined} undrawn @returns {T[]} */
+function prefer(shuffled, undrawn) {
+  if (!undrawn) return shuffled;
+  return [...shuffled.filter(w => undrawn.has(w)), ...shuffled.filter(w => !undrawn.has(w))];
+}
+
 /**
  * Draw `count` words spread across the length buckets in `mix`, or a deal is as likely
  * to be twelve nine-letter words as twelve four-letter ones. A short bucket is
  * backfilled nearest-length-first rather than throwing — the scarce bucket is always
  * the short words, and that subject is still worth playing.
  *
+ * `undrawn` is the subject's shuffle bag — the words the player has not seen this cycle.
+ * It only ORDERS each bucket, never filters it, so a bag that cannot fill a bucket still
+ * yields a full board rather than a short one. Omitting it reproduces the draw exactly,
+ * which is what keeps a pinned `?seed=` reproducible for every player.
+ *
  * @param {string[]} pool @param {import('./rng.js').Rng} rng
- * @param {{count:number, mix:Bucket[]}} opts
+ * @param {{count:number, mix:Bucket[], undrawn?:Set<string>}} opts
  * @returns {string[]}
  */
-export function pickWords(pool, rng, { count, mix }) {
+export function pickWords(pool, rng, { count, mix, undrawn }) {
   const lo = Math.min(...mix.map(b => b.min)), hi = Math.max(...mix.map(b => b.max));
   const eligible = pool.filter(w => w.length >= lo && w.length <= hi);
   if (eligible.length < count) {
@@ -49,14 +65,15 @@ export function pickWords(pool, rng, { count, mix }) {
   /** @type {Bucket[]} */
   const unfilled = [];
   for (const b of mix) {
-    const cands = rng.shuffle(eligible.filter(w => !used.has(w) && distanceTo(w.length, b) === 0));
+    const cands = prefer(rng.shuffle(eligible.filter(w => !used.has(w) && distanceTo(w.length, b) === 0)), undrawn);
     for (const w of cands.slice(0, b.take)) { used.add(w); out.push(w); }
     if (cands.length < b.take) unfilled.push(b);
   }
   if (out.length < count) {
     // Nearest length first. Shuffled before sorting so ties stay random — sort is
-    // stable in every engine this ships to.
-    const rest = rng.shuffle(eligible.filter(w => !used.has(w)))
+    // stable in every engine this ships to, which is also what lets the bag's ordering
+    // survive as the tie-break within a distance band.
+    const rest = prefer(rng.shuffle(eligible.filter(w => !used.has(w))), undrawn)
       .sort((a, b2) =>
         Math.min(...unfilled.map(u => distanceTo(a.length, u))) -
         Math.min(...unfilled.map(u => distanceTo(b2.length, u))));
@@ -74,12 +91,13 @@ const MAX_SWAPS = 8;
  * a test can assert the grid contains what the list claims. Knows nothing about
  * categories or the catalog, so it can be tested against a synthetic pool.
  *
- * @param {{name:string, pool:string[], rng:Rng, size:number, count:number, mix:Bucket[]}} opts
+ * @param {{name:string, pool:string[], rng:Rng, size:number, count:number, mix:Bucket[],
+ *          undrawn?:Set<string>}} opts
  * @returns {Puzzle}
  */
-export function buildPuzzle({ name, pool, rng, size, count, mix }) {
+export function buildPuzzle({ name, pool, rng, size, count, mix, undrawn }) {
   const fits = pool.filter(w => w.length <= size - 1);
-  const chosen = pickWords(fits, rng, { count, mix });
+  const chosen = pickWords(fits, rng, { count, mix, undrawn });
   // Longest first: a long word has the fewest legal positions, so placing it into an
   // empty grid and letting short words fill around it fails far less often.
   const words = chosen.slice().sort((a, b) => b.length - a.length);

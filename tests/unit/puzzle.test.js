@@ -231,3 +231,60 @@ test('every placement in a real puzzle matches at its own run and nowhere else',
     assert.equal(matchWord(p.placements, {}, 13, sel), pl.word, `${pl.word} at its own run`);
   }
 });
+
+// The shuffle bag reaches puzzle.js as a plain Set, so the preference is testable with no
+// storage and puzzle.js stays pure. Ordering rather than filtering is what keeps the
+// bucket contract intact: a bag that cannot fill a bucket must not produce a short board.
+
+const BAG_POOL = [
+  'AAA', 'BBB', 'CCC', 'DDD', 'EEEE', 'FFFF', 'GGGG', 'HHHH',
+  'IIIIII', 'JJJJJJ', 'KKKKKK', 'LLLLLL', 'MMMMMMM', 'NNNNNNN', 'OOOOOOO', 'PPPPPPP',
+  'QQQQQQQQQ', 'RRRRRRRRR', 'SSSSSSSSS', 'TTTTTTTTT',
+  'UUUUUUUUUU', 'VVVVVVVVVV', 'WWWWWWWWWW', 'XXXXXXXXXX',
+];
+const BAG_MIX = [
+  { min: 3, max: 5, take: 2 }, { min: 6, max: 8, take: 2 }, { min: 9, max: 12, take: 2 },
+];
+
+test('pickWords draws only from undrawn while the buckets allow it', () => {
+  // Every other word, so each bucket still has enough undrawn candidates to fill.
+  const undrawn = new Set(BAG_POOL.filter((_, i) => i % 2 === 0));
+  const got = pickWords(BAG_POOL, makeRng(1), { count: 6, mix: BAG_MIX, undrawn });
+  assert.equal(got.length, 6);
+  for (const w of got) assert.ok(undrawn.has(w), `${w} was already drawn and should not be reused`);
+});
+
+test('pickWords tops up from drawn words rather than returning a short list', () => {
+  const pool = ['AAA', 'BBB', 'CCC', 'DDD', 'EEEE', 'FFFF', 'GGGG', 'HHHH'];
+  const mix = [{ min: 3, max: 5, take: 4 }];
+  const undrawn = new Set(['AAA']);      // one word, but the bucket needs four
+  const got = pickWords(pool, makeRng(1), { count: 4, mix, undrawn });
+  assert.equal(got.length, 4, 'the bucket must still be filled');
+  assert.ok(got.includes('AAA'), 'the undrawn word is used first');
+});
+
+test('omitting undrawn reproduces the previous behaviour for a seed', () => {
+  const a = pickWords(BAG_POOL, makeRng(7), { count: 6, mix: BAG_MIX });
+  const b = pickWords(BAG_POOL, makeRng(7), { count: 6, mix: BAG_MIX, undrawn: undefined });
+  assert.deepEqual(a, b, 'an absent bag must not change the draw');
+});
+
+test('an undrawn set holding the whole pool changes nothing', () => {
+  assert.deepEqual(
+    pickWords(BAG_POOL, makeRng(7), { count: 6, mix: BAG_MIX }),
+    pickWords(BAG_POOL, makeRng(7), { count: 6, mix: BAG_MIX, undrawn: new Set(BAG_POOL) }),
+  );
+});
+
+test('an empty undrawn set still deals a full board', () => {
+  const got = pickWords(BAG_POOL, makeRng(3), { count: 6, mix: BAG_MIX, undrawn: new Set() });
+  assert.equal(got.length, 6, 'an exhausted bag must not starve the board');
+});
+
+test('buildPuzzle threads undrawn through to the draw', () => {
+  const undrawn = new Set(BAG_POOL.filter((_, i) => i % 2 === 0));
+  const p = buildPuzzle({
+    name: 'bag', pool: BAG_POOL, rng: makeRng(2), size: 13, count: 6, mix: BAG_MIX, undrawn,
+  });
+  for (const w of p.words) assert.ok(undrawn.has(w), `${w} should have come from the bag`);
+});
