@@ -47,6 +47,27 @@ test('a pinned seed is neither steered by the bag nor recorded in it', async ({ 
   expect((await page.locator('.cell').allTextContents()).join('')).toBe(grid);
 });
 
+// Found by playing 25 games rather than by a test: the bypass keyed on any of
+// seed/subject/category, because they share one boot branch. Only ?seed= needs it — that
+// is the case that must reproduce a grid for everyone. ?subject= and ?category= are
+// clock-seeded and so are ordinary play, and bypassing them meant anyone who bookmarked a
+// subject link never accrued coverage at all.
+test('a subject or category link still records coverage; only a seed opts out', async ({ page }) => {
+  await page.goto('/?subject=nature/birds');
+  await page.waitForSelector('#letters .cell');
+  expect((await record(page)).bags?.['nature/birds'], '?subject= is ordinary play').toBeDefined();
+
+  await page.evaluate((k) => localStorage.removeItem(k), KEY);
+  await page.goto('/?category=nature');
+  await page.waitForSelector('#letters .cell');
+  expect(Object.keys((await record(page)).bags || {}), '?category= is ordinary play too').toHaveLength(1);
+
+  await page.evaluate((k) => localStorage.removeItem(k), KEY);
+  await page.goto('/?seed=1&subject=nature/birds');
+  await page.waitForSelector('#letters .cell');
+  expect((await record(page)).bags?.['nature/birds'], '?seed= must not consume the bag').toBeUndefined();
+});
+
 test('playing one subject twice deals a different word set', async ({ page }) => {
   await page.goto('/?subject=nature/birds');
   await page.waitForSelector('#list .w');

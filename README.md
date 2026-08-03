@@ -48,8 +48,20 @@ contract the e2e suite rests on would not hold.
 A subject's pool holds 40–105 words and a puzzle draws 12, so one win shows about a
 quarter of a subject. `src/progress.js` gives each subject a **shuffle bag** of the words
 not yet drawn this cycle; `pickWords` prefers those, and emptying the bag refills it and
-counts a cycle. Seeing every word of a median subject takes 4 plays rather than ~24, and
-no word can repeat until every word has been used once.
+counts a cycle.
+
+Measured by playing it, not by arithmetic:
+
+| Pool | Deals to see every word | Random draw, for comparison |
+| --- | --- | --- |
+| 48 words (median) | 7 | — |
+| 105 words (largest) | 16 | ~70 |
+
+The idealised figure would be `ceil(pool / 12)` — 4 and 9 — and the bag does not reach it,
+because the length buckets in `mix` are quotas the bag cannot override. Once one bucket's
+unseen words are used up, that bucket re-serves seen words while the others still have
+fresh ones, so the last few words arrive slowly. Keeping the mix intact is the deliberate
+trade: a deal that is all long words is worse than a deal with a repeat in it.
 
 The subject you are dealt is the least-covered one in its category, which walks you
 through all 24 before deepening any of them. The picker's *Favour subjects I've seen

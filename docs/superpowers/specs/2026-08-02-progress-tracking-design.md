@@ -168,9 +168,18 @@ This is the standard shuffle-bag pattern and it earns its place three times over
 
 | | Today | With the bag |
 | --- | --- | --- |
-| Plays to see every word, median 45-word pool | ~24 | **4** |
-| Plays to see every word, 105-word pool | ~70 | **9** |
-| Spread between most- and least-used word | unbounded | **≤ 1, structurally** |
+| Deals to see every word, median 48-word pool | — | **7** |
+| Deals to see every word, 105-word pool | ~70 | **16** |
+| Spread between most- and least-used word | unbounded | **≤ 1 within a bucket** |
+
+**Corrected after implementation.** The planned figures were `ceil(pool / 12)` — 4 and 9 —
+and the bag does not reach them. The length buckets in `mix` are quotas the bag orders
+within but cannot override, so once one bucket's unseen words are exhausted it re-serves
+seen words while other buckets still hold fresh ones. Measured by playing the real app:
+7 deals for a median pool, 16 for the largest, against ~70 for the old random draw. The
+usage spread is therefore bounded within a bucket rather than across the whole pool.
+Keeping the mix intact is the deliberate trade — a deal that is all long words is worse
+than a deal carrying a repeat.
 
 That last row is the "threshold for max word usage" — it needs no threshold, because no word
 can be drawn twice until every word has been drawn once. There is nothing to tune.

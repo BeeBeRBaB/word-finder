@@ -443,9 +443,12 @@ async function boot() {
       const id = target.subject && cat.subjectIds.includes(target.subject)
         ? target.subject
         : cat.subjectIds[rng.int(cat.subjectIds.length)];
-      // useBag=false: a pinned URL must deal the same grid to every player, whatever
-      // their own coverage, and must not consume the bag for a puzzle they chose by link.
-      newPuzzle(seed, await loadSubject(id), PRESET, false);
+      // Only an explicit ?seed= bypasses the bag. That is the case that must reproduce a
+      // grid identically for every player, so it cannot let coverage pick the words.
+      // ?subject= or ?category= on their own are seeded by the clock and are therefore
+      // ordinary play of that subject — bypassing them too would mean anyone who
+      // bookmarks a subject link never accrues coverage at all.
+      newPuzzle(seed, await loadSubject(id), PRESET, !params.has('seed'));
       return;
     }
     const saved = store.load();
