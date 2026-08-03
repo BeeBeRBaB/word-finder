@@ -22,6 +22,7 @@ have no DOM access at all, which is what makes them cheap to unit-test:
 | `src/puzzle.js` | Word placement, grid fill, drag snapping, hit-detection. | pure |
 | `src/layout.js` | Screen arithmetic → grid dimensions. | pure |
 | `src/storage.js` | Reads and writes the saved game; discards a save it cannot trust. | pure |
+| `src/progress.js` | Word coverage per subject: the shuffle bag, and the draw preference. | pure |
 | `src/view.js` | Renders cells, selection pills and the word list. | DOM |
 | `src/effects.js` | Confetti and the WebAudio chime. | DOM |
 | `src/picker.js` | The category dialog. Reports a category id; owns no game state. | DOM |
