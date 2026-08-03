@@ -4,11 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <!-- Resolves the appearance before first paint; module scripts are deferred, so main.js
-     would land after a flash. Must stay equivalent to resolveAppearance(normalizePref(p),
-     prefersDark) in src/appearance.js. The storage read needs its own inner try: a
-     throwing getItem (iOS "Block All Cookies") must fall through to the OS query, not
-     abort the script. Covered by appearance.spec.js. -->
-<script>try{var p=null;try{p=localStorage.getItem('wordfinder-appearance')}catch(e){}if(p!=='light'&&p!=='dark')p=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.appearance=p}catch(e){}</script>
+     would land after a flash. Must stay equivalent to normalizePref() in src/appearance.js:
+     anything that is not exactly 'light' resolves to dark, which is both the default and
+     the migration for the 'system' setting this app used to offer. There is no OS query —
+     dropping `system` removed the only reason to ask. The storage read still needs its own
+     inner try: a throwing getItem (iOS "Block All Cookies") must fall through to the
+     default, not abort the script. Covered by appearance.spec.js. -->
+<script>try{var p=null;try{p=localStorage.getItem('wordfinder-appearance')}catch(e){}if(p!=='light')p='dark';document.documentElement.dataset.appearance=p}catch(e){}</script>
 <!-- Hold the first paint until main.js has laid the board out. The shell paints
      portrait with an unsized grid, and JS then flips orientation and sizes it, which
      measured CLS 0.66 — one shift moving #gridbox, #hdr and #side at once. Its own
@@ -39,8 +41,7 @@
     <div id="titles"><div id="kicker">WORD FINDER</div>
       <div id="subjectline"><span id="category"></span><span id="subject">Loading…</span></div></div>
     <div id="actions">
-      <button id="appearance" type="button" data-pref="system" title="Appearance: System" aria-label="Appearance: System">
-        <svg class="i-system" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path class="solid" d="M12 3a9 9 0 0 0 0 18z"/></svg>
+      <button id="appearance" type="button" data-pref="dark" title="Appearance: Dark" aria-label="Appearance: Dark">
         <svg class="i-light" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.6"/><path d="M12 2v2.6M12 19.4V22M2 12h2.6M19.4 12H22M4.9 4.9l1.9 1.9M17.2 17.2l1.9 1.9M19.1 4.9l-1.9 1.9M6.8 17.2l-1.9 1.9"/></svg>
         <svg class="i-dark" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1z"/></svg>
       </button>

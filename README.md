@@ -29,7 +29,7 @@ have no DOM access at all, which is what makes them cheap to unit-test:
 | `src/catalog.js` | The 25 category names. No subjects, no words — loads on every visit. | data |
 | `src/subjects/*.js` | One category's word pools, 40+ words per subject. Lazily imported. | data |
 | `src/subjects.js` | Resolves a subject id to its pool, memoising each category module. | pure-ish |
-| `src/appearance.js` | Light / dark / system preference: resolve, persist, follow the OS. | DOM |
+| `src/appearance.js` | Light / dark preference: resolve and persist. | DOM |
 
 ### Reproducible puzzles
 

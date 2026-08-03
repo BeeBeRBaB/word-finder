@@ -120,11 +120,9 @@ body{position:fixed;inset:0;width:100%;height:100%}
 #appearance{flex:none;width:44px;height:44px;padding:0;display:flex;align-items:center;justify-content:center;
   border:1.5px solid var(--accent);border-radius:999px;background:transparent;color:var(--accent-text);cursor:pointer}
 #appearance:hover{background:var(--accent-wash)}
-/* All three icons ship in the markup and data-pref picks one, so main.js never
+/* Both icons ship in the markup and data-pref picks one, so main.js never
    assembles HTML on a click. */
 #appearance svg{display:none;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-#appearance svg .solid{fill:currentColor;stroke:none}
-#appearance[data-pref="system"] .i-system,
 #appearance[data-pref="light"] .i-light,
 #appearance[data-pref="dark"] .i-dark{display:block}
 #gridbox{grid-area:grid;position:relative;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);touch-action:none;cursor:pointer;flex:none}

@@ -365,9 +365,9 @@ els.win.addEventListener('click', (e) => { if (e.target === els.win) els.win.sty
 // than duplicated here, so a palette edit has exactly one home.
 const themeColorMeta = document.querySelector('meta[name="theme-color"]');
 const appearance = makeAppearance({
-  onApply(pref, mode) {
-    els.appearance.dataset.pref = pref;
-    const label = appearanceLabel(pref, mode);
+  onApply(mode) {
+    els.appearance.dataset.pref = mode;
+    const label = appearanceLabel(mode);
     els.appearance.title = label;
     els.appearance.setAttribute('aria-label', label);
     if (themeColorMeta) {

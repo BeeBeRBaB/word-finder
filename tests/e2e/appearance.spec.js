@@ -57,51 +57,40 @@ test('the dark palette still resolves to the colours the game shipped with', asy
   });
 });
 
-// The inline <head> script (see its comment in index.html) sets data-appearance on
-// every normal load, so "nothing ever sets the attribute" is no longer the general
-// case. The underlying guarantee it still has to uphold is unchanged: a visitor for
-// whom the resolver genuinely cannot run must still get the dark palette this game
-// has always shipped with, never an unstyled/white page. Review fix: the localStorage
-// read now has its own inner try (see index.html), so a throwing getItem no longer
-// counts as "the resolver cannot run" -- it falls through to the OS query exactly
-// like an absent preference, and DOES set data-appearance. That is what the first
-// test below proves. matchMedia is the one call the inline script never guards
-// individually, so a missing/throwing matchMedia is the only remaining way to leave
-// data-appearance unset and fall back to the bare :root dark default -- the second
-// test. Both block src/main.js from loading, to rule out the module papering over
-// the inline script either way.
-test('a throwing localStorage.getItem falls through to the OS, it does not abort the resolver', async ({ page }) => {
-  await page.emulateMedia({ colorScheme: 'light' });
+// The inline <head> script (see its comment in index.html) sets data-appearance on every
+// normal load. The guarantee it has to uphold is that a visitor for whom the resolver
+// genuinely cannot run still gets the dark palette this game has always shipped with,
+// never an unstyled/white page. The localStorage read has its own inner try, so a
+// throwing getItem no longer counts as "the resolver cannot run" -- it falls through to
+// the default and DOES set data-appearance. Both tests block src/main.js from loading, to
+// rule out the module papering over the inline script either way.
+test('a throwing localStorage.getItem resolves dark, it does not abort the resolver', async ({ page }) => {
   await page.addInitScript(() => {
     window.localStorage.getItem = () => { throw new Error('blocked'); };
   });
   await page.route('**/src/main.js', route => route.abort());
   await page.goto('/?seed=1&subject=nature/birds');
-  expect(await page.evaluate(() => document.documentElement.getAttribute('data-appearance'))).toBe('light');
+  expect(await page.evaluate(() => document.documentElement.getAttribute('data-appearance'))).toBe('dark');
   const seen = await page.evaluate(() => {
     const cs = getComputedStyle(document.documentElement);
     return { bg: cs.getPropertyValue('--bg').trim(), surface: cs.getPropertyValue('--surface').trim() };
   });
-  expect(seen).toEqual({ bg: '#f2e3d5', surface: '#fffaf5' });
+  expect(seen).toEqual({ bg: '#100a05', surface: '#241a15' });
   // The computed rule, not just the declared tokens — proves something is actually
   // consuming --bg rather than it merely sitting on the attribute unused.
-  expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe('rgb(242, 227, 213)');
+  expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe('rgb(16, 10, 5)');
 });
 
-// Regression guard for the selector swap: with `:root` hanging off the light
-// palette, this rendered #eef3f1. Genuinely exercises the "cannot run at all"
-// branch the test above no longer can: storage is untouched here (getItem works
-// normally), and only matchMedia is missing.
-test('when matchMedia is missing, the app still renders dark, not white', async ({ page }) => {
-  await page.addInitScript(() => {
-    // @ts-ignore - deliberately breaking only matchMedia; storage is untouched
-    window.matchMedia = undefined;
-  });
-  await page.route('**/src/main.js', route => route.abort());
+// Replaces a test that broke matchMedia to reach the "resolver cannot run" branch. The
+// resolver no longer calls matchMedia at all, so that test could no longer fail. What is
+// worth pinning instead is the absence itself: an OS query here would reintroduce the
+// third setting through the back door, and would make first paint depend on something the
+// player never chose.
+test('the inline resolver contains no OS colour-scheme query', async ({ page }) => {
   await page.goto('/?seed=1&subject=nature/birds');
-  expect(await page.evaluate(() => document.documentElement.hasAttribute('data-appearance'))).toBe(false);
-  const bg = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--bg').trim());
-  expect(bg).toBe('#100a05');
+  const html = await page.content();
+  expect(html).not.toContain('prefers-color-scheme');
+  expect(html).not.toContain('matchMedia(\'(prefers-color-scheme');
 });
 
 /** @param {Page} page */
@@ -121,11 +110,10 @@ const inkOf = (page) => page.locator('.cell').first().evaluate(el => getComputed
 // styles.css's bare :root — dark — took over), then main.js's own normalizePref
 // coerced 'banana' to 'system' and repainted light. A visible flip on load, which is
 // the exact bug class this feature exists to prevent. This must fail against the
-// pre-fix inline script and pass after it allowlists to only 'light'/'dark'.
+// pre-fix inline script and pass after it allowlists to only 'light'/'dark'. The stored
+// value 'system' now takes the same path — it is exactly "a value this build does not
+// recognise" — so this doubles as the migration guard.
 test('an invalid stored preference resolves through the allowlist, never verbatim', async ({ page }) => {
-  // Light OS: maximizes visibility, since the pre-fix bug painted dark (bare :root
-  // fallback for an unrecognised data-appearance) then hydrated light.
-  await page.emulateMedia({ colorScheme: 'light' });
   await page.addInitScript(() => {
     window.localStorage.setItem('wordfinder-appearance', 'banana');
   });
@@ -135,7 +123,7 @@ test('an invalid stored preference resolves through the allowlist, never verbati
   await page.route('**/src/main.js', route => route.abort());
   await page.goto('/?seed=1&subject=nature/birds');
   const painted = await modeOf(page);
-  expect(['light', 'dark']).toContain(painted);       // never 'banana' verbatim
+  expect(painted).toBe('dark');                       // never 'banana' verbatim
   const paintedBg = await bgOf(page);
 
   // Now let the module run for real and hydrate. It must agree with what was
@@ -150,19 +138,17 @@ test('an invalid stored preference resolves through the allowlist, never verbati
 // inline resolver used to sit entirely inside one try, so a throwing
 // localStorage.getItem (iOS Safari's "Block All Cookies", Chrome with site data
 // blocked -- storage.test.js's "Safari private mode" case) aborted the whole thing
-// before data-appearance was ever set. The page then painted the bare :root dark
-// default, while src/appearance.js -- which degrades that identical failure to
-// pref='system' and asks the OS -- resolved 'light' on a light machine and repainted
-// on hydration. Unlike the tests above, this leaves src/main.js unblocked: a
-// `readystatechange` listener installed before the document is parsed captures
-// data-appearance the instant `document.readyState` becomes 'interactive', which per
-// the HTML spec happens after parsing (so after the inline <head> script has run) but
-// before deferred/module scripts execute -- i.e. exactly the pre-hydration paint,
-// without having to fake the module's absence. This must fail against the pre-fix
-// inline script (nothing painted pre-hydration, module then paints 'light': a flip)
-// and pass once the storage read has its own inner try.
-test('a throwing localStorage falls through to the OS instead of flipping on hydration', async ({ page }) => {
-  await page.emulateMedia({ colorScheme: 'light' });
+// before data-appearance was ever set. Unlike the tests above, this leaves src/main.js
+// unblocked: a `readystatechange` listener installed before the document is parsed
+// captures data-appearance the instant `document.readyState` becomes 'interactive',
+// which per the HTML spec happens after parsing (so after the inline <head> script has
+// run) but before deferred/module scripts execute -- i.e. exactly the pre-hydration
+// paint, without having to fake the module's absence.
+//
+// It used to assert a fall-through to the OS. There is no OS to fall through to now, so
+// what it pins is the property that actually matters and always did: whatever the inline
+// script paints, hydration must agree with, so the player never sees a flip.
+test('a throwing localStorage resolves dark, and does not flip on hydration', async ({ page }) => {
   await page.addInitScript(() => {
     window.localStorage.getItem = () => { throw new Error('blocked'); };
     document.addEventListener('readystatechange', () => {
@@ -177,25 +163,21 @@ test('a throwing localStorage falls through to the OS instead of flipping on hyd
   const prePaint = await page.evaluate(() => /** @type {any} */ (window).__prePaint);
   const hydrated = await modeOf(page);
   expect(prePaint).toBe(hydrated);   // no flip between what was painted and what hydration settled on
-  expect(hydrated).toBe('light');
+  expect(hydrated).toBe('dark');
 });
 
-// One pass over the whole cycle, asserting everything the button owns at each step:
+// One pass over the whole toggle, asserting everything the button owns at each step:
 // the stored pref, the resolved mode, the repaint (background AND a grid letter — the
 // page background alone would still pass if a token were declared in only one palette),
-// the visible icon, and the accessible name. These were three separate tests that each
-// reloaded the page and re-clicked the same cycle to check one extra fact.
-// The OS is emulated dark, so `system` resolves to dark and step 3 must repaint to the
-// exact colours step 0 captured.
+// the visible icon, and the accessible name. Two steps now rather than three: with
+// `system` gone a preference IS the resolved mode, and a new visitor starts on dark.
 const CYCLE = [
-  { pref: 'system', mode: 'dark', icon: 'i-system', label: 'Appearance: System (Dark)' },
+  { pref: 'dark', mode: 'dark', icon: 'i-dark', label: 'Appearance: Dark' },
   { pref: 'light', mode: 'light', icon: 'i-light', label: 'Appearance: Light' },
   { pref: 'dark', mode: 'dark', icon: 'i-dark', label: 'Appearance: Dark' },
-  { pref: 'system', mode: 'dark', icon: 'i-system', label: 'Appearance: System (Dark)' },
 ];
 
-test('the button cycles system -> light -> dark, repainting and relabelling each step', async ({ page }) => {
-  await page.emulateMedia({ colorScheme: 'dark' });
+test('the button toggles dark <-> light, repainting and relabelling each step', async ({ page }) => {
   await page.goto('/?seed=1&subject=nature/birds');
   /** @type {Record<string, string>} */
   const darkPaint = { bg: await bgOf(page), ink: await inkOf(page) };
@@ -215,26 +197,32 @@ test('the button cycles system -> light -> dark, repainting and relabelling each
   }
 });
 
-test('System follows the OS live; a pinned preference ignores it', async ({ page }) => {
-  await page.emulateMedia({ colorScheme: 'light' });
-  await page.goto('/');
-  expect(await modeOf(page)).toBe('light');
-
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await expect.poll(() => modeOf(page)).toBe('dark');
-
-  await page.locator('#appearance').click();                 // pin to light
-  await page.emulateMedia({ colorScheme: 'light' });
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await page.waitForTimeout(150);
-  expect(await modeOf(page)).toBe('light');
-});
+// The three first-paint cases. A stored value in each direction, and a first-ever visit,
+// must all be correct in the markup the browser first paints — not after hydration.
+// src/main.js is blocked so only the inline resolver can have done it.
+for (const [name, stored, expected] of /** @type {[string, string|null, string][]} */ ([
+  ['a stored dark preference', 'dark', 'dark'],
+  ['a stored light preference', 'light', 'light'],
+  ['a first-ever visit', null, 'dark'],
+])) {
+  test(`${name} is already correct at first paint`, async ({ page }) => {
+    await page.addInitScript((v) => {
+      try {
+        if (v === null) window.localStorage.removeItem('wordfinder-appearance');
+        else window.localStorage.setItem('wordfinder-appearance', v);
+      } catch (e) { /* ignore */ }
+    }, stored);
+    await page.route('**/src/main.js', route => route.abort());
+    await page.goto('/?seed=1&subject=nature/birds');
+    await expect(page.locator('.cell')).toHaveCount(0);   // the module really did not run
+    expect(await modeOf(page)).toBe(expected);
+  });
+}
 
 // The inline <head> script is the whole reason a dark-mode player doesn't see a
 // white flash on every load. Blocking the module proves the resolution happened
 // before any deferred script ran, which a plain reload assertion cannot.
 test('a stored preference applies with the module blocked entirely', async ({ page }) => {
-  await page.emulateMedia({ colorScheme: 'dark' });
   await page.goto('/');
   await page.locator('#appearance').click();                 // stores 'light'
   expect(await modeOf(page)).toBe('light');
@@ -246,10 +234,22 @@ test('a stored preference applies with the module blocked entirely', async ({ pa
 });
 
 test('the status bar colour tracks the page background', async ({ page }) => {
-  await page.emulateMedia({ colorScheme: 'dark' });
   await page.goto('/');
   const meta = page.locator('meta[name="theme-color"]');
   await expect(meta).toHaveAttribute('content', '#100a05');
   await page.locator('#appearance').click();
   await expect(meta).toHaveAttribute('content', '#f2e3d5');
+});
+
+// The migration off the third setting. Anyone holding 'system' when this shipped must
+// land on dark, at first paint, with no OS query involved. normalizePref's fallback is
+// the whole migration -- there is no migration code to test, only its effect.
+test('a stored "system" preference migrates to dark at first paint', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem('wordfinder-appearance', 'system');
+  });
+  await page.route('**/src/main.js', route => route.abort());
+  await page.goto('/?seed=1&subject=nature/birds');
+  await expect(page.locator('.cell')).toHaveCount(0);
+  expect(await modeOf(page)).toBe('dark');
 });
