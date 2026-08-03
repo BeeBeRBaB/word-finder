@@ -9,6 +9,7 @@ import { computeLayout, pickPreset, PRESETS } from './layout.js';
 import { applyLayout, renderGrid, renderList, renderPills, renderFoundCells, renderSolvedShape } from './view.js';
 import { burst, pop } from './effects.js';
 import { makeStorage } from './storage.js';
+import { makeProgress, chooseSubject } from './progress.js';
 import { makeAppearance, appearanceLabel } from './appearance.js';
 import { makePicker } from './picker.js';
 
@@ -82,6 +83,12 @@ const state = {
 };
 
 const store = makeStorage();
+const progress = makeProgress();
+// Installed status is a documented grant heuristic in both Chrome and WebKit, and a
+// home-screen web app is exempt from WebKit's 7-day cap on script-writable storage.
+// Optional chaining and a swallowed rejection: support is inconsistent and a storage
+// request must never reach the game.
+void navigator.storage?.persist?.().catch(() => {});
 /** @type {number} */
 let currentSeed;
 /** @type {string} */
@@ -115,8 +122,14 @@ function sweep() {
  * dealt at a different size.
  * @param {number} seed @param {import('./subjects.js').Subject} subject
  * @param {Preset} shape
+ * @param {boolean} [useBag] false for a restored board and for a URL-pinned puzzle. Both
+ *   must REPRODUCE a grid rather than consume coverage: a restored board was already
+ *   dealt, so recording it again would advance the bag twice for one puzzle, and letting
+ *   player state pick the words would mean one `?seed=` dealt different grids to
+ *   different players. rng.js keeps its pinned branches away from the rng for exactly
+ *   that second reason.
  * @returns {void} */
-function newPuzzle(seed, subject, shape) {
+function newPuzzle(seed, subject, shape, useBag = true) {
   currentSeed = seed;
   subjectId = subject.id;
   state.size = shape.size;
@@ -127,7 +140,12 @@ function newPuzzle(seed, subject, shape) {
   state.puzzle = buildPuzzle({
     name: subject.name, pool: subject.words, rng,
     size: shape.size, count: shape.count, mix: shape.mix,
+    undrawn: useBag ? progress.bagFor(subject.id, subject.words) : undefined,
   });
+  // At deal time, not at the win: the bag records what you were SHOWN. Solving is a
+  // separate fact, counted by addSolve, so an abandoned puzzle still advances coverage —
+  // you saw those words either way.
+  if (useBag) progress.noteDraw(subject.id, subject.words, state.puzzle.words);
   els.subject.textContent = cap(state.puzzle.name);
   els.subject.dataset.accent = String(accentSlot(state.puzzle.name));
   els.category.textContent = subject.categoryName;
@@ -250,6 +268,7 @@ function endDrag() {
     state.foundOrder.push(hit);
     renderFoundCells(els, state, state.size);
     const won = state.foundOrder.length === puzzle.words.length;
+    if (won) progress.addSolve();
     burst(els.fx, s, won ? 90 : 34, state.dims, PAD);
     pop(won);
     // Glow, then strike through. The timer only clears if `hit` is still the one
@@ -299,6 +318,19 @@ function reportLoadFailure(err) {
 /** @type {Set<string>} */
 const unavailableCategories = new Set();
 
+// Subject ids for every category loaded this session. A category's size is only knowable
+// once its module is imported, and importing all 25 to label a dropdown would defeat the
+// lazy load sw.js routes a whole separate cache to protect. Learning it on load is enough:
+// a category can only be COMPLETED by playing it, and playing it loads it.
+/** @type {Map<string, string[]>} */
+const loadedCategories = new Map();
+
+/** @param {import('./subjects.js').CategoryData} cat @returns {void} */
+function noteCategory(cat) {
+  loadedCategories.set(cat.id, cat.subjectIds);
+  progress.noteSize(cat.id, cat.subjectIds.length);
+}
+
 /** A fresh subject is a player-facing surprise, so it stays on Math.random() rather than
  * the seeded sequence: `?seed=` pins the puzzle you land on, not every one after. It also
  * gets a fresh seed, or newPuzzle would reproduce the same choices verbatim.
@@ -321,10 +353,13 @@ async function newGame(categoryId) {
   // A category that failed before but loads now (cache warmed, network back) is no longer
   // a reason to skip it. The loader retries on a fresh URL precisely so this can succeed.
   unavailableCategories.delete(id);
-  // Avoid dealing the subject already on screen, unless it is the only one there is.
-  const fresh = cat.subjectIds.filter(s => s !== subjectId);
-  const subjectPool = fresh.length ? fresh : cat.subjectIds;
-  const pick = subjectPool[Math.floor(Math.random() * subjectPool.length)];
+  noteCategory(cat);
+  // Least-seen first, still avoiding the subject already on screen. This generalises the
+  // filter that used to live here: chooseSubject drops `current` last and only when
+  // something else remains, so it can never empty the pool and dead-end.
+  const seen = new Map(cat.subjectIds.map(s => [s, progress.coverage(s)]));
+  const pick = chooseSubject(cat.subjectIds, seen, subjectId ?? null,
+    progress.get().favourLeastSeen, Math.random);
   newPuzzle(Date.now() >>> 0, await loadSubject(pick), PRESET);
 }
 // newGame rejects when a category cannot be fetched; the picker catches that to keep
@@ -398,10 +433,13 @@ async function boot() {
       const rng = makeRng(seed);
       const target = resolveTarget(location.search, CATEGORIES, rng);
       const cat = await loadCategory(target.category);
+      noteCategory(cat);
       const id = target.subject && cat.subjectIds.includes(target.subject)
         ? target.subject
         : cat.subjectIds[rng.int(cat.subjectIds.length)];
-      newPuzzle(seed, await loadSubject(id), PRESET);
+      // useBag=false: a pinned URL must deal the same grid to every player, whatever
+      // their own coverage, and must not consume the bag for a puzzle they chose by link.
+      newPuzzle(seed, await loadSubject(id), PRESET, false);
       return;
     }
     const saved = store.load();
@@ -425,9 +463,11 @@ async function boot() {
  * @param {import('./storage.js').SaveData} saved @returns {Promise<void>} */
 async function restore(saved) {
   const shape = saved.size === PRESETS.compact.size ? PRESETS.compact : PRESETS.full;
+  // useBag=false: this board was already dealt and its draw already recorded. Recording
+  // it again would advance the bag twice for one puzzle, silently, on every reload.
   newPuzzle(saved.seed, await loadSubject(saved.subjectId), {
     size: saved.size, count: saved.count, mix: shape.mix, minCell: shape.minCell,
-  });
+  }, false);
   for (const f of saved.found) {
     if (!state.puzzle || !state.puzzle.words.includes(f.word) || state.found[f.word]) continue;
     state.found[f.word] = { sel: { x0: f.x0, y0: f.y0, x1: f.x1, y1: f.y1 } };
