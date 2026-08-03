@@ -17,6 +17,7 @@
 :root, :root[data-appearance="dark"]{
   /* R>G>B keeps an orange cast at this luminance; --surface stays put so the grid's
      lift off the ground widens rather than narrows. */
+  color-scheme:dark;
   --bg:#100a05; --surface:#241a15; --border:#3d2b21;
   --text:#f0e0d2; --text-strong:#fdf4ea; --muted:#bfa694; --label:#e0913f; --hint:#a89283;
   --accent:#ff8c3a; --accent-text:#ffa869; --accent-ink:#2b1508;
@@ -35,6 +36,7 @@
    --accent is measured against the white --accent-ink it is actually read on (5.08:1),
    not against --bg. Token table: docs/superpowers/specs/2026-07-24-amber-phosphor-design.md */
 :root[data-appearance="light"]{
+  color-scheme:light;
   --bg:#f2e3d5; --surface:#fffaf5; --border:#dfc9b5;
   --text:#3a2418; --text-strong:#24140b; --muted:#775b47; --label:#9e4a0c; --hint:#725847;
   --accent:#b84e0d; --accent-text:#a3450b; --accent-ink:#ffffff;
@@ -174,15 +176,49 @@ body{position:fixed;inset:0;width:100%;height:100%}
 #wincard h2{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:-.015em;
   color:var(--text-strong);margin:8px 0 4px}
 #wincard p{font-size:14.5px;color:var(--muted);margin:0 0 20px}
+/* Empty at first paint, so it collapses and adds no gap until a win fills it. */
+/* p#winstats, not #winstats: #wincard p is (1,0,1) and would otherwise win. */
+#wincard p#winstats{margin:-12px 0 20px;font-size:13.5px}
+#winstats:empty{display:none}
 #winbtn{border:none;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:12px 22px;font-family:inherit;font-weight:700;font-size:15px;cursor:pointer}
 #winclose{position:absolute;top:0;right:0;width:44px;height:44px;border:none;background:transparent;color:var(--muted);font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
 #winclose:hover{color:var(--text-strong)}
 @keyframes popIn{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
 #picker{position:fixed;inset:0;background:var(--scrim);display:none;align-items:center;justify-content:center;z-index:60}
-#pickercard{background:var(--surface);border:1px solid var(--accent);border-radius:20px;padding:30px 34px;text-align:center;animation:popIn .45s ease;box-shadow:var(--card-shadow);min-width:280px}
+/* Capped, and genuinely scrollable. The card gained a checkbox row, and a short landscape
+   phone leaves ~300px of usable height. box-sizing matters: without it the cap applies to
+   the CONTENT box, so 60px of padding and 2px of border sat outside it and the card ended
+   up taller than the viewport with Start unreachable. overflow-y matters for the same
+   reason — a max-height with no scroll container clips rather than scrolls. The 100vh line
+   is the fallback for a UA without dvh, where an unknown unit invalidates the whole calc
+   and would otherwise drop the cap entirely. */
+#pickercard{background:var(--surface);border:1px solid var(--accent);border-radius:20px;padding:30px 34px;text-align:center;animation:popIn .45s ease;box-shadow:var(--card-shadow);min-width:280px;
+  box-sizing:border-box;overflow-y:auto;
+  max-height:calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 32px);
+  max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 32px)}
+/* Short landscape has no room for the full spacing once the card must also fit buttons.
+   Everything here is margin and padding; the 48px checkbox row and the 44px buttons are
+   touch targets and are deliberately not shrunk. */
+@media (max-height:420px){
+  #pickercard{padding:16px 24px}
+  #pickercard h2{font-size:19px;margin-bottom:8px}
+  #picker-warning{margin-bottom:8px}
+  #picker-field{margin-bottom:8px}
+  #picker-least{margin-bottom:6px}
+  #picker-error{margin:-4px 0 8px}
+}
+/* One label so the text is part of the hit area; 48px clears Apple's 44pt, Material's
+   48dp, WCAG 2.2 AAA's 44px and BBC GEL's 44px simultaneously. */
+#picker-least{display:flex;align-items:center;gap:10px;min-height:48px;margin:0 0 12px;
+  font-family:inherit;font-size:14.5px;font-weight:400;color:var(--text);text-align:left;
+  cursor:pointer;text-transform:none;letter-spacing:normal}
+#picker-least input{width:20px;height:20px;flex:none;accent-color:var(--accent);cursor:pointer;margin:0}
 #pickercard h2{font-family:var(--display);font-weight:700;font-size:22px;color:var(--text-strong);margin:0 0 14px}
 #picker-warning{font-size:14.5px;color:var(--muted);margin:0 0 18px;max-width:260px}
-#pickercard label{display:block;font-family:var(--utility);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--label);margin-bottom:6px;text-align:left}
+/* Scoped to the Category label by its `for`, NOT `#pickercard label`: that was (1,0,1)
+   and silently beat #picker-least's (1,0,0), rendering the checkbox row as a second
+   uppercase field label. Specificity, not source order — reordering would not have fixed it. */
+label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--label);margin-bottom:6px;text-align:left}
 /* appearance:none so the control takes the card's palette rather than the platform's
    white; 44px is the touch target the rest of the dialogs keep. It also strips the
    native chevron, so the wrapper draws one back — without it the control reads as a

@@ -201,13 +201,22 @@ export function makeProgress(store) {
     /** @param {boolean} on @returns {void} */
     setFavourLeastSeen(on) { data.favourLeastSeen = !!on; flush(); },
 
-    /** Every subject in the category through at least one full cycle. False when the
-     * category's size is unknown — never guess a completion the record cannot support.
-     * @param {string} catId @param {string[]} subjectIds @returns {boolean} */
-    isComplete(catId, subjectIds) {
+    /** Every subject in the category through at least one full cycle.
+     *
+     * Counted from the record itself — bags whose id carries this category's prefix —
+     * rather than from a list of subject ids the caller happens to hold. That matters:
+     * subject ids only exist once a category module has been imported, so asking for them
+     * would have limited the mark to whichever single category was loaded this session,
+     * while `sizes` and `bags` both persist. False when the size is unknown; never guess
+     * a completion the record cannot support.
+     * @param {string} catId @returns {boolean} */
+    isComplete(catId) {
       const n = data.sizes[catId];
-      if (!n || subjectIds.length < n) return false;
-      return subjectIds.every(id => (data.bags[id]?.c ?? 0) > 0);
+      if (!n) return false;
+      const prefix = catId + '/';
+      let done = 0;
+      for (const [id, b] of Object.entries(data.bags)) if (id.startsWith(prefix) && b.c > 0) done++;
+      return done >= n;
     },
   };
 }

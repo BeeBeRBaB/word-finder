@@ -137,27 +137,36 @@ test('noteSize records a category size and setFavourLeastSeen persists', () => {
 
 test('isComplete needs every subject through a full cycle', () => {
   const p = makeProgress(memStore());
-  const ids = ['a/one', 'a/two'];
   p.noteSize('a', 2);
-  assert.equal(p.isComplete('a', ids), false, 'nothing played');
+  assert.equal(p.isComplete('a'), false, 'nothing played');
   p.noteDraw('a/one', POOL, POOL);
-  assert.equal(p.isComplete('a', ids), false, 'one subject short');
+  assert.equal(p.isComplete('a'), false, 'one subject short');
   p.noteDraw('a/two', POOL, POOL);
-  assert.equal(p.isComplete('a', ids), true);
+  assert.equal(p.isComplete('a'), true);
+});
+
+test('isComplete counts only bags belonging to that category', () => {
+  const p = makeProgress(memStore());
+  p.noteSize('a', 2);
+  p.noteDraw('a/one', POOL, POOL);
+  p.noteDraw('b/two', POOL, POOL);      // another category, fully covered
+  assert.equal(p.isComplete('a'), false, 'a sibling category must not count toward this one');
+});
+
+test('isComplete ignores a subject that has been started but not finished', () => {
+  const p = makeProgress(memStore());
+  p.noteSize('a', 1);
+  p.noteDraw('a/one', POOL, POOL.slice(0, 2));   // partial cycle, c stays 0
+  assert.equal(p.isComplete('a'), false);
 });
 
 test('isComplete is false when the category size is unknown', () => {
   const p = makeProgress(memStore());
   p.noteDraw('a/one', POOL, POOL);
-  assert.equal(p.isComplete('a', ['a/one']), false, 'never guess from an unknown size');
+  assert.equal(p.isComplete('a'), false, 'never guess from an unknown size');
 });
 
-test('isComplete is false when fewer ids are offered than the recorded size', () => {
-  const p = makeProgress(memStore());
-  p.noteSize('a', 2);
-  p.noteDraw('a/one', POOL, POOL);
-  assert.equal(p.isComplete('a', ['a/one']), false);
-});
+
 
 test('get() returns a copy that cannot mutate the record', () => {
   const p = makeProgress(memStore());

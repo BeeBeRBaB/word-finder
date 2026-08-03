@@ -59,6 +59,7 @@ const els = {
   app: must('app'), gridbox: must('gridbox'), pills: must('pills'), letters: must('letters'), fx: must('fx'),
   list: must('list'), side: must('side'), count: must('count'),
   subject: must('subject'), category: must('category'), win: must('win'), winmsg: must('winmsg'),
+  winstats: must('winstats'),
   picker: must('picker'), winclose: must('winclose'), appearance: must('appearance'),
   solved: must('solved'),
 };
@@ -286,6 +287,11 @@ function endDrag() {
     if (won) state.winTimer = setTimeout(() => {
       state.winTimer = null;
       els.winmsg.textContent = 'You found every ' + cap(puzzle.name) + ' word.';
+      // Written here rather than in the markup so the live region is empty until there is
+      // something to announce. The count is the only number shown anywhere — no
+      // fractions, which are what turn a record into a target.
+      const n = progress.get().puzzles;
+      els.winstats.textContent = `${n} ${n === 1 ? 'puzzle' : 'puzzles'} solved`;
       renderSolvedShape(els, state, state.size);
       els.win.style.display = 'flex';
     }, 700);
@@ -318,16 +324,12 @@ function reportLoadFailure(err) {
 /** @type {Set<string>} */
 const unavailableCategories = new Set();
 
-// Subject ids for every category loaded this session. A category's size is only knowable
-// once its module is imported, and importing all 25 to label a dropdown would defeat the
-// lazy load sw.js routes a whole separate cache to protect. Learning it on load is enough:
-// a category can only be COMPLETED by playing it, and playing it loads it.
-/** @type {Map<string, string[]>} */
-const loadedCategories = new Map();
-
+// A category's size is only knowable once its module is imported, and importing all 25 to
+// label a dropdown would defeat the lazy load sw.js routes a whole separate cache to
+// protect. Learning it on load is enough, and it persists: a category can only be
+// completed by playing it, and playing it loads it.
 /** @param {import('./subjects.js').CategoryData} cat @returns {void} */
 function noteCategory(cat) {
-  loadedCategories.set(cat.id, cat.subjectIds);
   progress.noteSize(cat.id, cat.subjectIds.length);
 }
 
@@ -373,7 +375,11 @@ const picker = makePicker({
   surprise: must('picker-surprise'),
   cancel: must('picker-cancel'),
   categories: CATEGORIES,
+  leastBox: /** @type {HTMLInputElement} */ (must('picker-least-box')),
   isUnavailable: (id) => unavailableCategories.has(id),
+  isComplete: (id) => progress.isComplete(id),
+  leastDefault: () => progress.get().favourLeastSeen,
+  onLeast: (on) => progress.setFavourLeastSeen(on),
   onStart: (categoryId) => newGame(categoryId),
 });
 // Unconditional, unlike the confirm it replaces: the dialog is now how a game is started,

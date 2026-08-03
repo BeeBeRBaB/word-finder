@@ -7,11 +7,15 @@
  * @param {{
  *   root:HTMLElement, select:HTMLSelectElement, warning:HTMLElement, error:HTMLElement,
  *   start:HTMLElement, surprise:HTMLElement, cancel:HTMLElement, categories:Category[],
+ *   leastBox:HTMLInputElement,
  *   isUnavailable:(categoryId:string)=>boolean,
+ *   isComplete:(categoryId:string)=>boolean,
+ *   leastDefault:()=>boolean,
+ *   onLeast:(on:boolean)=>void,
  *   onStart:(categoryId:string|null)=>Promise<void>,
  * }} deps
  */
-export function makePicker({ root, select, warning, error, start, surprise, cancel, categories, isUnavailable, onStart }) {
+export function makePicker({ root, select, warning, error, start, surprise, cancel, categories, leastBox, isUnavailable, isComplete, leastDefault, onLeast, onStart }) {
   // A disabled placeholder, then the real categories. Random is its own button, so the
   // list holds only things you can choose — no action hiding among the values.
   select.innerHTML = '';
@@ -50,11 +54,34 @@ export function makePicker({ root, select, warning, error, start, surprise, canc
     start.toggleAttribute('disabled', !select.value);
   }
 
+  /** Rewrite the option labels, marking categories the player has fully covered.
+   *
+   * Called from open(), BEFORE select.focus(), and never while the control is live.
+   * Changing a focused control's accessible name is not reliably announced — JAWS+Chrome
+   * and NVDA+Firefox have both been measured failing on it, and devtools hide the bug by
+   * showing the new name while the screen reader still reports the old one. Rewriting
+   * before focus is a fresh render rather than a rename.
+   *
+   * The mark is text, not a tick glyph: <option> permits only text content, and a check
+   * character is announced inconsistently across screen readers.
+   * @returns {void} */
+  function labelOptions() {
+    for (const o of select.options) {
+      if (!o.value) continue;
+      const c = categories.find(x => x.id === o.value);
+      if (c) o.textContent = isComplete(o.value) ? `${c.name} (done)` : c.name;
+    }
+  }
+
   /** @param {boolean} inProgress @returns {void} */
   function open(inProgress) {
     // Reset on every open. Choosing a category is an act, not a setting: a remembered
-    // choice would silently narrow every later game to it.
+    // choice would silently narrow every later game to it. The checkbox below is the
+    // deliberate opposite — it IS a setting, so it reflects the stored value instead of
+    // being reset. Do not "fix" the inconsistency; the two controls differ on purpose.
     select.value = '';
+    labelOptions();
+    leastBox.checked = leastDefault();
     syncDisabled();
     warning.style.display = inProgress ? '' : 'none';
     error.hidden = true;
@@ -84,7 +111,14 @@ export function makePicker({ root, select, warning, error, start, surprise, canc
   }
 
   select.addEventListener('change', syncDisabled);
-  start.addEventListener('click', () => { void deal(select.value || null, select.selectedOptions[0]?.textContent ?? ''); });
+  leastBox.addEventListener('change', () => onLeast(leastBox.checked));
+  // The label from `categories`, not from the option's text: labelOptions() may have
+  // appended "(done)" to that, which would then read back in the failure message as
+  // "Nature (done) isn't available offline yet."
+  start.addEventListener('click', () => {
+    const id = select.value || null;
+    void deal(id, (id && categories.find(c => c.id === id)?.name) || '');
+  });
   surprise.addEventListener('click', () => { void deal(null, ''); });
   cancel.addEventListener('click', close);
   root.addEventListener('click', (e) => { if (e.target === root) close(); });

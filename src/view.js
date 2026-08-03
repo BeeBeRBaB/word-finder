@@ -12,6 +12,7 @@ import { cap, lineIndices } from './puzzle.js';
  *   app:HTMLElement, gridbox:HTMLElement, pills:HTMLElement, letters:HTMLElement, fx:HTMLElement,
  *   list:HTMLElement, side:HTMLElement, count:HTMLElement,
  *   subject:HTMLElement, category:HTMLElement, win:HTMLElement, winmsg:HTMLElement,
+ *   winstats:HTMLElement,
  *   picker:HTMLElement, winclose:HTMLElement, appearance:HTMLElement, solved:HTMLElement,
  * }} Els
  */

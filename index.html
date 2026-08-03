@@ -60,6 +60,10 @@
   <!-- The strokes of the puzzle you just solved, letters stripped: a different mark
        every game. Decorative, so aria-hidden; #winmsg carries the same news in words. -->
   <div id="solved" aria-hidden="true"></div><h2>Puzzle solved!</h2><p id="winmsg"></p>
+  <!-- Present and EMPTY at first paint, populated on a win. ARIA22 requires the container
+       to exist before the message appears, and notes role="status" is not treated as
+       atomic by default everywhere — hence the explicit aria-atomic. -->
+  <p id="winstats" role="status" aria-atomic="true"></p>
   <button id="winbtn" type="button">Play a new game &#8594;</button>
 </div></div>
 <div id="picker"><div id="pickercard">
@@ -70,6 +74,10 @@
        count, renders as the system wheel picker on iOS, and brings keyboard and
        screen-reader support with it. -->
   <div id="picker-field"><select id="picker-select"></select></div>
+  <!-- A checkbox, not a switch: this applies when Start is pressed, and both Apple HIG and
+       Material reserve the switch for settings that take effect immediately. One label so
+       the text is part of the 48px hit area. -->
+  <label id="picker-least"><input type="checkbox" id="picker-least-box"><span>Favour subjects I've seen least</span></label>
   <p id="picker-error" hidden></p>
   <div id="picker-actions"><button id="picker-cancel" type="button">Cancel</button>
   <button id="picker-surprise" type="button">Surprise me</button>
