@@ -253,3 +253,27 @@ test('a stored "system" preference migrates to dark at first paint', async ({ pa
   await expect(page.locator('.cell')).toHaveCount(0);
   expect(await modeOf(page)).toBe('dark');
 });
+
+// A visitor reported the theme button as an empty circle after a deploy. Reproduced: the
+// service worker revalidates each file independently, so new CSS can pair with old markup
+// for one load, and the old markup ships data-pref="system" -- which an exact
+// [data-pref="dark"] selector does not match, leaving zero icons visible.
+//
+// The button must never render glyph-less, whatever the attribute says. This drives the
+// attribute directly rather than through the toggle, because the toggle can only ever
+// produce the two values this build already handles.
+test('exactly one icon shows for any data-pref, including values this build retired', async ({ page }) => {
+  await page.goto('/?seed=1&subject=nature/birds');
+  await page.waitForSelector('#letters .cell');
+  for (const pref of ['dark', 'light', 'system', 'banana', '']) {
+    const shown = await page.evaluate((p) => {
+      const btn = /** @type {HTMLElement} */ (document.getElementById('appearance'));
+      btn.dataset.pref = p;
+      return [...btn.querySelectorAll('svg')]
+        .filter(s => getComputedStyle(s).display !== 'none')
+        .map(s => s.getAttribute('class'));
+    }, pref);
+    expect(shown, `data-pref="${pref}" must show exactly one icon`).toHaveLength(1);
+    expect(shown[0]).toBe(pref === 'light' ? 'i-light' : 'i-dark');
+  }
+});

@@ -125,8 +125,15 @@ body{position:fixed;inset:0;width:100%;height:100%}
 /* Both icons ship in the markup and data-pref picks one, so main.js never
    assembles HTML on a click. */
 #appearance svg{display:none;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+/* Light is the only value that selects the sun; ANYTHING else shows the moon, including a
+   value this build does not know. That is not defensive dressing: during a deploy the
+   service worker revalidates each file independently, so new CSS can pair with old markup
+   for one load — and the old markup ships data-pref="system", which an exact
+   [data-pref="dark"] selector does not match. The button then renders as an empty 44px
+   circle with no glyph, silently, exactly as a visitor reported. Mirrors normalizePref:
+   not 'light' means dark. */
 #appearance[data-pref="light"] .i-light,
-#appearance[data-pref="dark"] .i-dark{display:block}
+#appearance:not([data-pref="light"]) .i-dark{display:block}
 #gridbox{grid-area:grid;position:relative;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);touch-action:none;cursor:pointer;flex:none}
 #pills,#fx{position:absolute;inset:0;pointer-events:none}
 /* Pill colours are class-driven so they live in the palette; as rgba literals in JS
