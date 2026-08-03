@@ -4,7 +4,7 @@
 import { CATEGORIES, categoryOf } from './catalog.js';
 import { loadCategory, loadSubject, SubjectLoadError } from './subjects.js';
 import { makeRng, resolveSeed, resolveTarget } from './rng.js';
-import { buildPuzzle, cap, matchWord, readLine, snap } from './puzzle.js';
+import { buildPuzzle, cap, matchWord, snap } from './puzzle.js';
 import { computeLayout, pickPreset, PRESETS } from './layout.js';
 import { applyLayout, renderGrid, renderList, renderPills, renderFoundCells, renderSolvedShape } from './view.js';
 import { burst, pop } from './effects.js';
@@ -243,7 +243,7 @@ function endDrag() {
   // Aliased to a local so the narrowing to non-null survives inside the setTimeout
   // closures below, the same reason effects.js aliases `ac`.
   const puzzle = state.puzzle;
-  const hit = matchWord(puzzle.words, state.found, readLine(puzzle.cells, state.size, s));
+  const hit = matchWord(puzzle.placements, state.found, state.size, s);
   state.sel = null;
   if (hit) {
     state.found[hit] = { sel: s };

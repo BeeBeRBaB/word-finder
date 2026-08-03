@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildPuzzle, pickWords, snap, readLine, matchWord, cap } from '../../src/puzzle.js';
+import { buildPuzzle, pickWords, snap, readLine, matchWord, runKey, cap } from '../../src/puzzle.js';
 import { makeRng } from '../../src/rng.js';
 
 const FULL_MIX = [
@@ -148,14 +148,86 @@ test('readLine reads a selection in order', () => {
   assert.equal(readLine(cells, 13, { x0: 0, y0: 0, x1: 3, y1: 0 }), 'ABCD');
 });
 
-test('matchWord matches forwards and backwards, skipping found words', () => {
-  const words = ['CAT', 'DOG'];
-  assert.equal(matchWord(words, {}, 'CAT'), 'CAT');
-  assert.equal(matchWord(words, {}, 'TAC'), 'CAT');
-  assert.equal(matchWord(words, { CAT: true }, 'CAT'), null);
-  assert.equal(matchWord(words, {}, 'XYZ'), null);
+test('matchWord matches a placement, and nothing for an empty run', () => {
+  // Replaces a string-based version of this test. matchWord no longer reads letters at
+  // all -- see the cell-run tests below for why that had to change.
+  const placements = [
+    { word: 'CAT', x0: 0, y0: 0, dx: 1, dy: 0 },
+    { word: 'DOG', x0: 0, y0: 2, dx: 1, dy: 0 },
+  ];
+  assert.equal(matchWord(placements, {}, 13, { x0: 0, y0: 0, x1: 2, y1: 0 }), 'CAT');
+  assert.equal(matchWord(placements, {}, 13, { x0: 2, y0: 0, x1: 0, y1: 0 }), 'CAT');
+  assert.equal(matchWord(placements, { CAT: true }, 13, { x0: 0, y0: 0, x1: 2, y1: 0 }), null);
+  assert.equal(matchWord(placements, {}, 13, { x0: 5, y0: 5, x1: 7, y1: 5 }), null);
 });
 
 test('cap title-cases a word', () => {
   assert.equal(cap('SUNSHINE'), 'Sunshine');
+});
+
+// A word's letters also read where the word is NOT: inside a longer word, or by chance in
+// the filler. Matching on letters alone marked it found at the wrong place, after which
+// its real placement flashed as a miss. 581 of 600 subjects contain a word inside another
+// of their own words, and 30% of dealt puzzles contain at least one such run.
+
+test('a word is not matched at a run that is not its placement', () => {
+  // HARDWOOD across the top row; WOOD placed on its own, five rows down.
+  const placements = [
+    { word: 'HARDWOOD', x0: 0, y0: 0, dx: 1, dy: 0 },
+    { word: 'WOOD', x0: 0, y0: 5, dx: 1, dy: 0 },
+  ];
+  // Cells 4..7 of row 0 spell WOOD, but that is HARDWOOD's tail, not WOOD's placement.
+  assert.equal(matchWord(placements, {}, 13, { x0: 4, y0: 0, x1: 7, y1: 0 }), null);
+  assert.equal(matchWord(placements, {}, 13, { x0: 0, y0: 5, x1: 3, y1: 5 }), 'WOOD');
+});
+
+test('two words sharing cells are both findable, in either order', () => {
+  // WOOD sits exactly on HARDWOOD's last four cells -- a legal overlap.
+  const placements = [
+    { word: 'HARDWOOD', x0: 0, y0: 0, dx: 1, dy: 0 },
+    { word: 'WOOD', x0: 4, y0: 0, dx: 1, dy: 0 },
+  ];
+  /** @type {Record<string, boolean>} */
+  const found = {};
+  assert.equal(matchWord(placements, found, 13, { x0: 4, y0: 0, x1: 7, y1: 0 }), 'WOOD');
+  found.WOOD = true;
+  assert.equal(matchWord(placements, found, 13, { x0: 0, y0: 0, x1: 7, y1: 0 }), 'HARDWOOD',
+    'finding the short word must not consume the long one');
+});
+
+test('a word dragged backwards is the same run as forwards', () => {
+  const placements = [{ word: 'STAR', x0: 2, y0: 3, dx: 1, dy: 0 }];
+  assert.equal(matchWord(placements, {}, 13, { x0: 2, y0: 3, x1: 5, y1: 3 }), 'STAR');
+  assert.equal(matchWord(placements, {}, 13, { x0: 5, y0: 3, x1: 2, y1: 3 }), 'STAR');
+});
+
+test('a diagonal placement matches only its own run', () => {
+  const placements = [{ word: 'CAT', x0: 0, y0: 0, dx: 1, dy: 1 }];
+  assert.equal(matchWord(placements, {}, 13, { x0: 0, y0: 0, x1: 2, y1: 2 }), 'CAT');
+  assert.equal(matchWord(placements, {}, 13, { x0: 0, y0: 0, x1: 2, y1: 0 }), null,
+    'same start, same length, wrong direction');
+});
+
+test('an already-found word is skipped', () => {
+  const placements = [{ word: 'CAT', x0: 0, y0: 0, dx: 1, dy: 0 }];
+  assert.equal(matchWord(placements, { CAT: true }, 13, { x0: 0, y0: 0, x1: 2, y1: 0 }), null);
+});
+
+test('a one-cell selection matches nothing on a real board', () => {
+  const placements = [{ word: 'CAT', x0: 0, y0: 0, dx: 1, dy: 0 }];
+  assert.equal(matchWord(placements, {}, 13, { x0: 0, y0: 0, x1: 0, y1: 0 }), null);
+});
+
+test('runKey is direction-independent and distinguishes different runs', () => {
+  assert.equal(runKey(13, { x0: 1, y0: 0, x1: 4, y1: 0 }), runKey(13, { x0: 4, y0: 0, x1: 1, y1: 0 }));
+  assert.notEqual(runKey(13, { x0: 1, y0: 0, x1: 4, y1: 0 }), runKey(13, { x0: 1, y0: 0, x1: 4, y1: 3 }));
+});
+
+test('every placement in a real puzzle matches at its own run and nowhere else', () => {
+  const p = build(6);
+  for (const pl of p.placements) {
+    const last = pl.word.length - 1;
+    const sel = { x0: pl.x0, y0: pl.y0, x1: pl.x0 + pl.dx * last, y1: pl.y0 + pl.dy * last };
+    assert.equal(matchWord(p.placements, {}, 13, sel), pl.word, `${pl.word} at its own run`);
+  }
 });

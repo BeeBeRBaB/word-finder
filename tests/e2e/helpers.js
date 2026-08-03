@@ -19,14 +19,19 @@ async function gridGeometry(page) {
 }
 
 /**
- * Locate a word in the rendered grid by brute force over all 8 directions.
- * Pass a word to find that specific one, or omit to get the first word from the
- * list that is locatable. Returns grid coordinates, not pixels.
+ * Every run in the rendered grid that reads `word`, by brute force over all 8 directions.
+ * Pass a word to search for that one, or omit to scan every word in the list.
+ *
+ * More than one run can read the same word: its letters also appear inside longer words
+ * (WOOD inside HARDWOOD) and, for short words, by chance in the filler. Only one of them
+ * is the word's actual placement, and the DOM does not say which — so callers try them in
+ * turn. Before matchWord keyed on the cell run, dragging ANY of these "found" the word,
+ * which is the bug `findAndDrag` now guards.
  * @param {Page} page @param {string} [word]
- * @returns {Promise<{word:string, x0:number, y0:number, x1:number, y1:number}>}
+ * @returns {Promise<{word:string, x0:number, y0:number, x1:number, y1:number}[]>}
  */
-export async function findWordInGrid(page, word) {
-  const found = await page.evaluate((target) => {
+export async function findRunsInGrid(page, word) {
+  const runs = await page.evaluate((target) => {
     const letters = [...document.querySelectorAll('.cell')].map(e => e.textContent);
     const N = Math.round(Math.sqrt(letters.length));
     const words = target
@@ -36,6 +41,8 @@ export async function findWordInGrid(page, word) {
       // that would silently hide a real regression instead of throwing on one.
       : [...document.querySelectorAll('.w')].map(e => /** @type {string} */ (e.textContent).toUpperCase());
     const DIRS = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
+    /** @type {{word:string, x0:number, y0:number, x1:number, y1:number}[]} */
+    const out = [];
     for (const w of words) {
       for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
         for (const [dx, dy] of DIRS) {
@@ -45,14 +52,42 @@ export async function findWordInGrid(page, word) {
           for (let i = 0; i < w.length; i++) {
             if (letters[(y + dy * i) * N + (x + dx * i)] !== w[i]) { ok = false; break; }
           }
-          if (ok) return { word: w, x0: x, y0: y, x1: ex, y1: ey };
+          if (ok) out.push({ word: w, x0: x, y0: y, x1: ex, y1: ey });
         }
       }
     }
-    return null;
+    return out;
   }, word);
-  if (!found) throw new Error(`could not locate ${word || 'any word'} in the grid`);
-  return found;
+  if (!runs.length) throw new Error(`could not locate ${word || 'any word'} in the grid`);
+  return runs;
+}
+
+/**
+ * The first run that reads the word. Only safe where the caller does not need the word to
+ * actually register — asserting a miss, or reading geometry. To find a word for real,
+ * use `findAndDrag`, which tries runs until one is accepted.
+ * @param {Page} page @param {string} [word]
+ * @returns {Promise<{word:string, x0:number, y0:number, x1:number, y1:number}>}
+ */
+export async function findWordInGrid(page, word) {
+  return (await findRunsInGrid(page, word))[0];
+}
+
+/** Drag runs until the word actually crosses out, and return the run that worked.
+ *
+ * A word can read at several runs but is placed at exactly one, so a single drag at the
+ * first match is a coin flip on any board where the word's letters recur.
+ * @param {Page} page @param {string} word
+ * @returns {Promise<{word:string, x0:number, y0:number, x1:number, y1:number}>}
+ */
+export async function findAndDrag(page, word) {
+  const runs = await findRunsInGrid(page, word);
+  for (const run of runs) {
+    await dragCells(page, run);
+    const done = await page.locator('.w.done, .w.glow').allTextContents();
+    if (done.some(t => t.trim().toUpperCase() === word.toUpperCase())) return run;
+  }
+  throw new Error(`no run for ${word} registered as found — ${runs.length} tried`);
 }
 
 /** Same brute-force search, but only accepts a diagonally placed word.
@@ -62,8 +97,11 @@ export async function findWordInGrid(page, word) {
 export async function findDiagonalWord(page) {
   const all = await page.locator('.w').allTextContents();
   for (const w of all) {
-    const hit = await findWordInGrid(page, w.toUpperCase());
-    if (hit.x0 !== hit.x1 && hit.y0 !== hit.y1) return hit;
+    // Every run, not just the first: the first match can be a straight ghost of a word
+    // that is actually placed diagonally, which would skip a perfectly good candidate.
+    for (const hit of await findRunsInGrid(page, w.toUpperCase())) {
+      if (hit.x0 !== hit.x1 && hit.y0 !== hit.y1) return hit;
+    }
   }
   throw new Error('no diagonally placed word in this puzzle');
 }

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { findWordInGrid, findDiagonalWord, dragCells } from './helpers.js';
+import { findDiagonalWord, findAndDrag, dragCells } from './helpers.js';
 
 // Every unseeded goto() below is pinned to ?subject=nature/birds rather than left as
 // '/': none of these tests care which subject loads, only that one does, and the
@@ -8,8 +8,11 @@ import { findWordInGrid, findDiagonalWord, dragCells } from './helpers.js';
 
 test('dragging across a word finds it', async ({ page }) => {
   await page.goto('/?subject=nature/birds');
-  const sel = await findWordInGrid(page);
-  await dragCells(page, sel);
+  // findAndDrag, not findWordInGrid: a word's letters can read at several runs but it is
+  // placed at exactly one, and these boards are clock-seeded, so taking the first match
+  // would fail on whichever run happened to be a ghost.
+  const first = /** @type {string} */ (await page.locator('.w').first().textContent());
+  await findAndDrag(page, first.toUpperCase());
   const total = await page.locator('.w').count();
   await expect(page.locator('#count')).toContainText(`1 of ${total} found`);
   await expect(page.locator('#pills .pill')).toHaveCount(1);
@@ -26,8 +29,8 @@ test('dragging across nonsense finds nothing', async ({ page }) => {
 
 test('a found word glows, then crosses out', async ({ page }) => {
   await page.goto('/?subject=nature/birds');
-  const sel = await findWordInGrid(page);
-  await dragCells(page, sel);
+  const first = /** @type {string} */ (await page.locator('.w').first().textContent());
+  const sel = await findAndDrag(page, first.toUpperCase());
   const chip = page.locator('.w', { hasText: new RegExp(`^${sel.word}$`, 'i') });
   // The glow is applied synchronously on pointerup, so it is already
   // present by the time dragCells resolves; the strike-through follows GLOW_MS
@@ -49,7 +52,7 @@ test('finding every word raises the win overlay', async ({ page }) => {
   await page.goto('/?subject=nature/birds');
   const words = await page.locator('.w').allTextContents();
   for (const w of words) {
-    await dragCells(page, await findWordInGrid(page, w.toUpperCase()));
+    await findAndDrag(page, w.toUpperCase());
   }
   await expect(page.locator('#win')).toBeVisible();
   await expect(page.locator('#winmsg')).toContainText('You found every');

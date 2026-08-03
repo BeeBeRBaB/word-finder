@@ -1,5 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { findWordInGrid, dragCells } from './helpers.js';
+import { findAndDrag, dragCells } from './helpers.js';
+import { buildPuzzle, runKey } from '../../src/puzzle.js';
+import { makeRng } from '../../src/rng.js';
+import { PRESETS } from '../../src/layout.js';
+import { WORDS } from '../../src/subjects/home.js';
 
 // Regression for 43c8402. Winning schedules the overlay on a 700ms timer. Starting
 // a new puzzle inside that window used to let the stale timer drop the overlay over
@@ -13,7 +17,7 @@ import { findWordInGrid, dragCells } from './helpers.js';
 test('starting a new game during the win delay leaves the board playable', async ({ page }) => {
   await page.goto('/?seed=1&subject=nature/birds');
   const words = await page.locator('.w').allTextContents();
-  for (const w of words) await dragCells(page, await findWordInGrid(page, w.toUpperCase()));
+  for (const w of words) await findAndDrag(page, w.toUpperCase());
 
   await page.locator('#newbtn').click();   // inside the 700ms window
   await page.locator('#picker-select').selectOption('nature');
@@ -25,7 +29,8 @@ test('starting a new game during the win delay leaves the board playable', async
   await expect(page.locator('#count')).toContainText(`0 of ${total} found`);
 
   // The real symptom was a dead board, so prove it still accepts input.
-  await dragCells(page, await findWordInGrid(page));
+  const any = /** @type {string} */ (await page.locator('.w').first().textContent());
+  await findAndDrag(page, any.toUpperCase());
   await expect(page.locator('#count')).toContainText(`1 of ${total} found`);
 });
 
@@ -230,3 +235,76 @@ test('every same-origin asset the app loads is covered by the precache list', as
 
   expect(missing, `loaded but missing from sw.js ASSETS: ${missing.join(', ')}`).toEqual([]);
 });
+
+// Regression for the WOOD-in-HARDWOOD class of bug. matchWord used to compare the dragged
+// LETTERS against the word list, so a word was marked found wherever its letters happened
+// to read -- inside a longer word, or by chance in the filler. Its real placement then
+// failed to match and flashed as a miss on a word that is genuinely there.
+//
+// Measured on the corpus when this was found: 581 of 600 subjects contain a word inside
+// another of their own words, and 30% of dealt puzzles contain at least one such run.
+//
+// Ground truth comes from rebuilding the pinned puzzle here in Node with the same pure
+// modules the page uses, because the DOM cannot say which of several readable runs is the
+// placement -- that is precisely the information matchWord was missing.
+test('a run that only spells a word does not find it', async ({ page }) => {
+  const SEED = 0, SUBJECT = 'home/carpentry';
+  await page.goto(`/?seed=${SEED}&subject=${SUBJECT}`);
+  await page.waitForSelector('#letters .cell');
+
+  const size = Math.round(Math.sqrt(await page.locator('.cell').count()));
+  const shape = size === PRESETS.compact.size ? PRESETS.compact : PRESETS.full;
+  const puzzle = buildPuzzle({
+    name: 'carpentry', pool: WORDS[SUBJECT].split(','), rng: makeRng(SEED),
+    size: shape.size, count: shape.count, mix: shape.mix,
+  });
+  // The board the page rendered must be the board we just rebuilt, or the rest is fiction.
+  expect((await page.locator('.cell').allTextContents()).join('')).toBe(puzzle.cells.join(''));
+
+  const placed = new Set(puzzle.placements.map((p) => {
+    const last = p.word.length - 1;
+    return runKey(shape.size, { x0: p.x0, y0: p.y0, x1: p.x0 + p.dx * last, y1: p.y0 + p.dy * last });
+  }));
+  const ghost = findGhostRun(puzzle, shape.size, placed);
+  if (!ghost) {
+    // The compact 10x10 board draws 8 shorter words, so a pinned seed that ghosts on the
+    // full board need not ghost here. Skipping is honest; asserting nothing would not be.
+    test.skip(true, `no off-placement run on this ${shape.size}x${shape.size} board`);
+    return;
+  }
+  const g = ghost;
+
+  // Dragging the run that merely spells the word must do nothing at all.
+  await dragCells(page, g);
+  const total = await page.locator('.w').count();
+  await expect(page.locator('#count')).toContainText(`0 of ${total} found`);
+  await expect(page.locator('.w', { hasText: new RegExp(`^${g.word}$`, 'i') })).not.toHaveClass(/\bdone\b/);
+
+  // And the word is still findable at its real placement -- the half that used to break.
+  await findAndDrag(page, g.word);
+  await expect(page.locator('#count')).toContainText(`1 of ${total} found`);
+});
+
+/** A straight run that reads one of the puzzle's words but is NOT that word's placement.
+ * Extracted rather than inlined so its `null` return narrows cleanly at the call site.
+ * @param {import('../../src/puzzle.js').Puzzle} puzzle
+ * @param {number} size @param {Set<string>} placed run keys of the real placements
+ * @returns {{word:string, x0:number, y0:number, x1:number, y1:number}|null} */
+function findGhostRun(puzzle, size, placed) {
+  const rev = (/** @type {string} */ s) => s.split('').reverse().join('');
+  for (const w of puzzle.words) {
+    for (const [dx, dy] of [[1, 0], [0, 1], [1, 1], [1, -1]]) {
+      for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+          const x1 = x + dx * (w.length - 1), y1 = y + dy * (w.length - 1);
+          if (x1 < 0 || x1 >= size || y1 < 0 || y1 >= size) continue;
+          let s = '';
+          for (let i = 0; i < w.length; i++) s += puzzle.cells[(y + dy * i) * size + (x + dx * i)];
+          if (s !== w && rev(s) !== w) continue;
+          if (!placed.has(runKey(size, { x0: x, y0: y, x1, y1 }))) return { word: w, x0: x, y0: y, x1, y1 };
+        }
+      }
+    }
+  }
+  return null;
+}
