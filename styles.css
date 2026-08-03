@@ -72,12 +72,23 @@ body{position:fixed;inset:0;width:100%;height:100%}
   padding:calc(10px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));
   grid-template-columns:1fr;grid-template-areas:"hdr" "grid" "side";
   justify-items:center;align-content:start;gap:10px}
+/* Portrait stays CENTRED while landscape is start-aligned, and that asymmetry is a
+   decision, not an oversight. Portrait leaves 14px of slack on a phone and 32px on an
+   iPad, which reads as padding; landscape left 195px on a 1512px window, which read as
+   the board having drifted. Do not "make these consistent" without asking. */
 /* Rows are explicit so the header hugs its own height and the list takes the rest: left
    as `auto`, the grid spans both and pushes half its height into each, centring the rail.
-   `safe center`, never bare `center` — the 160px rail floor can still make the tracks
-   wider than the viewport, and bare `center` splits that overflow across both edges,
-   where the start-edge half is unreachable (not scrollable, not in scrollWidth). */
-#app[data-landscape]{grid-template-areas:"grid hdr" "grid side";grid-template-rows:min-content 1fr;align-content:start;justify-items:start;justify-content:safe center;column-gap:20px;row-gap:14px}
+   `justify-content:start`, not `safe center`: the board caps at 54px cells, so centring
+   left a wide window with idle margin on both sides and the board floating away from the
+   edge. Start inherits what `safe` was protecting rather than discarding it: the 160px
+   rail floor can make the tracks wider than the viewport — measured below innerWidth 610
+   on the full board and 380 on the compact one — and bare `center` splits that overflow
+   across both edges, where the start-edge half is unreachable, neither scrollable nor in
+   scrollWidth. `safe center` was already degrading to start at exactly those widths, so
+   this states the same geometry directly. Start can only ever overflow to the right,
+   which IS scrollable.
+   IF THIS IS EVER RE-CENTRED IT MUST BE `safe center`, NEVER BARE `center`. */
+#app[data-landscape]{grid-template-areas:"grid hdr" "grid side";grid-template-rows:min-content 1fr;align-content:start;justify-items:start;justify-content:start;column-gap:20px;row-gap:14px}
 /* A landscape phone leaves ~300px of height for the whole rail. The hint is
    instructional rather than gameplay, so it is the first thing to go. */
 #app[data-landscape] #hint{display:none}
