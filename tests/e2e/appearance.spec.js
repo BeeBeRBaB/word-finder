@@ -11,6 +11,17 @@ import { findWordInGrid, dragCells } from './helpers.js';
 // owns the service worker's behaviour and keeps its own workers.
 test.use({ serviceWorkers: 'block' });
 
+/** Flip light/dark the way a player now does: through the Settings pane.
+ * @param {Page} page @param {'light'|'dark'} [to] @returns {Promise<void>} */
+async function switchMode(page, to) {
+  await page.locator('#appearance').click();
+  const target = to ?? ((await page.locator('#mode-light').getAttribute('aria-pressed')) === 'true' ? 'dark' : 'light');
+  await page.locator(`#mode-${target}`).click();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#settings')).toBeHidden();
+}
+
+
 // The pill colours moved out of view.js's PAL and into the palette. A pill that
 // renders transparent means the class/variable wiring broke, which no existing
 // test would notice — they all assert on the word list, not the grid overlay.
@@ -172,12 +183,12 @@ test('a throwing localStorage resolves dark, and does not flip on hydration', as
 // the visible icon, and the accessible name. Two steps now rather than three: with
 // `system` gone a preference IS the resolved mode, and a new visitor starts on dark.
 const CYCLE = [
-  { pref: 'dark', mode: 'dark', icon: 'i-dark', label: 'Appearance: Dark' },
-  { pref: 'light', mode: 'light', icon: 'i-light', label: 'Appearance: Light' },
-  { pref: 'dark', mode: 'dark', icon: 'i-dark', label: 'Appearance: Dark' },
+  { pref: 'dark', mode: 'dark', icon: 'i-dark', label: 'Settings' },
+  { pref: 'light', mode: 'light', icon: 'i-light', label: 'Settings' },
+  { pref: 'dark', mode: 'dark', icon: 'i-dark', label: 'Settings' },
 ];
 
-test('the button toggles dark <-> light, repainting and relabelling each step', async ({ page }) => {
+test('the mode switch toggles dark <-> light, repainting and relabelling each step', async ({ page }) => {
   await page.goto('/?seed=1&subject=nature/birds');
   /** @type {Record<string, string>} */
   const darkPaint = { bg: await bgOf(page), ink: await inkOf(page) };
@@ -193,7 +204,7 @@ test('the button toggles dark <-> light, repainting and relabelling each step', 
     if (step.mode === 'dark') expect(paint, `step ${i} paint`).toEqual(darkPaint);
     else expect(paint, `step ${i} paint`).not.toEqual(darkPaint);
 
-    await page.locator('#appearance').click();
+    await switchMode(page);
   }
 });
 
@@ -224,7 +235,7 @@ for (const [name, stored, expected] of /** @type {[string, string|null, string][
 // before any deferred script ran, which a plain reload assertion cannot.
 test('a stored preference applies with the module blocked entirely', async ({ page }) => {
   await page.goto('/');
-  await page.locator('#appearance').click();                 // stores 'light'
+  await switchMode(page, 'light');                           // stores 'light'
   expect(await modeOf(page)).toBe('light');
 
   await page.route('**/src/main.js', route => route.abort());
@@ -237,7 +248,7 @@ test('the status bar colour tracks the page background', async ({ page }) => {
   await page.goto('/');
   const meta = page.locator('meta[name="theme-color"]');
   await expect(meta).toHaveAttribute('content', '#100a05');
-  await page.locator('#appearance').click();
+  await switchMode(page, 'light');
   await expect(meta).toHaveAttribute('content', '#f2e3d5');
 });
 

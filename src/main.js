@@ -8,9 +8,9 @@ import { buildPuzzle, cap, matchWord, snap } from './puzzle.js';
 import { computeLayout, pickPreset, PRESETS } from './layout.js';
 import { applyLayout, renderGrid, renderList, renderPills, renderFoundCells, renderSolvedShape } from './view.js';
 import { burst, pop } from './effects.js';
-import { makeStorage } from './storage.js';
+import { makeStorage, defaultStore } from './storage.js';
 import { makeProgress, chooseSubject } from './progress.js';
-import { makeAppearance, appearanceLabel } from './appearance.js';
+import { makeAppearance, THEMES, themeName } from './appearance.js';
 import { makePicker } from './picker.js';
 
 /**
@@ -43,6 +43,10 @@ const PRESET = pickPreset({ screenW: screen.width, screenH: screen.height });
 // How long a found word glows before it strikes through. Matches the `foundGlow`
 // animation duration in styles.css.
 const GLOW_MS = 900;
+// How long the win card waits before dealing the next puzzle on its own. Matches the
+// `drain` animation on #winbar in styles.css.
+const AUTO_NEXT_MS = 5000;
+const AUTO_KEY = 'wordfinder-autonext';
 /** @returns {boolean} */
 const prefersReducedMotion = () =>
   !!(globalThis.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -118,7 +122,7 @@ function sweep() {
   els.gridbox.classList.add('sweep');
 }
 
-/** Every puzzle is built from its own fresh rng seeded by `seed`, so a stored seed
+/** Every puzzle is built from its own fresh rng seeded by `seed`, so a `?seed=`
  * reproduces its grid. `shape` is an argument, not PRESET: a restored save may have been
  * dealt at a different size.
  * @param {number} seed @param {import('./subjects.js').Subject} subject
@@ -129,8 +133,9 @@ function sweep() {
  *   player state pick the words would mean one `?seed=` dealt different grids to
  *   different players. rng.js keeps its pinned branches away from the rng for exactly
  *   that second reason.
+ * @param {Puzzle} [dealt] a saved board to put back instead of building one
  * @returns {void} */
-function newPuzzle(seed, subject, shape, useBag = true) {
+function newPuzzle(seed, subject, shape, useBag = true, dealt) {
   currentSeed = seed;
   subjectId = subject.id;
   state.size = shape.size;
@@ -138,7 +143,7 @@ function newPuzzle(seed, subject, shape, useBag = true) {
   const rng = makeRng(seed);
   justFound = null;
   state.found = {}; state.foundOrder = []; state.sel = null; state.miss = null; state.drag = null;
-  state.puzzle = buildPuzzle({
+  state.puzzle = dealt ?? buildPuzzle({
     name: subject.name, pool: subject.words, rng,
     size: shape.size, count: shape.count, mix: shape.mix,
     undrawn: useBag ? progress.bagFor(subject.id, subject.words) : undefined,
@@ -152,15 +157,16 @@ function newPuzzle(seed, subject, shape, useBag = true) {
   els.category.textContent = subject.categoryName;
   // Or a stale timer drops the win overlay over the fresh grid, swallowing every tap.
   if (state.winTimer) { clearTimeout(state.winTimer); state.winTimer = null; }
-  els.win.style.display = 'none';
+  hideWin();
   layout();
   list();
   sweep();
   persist();
 }
 
-/** Just enough to regenerate the identical grid on reload: the seed, the subject, the
- * board's shape and each found word's selection — not the cells themselves.
+/** The board as dealt, with the seed, the subject, the board's shape and each found
+ * word's selection. The cells, not just the seed: a deal the coverage bag steered does
+ * not regenerate from its seed, because the deal itself moved the bag on.
  * @returns {void} */
 function persist() {
   if (!state.puzzle) return;   // nothing to save before the first deal
@@ -170,6 +176,8 @@ function persist() {
     size: state.size,
     // buildPuzzle never returns a short board, so the word list IS the count.
     count: state.puzzle.words.length,
+    cells: state.puzzle.cells.join(''),
+    placements: state.puzzle.placements,
     found: state.foundOrder.map(w => ({ word: w, ...state.found[w].sel })),
   });
 }
@@ -291,9 +299,20 @@ function endDrag() {
       // something to announce. The count is the only number shown anywhere — no
       // fractions, which are what turn a record into a target.
       const n = progress.get().puzzles;
+      const paneOpen = els.picker.style.display === 'flex' || settings.style.display === 'flex';
+      const counting = !paneOpen && startAutoNext();
       els.winstats.textContent = `${n} ${n === 1 ? 'puzzle' : 'puzzles'} solved`;
+      // One announcement, including the countdown, rather than a live digit every second.
+      // Visually hidden: the countdown row already shows it.
+      if (counting) {
+        const sr = document.createElement('span');
+        sr.className = 'sr';
+        sr.textContent = `. Next puzzle in ${AUTO_NEXT_MS / 1000} seconds.`;
+        els.winstats.appendChild(sr);
+      }
       renderSolvedShape(els, state, state.size);
       els.win.style.display = 'flex';
+      if (!paneOpen) winbtn.focus({ preventScroll: true });
     }, 700);
   } else if (!(s.x0 === s.x1 && s.y0 === s.y1)) {
     // A plain tap's 1-cell selection can never match, so it is not a miss.
@@ -337,8 +356,10 @@ function noteCategory(cat) {
  * the seeded sequence: `?seed=` pins the puzzle you land on, not every one after. It also
  * gets a fresh seed, or newPuzzle would reproduce the same choices verbatim.
  * @param {string|null} [categoryId] restrict the pick to one category
- * @returns {Promise<void>} */
-async function newGame(categoryId) {
+ * @param {() => boolean} [stillWanted] checked after the loads, before dealing: a win-card
+ *   deal the player has since moved on from must not replace their board, or record a draw
+ * @returns {Promise<boolean>} whether it dealt */
+async function newGame(categoryId, stillWanted = () => true) {
   // The exclusion narrows the RANDOM draw only; an explicit categoryId is attempted
   // regardless. Falls back to the full catalog if everything is somehow marked bad.
   const candidates = CATEGORIES.filter(c => !unavailableCategories.has(c.id));
@@ -362,7 +383,10 @@ async function newGame(categoryId) {
   const seen = new Map(cat.subjectIds.map(s => [s, progress.coverage(s)]));
   const pick = chooseSubject(cat.subjectIds, seen, subjectId ?? null,
     progress.get().favourLeastSeen, Math.random);
-  newPuzzle(Date.now() >>> 0, await loadSubject(pick), PRESET);
+  const subject = await loadSubject(pick);
+  if (!stillWanted()) return false;
+  newPuzzle(Date.now() >>> 0, subject, PRESET);
+  return true;
 }
 // newGame rejects when a category cannot be fetched; the picker catches that to keep
 // itself open, so the rejection must survive rather than being swallowed here.
@@ -372,7 +396,6 @@ const picker = makePicker({
   warning: must('picker-warning'),
   error: must('picker-error'),
   start: must('picker-start'),
-  surprise: must('picker-surprise'),
   cancel: must('picker-cancel'),
   categories: CATEGORIES,
   leastBox: /** @type {HTMLInputElement} */ (must('picker-least-box')),
@@ -380,37 +403,236 @@ const picker = makePicker({
   isComplete: (id) => progress.isComplete(id),
   leastDefault: () => progress.get().favourLeastSeen,
   onLeast: (on) => progress.setFavourLeastSeen(on),
-  onStart: (categoryId) => newGame(categoryId),
+  onStart: async (categoryId) => { await newGame(categoryId); },
+  opener: must('catbtn'),
 });
 // Unconditional, unlike the confirm it replaces: the dialog is now how a game is started,
 // and the warning is one line inside it rather than a reason to show it.
-must('newbtn').addEventListener('click', () => {
+/** On a wide screen a pane drops from under the header's buttons, which in landscape sit
+ * at the end of the rail rather than the window's edge. Phones keep the CSS full-width
+ * sheet, and a short landscape screen keeps its CSS top offset.
+ * @param {HTMLElement} pane @returns {void} */
+function anchorPane(pane) {
+  pane.style.paddingRight = pane.style.paddingTop = '';
+  if (innerWidth < 600) return;
+  const r = must('actions').getBoundingClientRect();
+  pane.style.paddingRight = Math.max(8, innerWidth - r.right) + 'px';
+  if (innerHeight > 420) pane.style.paddingTop = (r.bottom + 8) + 'px';
+}
+must('catbtn').addEventListener('click', () => {
+  hideToast();   // an Undo must never restore over a board dealt from the pane
+  quickGen++;    // nor a one-click deal still loading land over it
+  cancelAutoNext();
+  dealGen++;
+  closeSettings();
+  anchorPane(els.picker);
   const inProgress = !!state.puzzle && state.foundOrder.length > 0
     && state.foundOrder.length < state.puzzle.words.length;
   picker.open(inProgress);
 });
-must('winbtn').addEventListener('click', () => {
-  newGame().catch((err) => {
+// ---- The win card's countdown ----
+const winnext = must('winnext'), wincount = must('wincount'), winbtn = must('winbtn');
+/** @type {ReturnType<typeof setInterval>|null} */
+let autoTimer = null;
+// True while the win card's deal is in flight, so a tap on Play as the countdown fires
+// (or a double tap) deals once, not twice.
+let dealing = false;
+// Bumped whenever the player moves on from the win card (closes it, opens a pane, or a
+// board is dealt). A win-card deal still loading checks it and quietly drops its result.
+let dealGen = 0;
+const prefs = defaultStore();
+let autoNext = true;
+try { autoNext = prefs?.getItem(AUTO_KEY) !== 'off'; } catch { /* default on */ }
+
+/** @returns {void} */
+function cancelAutoNext() {
+  if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+  winnext.hidden = true;
+  winnext.classList.remove('run');
+  // The announcement was of a deal that is no longer coming.
+  els.winstats.querySelector('.sr')?.remove();
+}
+/** Deal from the win card: the Play button and the countdown share this exactly.
+ * @returns {void} */
+function advance() {
+  if (dealing) return;
+  cancelAutoNext();
+  dealing = true;
+  const gen = ++dealGen;
+  newGame(null, () => gen === dealGen).catch((err) => {
+    if (gen !== dealGen) return;   // the player has moved on; this failure is not news
     // newGame rejects before newPuzzle runs, so the solved board and win card are still
     // up with nothing saying the tap did nothing. Hide the overlay so the header's
     // failure text is what the player actually sees.
-    els.win.style.display = 'none';
+    hideWin();
     reportLoadFailure(err);
-  });
+  }).finally(() => { dealing = false; });
+}
+/** Start counting down, unless the player turned it off or is looking elsewhere.
+ * Timed from a deadline rather than by counting ticks, so a throttled timer cannot drift.
+ * @returns {boolean} whether it started */
+function startAutoNext() {
+  cancelAutoNext();
+  if (!autoNext || document.hidden || els.picker.style.display === 'flex' || settings.style.display === 'flex') return false;
+  const deadline = performance.now() + AUTO_NEXT_MS;
+  wincount.textContent = String(AUTO_NEXT_MS / 1000);
+  winnext.hidden = false;
+  void winnext.offsetWidth;   // restart the drain animation from full
+  winnext.classList.add('run');
+  autoTimer = setInterval(() => {
+    const left = Math.ceil((deadline - performance.now()) / 1000);
+    if (left <= 0) { advance(); return; }
+    if (wincount.textContent !== String(left)) wincount.textContent = String(left);
+  }, 200);
+  return true;
+}
+/** @returns {void} */
+function hideWin() {
+  cancelAutoNext();
+  dealGen++;
+  // Unblock Play: a superseded deal may still be loading, and must not hold the button.
+  dealing = false;
+  els.win.style.display = 'none';
+}
+winbtn.addEventListener('click', advance);
+
+// ---- One-click New game, with Undo ----
+const toast = must('toast'), toastMsg = must('toast-msg'), toastLive = must('toast-live');
+const toastUndo = must('toast-undo'), newbtn = must('newbtn');
+const UNDO_MS = 6000;
+/** A board exactly as it stood, held in memory.
+ * @typedef {{puzzle:Puzzle, found:State['found'], foundOrder:string[], seed:number,
+ *   subjectId:string, size:number, minCell:number, category:string}} Snapshot */
+/** @type {Snapshot|null} */
+let undoSnap = null;
+/** @type {ReturnType<typeof setTimeout>|null} */
+let toastTimer = null;
+// Its own generation and guard, apart from the win card's: closing a pane or pressing
+// Escape must not cancel a deal the player asked for with this button.
+let quickGen = 0;
+let quickDealing = false;
+
+/** @returns {Snapshot|null} */
+function snapshot() {
+  const p = state.puzzle;
+  if (!p) return null;
+  return { puzzle: p, found: { ...state.found }, foundOrder: [...state.foundOrder], seed: currentSeed,
+    subjectId, size: state.size, minCell: state.minCell, category: els.category.textContent ?? '' };
+}
+/** Put a snapshot back as the live board, without regenerating it.
+ * @param {Snapshot} snap @returns {void} */
+function reinstate(snap) {
+  currentSeed = snap.seed; subjectId = snap.subjectId;
+  state.size = snap.size; state.minCell = snap.minCell;
+  state.puzzle = snap.puzzle; state.found = snap.found; state.foundOrder = snap.foundOrder;
+  state.sel = null; state.miss = null; state.drag = null; justFound = null;
+  els.subject.textContent = cap(snap.puzzle.name);
+  els.subject.dataset.accent = String(accentSlot(snap.puzzle.name));
+  els.category.textContent = snap.category;
+  hideWin();
+  layout();   // a different puzzle object, so this rebuilds the cells
+  renderFoundCells(els, state, state.size);
+  pills();
+  list();
+  persist();
+}
+/** @returns {void} */
+function armToastTimer() {
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(hideToast, UNDO_MS);
+}
+/** @param {string} msg @param {boolean} undoable @returns {void} */
+function showToast(msg, undoable) {
+  toastMsg.textContent = msg;
+  toastUndo.hidden = !undoable;
+  toast.hidden = false;
+  // The live region is outside the toast and always rendered, so it exists before the
+  // message does (ARIA22), the same reason #winstats ships empty.
+  toastLive.textContent = undoable ? `${msg} Undo available.` : msg;
+  armToastTimer();
+}
+/** @returns {void} */
+function hideToast() {
+  if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; }
+  undoSnap = null;
+  // Never hide the element that has focus; hand it to the control that raised the toast.
+  if (toast.contains(document.activeElement)) newbtn.focus();
+  toast.hidden = true;
+  toastMsg.textContent = '';
+  toastLive.textContent = '';
+}
+/** Deal a random game now. A board in progress is not asked about first; it is kept for
+ * Undo instead, so the common case stays one click and a misclick costs one more.
+ * @returns {void} */
+function quickDeal() {
+  if (quickDealing) return;
+  // A second press on a board still untouched keeps the first offer, rather than losing
+  // the board that one was protecting.
+  const carried = undoSnap;
+  hideToast();
+  cancelAutoNext();
+  closeSettings();
+  picker.close();
+  quickDealing = true;
+  const gen = ++quickGen;
+  /** @type {Snapshot|null} */
+  let snap = null;
+  newGame(null, () => {
+    if (gen !== quickGen) return false;
+    // Taken as the deal lands, not at the click, so finds made during a slow load count.
+    const p = state.puzzle, n = state.foundOrder.length;
+    snap = !p || n === 0 ? carried : n < p.words.length ? snapshot() : null;
+    return true;
+  }).then((dealt) => {
+    if (dealt && snap) { undoSnap = snap; showToast('New game dealt.', true); }
+  }).catch((err) => {
+    if (gen !== quickGen) return;
+    // A board is still on screen and playable; say so in the toast, not by renaming it.
+    if (state.puzzle) showToast("Couldn't load a new game. Check your connection.", false);
+    else reportLoadFailure(err);
+  }).finally(() => { quickDealing = false; });
+}
+newbtn.addEventListener('click', quickDeal);
+toastUndo.addEventListener('click', () => {
+  const snap = undoSnap;
+  newbtn.focus();
+  hideToast();
+  if (snap) { quickGen++; reinstate(snap); }
 });
-els.winclose.addEventListener('click', () => { els.win.style.display = 'none'; });
-els.win.addEventListener('click', (e) => { if (e.target === els.win) els.win.style.display = 'none'; });
+// Hold the offer while someone is reaching for it.
+toast.addEventListener('pointerenter', () => { if (toastTimer) clearTimeout(toastTimer); });
+toast.addEventListener('focusin', () => { if (toastTimer) clearTimeout(toastTimer); });
+toast.addEventListener('pointerleave', () => { if (!toast.hidden && !toast.contains(document.activeElement)) armToastTimer(); });
+toast.addEventListener('focusout', (e) => { if (!toast.hidden && !toast.contains(/** @type {Node|null} */ (e.relatedTarget))) armToastTimer(); });
+// The first move on the new board means the player has accepted it.
+els.gridbox.addEventListener('pointerdown', () => { if (!toast.hidden) hideToast(); });
+must('winstay').addEventListener('click', () => { cancelAutoNext(); winbtn.focus(); });
+els.winclose.addEventListener('click', hideWin);
+els.win.addEventListener('click', (e) => { if (e.target === els.win) hideWin(); });
+// Cancel rather than pause: a player coming back to the tab should find the board they
+// left, not one dealt behind their back. Play is still there.
+document.addEventListener('visibilitychange', () => { if (document.hidden) cancelAutoNext(); });
 
 // appearance.js owns the preference and resolves it onto <html>; this callback is the
 // page-shaped half. The status-bar colour is read back off the resolved palette rather
 // than duplicated here, so a palette edit has exactly one home.
 const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+const settings = must('settings');
+const themeSelect = /** @type {HTMLSelectElement} */ (must('settings-theme'));
+const modeLight = must('mode-light'), modeDark = must('mode-dark');
+const autoBox = /** @type {HTMLInputElement} */ (must('settings-auto-box'));
+for (const t of THEMES) {
+  const o = document.createElement('option');
+  o.value = t;
+  o.textContent = themeName(t);
+  themeSelect.appendChild(o);
+}
 const appearance = makeAppearance({
-  onApply(mode) {
+  onApply(mode, theme) {
     els.appearance.dataset.pref = mode;
-    const label = appearanceLabel(mode);
-    els.appearance.title = label;
-    els.appearance.setAttribute('aria-label', label);
+    modeLight.setAttribute('aria-pressed', String(mode === 'light'));
+    modeDark.setAttribute('aria-pressed', String(mode === 'dark'));
+    themeSelect.value = theme;
     if (themeColorMeta) {
       const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
       themeColorMeta.setAttribute('content', bg);
@@ -418,11 +640,54 @@ const appearance = makeAppearance({
   },
 });
 appearance.start();
-els.appearance.addEventListener('click', () => appearance.cycle());
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') { els.win.style.display = 'none'; picker.close(); }
+/** @returns {void} */
+function openSettings() {
+  cancelAutoNext();
+  dealGen++;
+  picker.close();
+  autoBox.checked = autoNext;
+  anchorPane(settings);
+  settings.style.display = 'flex';
+  els.appearance.setAttribute('aria-expanded', 'true');
+  themeSelect.focus({ preventScroll: true });
+}
+/** @returns {void} */
+function closeSettings() {
+  if (settings.style.display !== 'flex') return;
+  settings.style.display = 'none';
+  els.appearance.setAttribute('aria-expanded', 'false');
+  els.appearance.focus();
+}
+els.appearance.setAttribute('aria-expanded', 'false');
+els.appearance.addEventListener('click', () => {
+  if (settings.style.display === 'flex') closeSettings(); else openSettings();
 });
-window.addEventListener('resize', onResize);
+themeSelect.addEventListener('change', () => appearance.setTheme(themeSelect.value));
+modeLight.addEventListener('click', () => appearance.set('light'));
+modeDark.addEventListener('click', () => appearance.set('dark'));
+autoBox.addEventListener('change', () => {
+  autoNext = autoBox.checked;
+  if (!autoNext) cancelAutoNext();
+  try { prefs?.setItem(AUTO_KEY, autoNext ? 'on' : 'off'); } catch { /* not remembered */ }
+});
+must('settings-close').addEventListener('click', closeSettings);
+settings.addEventListener('click', (e) => { if (e.target === settings) closeSettings(); });
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    // A themed (base-select) dropdown's list is in the page, so its Escape arrives here;
+    // it closes the list only, not the pane around it. The try: engines without :open throw.
+    const sel = e.target instanceof Element ? e.target.closest('select') : null;
+    try { if (sel && sel.matches(':open')) return; } catch { /* no :open, so no in-page list */ }
+    // Only when it is showing: hideWin() also cancels a win-card deal in flight.
+    if (els.win.style.display === 'flex') hideWin();
+    picker.close(); closeSettings();
+  }
+});
+window.addEventListener('resize', () => {
+  onResize();
+  // An open pane's inline offsets were measured for the old shape.
+  for (const p of [els.picker, settings]) if (p.style.display === 'flex') anchorPane(p);
+});
 
 /** Explicit `?seed=` / `?subject=` / `?category=` always wins, even over a saved game —
  * that is the point of pinning a puzzle by URL. Otherwise prefer the save, and only deal
@@ -465,18 +730,24 @@ async function boot() {
   }
 }
 
-/** Regenerate the exact grid a save came from, then replay the found words on top. The
- * saved shape wins over this device's preset — a board is not something a resize gets to
- * discard. A word the regenerated puzzle doesn't contain, or one already replayed, is
- * skipped rather than crashing.
+/** Put back the exact board a save holds, then replay the found words on top. A save
+ * written before boards were stored is regenerated from its seed instead, which is exact
+ * only for a deal the bag did not steer. The saved shape wins over this device's preset —
+ * a board is not something a resize gets to discard. A word the restored puzzle doesn't
+ * contain, or one already replayed, is skipped rather than crashing.
  * @param {import('./storage.js').SaveData} saved @returns {Promise<void>} */
 async function restore(saved) {
   const shape = saved.size === PRESETS.compact.size ? PRESETS.compact : PRESETS.full;
+  const subject = await loadSubject(saved.subjectId);
+  const { cells, placements } = saved;
+  const dealt = cells && placements
+    ? { name: subject.name, cells: [...cells], words: placements.map(p => p.word), placements }
+    : undefined;
   // useBag=false: this board was already dealt and its draw already recorded. Recording
   // it again would advance the bag twice for one puzzle, silently, on every reload.
-  newPuzzle(saved.seed, await loadSubject(saved.subjectId), {
+  newPuzzle(saved.seed, subject, {
     size: saved.size, count: saved.count, mix: shape.mix, minCell: shape.minCell,
-  }, false);
+  }, false, dealt);
   for (const f of saved.found) {
     if (!state.puzzle || !state.puzzle.words.includes(f.word) || state.found[f.word]) continue;
     state.found[f.word] = { sel: { x0: f.x0, y0: f.y0, x1: f.x1, y1: f.y1 } };

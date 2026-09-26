@@ -97,3 +97,35 @@ test('a null store is accepted and simply does not persist', () => {
   assert.equal(a.get(), 'light');
   assert.equal(root.dataset.appearance, 'light');
 });
+
+test('themes: default first, unknown values normalize to it, and a choice persists', async () => {
+  const { THEMES, THEME_KEY, normalizeTheme, themeName } = await import('../../src/appearance.js');
+  assert.equal(THEMES[0], 'phosphor');
+  assert.equal(normalizeTheme('grove'), 'grove');
+  assert.equal(normalizeTheme('banana'), 'phosphor');
+  assert.equal(normalizeTheme(null), 'phosphor');
+  assert.equal(themeName('plum'), 'Plum');
+  const store = memStore();
+  const root = fakeRoot();
+  /** @type {[string, string][]} */
+  const seen = [];
+  const a = makeAppearance({ store, root, onApply: (m, t) => seen.push([m, t]) });
+  a.start();
+  assert.equal(/** @type {any} */ (root).dataset.theme, 'phosphor');
+  a.setTheme('sticker');
+  assert.equal(store.getItem(THEME_KEY), 'sticker');
+  assert.equal(/** @type {any} */ (root).dataset.theme, 'sticker');
+  assert.deepEqual(seen.at(-1), ['dark', 'sticker']);
+  const b = makeAppearance({ store, root: fakeRoot() });
+  assert.equal(b.getTheme(), 'sticker', 'read back on construction');
+  a.setTheme('retired-theme');
+  assert.equal(a.getTheme(), 'phosphor');
+});
+
+test('a throwing store still yields the default theme', () => {
+  const bad = { getItem() { throw new Error('blocked'); }, setItem() { throw new Error('blocked'); } };
+  const a = makeAppearance({ store: bad, root: fakeRoot() });
+  assert.equal(a.getTheme(), 'phosphor');
+  a.setTheme('plum');
+  assert.equal(a.getTheme(), 'plum', 'applied for the session even though it cannot be stored');
+});

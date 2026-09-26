@@ -5,7 +5,7 @@ import { CATEGORIES } from '../../src/catalog.js';
 test('New game opens the picker, and Cancel leaves the board alone', async ({ page }) => {
   await page.goto('/?seed=1&subject=nature/birds');
   const before = await page.locator('.cell').allTextContents();
-  await page.locator('#newbtn').click();
+  await page.locator('#catbtn').click();
   await expect(page.locator('#picker')).toBeVisible();
   await page.locator('#picker-cancel').click();
   await expect(page.locator('#picker')).toBeHidden();
@@ -28,14 +28,13 @@ test('Cancel during a slow deal leaves the board alone, and Start cannot deal tw
   await page.goto('/?seed=1&subject=nature/birds');
   const before = (await page.locator('.cell').allTextContents()).join('');
 
-  await page.locator('#newbtn').click();
+  await page.locator('#catbtn').click();
   await page.locator('#picker-select').selectOption('food');
   await page.locator('#picker-start').click();
 
   // Mid-flight: both controls are disabled, so neither a second Start nor a Cancel can
   // reach the handler, and the dialog refuses to close on a promise it cannot recall.
   await expect(page.locator('#picker-start')).toBeDisabled();
-  await expect(page.locator('#picker-surprise')).toBeDisabled();
   await expect(page.locator('#picker-cancel')).toBeDisabled();
   await page.locator('#picker-cancel').click({ force: true });
   await expect(page.locator('#picker')).toBeVisible();
@@ -49,58 +48,96 @@ test('Cancel during a slow deal leaves the board alone, and Start cannot deal tw
 
 test('the picker lists every category behind a placeholder, with Start held back', async ({ page }) => {
   await page.goto('/?seed=1&subject=nature/birds');
-  await page.locator('#newbtn').click();
+  await page.locator('#catbtn').click();
   const opts = await page.locator('#picker-select option').allTextContents();
   expect(opts[0]).toBe('Choose a category…');
   expect(opts).toContain('Nature');
   expect(opts).toContain('Food & Drink');
   expect(opts).toHaveLength(CATEGORIES.length + 1);
-  // Random is its own button, so the list holds only choosable things and Start has
-  // nothing to start until one is picked.
+  // Random is the header's one-click New game, so the list holds only choosable things
+  // and Start has nothing to start until one is picked.
   await expect(page.locator('#picker-start')).toBeDisabled();
-  await expect(page.locator('#picker-surprise')).toBeEnabled();
+  await expect(page.locator('#picker-surprise')).toHaveCount(0);
   await page.locator('#picker-select').selectOption('food');
   await expect(page.locator('#picker-start')).toBeEnabled();
 });
 
 test('choosing a category deals a subject from it', async ({ page }) => {
   await page.goto('/?seed=1&subject=nature/birds');
-  await page.locator('#newbtn').click();
+  await page.locator('#catbtn').click();
   await page.locator('#picker-select').selectOption('food');
   await page.locator('#picker-start').click();
   await expect(page.locator('#picker')).toBeHidden();
   await expect(page.locator('#category')).toHaveText('Food & Drink');
 });
 
-test('Surprise me deals a game in one tap, without choosing a category', async ({ page }) => {
+test('New game deals a random game in one click, without opening the picker', async ({ page }) => {
   // Truly random: content.test.js guarantees all 25 categories have a module, so the
   // draw can be what it says it is rather than a pinned Math.random.
   await page.goto('/?seed=1&subject=nature/birds');
+  const before = await page.locator('#letters').textContent();
   await page.locator('#newbtn').click();
-  await page.locator('#picker-surprise').click();
   await expect(page.locator('#picker')).toBeHidden();
-  await expect(page.locator('#subject')).not.toHaveText('Loading…');
-  await expect(page.locator('#count')).toContainText('found');
+  await expect.poll(() => page.locator('#letters').textContent()).not.toBe(before);
+  await expect(page.locator('#count')).toContainText('0 of');
+  await expect(page.locator('#toast')).toBeHidden();   // nothing was in progress, so nothing to undo
+});
+
+test('a one-click deal over a board in progress offers Undo, which brings it back', async ({ page }) => {
+  await page.goto('/?seed=1&subject=nature/birds');
+  const first = /** @type {string} */ (await page.locator('.w').first().textContent()).toUpperCase();
+  await dragCells(page, await findWordInGrid(page, first));
+  const board = await page.locator('#letters').textContent();
+  await page.locator('#newbtn').click();
+  await expect(page.locator('#toast')).toBeVisible();
+  await expect(page.locator('#toast-msg')).toHaveText('New game dealt.');
+  await page.locator('#toast-undo').click();
+  await expect(page.locator('#toast')).toBeHidden();
+  await expect.poll(() => page.locator('#letters').textContent()).toBe(board);
+  await expect(page.locator('.w.done')).toHaveCount(1);
+  await expect(page.locator('#subject')).toHaveText('Birds');
+});
+
+test('the Undo offer goes away on its own, and on the first move on the new board', async ({ page }) => {
+  await page.goto('/?seed=1&subject=nature/birds');
+  const first = /** @type {string} */ (await page.locator('.w').first().textContent()).toUpperCase();
+  await dragCells(page, await findWordInGrid(page, first));
+  await page.locator('#newbtn').click();
+  await expect(page.locator('#toast')).toBeVisible();
+  await page.locator('#gridbox').click({ position: { x: 30, y: 30 } });
+  await expect(page.locator('#toast')).toBeHidden();
+});
+
+test('the category chevron opens the pane and reports it', async ({ page }) => {
+  await page.goto('/?seed=1&subject=nature/birds');
+  const chev = page.locator('#catbtn');
+  await expect(chev).toHaveAttribute('aria-expanded', 'false');
+  await chev.click();
+  await expect(page.locator('#picker')).toBeVisible();
+  await expect(chev).toHaveAttribute('aria-expanded', 'true');
+  await page.locator('#picker-cancel').click();
+  await expect(chev).toHaveAttribute('aria-expanded', 'false');
+  await expect(chev).toBeFocused();
 });
 
 // The dialog replaces the old confirm, so the warning it absorbed has to survive:
 // an accidental tap mid-board must still say what it is about to cost.
 test('the warning shows only when a board is in progress', async ({ page }) => {
   await page.goto('/?seed=1&subject=nature/birds');
-  await page.locator('#newbtn').click();
+  await page.locator('#catbtn').click();
   await expect(page.locator('#picker-warning')).toBeHidden();
   await page.locator('#picker-cancel').click();
 
   const first = /** @type {string} */ (await page.locator('.w').first().textContent()).toUpperCase();
   await dragCells(page, await findWordInGrid(page, first));
-  await page.locator('#newbtn').click();
+  await page.locator('#catbtn').click();
   await expect(page.locator('#picker-warning')).toBeVisible();
   await expect(page.locator('#picker-warning')).toHaveText('Start a new game? Your progress will be lost.');
 });
 
 test('Escape closes the picker', async ({ page }) => {
   await page.goto('/?seed=1&subject=nature/birds');
-  await page.locator('#newbtn').click();
+  await page.locator('#catbtn').click();
   await page.keyboard.press('Escape');
   await expect(page.locator('#picker')).toBeHidden();
 });
@@ -127,7 +164,7 @@ test('a category that fails to load stays open, reports the failure inline, and 
   await page.goto('/?seed=1&subject=nature/birds');
   await page.route('**/src/subjects/food.js', route => route.abort());
 
-  await page.locator('#newbtn').click();
+  await page.locator('#catbtn').click();
   await page.locator('#picker-select').selectOption('food');
   await page.locator('#picker-start').click();
 
@@ -143,4 +180,52 @@ test('a category that fails to load stays open, reports the failure inline, and 
   await page.locator('#picker-start').click();
   await expect(page.locator('#picker')).toBeHidden();
   await expect(page.locator('#category')).toHaveText('Nature');
+});
+
+// Undo used to regenerate the old board from its save. A deal steered by the coverage bag
+// does not regenerate identically, so Undo brought back different words. Five ordinary
+// deals of one subject leave its bag partly drawn, which is the case that broke.
+test('Undo brings back the exact board, even one the coverage bag steered', async ({ page }) => {
+  for (let i = 0; i < 5; i++) await page.goto('/?subject=nature/birds');
+  await page.waitForSelector('#letters .cell');
+  const first = /** @type {string} */ (await page.locator('.w').first().textContent()).toUpperCase();
+  await dragCells(page, await findWordInGrid(page, first));
+  const words = await page.locator('.w').allTextContents();
+  const board = await page.locator('#letters').textContent();
+  await page.locator('#newbtn').click();
+  await expect(page.locator('#toast')).toBeVisible();
+  await page.locator('#toast-undo').click();
+  await expect.poll(() => page.locator('#letters').textContent()).toBe(board);
+  expect(await page.locator('.w').allTextContents()).toEqual(words);
+  await expect(page.locator('.w.done')).toHaveCount(1);
+  await expect(page.locator('#newbtn')).toBeFocused();
+});
+
+test('pressing New game twice keeps the Undo for the board that had progress', async ({ page }) => {
+  await page.goto('/?seed=1&subject=nature/birds');
+  const first = /** @type {string} */ (await page.locator('.w').first().textContent()).toUpperCase();
+  await dragCells(page, await findWordInGrid(page, first));
+  const board = await page.locator('#letters').textContent();
+  await page.locator('#newbtn').click();
+  await expect(page.locator('#toast')).toBeVisible();
+  const second = await page.locator('#letters').textContent();
+  await page.locator('#newbtn').click();
+  await expect.poll(() => page.locator('#letters').textContent()).not.toBe(second);
+  await expect(page.locator('#toast')).toBeVisible();
+  await page.locator('#toast-undo').click();
+  await expect.poll(() => page.locator('#letters').textContent()).toBe(board);
+  await expect(page.locator('#subject')).toHaveText('Birds');
+});
+
+test('Escape does not cancel a one-click deal that is still loading', async ({ page }) => {
+  await page.route('**/src/subjects/*.js', async (route) => {
+    if (!route.request().url().endsWith('/nature.js')) await new Promise(r => setTimeout(r, 1200));
+    await route.continue();
+  });
+  await page.goto('/?seed=1&subject=nature/birds');
+  const board = await page.locator('#letters').textContent();
+  await page.evaluate(() => { Math.random = () => 0.99; });   // draw a category other than nature
+  await page.locator('#newbtn').click();
+  await page.keyboard.press('Escape');
+  await expect.poll(() => page.locator('#letters').textContent(), { timeout: 5000 }).not.toBe(board);
 });

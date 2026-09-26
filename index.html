@@ -9,8 +9,10 @@
      the migration for the 'system' setting this app used to offer. There is no OS query —
      dropping `system` removed the only reason to ask. The storage read still needs its own
      inner try: a throwing getItem (iOS "Block All Cookies") must fall through to the
-     default, not abort the script. Covered by appearance.spec.js. -->
-<script>try{var p=null;try{p=localStorage.getItem('wordfinder-appearance')}catch(e){}if(p!=='light')p='dark';document.documentElement.dataset.appearance=p}catch(e){}</script>
+     default, not abort the script. The theme is resolved the same way and must stay
+     equivalent to normalizeTheme(): anything not in the list is the default. Covered by
+     appearance.spec.js. -->
+<script>try{var p=null,t=null;try{p=localStorage.getItem('wordfinder-appearance');t=localStorage.getItem('wordfinder-theme')}catch(e){}if(p!=='light')p='dark';if(['broadsheet','sticker','drafting','grove','plum','graphite'].indexOf(t)<0)t='phosphor';document.documentElement.dataset.appearance=p;document.documentElement.dataset.theme=t}catch(e){}</script>
 <!-- Hold the first paint until main.js has laid the board out. The shell paints
      portrait with an unsized grid, and JS then flips orientation and sizes it, which
      measured CLS 0.66 — one shift moving #gridbox, #hdr and #side at once. Its own
@@ -35,24 +37,26 @@
 <body>
 <div id="app">
   <div id="hdr">
-    <!-- The category is a sibling of #subject, not a ::before on it: #subject's
+    <!-- The category is its own element, not a ::before on #subject: #subject's
          textContent has to stay the bare name (gameplay.spec.js compares it across two
-         loads of one seed), and its underline must mark the name only. -->
-    <div id="titles"><div id="kicker">WORD FINDER</div>
-      <div id="subjectline"><span id="category"></span><span id="subject">Loading…</span></div></div>
+         loads of one seed), and its underline must mark the name only. It sits on the
+         label line, at label size, so the subject name has its row to itself. -->
+    <div id="titles"><div id="kickerline"><span id="kicker">WORD FINDER</span><span id="category"></span></div>
+      <div id="subjectline"><span id="subject">Loading…</span></div></div>
     <div id="actions">
-      <button id="appearance" type="button" data-pref="dark" title="Appearance: Dark" aria-label="Appearance: Dark">
+      <button id="appearance" type="button" aria-haspopup="dialog" aria-controls="settings" data-pref="dark" title="Settings" aria-label="Settings">
         <svg class="i-light" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.6"/><path d="M12 2v2.6M12 19.4V22M2 12h2.6M19.4 12H22M4.9 4.9l1.9 1.9M17.2 17.2l1.9 1.9M19.1 4.9l-1.9 1.9M6.8 17.2l-1.9 1.9"/></svg>
         <svg class="i-dark" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1z"/></svg>
       </button>
-      <button id="newbtn" type="button">&#8635; New game</button>
+      <!-- One control in two parts: the label deals a random game in one click, the chevron
+           opens the category pane. -->
+      <div id="newgroup"><button id="newbtn" type="button">&#8635; New game</button><button id="catbtn" type="button" aria-label="Choose a category" aria-haspopup="dialog" aria-controls="picker" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9.5l6 6 6-6"/></svg></button></div>
     </div>
   </div>
   <div id="gridbox"><div id="pills"></div><div id="letters"></div><div id="fx"></div></div>
   <div id="side">
     <div id="listhdr"><b>WORDS</b><span id="count"></span></div>
     <div id="list"></div>
-    <div id="hint">Drag across a word in the grid to find it, then tap it here to cross it out.</div>
   </div>
 </div>
 <div id="win"><div id="wincard">
@@ -64,7 +68,31 @@
        to exist before the message appears, and notes role="status" is not treated as
        atomic by default everywhere — hence the explicit aria-atomic. -->
   <p id="winstats" role="status" aria-atomic="true"></p>
+  <!-- The countdown to the next deal. The digit is aria-hidden so a screen reader does
+       not hear 5, 4, 3...; #winstats announces the countdown once instead. -->
+  <div id="winnext" hidden><div id="winnextline"><span aria-hidden="true">Next puzzle in <b id="wincount">5</b></span>
+    <button id="winstay" type="button">Stay here</button></div><div id="winbar" aria-hidden="true"><i></i></div></div>
   <button id="winbtn" type="button">Play a new game &#8594;</button>
+</div></div>
+<!-- Offered after a one-click deal replaced a board in progress. The announcement goes
+     through #toast-live, which is always rendered; the toast itself is hidden between offers. -->
+<div id="toast" hidden><span id="toast-msg"></span><button id="toast-undo" type="button">Undo</button></div>
+<span id="toast-live" class="sr" role="status"></span>
+<!-- Settings: a pane that drops from the top, like the new-game picker. -->
+<div id="settings"><div id="settingscard" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+  <div class="panehead"><h2 id="settings-title">Settings</h2>
+    <button id="settings-close" class="paneclose" type="button" aria-label="Close">&times;</button></div>
+  <label for="settings-theme">Theme</label>
+  <div id="settings-field" class="selectfield"><select id="settings-theme"></select></div>
+  <div id="settings-swatches" aria-hidden="true"><i class="p1"></i><i class="p2"></i><i class="p3"></i><i class="p4"></i></div>
+  <span class="panelabel" id="settings-mode-label">Mode</span>
+  <div id="settings-mode" role="group" aria-labelledby="settings-mode-label">
+    <button id="mode-light" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.6"/><path d="M12 2v2.6M12 19.4V22M2 12h2.6M19.4 12H22M4.9 4.9l1.9 1.9M17.2 17.2l1.9 1.9M19.1 4.9l-1.9 1.9M6.8 17.2l-1.9 1.9"/></svg>Light</button>
+    <button id="mode-dark" type="button" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1z"/></svg>Dark</button>
+  </div>
+  <label id="settings-auto"><input type="checkbox" id="settings-auto-box"><span>Start the next puzzle automatically</span></label>
+  <!-- Lived under the word list until the grid needed its 46px on a phone. -->
+  <p id="hint"><b>How to play.</b> Drag across a word in the grid, in any of eight directions. Found words are crossed off the list.</p>
 </div></div>
 <div id="picker"><div id="pickercard">
   <h2>New game</h2>
@@ -80,7 +108,6 @@
   <label id="picker-least"><input type="checkbox" id="picker-least-box"><span>Favour subjects I've seen least</span></label>
   <p id="picker-error" hidden></p>
   <div id="picker-actions"><button id="picker-cancel" type="button">Cancel</button>
-  <button id="picker-surprise" type="button">Surprise me</button>
   <button id="picker-start" type="button">Start</button></div>
 </div></div>
 <script type="module" src="src/main.js"></script>

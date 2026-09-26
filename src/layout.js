@@ -31,9 +31,11 @@ export function pickPreset({ screenW, screenH }) {
 }
 
 // Portrait chrome above and below the grid: a fixed part, plus one row per two words.
-// Pinned so reservePortrait(12) === 366, the value the full board shipped with.
-const RESERVE_BASE = 162;
-const ROW_H = 34;
+// Measured: one-row header 46 + two 10px gaps + list header 35, less the last row's 6px
+// gap, is 95; each row is 31 plus a 6px gap. 96 keeps a pixel of margin. The hint used to
+// sit below the list and cost every phone 46px of grid.
+const RESERVE_BASE = 96;
+const ROW_H = 37;
 /** @param {number} count @returns {number} */
 export const reservePortrait = (count) => RESERVE_BASE + Math.ceil(count / 2) * ROW_H;
 
@@ -46,7 +48,7 @@ const GAP = 20;        // must equal #app[data-landscape]'s column-gap; tokens.t
 // content-sized columns, the widest is 316px (sports/archery), median 275.
 const MIN_SIDE = 320;
 // Rail ceiling. 580, not 380: in landscape the header shares this track with the two
-// action buttons (168px), so a 380px rail left the title ~200px and ellipsised the subject
+// action buttons (then 168px, 210px since the split New game control), so a 380px rail left the title ~200px and ellipsised the subject
 // name at EVERY width — still truncating at 1700px with 659px of the window sitting empty.
 // The widest title in the corpus is 375px ("Artificial Intelligence"), so 580 leaves 402
 // after the buttons and the gap. Above this the rail stops growing and the spare width

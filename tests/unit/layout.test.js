@@ -107,12 +107,12 @@ test('the presets are the two shapes the game deals', () => {
 // Pinned exactly, not approximately. The full preset must be a provable no-op on a
 // value that was measured against real devices; every px of drift here is a px the
 // portrait grid silently loses.
-test('reservePortrait(12) reproduces the measured 366 exactly', () => {
-  assert.equal(reservePortrait(12), 366);
+test('reservePortrait(12) reproduces the measured 318 exactly', () => {
+  assert.equal(reservePortrait(12), 318);
 });
 
 test('eight words reserve two rows less than twelve', () => {
-  assert.equal(reservePortrait(8), 298);
+  assert.equal(reservePortrait(8), 244);
   assert.ok(reservePortrait(8) < reservePortrait(12));
 });
 
@@ -121,7 +121,7 @@ test('a shorter list gives the portrait grid its rows back', () => {
   // compact preset exists to replace.
   const big = computeLayout({ vw: 370, vh: 644, size: 13, pad: 10, count: 12 });
   const small = computeLayout({ vw: 370, vh: 644, size: 10, pad: 10, count: 8 });
-  assert.equal(big.cell, 19);
+  assert.equal(big.cell, 23);
   assert.ok(small.cell >= 30, `compact cell is ${small.cell}px, expected 30+`);
 });
 
@@ -161,10 +161,11 @@ test('the rail stops growing, so an ultrawide does not stretch the list to the h
 });
 
 test('the rail leaves room for the longest subject title beside the action buttons', () => {
-  // The header shares the rail track with #actions (168px) plus a 10px gap. The widest
-  // title in the corpus is 375px ("Artificial Intelligence"), and a rail that cannot seat
-  // it ellipsises the subject name on a window with hundreds of spare pixels.
-  const ACTIONS = 168, GAP_TO_TITLE = 10, WIDEST_TITLE = 375;
+  // The header shares the rail track with #actions (210px: Settings plus the split New
+  // game control) and a 10px gap. The widest of the 600 titles at the 22px subject size is
+  // 240px ("Woodwind instruments"), and a rail that cannot seat it ellipsises the subject
+  // name on a window with hundreds of spare pixels.
+  const ACTIONS = 210, GAP_TO_TITLE = 10, WIDEST_TITLE = 240;
   const roomy = at(1492, 850);            // a 1512px window, insets removed
   assert.ok(roomy.sideWidth - ACTIONS - GAP_TO_TITLE >= WIDEST_TITLE,
     `rail ${roomy.sideWidth} leaves only ${roomy.sideWidth - ACTIONS - GAP_TO_TITLE}px for a ${WIDEST_TITLE}px title`);

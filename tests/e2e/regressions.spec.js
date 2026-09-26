@@ -19,7 +19,7 @@ test('starting a new game during the win delay leaves the board playable', async
   const words = await page.locator('.w').allTextContents();
   for (const w of words) await findAndDrag(page, w.toUpperCase());
 
-  await page.locator('#newbtn').click();   // inside the 700ms window
+  await page.locator('#catbtn').click();   // inside the 700ms window
   await page.locator('#picker-select').selectOption('nature');
   await page.locator('#picker-start').click();
   await page.waitForTimeout(1200);         // let any stale timer fire

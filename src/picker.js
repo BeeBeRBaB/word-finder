@@ -6,18 +6,19 @@
 /**
  * @param {{
  *   root:HTMLElement, select:HTMLSelectElement, warning:HTMLElement, error:HTMLElement,
- *   start:HTMLElement, surprise:HTMLElement, cancel:HTMLElement, categories:Category[],
+ *   start:HTMLElement, cancel:HTMLElement, categories:Category[],
  *   leastBox:HTMLInputElement,
  *   isUnavailable:(categoryId:string)=>boolean,
  *   isComplete:(categoryId:string)=>boolean,
  *   leastDefault:()=>boolean,
  *   onLeast:(on:boolean)=>void,
  *   onStart:(categoryId:string|null)=>Promise<void>,
+ *   opener?:HTMLElement,
  * }} deps
  */
-export function makePicker({ root, select, warning, error, start, surprise, cancel, categories, leastBox, isUnavailable, isComplete, leastDefault, onLeast, onStart }) {
-  // A disabled placeholder, then the real categories. Random is its own button, so the
-  // list holds only things you can choose — no action hiding among the values.
+export function makePicker({ root, select, warning, error, start, cancel, categories, leastBox, isUnavailable, isComplete, leastDefault, onLeast, onStart, opener }) {
+  // A disabled placeholder, then the real categories. Random is the header's one-click New
+  // game, so the list holds only things you can choose — no action hiding among the values.
   select.innerHTML = '';
   const placeholder = document.createElement('option');
   placeholder.value = '';
@@ -38,12 +39,18 @@ export function makePicker({ root, select, warning, error, start, surprise, canc
   /** @param {boolean} on @returns {void} */
   function setBusy(on) {
     pending = on;
-    for (const b of [start, surprise, cancel]) b.toggleAttribute('disabled', on);
+    for (const b of [start, cancel]) b.toggleAttribute('disabled', on);
     root.setAttribute('aria-busy', String(on));
     if (!on) syncDisabled();
   }
 
-  const close = () => { if (!pending) root.style.display = 'none'; };
+  // Focus goes back to the button that opened the pane, or it is left on a hidden element.
+  const close = () => {
+    if (pending || root.style.display !== 'flex') return;
+    root.style.display = 'none';
+    opener?.setAttribute('aria-expanded', 'false');
+    opener?.focus();
+  };
 
   // Derived from main.js's shared failure record on every call, never tracked here, so
   // a category the random draw found dead is disabled even though this dialog never
@@ -86,6 +93,7 @@ export function makePicker({ root, select, warning, error, start, surprise, canc
     warning.style.display = inProgress ? '' : 'none';
     error.hidden = true;
     root.style.display = 'flex';
+    opener?.setAttribute('aria-expanded', 'true');
     select.focus();
   }
 
@@ -119,7 +127,6 @@ export function makePicker({ root, select, warning, error, start, surprise, canc
     const id = select.value || null;
     void deal(id, (id && categories.find(c => c.id === id)?.name) || '');
   });
-  surprise.addEventListener('click', () => { void deal(null, ''); });
   cancel.addEventListener('click', close);
   root.addEventListener('click', (e) => { if (e.target === root) close(); });
 

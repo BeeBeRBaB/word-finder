@@ -31,6 +31,13 @@
   --pill-edge:rgba(255,255,255,.25);
   --confetti-1:#ff8c3a; --confetti-2:#ffc14d; --confetti-3:#78cdc8;
   --confetti-4:#ff828c; --confetti-5:#c89bff; --confetti-6:#fdf4ea;
+  /* Shape. Per theme rather than per appearance, but declared in every palette so the
+     parity test covers them too. */
+  --radius-board:16px; --radius-ctl:999px; --radius-pill:999px;
+  --ctl-edge:var(--accent); --ctl-width:1.5px; --ctl-shadow:none;
+  --found-shadow:0 0 10px var(--glow); --board-outline:none; --board-outline-offset:0px; --board-texture:none;
+  --pill-ring-1:inset 0 0 0 1px var(--pill-edge); --pill-ring-2:inset 0 0 0 1px var(--pill-edge);
+  --pill-ring-3:inset 0 0 0 1px var(--pill-edge); --pill-ring-4:inset 0 0 0 1px var(--pill-edge);
 }
 /* An orange light enough to feel warm on paper cannot carry white button text, so
    --accent is measured against the white --accent-ink it is actually read on (5.08:1),
@@ -50,6 +57,206 @@
   --pill-edge:rgba(60,35,20,.16);
   --confetti-1:#b84e0d; --confetti-2:#e0a014; --confetti-3:#1e9691;
   --confetti-4:#e1506e; --confetti-5:#965fdc; --confetti-6:#8a6a55;
+  --radius-board:16px; --radius-ctl:999px; --radius-pill:999px;
+  --ctl-edge:var(--accent); --ctl-width:1.5px; --ctl-shadow:none;
+  --found-shadow:0 0 10px var(--glow); --board-outline:none; --board-outline-offset:0px; --board-texture:none;
+  --pill-ring-1:inset 0 0 0 1px var(--pill-edge); --pill-ring-2:inset 0 0 0 1px var(--pill-edge);
+  --pill-ring-3:inset 0 0 0 1px var(--pill-edge); --pill-ring-4:inset 0 0 0 1px var(--pill-edge);
+}
+/* Six more themes. Same token names as the two palettes above, and the same shape: the
+   bare [data-theme] selector is the dark default, and the [data-appearance="light"] one
+   outranks the base light block by one attribute. Generated from contrast-checked values;
+   re-run the AA check before hand-tuning any of them. */
+:root[data-theme="broadsheet"], :root[data-theme="broadsheet"][data-appearance="dark"]{
+  color-scheme:dark; --bg:#12110f; --surface:#1c1a17; --border:#e9e2d3; --text:#e9e2d3;
+  --text-strong:#faf6ee; --muted:#a79f90; --label:#f08a6c; --hint:#9d9585; --accent:#e9e2d3;
+  --accent-text:#e9e2d3; --accent-ink:#12110f; --accent-wash:rgba(233,226,211,0.14);
+  --scrim:rgba(0,0,0,.62); --shadow:none; --card-shadow:0 10px 40px rgba(0,0,0,.5);
+  --found-text:#ffffff; --done-text:rgba(233,226,211,.58); --glow:rgba(233,226,211,0.4);
+  --pill-1:rgba(247,208,32,.34); --pill-2:rgba(64,180,220,.34); --pill-3:rgba(240,110,160,.34);
+  --pill-4:rgba(120,200,90,.34); --pill-sel:rgba(233,226,211,.16);
+  --pill-miss:rgba(255,80,70,.5); --pill-edge:rgba(255,255,255,.22); --confetti-1:#e9e2d3;
+  --confetti-2:#f7d020; --confetti-3:#40b4dc; --confetti-4:#f06ea0; --confetti-5:#78c85a;
+  --confetti-6:#faf6ee; --radius-board:2px; --radius-ctl:2px; --radius-pill:3px;
+  --ctl-edge:var(--border); --ctl-width:1px; --ctl-shadow:none; --found-shadow:none;
+  --board-outline:1px solid #e9e2d3; --board-outline-offset:4px; --board-texture:none;
+  --pill-ring-1:none; --pill-ring-2:none; --pill-ring-3:none; --pill-ring-4:none;
+}
+:root[data-theme="broadsheet"][data-appearance="light"]{
+  color-scheme:light; --bg:#ece7dc; --surface:#faf8f3; --border:#1c1a16; --text:#1c1a16;
+  --text-strong:#0d0c0a; --muted:#534d42; --label:#8f2511; --hint:#5f594d; --accent:#1c1a16;
+  --accent-text:#1c1a16; --accent-ink:#faf8f3; --accent-wash:rgba(28,26,22,0.1);
+  --scrim:rgba(28,26,22,0.4); --shadow:none; --card-shadow:0 10px 40px rgba(28,26,22,0.22);
+  --found-text:#0d0c0a; --done-text:rgba(28,26,22,.62); --glow:rgba(28,26,22,0.26);
+  --pill-1:rgba(247,208,32,.62); --pill-2:rgba(64,180,220,.42); --pill-3:rgba(240,110,160,.42);
+  --pill-4:rgba(120,200,90,.48); --pill-sel:rgba(28,26,22,.14); --pill-miss:rgba(210,45,40,.36);
+  --pill-edge:rgba(0,0,0,.14); --confetti-1:#1c1a16; --confetti-2:#f7d020; --confetti-3:#40b4dc;
+  --confetti-4:#f06ea0; --confetti-5:#78c85a; --confetti-6:#0d0c0a; --radius-board:2px;
+  --radius-ctl:2px; --radius-pill:3px; --ctl-edge:var(--border); --ctl-width:1px;
+  --ctl-shadow:none; --found-shadow:none; --board-outline:1px solid #1c1a16;
+  --board-outline-offset:4px; --board-texture:none; --pill-ring-1:none; --pill-ring-2:none;
+  --pill-ring-3:none; --pill-ring-4:none;
+}
+:root[data-theme="sticker"], :root[data-theme="sticker"][data-appearance="dark"]{
+  color-scheme:dark; --bg:#1b1433; --surface:#281e4a; --border:#07040f; --text:#efe9ff;
+  --text-strong:#ffffff; --muted:#b8acdc; --label:#ffc15e; --hint:#aea2d4; --accent:#ffc15e;
+  --accent-text:#ffc15e; --accent-ink:#1b1433; --accent-wash:rgba(255,193,94,0.14);
+  --scrim:rgba(0,0,0,.62); --shadow:0 0 0 2px #07040f,7px 7px 0 2px #07040f;
+  --card-shadow:6px 6px 0 #07040f; --found-text:#120c28; --done-text:rgba(239,233,255,.56);
+  --glow:rgba(255,193,94,0.4); --pill-1:#ffb547; --pill-2:#5fd4b4; --pill-3:#ff86ab;
+  --pill-4:#8fadff; --pill-sel:rgba(255,193,94,.26); --pill-miss:rgba(255,80,70,.5);
+  --pill-edge:rgba(255,255,255,.22); --confetti-1:#ffc15e; --confetti-2:#ffb547;
+  --confetti-3:#5fd4b4; --confetti-4:#ff86ab; --confetti-5:#8fadff; --confetti-6:#ffffff;
+  --radius-board:22px; --radius-ctl:999px; --radius-pill:999px; --ctl-edge:var(--border);
+  --ctl-width:2px; --ctl-shadow:3px 3px 0 #07040f; --found-shadow:none; --board-outline:none;
+  --board-outline-offset:0px; --board-texture:none; --pill-ring-1:inset 0 0 0 2px #07040f;
+  --pill-ring-2:inset 0 0 0 2px #07040f; --pill-ring-3:inset 0 0 0 2px #07040f;
+  --pill-ring-4:inset 0 0 0 2px #07040f;
+}
+:root[data-theme="sticker"][data-appearance="light"]{
+  color-scheme:light; --bg:#fff1d6; --surface:#ffffff; --border:#1d1638; --text:#1d1638;
+  --text-strong:#120c28; --muted:#5b5376; --label:#6b3fd1; --hint:#5b5376; --accent:#6b3fd1;
+  --accent-text:#5a2fc0; --accent-ink:#ffffff; --accent-wash:rgba(107,63,209,0.1);
+  --scrim:rgba(29,22,56,0.4); --shadow:0 0 0 2px #1d1638,7px 7px 0 2px #1d1638;
+  --card-shadow:6px 6px 0 #1d1638; --found-text:#120c28; --done-text:rgba(29,22,56,.68);
+  --glow:rgba(107,63,209,0.26); --pill-1:#ffc15e; --pill-2:#8ee0c9; --pill-3:#ff9fbd;
+  --pill-4:#a9c1ff; --pill-sel:rgba(107,63,209,.20); --pill-miss:rgba(210,45,40,.36);
+  --pill-edge:rgba(0,0,0,.14); --confetti-1:#6b3fd1; --confetti-2:#ffc15e; --confetti-3:#8ee0c9;
+  --confetti-4:#ff9fbd; --confetti-5:#a9c1ff; --confetti-6:#120c28; --radius-board:22px;
+  --radius-ctl:999px; --radius-pill:999px; --ctl-edge:var(--border); --ctl-width:2px;
+  --ctl-shadow:3px 3px 0 #1d1638; --found-shadow:none; --board-outline:none;
+  --board-outline-offset:0px; --board-texture:none; --pill-ring-1:inset 0 0 0 2px #1d1638;
+  --pill-ring-2:inset 0 0 0 2px #1d1638; --pill-ring-3:inset 0 0 0 2px #1d1638;
+  --pill-ring-4:inset 0 0 0 2px #1d1638;
+}
+:root[data-theme="drafting"], :root[data-theme="drafting"][data-appearance="dark"]{
+  color-scheme:dark; --bg:#0a1b2c; --surface:#0e2540; --border:#2c4a6b; --text:#d6e6f4;
+  --text-strong:#ffffff; --muted:#8eadc9; --label:#7fd3ff; --hint:#89a7c2; --accent:#7fd3ff;
+  --accent-text:#7fd3ff; --accent-ink:#06182a; --accent-wash:rgba(127,211,255,0.14);
+  --scrim:rgba(0,0,0,.62); --shadow:none; --card-shadow:0 10px 40px rgba(0,0,0,.5);
+  --found-text:#ffffff; --done-text:rgba(214,230,244,.56); --glow:rgba(127,211,255,0.4);
+  --pill-1:rgba(255,190,70,.30); --pill-2:rgba(90,220,255,.26); --pill-3:rgba(255,120,110,.28);
+  --pill-4:rgba(170,230,90,.28); --pill-sel:rgba(127,211,255,.20);
+  --pill-miss:rgba(255,80,70,.5); --pill-edge:rgba(255,255,255,.22); --confetti-1:#7fd3ff;
+  --confetti-2:#ffbe46; --confetti-3:#5adcff; --confetti-4:#ff786e; --confetti-5:#aae65a;
+  --confetti-6:#ffffff; --radius-board:4px; --radius-ctl:4px; --radius-pill:5px;
+  --ctl-edge:var(--accent); --ctl-width:1.5px; --ctl-shadow:none; --found-shadow:none;
+  --board-outline:none; --board-outline-offset:0px;
+  --board-texture:linear-gradient(rgba(127,211,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(127,211,255,.07) 1px,transparent 1px);
+  --pill-ring-1:inset 0 0 0 1.5px #ffbe46; --pill-ring-2:inset 0 0 0 1.5px #5adcff;
+  --pill-ring-3:inset 0 0 0 1.5px #ff786e; --pill-ring-4:inset 0 0 0 1.5px #aae65a;
+}
+:root[data-theme="drafting"][data-appearance="light"]{
+  color-scheme:light; --bg:#e4ebee; --surface:#f6f9fa; --border:#a9bbc3; --text:#132430;
+  --text-strong:#08141c; --muted:#4a5f6c; --label:#0b5c86; --hint:#4f6370; --accent:#0b5c86;
+  --accent-text:#0b5c86; --accent-ink:#ffffff; --accent-wash:rgba(11,92,134,0.1);
+  --scrim:rgba(19,36,48,0.4); --shadow:none; --card-shadow:0 10px 40px rgba(19,36,48,0.22);
+  --found-text:#08141c; --done-text:rgba(19,36,48,.70); --glow:rgba(11,92,134,0.26);
+  --pill-1:rgba(232,150,20,.30); --pill-2:rgba(20,150,190,.28); --pill-3:rgba(220,70,70,.24);
+  --pill-4:rgba(100,160,40,.30); --pill-sel:rgba(11,92,134,.18);
+  --pill-miss:rgba(210,45,40,.36); --pill-edge:rgba(0,0,0,.14); --confetti-1:#0b5c86;
+  --confetti-2:#e89614; --confetti-3:#1496be; --confetti-4:#dc4646; --confetti-5:#64a028;
+  --confetti-6:#08141c; --radius-board:4px; --radius-ctl:4px; --radius-pill:5px;
+  --ctl-edge:var(--accent); --ctl-width:1.5px; --ctl-shadow:none; --found-shadow:none;
+  --board-outline:none; --board-outline-offset:0px;
+  --board-texture:linear-gradient(rgba(10,95,138,.10) 1px,transparent 1px),linear-gradient(90deg,rgba(10,95,138,.10) 1px,transparent 1px);
+  --pill-ring-1:inset 0 0 0 1.5px #b87108; --pill-ring-2:inset 0 0 0 1.5px #0b7fa3;
+  --pill-ring-3:inset 0 0 0 1.5px #b8332f; --pill-ring-4:inset 0 0 0 1.5px #4f8a12;
+}
+:root[data-theme="grove"], :root[data-theme="grove"][data-appearance="dark"]{
+  color-scheme:dark; --bg:#131B15; --surface:#1A241C; --border:#2F3D31; --text:#E2E5D4;
+  --text-strong:#F3F0E2; --muted:#A4AE97; --label:#9FB88F; --hint:#98A18C; --accent:#D4764E;
+  --accent-text:#E48E67; --accent-ink:#1B120C; --accent-wash:rgba(212,118,78,0.14);
+  --scrim:rgba(0,0,0,.62);
+  --shadow:inset 0 1px 0 rgba(226,229,212,0.05), 0 14px 30px -18px rgba(0,0,0,0.75);
+  --card-shadow:0 10px 40px rgba(0,0,0,.5); --found-text:#F6F2E4;
+  --done-text:rgba(226,229,212,0.58); --glow:rgba(212,118,78,0.4); --pill-1:#2E4A2A;
+  --pill-2:#46603A; --pill-3:#5A2C1F; --pill-4:#5A4C1E; --pill-sel:rgba(212,118,78,0.30);
+  --pill-miss:rgba(255,80,70,.5); --pill-edge:rgba(255,255,255,.22); --confetti-1:#d4764e;
+  --confetti-2:#2e4a2a; --confetti-3:#46603a; --confetti-4:#5a2c1f; --confetti-5:#5a4c1e;
+  --confetti-6:#f3f0e2; --radius-board:18px; --radius-ctl:10px; --radius-pill:14px 4px 14px 4px;
+  --ctl-edge:var(--accent); --ctl-width:1.5px; --ctl-shadow:none; --found-shadow:none;
+  --board-outline:none; --board-outline-offset:0px; --board-texture:none; --pill-ring-1:none;
+  --pill-ring-2:none; --pill-ring-3:none; --pill-ring-4:none;
+}
+:root[data-theme="grove"][data-appearance="light"]{
+  color-scheme:light; --bg:#F3EEE1; --surface:#FBF8EF; --border:#CFC8AE; --text:#253022;
+  --text-strong:#1A2716; --muted:#56604B; --label:#4A5E3E; --hint:#5F6552; --accent:#A94D2C;
+  --accent-text:#9A4224; --accent-ink:#FFF8EE; --accent-wash:rgba(169,77,44,0.1);
+  --scrim:rgba(37,48,34,0.4); --shadow:0 1px 0 #E4DDC8, 0 12px 26px -16px rgba(58,74,44,0.38);
+  --card-shadow:0 10px 40px rgba(37,48,34,0.22); --found-text:#1A2716;
+  --done-text:rgba(37,48,34,0.72); --glow:rgba(169,77,44,0.26); --pill-1:#CADDB0;
+  --pill-2:#9FC08F; --pill-3:#E8B598; --pill-4:#F0E4AE; --pill-sel:rgba(169,77,44,0.22);
+  --pill-miss:rgba(210,45,40,.36); --pill-edge:rgba(0,0,0,.14); --confetti-1:#a94d2c;
+  --confetti-2:#caddb0; --confetti-3:#9fc08f; --confetti-4:#e8b598; --confetti-5:#f0e4ae;
+  --confetti-6:#1a2716; --radius-board:18px; --radius-ctl:10px; --radius-pill:14px 4px 14px 4px;
+  --ctl-edge:var(--accent); --ctl-width:1.5px; --ctl-shadow:none; --found-shadow:none;
+  --board-outline:none; --board-outline-offset:0px; --board-texture:none; --pill-ring-1:none;
+  --pill-ring-2:none; --pill-ring-3:none; --pill-ring-4:none;
+}
+:root[data-theme="plum"], :root[data-theme="plum"][data-appearance="dark"]{
+  color-scheme:dark; --bg:#1c1220; --surface:#261a2b; --border:#3d2b44; --text:#f1e4ec;
+  --text-strong:#fff2f7; --muted:#c9aebf; --label:#e3a3b6; --hint:#b99bab; --accent:#f08a73;
+  --accent-text:#f4a08c; --accent-ink:#2a1420; --accent-wash:rgba(240,138,115,0.14);
+  --scrim:rgba(0,0,0,.62); --shadow:0 0 0 4px #221726, 0 14px 30px -16px rgba(0,0,0,.6);
+  --card-shadow:0 10px 40px rgba(0,0,0,.5); --found-text:#fff5f9;
+  --done-text:rgba(241,228,236,.55); --glow:rgba(240,138,115,0.4);
+  --pill-1:rgba(240,138,115,.46); --pill-2:rgba(206,96,150,.48); --pill-3:rgba(140,112,200,.40);
+  --pill-4:rgba(228,186,120,.44); --pill-sel:rgba(244,160,140,.22);
+  --pill-miss:rgba(255,80,70,.5); --pill-edge:rgba(255,255,255,.22); --confetti-1:#f08a73;
+  --confetti-2:#f08a73; --confetti-3:#ce6096; --confetti-4:#8c70c8; --confetti-5:#e4ba78;
+  --confetti-6:#fff2f7; --radius-board:18px; --radius-ctl:999px; --radius-pill:999px;
+  --ctl-edge:var(--accent); --ctl-width:1.5px; --ctl-shadow:none; --found-shadow:none;
+  --board-outline:none; --board-outline-offset:0px; --board-texture:none; --pill-ring-1:none;
+  --pill-ring-2:none; --pill-ring-3:none; --pill-ring-4:none;
+}
+:root[data-theme="plum"][data-appearance="light"]{
+  color-scheme:light; --bg:#f7ebee; --surface:#fdf6f7; --border:#e3cdd4; --text:#2b1a2e;
+  --text-strong:#1f1022; --muted:#6e4f66; --label:#8a3f5c; --hint:#6f5a68; --accent:#b04a52;
+  --accent-text:#9c3d47; --accent-ink:#fff7f5; --accent-wash:rgba(176,74,82,0.1);
+  --scrim:rgba(43,26,46,0.4); --shadow:0 1px 0 #efdde2, 0 10px 24px -14px rgba(74,30,60,.35);
+  --card-shadow:0 10px 40px rgba(43,26,46,0.22); --found-text:#2b1a2e;
+  --done-text:rgba(43,26,46,.68); --glow:rgba(176,74,82,0.26); --pill-1:rgba(236,168,150,.55);
+  --pill-2:rgba(222,120,160,.52); --pill-3:rgba(150,110,200,.50);
+  --pill-4:rgba(232,196,120,.42); --pill-sel:rgba(176,74,82,.16);
+  --pill-miss:rgba(210,45,40,.36); --pill-edge:rgba(0,0,0,.14); --confetti-1:#b04a52;
+  --confetti-2:#eca896; --confetti-3:#de78a0; --confetti-4:#966ec8; --confetti-5:#e8c478;
+  --confetti-6:#1f1022; --radius-board:18px; --radius-ctl:999px; --radius-pill:999px;
+  --ctl-edge:var(--accent); --ctl-width:1.5px; --ctl-shadow:none; --found-shadow:none;
+  --board-outline:none; --board-outline-offset:0px; --board-texture:none; --pill-ring-1:none;
+  --pill-ring-2:none; --pill-ring-3:none; --pill-ring-4:none;
+}
+:root[data-theme="graphite"], :root[data-theme="graphite"][data-appearance="dark"]{
+  color-scheme:dark; --bg:#111112; --surface:#1A1A1C; --border:#303033; --text:#E7E7E5;
+  --text-strong:#FFFFFF; --muted:#A3A3A7; --label:#B6B6BA; --hint:#9A9A9E; --accent:#FF5A26;
+  --accent-text:#FF7A4E; --accent-ink:#0A0A0B; --accent-wash:rgba(255,90,38,0.14);
+  --scrim:rgba(0,0,0,.62); --shadow:0 0 0 1px #0A0A0B,0 12px 28px -14px rgba(0,0,0,.7);
+  --card-shadow:0 10px 40px rgba(0,0,0,.5); --found-text:#0A0A0B;
+  --done-text:rgba(231,231,229,0.62); --glow:rgba(255,90,38,0.4); --pill-1:#E6F53C;
+  --pill-2:#FFB45A; --pill-3:#6AA8FF; --pill-4:#FF5A5A; --pill-sel:rgba(255,255,255,0.16);
+  --pill-miss:rgba(255,80,70,.5); --pill-edge:rgba(255,255,255,.22); --confetti-1:#ff5a26;
+  --confetti-2:#e6f53c; --confetti-3:#ffb45a; --confetti-4:#6aa8ff; --confetti-5:#ff5a5a;
+  --confetti-6:#ffffff; --radius-board:4px; --radius-ctl:4px; --radius-pill:3px;
+  --ctl-edge:var(--accent); --ctl-width:1.5px; --ctl-shadow:none; --found-shadow:none;
+  --board-outline:none; --board-outline-offset:0px; --board-texture:none; --pill-ring-1:none;
+  --pill-ring-2:none; --pill-ring-3:none; --pill-ring-4:none;
+}
+:root[data-theme="graphite"][data-appearance="light"]{
+  color-scheme:light; --bg:#E9E9E8; --surface:#F6F6F5; --border:#C6C6C4; --text:#1B1B1C;
+  --text-strong:#0A0A0B; --muted:#55555A; --label:#46464A; --hint:#5E5E62; --accent:#C8360E;
+  --accent-text:#AE2E0A; --accent-ink:#FFFFFF; --accent-wash:rgba(200,54,14,0.1);
+  --scrim:rgba(27,27,28,0.4);
+  --shadow:0 1px 2px rgba(10,10,11,.06),0 10px 24px -14px rgba(10,10,11,.22);
+  --card-shadow:0 10px 40px rgba(27,27,28,0.22); --found-text:#0A0A0B;
+  --done-text:rgba(27,27,28,0.66); --glow:rgba(200,54,14,0.26); --pill-1:#CBE31C;
+  --pill-2:#FFA04A; --pill-3:#5E9DFF; --pill-4:#EE4B4B; --pill-sel:rgba(24,24,26,0.14);
+  --pill-miss:rgba(210,45,40,.36); --pill-edge:rgba(0,0,0,.14); --confetti-1:#c8360e;
+  --confetti-2:#cbe31c; --confetti-3:#ffa04a; --confetti-4:#5e9dff; --confetti-5:#ee4b4b;
+  --confetti-6:#0a0a0b; --radius-board:4px; --radius-ctl:4px; --radius-pill:3px;
+  --ctl-edge:var(--accent); --ctl-width:1.5px; --ctl-shadow:none; --found-shadow:none;
+  --board-outline:none; --board-outline-offset:0px; --board-texture:none;
+  --pill-ring-1:inset 0 0 0 1.5px #8FA10F; --pill-ring-2:inset 0 0 0 1.5px #D9731C;
+  --pill-ring-3:inset 0 0 0 1.5px #2F6FE0; --pill-ring-4:inset 0 0 0 1.5px #C42E2E;
 }
 
 /* Lock the viewport: no page scroll or rubber-band on iPad / iOS standalone. */
@@ -89,49 +296,88 @@ body{position:fixed;inset:0;width:100%;height:100%}
    which IS scrollable.
    IF THIS IS EVER RE-CENTRED IT MUST BE `safe center`, NEVER BARE `center`. */
 #app[data-landscape]{grid-template-areas:"grid hdr" "grid side";grid-template-rows:min-content 1fr;align-content:start;justify-items:start;justify-content:start;column-gap:20px;row-gap:14px}
-/* A landscape phone leaves ~300px of height for the whole rail. The hint is
-   instructional rather than gameplay, so it is the first thing to go. */
-#app[data-landscape] #hint{display:none}
-/* The header stays on one line and the title truncates instead. Wrapping dropped the
-   buttons to a second row, doubling the header to 107px and pushing words off the
-   bottom; vertical space is the scarce axis here. flex:none keeps the buttons from
-   being the item that absorbs the squeeze, and min-width:0 is what lets the ellipsis
-   engage at all — a flex item's default min-width:auto refuses to shrink. */
-#app[data-landscape] #hdr{flex-wrap:nowrap}
-#app[data-landscape] #actions{flex:none}
-#app[data-landscape] #titles{min-width:0}
+/* The header stays on one line in BOTH orientations and the title truncates instead.
+   Wrapping dropped the buttons to a second row, doubling the header to ~105px and pushing
+   words off the bottom; vertical space is the scarce axis here. Portrait used to be
+   exempt, and wrapped for every long subject name on a phone — 43px of clipped list on a
+   390x664 iPhone. flex:none keeps the buttons from being the item that absorbs the
+   squeeze, and min-width:0 is what lets the ellipsis engage at all — a flex item's
+   default min-width:auto refuses to shrink. */
+/* min-width:0 too, or the portrait 1fr track grows to the header's no-wrap width and
+   pushes New game off a 320px screen. */
+#hdr{flex-wrap:nowrap;min-width:0}
+#actions{flex:none}
+/* The title block fills whatever the buttons leave, and is a size container so the label
+   line can drop the app's name outright when that is narrow, rather than ellipsising it
+   to "W…" beside a clipped category. */
+#titles{min-width:0;flex:1 1 auto;container-type:inline-size}
+@container (max-width:300px){
+  #kicker{display:none}
+  #kickerline #category:not(:empty)::before{content:none}
+  #kickerline #category{color:var(--label);font-weight:700}
+}
 /* The category yields before the name, and the name keeps a floor: letting both
    collapse freely rendered #subject at zero width, invisible rather than truncated. */
-#app[data-landscape] #category{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#app[data-landscape] #subject{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1 1 auto;min-width:5ch}
+#category{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#subject{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1 1 auto;min-width:5ch}
+/* A phone has ~190px beside the buttons. The app's own name is the one thing there the
+   player does not need, so the label line becomes just the category. */
+@media (max-width:479px){
+  #kicker{display:none}
+  /* #kickerline in front: the base '/ ' rule sits later in the file at equal specificity. */
+  #kickerline #category:not(:empty)::before{content:none}
+  #kickerline #category{color:var(--label);font-weight:700}
+  #app #subject{font-size:20px}
+  #app #newbtn{padding:9px 13px}
+}
 #app[data-landscape] #listhdr{margin:2px 2px 6px 0}
 /* The pull-back has to equal .w's padding below exactly, or the text leaves the rail edge. */
 #app[data-landscape] #list{gap:4px 14px;margin-left:-10px}
 /* Words keep their size and give up vertical padding: 2px off each of 6 rows is 24px,
    the difference between fitting an iPhone landscape and overflowing it. */
 #app[data-landscape] .w{padding:2px 10px}
-#hdr{grid-area:hdr;width:100%;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
-#kicker{font-family:var(--utility);font-weight:700;font-size:13px;letter-spacing:.18em;color:var(--label);margin-bottom:2px}
+#hdr{grid-area:hdr;width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px}
+/* Label line: app name and category share one row at label size, so the subject name
+   is the only large thing in the header. At 28px beside 13px labels the name read as a
+   headline rather than a heading. */
+#kickerline{display:flex;align-items:baseline;gap:8px;min-width:0;margin-bottom:3px}
+/* When the label line is short of room the app's name gives way first, not the category:
+   the heavy shrink weight makes it absorb nearly all of the squeeze. */
+#kicker{font-family:var(--utility);font-weight:700;font-size:13px;letter-spacing:.18em;color:var(--label);
+  flex:0 1000 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #subjectline{display:flex;align-items:baseline;gap:8px}
 /* The separator is generated here so #subject's textContent stays the bare name the
    tests compare; `:empty` guards the first paint, before boot has resolved a subject. */
-#category{font-family:var(--utility);font-size:13px;color:var(--muted);flex:none}
-#category:not(:empty)::after{content:' ·';color:var(--muted)}
+/* Shrinkable (not flex:none), or its ellipsis never engages and a long category runs
+   under the Settings button on a landscape phone. */
+#category{font-family:var(--utility);font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);flex:0 1 auto}
+#category:not(:empty)::before{content:'/ '}
 /* Underlined in one of the four pill hues, hashed from the name by accentSlot in
    main.js, so all 600 subjects don't render identically. An underline draws inside the
    line box and adds no height — which the landscape rail has none to give. */
-#subject{font-family:var(--display);font-weight:700;font-size:28px;line-height:1.1;color:var(--text-strong);
+#subject{font-family:var(--display);font-weight:700;font-size:22px;line-height:1.15;color:var(--text-strong);
   letter-spacing:-.015em;text-decoration:underline;text-decoration-thickness:3px;
-  text-underline-offset:6px;text-decoration-color:var(--subject-accent,var(--pill-sel))}
+  text-underline-offset:5px;text-decoration-color:var(--subject-accent,var(--pill-sel))}
 #subject[data-accent="1"]{--subject-accent:var(--pill-1)}
 #subject[data-accent="2"]{--subject-accent:var(--pill-2)}
 #subject[data-accent="3"]{--subject-accent:var(--pill-3)}
 #subject[data-accent="4"]{--subject-accent:var(--pill-4)}
-#newbtn{border:1.5px solid var(--accent);color:var(--accent-text);background:transparent;border-radius:999px;padding:9px 16px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;min-height:44px}
-#newbtn:hover{background:var(--accent-wash)}
+#newbtn{border:var(--ctl-width) solid var(--ctl-edge);box-shadow:var(--ctl-shadow);color:var(--accent-text);background:transparent;border-radius:var(--radius-ctl);padding:9px 16px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;min-height:44px}
+#newbtn:hover,#catbtn:hover{background:var(--accent-wash)}
+/* New game and its chevron read as one control: shared edge, outer corners only. The
+   chevron is a full 44px target of its own. */
+/* The divider is #catbtn's dotted left edge alone, and a theme's hard shadow sits on the
+   group, so neither half's shadow shows through the other. */
+#newgroup{display:flex;border-radius:var(--radius-ctl);box-shadow:var(--ctl-shadow)}
+#newgroup #newbtn{border-right:0;border-top-right-radius:0;border-bottom-right-radius:0;box-shadow:none}
+#catbtn{width:44px;min-height:44px;padding:0;display:flex;align-items:center;justify-content:center;
+  border:var(--ctl-width) solid var(--ctl-edge);border-left-style:dotted;border-radius:0 var(--radius-ctl) var(--radius-ctl) 0;
+  background:transparent;color:var(--accent-text);cursor:pointer}
+#catbtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+#catbtn[aria-expanded="true"]{background:var(--accent-wash)}
 #actions{display:flex;align-items:center;gap:8px}
 #appearance{flex:none;width:44px;height:44px;padding:0;display:flex;align-items:center;justify-content:center;
-  border:1.5px solid var(--accent);border-radius:999px;background:transparent;color:var(--accent-text);cursor:pointer}
+  border:var(--ctl-width) solid var(--ctl-edge);box-shadow:var(--ctl-shadow);border-radius:var(--radius-ctl);background:transparent;color:var(--accent-text);cursor:pointer}
 #appearance:hover{background:var(--accent-wash)}
 /* Both icons ship in the markup and data-pref picks one, so main.js never
    assembles HTML on a click. */
@@ -145,21 +391,24 @@ body{position:fixed;inset:0;width:100%;height:100%}
    not 'light' means dark. */
 #appearance[data-pref="light"] .i-light,
 #appearance:not([data-pref="light"]) .i-dark{display:block}
-#gridbox{grid-area:grid;position:relative;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);touch-action:none;cursor:pointer;flex:none}
+/* The border stays 1px in every theme: layout.js reserves exactly 2px for it. A heavier
+   frame is drawn with --shadow or --board-outline, which take no layout space. */
+#gridbox{grid-area:grid;position:relative;background:var(--surface);background-image:var(--board-texture);background-size:9px 9px;border:1px solid var(--border);border-radius:var(--radius-board);box-shadow:var(--shadow);
+  outline:var(--board-outline);outline-offset:var(--board-outline-offset);touch-action:none;cursor:pointer;flex:none}
 #pills,#fx{position:absolute;inset:0;pointer-events:none}
 /* Pill colours are class-driven so they live in the palette; as rgba literals in JS
    they were tuned for a dark surface and all but invisible on paper. */
-.pill{position:absolute;border-radius:999px;box-shadow:inset 0 0 0 1px var(--pill-edge)}
-.pill.p1{background:var(--pill-1)}
-.pill.p2{background:var(--pill-2)}
-.pill.p3{background:var(--pill-3)}
-.pill.p4{background:var(--pill-4)}
+.pill{position:absolute;border-radius:var(--radius-pill);box-shadow:inset 0 0 0 1px var(--pill-edge)}
+.pill.p1{background:var(--pill-1);box-shadow:var(--pill-ring-1)}
+.pill.p2{background:var(--pill-2);box-shadow:var(--pill-ring-2)}
+.pill.p3{background:var(--pill-3);box-shadow:var(--pill-ring-3)}
+.pill.p4{background:var(--pill-4);box-shadow:var(--pill-ring-4)}
 .pill.sel{background:var(--pill-sel)}
 .pill.miss{background:var(--pill-miss)}
 .cell{position:absolute;text-align:center;font-weight:700;color:var(--text);pointer-events:none}
 /* The halo is what carries the found state — on light, --found-text and --text are two
    dark browns a hair apart. text-shadow doesn't reflow, so cells cannot shift. */
-.cell.found{color:var(--found-text);text-shadow:0 0 10px var(--glow)}
+.cell.found{color:var(--found-text);text-shadow:var(--found-shadow)}
 /* One phosphor pass as a puzzle appears. Animating background-position keeps the
    gradient inside the element, so #gridbox needs no overflow:hidden that would clip a
    pill; ::after paints above the letters and cannot swallow the first drag. */
@@ -184,9 +433,11 @@ body{position:fixed;inset:0;width:100%;height:100%}
 /* Glows for one beat, then main.js swaps in `.done`. Duration matches GLOW_MS. */
 .w.glow{color:var(--found-text);animation:foundGlow .9s ease}
 @keyframes foundGlow{0%{background:transparent}45%{background:var(--glow)}100%{background:transparent}}
-#hint{margin:10px 0 0;font-size:13px;line-height:1.4;color:var(--hint);max-width:280px}
-#win{position:fixed;inset:0;background:var(--scrim);display:none;align-items:center;justify-content:center;z-index:50}
-#wincard{position:relative;background:var(--surface);border:1px solid var(--accent);border-radius:20px;padding:34px 42px;text-align:center;animation:popIn .45s ease;box-shadow:var(--card-shadow)}
+#hint{margin:8px 0 0;padding-top:12px;border-top:1px solid var(--border);font-size:13.5px;line-height:1.45;color:var(--hint)}
+#hint b{color:var(--text)}
+/* safe center plus a scroll, so a card taller than a landscape phone can still be reached. */
+#win{position:fixed;inset:0;background:var(--scrim);display:none;align-items:safe center;justify-content:center;z-index:50;overflow-y:auto}
+#wincard{position:relative;min-width:260px;background:var(--surface);border:1px solid var(--accent);border-radius:20px;padding:34px 42px;text-align:center;animation:popIn .45s ease;box-shadow:var(--card-shadow)}
 /* Sized in px to match SOLVED_BOX in view.js — the two have to agree or the mark is
    cropped or floats. */
 #solved{position:relative;width:148px;height:148px;margin:0 auto 16px;
@@ -198,11 +449,69 @@ body{position:fixed;inset:0;width:100%;height:100%}
 /* p#winstats, not #winstats: #wincard p is (1,0,1) and would otherwise win. */
 #wincard p#winstats{margin:-12px 0 20px;font-size:13.5px}
 #winstats:empty{display:none}
-#winbtn{border:none;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:12px 22px;font-family:inherit;font-weight:700;font-size:15px;cursor:pointer}
+/* The Undo offer after a one-click deal. Above the board, below every overlay. */
+#toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:40;
+  display:flex;align-items:center;gap:6px;padding:4px 4px 4px 16px;background:var(--surface);color:var(--text);
+  border:1px solid var(--accent);border-radius:var(--radius-ctl);box-shadow:var(--card-shadow);font-size:15px;white-space:nowrap}
+#toast[hidden],#toast-undo[hidden]{display:none}
+/* Only the button takes input, so a cell or word under the toast is still reachable. */
+#toast{pointer-events:none}
+#toast-undo{pointer-events:auto}
+/* In landscape, over the rail's empty space rather than the middle of the board. */
+#app[data-landscape] ~ #toast{left:auto;right:calc(10px + env(safe-area-inset-right));transform:none}
+#toast-undo{min-height:44px;padding:0 16px;border:none;border-radius:var(--radius-ctl);background:var(--accent);color:var(--accent-ink);
+  font-family:inherit;font-weight:700;font-size:15px;cursor:pointer}
+/* Read by a screen reader, not shown. */
+.sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+/* The countdown to the next deal. The bar drains by transform, so it is the one piece of
+   motion here; reduced motion drops it and keeps the digit. */
+#winnext[hidden]{display:none}
+#winnext{margin:-6px 0 18px}
+#winnextline{display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--utility);font-size:13.5px;color:var(--text)}
+#winstay{min-height:44px;padding:0 14px;border:none;background:transparent;color:var(--accent-text);font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+#winbar{height:6px;border-radius:999px;background:var(--bg);border:1px solid var(--border);overflow:hidden}
+#winbar i{display:block;height:100%;background:var(--accent);transform-origin:left center}
+#winnext.run #winbar i{animation:drain 5s linear forwards}
+@keyframes drain{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+#winbtn{border:none;background:var(--accent);color:var(--accent-ink);border-radius:var(--radius-ctl);padding:12px 22px;font-family:inherit;font-weight:700;font-size:15px;cursor:pointer}
 #winclose{position:absolute;top:0;right:0;width:44px;height:44px;border:none;background:transparent;color:var(--muted);font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
 #winclose:hover{color:var(--text-strong)}
+/* A landscape phone is ~300px tall and the countdown row made the card 444px. The solved
+   mark is decorative (aria-hidden), so it goes first. */
+@media (max-height:420px){
+  #solved{display:none}
+  #wincard{padding:18px 28px}
+  #wincard h2{margin-top:0}
+}
 @keyframes popIn{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
-#picker{position:fixed;inset:0;background:var(--scrim);display:none;align-items:center;justify-content:center;z-index:60}
+/* Both panes drop from the top edge: full width on a phone, a card under the header's
+   buttons on anything wider. JS only ever toggles display; everything else is here. */
+#picker,#settings{position:fixed;inset:0;background:var(--scrim);display:none;align-items:flex-start;justify-content:center;z-index:60}
+@keyframes dropIn{from{transform:translateY(-24px);opacity:0}to{transform:none;opacity:1}}
+#settingscard{background:var(--surface);border:1px solid var(--accent);box-shadow:var(--card-shadow);padding:22px 24px 24px;
+  display:flex;flex-direction:column;gap:10px;text-align:left;box-sizing:border-box;overflow-y:auto;
+  max-height:calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 16px);
+  max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 16px)}
+.panehead{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px}
+.panehead h2{font-family:var(--display);font-weight:700;font-size:20px;color:var(--text-strong);margin:0}
+.paneclose{width:44px;height:44px;margin:-10px -12px 0 0;border:none;background:transparent;color:var(--muted);font-size:22px;line-height:1;cursor:pointer}
+.paneclose:hover{color:var(--text-strong)}
+label[for="settings-theme"],.panelabel{display:block;font-family:var(--utility);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--label)}
+.panelabel{margin-top:8px}
+#settings-swatches{display:flex;gap:6px}
+#settings-swatches i{width:28px;height:12px;border-radius:999px;box-shadow:inset 0 0 0 1px var(--border)}
+#settings-swatches .p1{background:var(--pill-1)}
+#settings-swatches .p2{background:var(--pill-2)}
+#settings-swatches .p3{background:var(--pill-3)}
+#settings-swatches .p4{background:var(--pill-4)}
+#settings-mode{display:flex;gap:8px}
+#settings-mode button{flex:1;min-height:44px;display:flex;align-items:center;justify-content:center;gap:8px;
+  border:var(--ctl-width) solid var(--border);border-radius:var(--radius-ctl);background:transparent;color:var(--text);
+  font-family:inherit;font-weight:700;font-size:15px;cursor:pointer}
+#settings-mode button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+#settings-mode svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#settings-auto{display:flex;align-items:center;gap:10px;min-height:48px;margin-top:6px;font-size:14.5px;color:var(--text);cursor:pointer}
+#settings-auto input{width:20px;height:20px;flex:none;accent-color:var(--accent);cursor:pointer;margin:0}
 /* Capped, and genuinely scrollable. The card gained a checkbox row, and a short landscape
    phone leaves ~300px of usable height. box-sizing matters: without it the cap applies to
    the CONTENT box, so 60px of padding and 2px of border sat outside it and the card ended
@@ -210,7 +519,7 @@ body{position:fixed;inset:0;width:100%;height:100%}
    reason — a max-height with no scroll container clips rather than scrolls. The 100vh line
    is the fallback for a UA without dvh, where an unknown unit invalidates the whole calc
    and would otherwise drop the cap entirely. */
-#pickercard{background:var(--surface);border:1px solid var(--accent);border-radius:20px;padding:30px 34px;text-align:center;animation:popIn .45s ease;box-shadow:var(--card-shadow);min-width:280px;
+#pickercard{background:var(--surface);border:1px solid var(--accent);padding:30px 34px;text-align:center;box-shadow:var(--card-shadow);min-width:280px;
   box-sizing:border-box;overflow-y:auto;
   max-height:calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 32px);
   max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 32px)}
@@ -242,22 +551,74 @@ label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12
    native chevron, so the wrapper draws one back — without it the control reads as a
    text input and nothing says it opens. */
 #picker-field{position:relative;margin-bottom:20px}
-#picker-field::after{content:'';position:absolute;right:18px;top:50%;width:9px;height:9px;margin-top:-7px;
+.selectfield{position:relative}
+#picker-field::after,.selectfield::after{content:'';position:absolute;right:18px;top:50%;width:9px;height:9px;margin-top:-7px;
   border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);pointer-events:none}
-#picker-select{appearance:none;-webkit-appearance:none;width:100%;box-sizing:border-box;display:block;
-  background:var(--bg);color:var(--text);border:1.5px solid var(--border);border-radius:12px;
+#picker-select,#settings-theme{appearance:none;-webkit-appearance:none;width:100%;box-sizing:border-box;display:block;
+  background:var(--bg);color:var(--text);border:1.5px solid var(--muted);border-radius:12px;
   padding:11px 40px 11px 14px;font-family:inherit;font-size:15px;min-height:44px;cursor:pointer}
 #picker-error{font-size:13px;color:var(--pill-miss);margin:-12px 0 16px;max-width:260px}
 /* Wraps rather than shrinking below the 44px touch target; Start sits last so it keeps
    the primary position on either layout. */
 #picker-actions{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
-#picker-cancel,#picker-surprise,#picker-start{border:none;border-radius:999px;padding:12px 22px;font-family:inherit;font-weight:700;font-size:15px;cursor:pointer;min-height:44px}
-#picker-cancel,#picker-surprise{background:transparent;border:1.5px solid var(--accent);color:var(--accent-text)}
+#picker-cancel,#picker-start{border:none;border-radius:var(--radius-ctl);padding:12px 22px;font-family:inherit;font-weight:700;font-size:15px;cursor:pointer;min-height:44px}
+#picker-cancel{background:transparent;border:1.5px solid var(--accent);color:var(--accent-text)}
 #picker-start{background:var(--accent);color:var(--accent-ink)}
 /* All three go disabled together while a deal is in flight, so all three have to look it. */
 #picker-actions button[disabled]{opacity:.45;cursor:not-allowed}
+/* Edges: --border is a divider tone and is under 3:1 against the card in most themes, so
+   the closed control takes --muted and the open list --accent (both 4:1+ in all 14).
+   The list sits on --bg, not the card's --surface, so it reads as a layer above it. */
+/* The open list of both dropdowns, in the theme's colours, where the browser can draw it
+   (Chromium and Safari support base-select). Mouse and trackpad only: on a touch screen
+   the native picker stays, which on an iPhone is the wheel and suits a thumb better than
+   any in-page list. Everything else keeps the native popup. */
+@media (pointer:fine){
+  @supports (appearance:base-select){
+    #picker-select,#settings-theme,#picker-select::picker(select),#settings-theme::picker(select){appearance:base-select}
+    /* The wrapper already draws a chevron. */
+    #picker-select::picker-icon,#settings-theme::picker-icon{display:none}
+    #picker-select::picker(select),#settings-theme::picker(select){margin-top:6px;padding:6px;
+      background:var(--bg);color:var(--text);border:1.5px solid var(--accent);border-radius:12px;
+      box-shadow:var(--card-shadow);overflow-y:auto}
+    /* Capped only where there is room: in a short window the UA's own sizing keeps the
+       list below its control instead of sliding up over it. */
+    @media (min-height:600px){
+      #picker-select::picker(select),#settings-theme::picker(select){max-height:min(60vh,420px)}
+    }
+    #picker-select option,#settings-theme option{box-sizing:border-box;min-height:40px;padding:8px 12px;border-radius:8px;
+      font-size:15px;color:var(--text);background:transparent;cursor:pointer}
+    #picker-select option:hover,#settings-theme option:hover,
+    #picker-select option:focus-visible,#settings-theme option:focus-visible{background:var(--accent-wash);outline:none}
+    #picker-select option:checked,#settings-theme option:checked{color:var(--accent-text);font-weight:700}
+    #picker-select option::checkmark,#settings-theme option::checkmark{color:var(--accent-text)}
+    /* Accent text on the wash is 4.33:1 in Phosphor light; the strongest text colour is not. */
+    #picker-select option:checked:is(:hover,:focus-visible),#settings-theme option:checked:is(:hover,:focus-visible){color:var(--text-strong)}
+    #picker-select option:disabled,#settings-theme option:disabled{color:var(--muted);cursor:default;background:transparent}
+  }
+}
+/* After both cards' own rules on purpose: their `padding` and `border` shorthands would
+   otherwise reset the phone-only top edge set here. Same specificity, so order decides. */
+#pickercard,#settingscard{width:100%;border-radius:0 0 20px 20px;border-top:none;animation:dropIn .28s ease-out;
+  padding-top:calc(22px + env(safe-area-inset-top))}
+@media (min-width:600px){
+  #picker,#settings{justify-content:flex-end;padding:calc(64px + env(safe-area-inset-top)) calc(20px + env(safe-area-inset-right)) 0 0}
+  #pickercard,#settingscard{width:380px;border-radius:20px;border-top:1px solid var(--accent);padding-top:26px;
+    max-height:calc(100vh - 80px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    max-height:calc(100dvh - 80px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
+}
+/* A short landscape phone cannot spare the 64px drop: the picker's buttons went below the
+   fold at 300px tall. Pin the card to the top instead. */
+@media (min-width:600px) and (max-height:420px){
+  #picker,#settings{padding-top:calc(8px + env(safe-area-inset-top))}
+  #pickercard,#settingscard{padding-top:16px;
+    max-height:calc(100vh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    max-height:calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
+}
 @media (prefers-reduced-motion: reduce){
   #wincard{animation:none}
+  #pickercard,#settingscard{animation:none}
+  #winbar{display:none}
   .pill{transition:none}
   .w.glow{animation:none}
   /* main.js already skips sweep() under reduced motion; this is the belt to that braces. */

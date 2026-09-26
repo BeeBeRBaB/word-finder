@@ -108,13 +108,13 @@ test('the win card counter is empty at first paint and fills on a win', async ({
     await findAndDrag(page, w.toUpperCase());
   }
   await expect(page.locator('#win')).toBeVisible();
-  await expect(page.locator('#winstats')).toHaveText('1 puzzle solved');
+  await expect(page.locator('#winstats')).toHaveText(/^1 puzzle solved(\. Next puzzle in 5 seconds\.)?$/);
 });
 
 test('the checkbox reflects and persists the stored setting', async ({ page }) => {
   await page.goto('/');
   await page.waitForSelector('#letters .cell');
-  await page.locator('#newbtn').click();
+  await page.locator('#catbtn').click();
   const box = page.locator('#picker-least-box');
   await expect(box, 'on by default').toBeChecked();
 
@@ -123,12 +123,12 @@ test('the checkbox reflects and persists the stored setting', async ({ page }) =
 
   // Unlike the category select, this must NOT reset when the dialog reopens.
   await page.locator('#picker-cancel').click();
-  await page.locator('#newbtn').click();
+  await page.locator('#catbtn').click();
   await expect(box).not.toBeChecked();
 
   await page.reload();
   await page.waitForSelector('#letters .cell');
-  await page.locator('#newbtn').click();
+  await page.locator('#catbtn').click();
   await expect(page.locator('#picker-least-box'), 'survives a reload').not.toBeChecked();
 });
 
@@ -149,7 +149,7 @@ test('a fully covered category is marked done in the select', async ({ page }) =
 
   await page.reload();
   await page.waitForSelector('#letters .cell');
-  await page.locator('#newbtn').click();
+  await page.locator('#catbtn').click();
   await expect(page.locator('#picker-select option[value="nature"]')).toHaveText('Nature (done)');
   await expect(page.locator('#picker-select option[value="food"]')).toHaveText('Food & Drink');
 });
@@ -170,13 +170,15 @@ test('the picker action buttons stay reachable on a short landscape phone', asyn
   const first = /** @type {string} */ (await page.locator('#list .w').first().textContent());
   await findAndDrag(page, first.toUpperCase());   // now inProgress, so the warning shows
 
-  await page.locator('#newbtn').click();
+  await page.locator('#catbtn').click();
   await expect(page.locator('#picker-warning')).toBeVisible();
   await page.locator('#picker-select').selectOption('nature');
   await page.locator('#picker-start').click();
   await expect(page.locator('#picker-error')).toBeVisible();   // the tallest state
 
-  // The card itself must stay inside the viewport...
+  // The card itself must stay inside the viewport... measured at rest: the pane drops in
+  // from 24px above, and a loaded machine can sample it mid-slide.
+  await page.locator('#pickercard').evaluate(el => Promise.all(el.getAnimations().map(x => x.finished)));
   const card = await page.locator('#pickercard').boundingBox();
   expect(card).not.toBeNull();
   const c = /** @type {{y:number,height:number}} */ (card);
@@ -206,7 +208,7 @@ test('the checkbox row is a control, not a second field label', async ({ page })
   // box jammed against the text because `display` never became flex either.
   await page.goto('/');
   await page.waitForSelector('#letters .cell');
-  await page.locator('#newbtn').click();
+  await page.locator('#catbtn').click();
   const style = await page.locator('#picker-least').evaluate((el) => {
     const cs = getComputedStyle(el);
     return { display: cs.display, transform: cs.textTransform, size: cs.fontSize };

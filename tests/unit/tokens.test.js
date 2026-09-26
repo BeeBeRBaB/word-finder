@@ -33,6 +33,31 @@ test('the light and dark palettes declare exactly the same tokens', () => {
   assert.ok(light.size >= 25, `only ${light.size} tokens — did the palette blocks move?`);
 });
 
+// Every [data-theme] block, found by selector rather than listed, so a theme added to the
+// stylesheet is covered without touching this file.
+const THEME_BLOCKS = [...css.matchAll(/^(:root\[data-theme="[\w-]+"\][^{]*)\{/gm)].map(m => m[1].trim());
+
+test('every theme block declares exactly the default palette\'s tokens', () => {
+  const dark = tokensIn(DEFAULT_DARK);
+  assert.ok(THEME_BLOCKS.length >= 2, 'no theme blocks found — did the selector shape change?');
+  for (const sel of THEME_BLOCKS) {
+    const t = tokensIn(sel);
+    assert.deepEqual([...dark].filter(x => !t.has(x)), [], `${sel} is missing tokens`);
+    assert.deepEqual([...t].filter(x => !dark.has(x)), [], `${sel} declares tokens the default palette does not`);
+  }
+});
+
+test('every theme has both a dark and a light block, and appearance.js lists exactly those themes', async () => {
+  const { THEMES } = await import('../../src/appearance.js');
+  const inCss = [...new Set(THEME_BLOCKS.map(s => /** @type {RegExpMatchArray} */ (s.match(/data-theme="([\w-]+)"/))[1]))];
+  for (const k of inCss) {
+    assert.ok(THEME_BLOCKS.some(s => s.startsWith(`:root[data-theme="${k}"], `)), `${k} has no dark block`);
+    assert.ok(THEME_BLOCKS.includes(`:root[data-theme="${k}"][data-appearance="light"]`), `${k} has no light block`);
+  }
+  // The default theme rides on the base palettes and has no block of its own.
+  assert.deepEqual([...inCss].sort(), THEMES.filter(t => t !== THEMES[0]).slice().sort());
+});
+
 test('the type block is first, so it is what a bare `:root` lookup finds', () => {
   const type = tokensIn(TYPE);
   assert.deepEqual([...type].sort(), ['--display', '--utility'],
@@ -93,7 +118,7 @@ test('no bare hex literal survives outside the palette blocks', () => {
     const open = css.indexOf('{', at);
     return css.indexOf('}', open);
   };
-  const lastClose = Math.max(closeOf(DEFAULT_DARK), closeOf(LIGHT_ONLY));
+  const lastClose = Math.max(closeOf(DEFAULT_DARK), closeOf(LIGHT_ONLY), ...THEME_BLOCKS.map(closeOf));
   const body = css.slice(lastClose + 1);
   assert.ok(body.length > 100, 'suspiciously little CSS left after the palette blocks — did the slice point go wrong?');
   assert.deepEqual(body.match(/#[0-9a-fA-F]{3,8}\b/g) ?? [], []);

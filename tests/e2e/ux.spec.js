@@ -1,6 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { findWordInGrid, dragCells, blockServiceWorker } from './helpers.js';
+import { findWordInGrid, findAndDrag, dragCells, blockServiceWorker } from './helpers.js';
 import { CATEGORIES } from '../../src/catalog.js';
+import { buildPuzzle } from '../../src/puzzle.js';
+import { makeRng } from '../../src/rng.js';
+import { PRESETS } from '../../src/layout.js';
+import { WORDS as NATURE } from '../../src/subjects/nature.js';
 
 test('the win overlay can be dismissed, leaving the solved board', async ({ page }) => {
   await page.goto('/?seed=1&subject=nature/birds');
@@ -73,15 +77,54 @@ test('progress and puzzle survive a reload', async ({ page }) => {
   await expect(page.locator('.w.done')).toHaveCount(1);   // still crossed out
 });
 
+// The reload above only ever restores a subject's first deal, whose bag is full. A save
+// used to hold just the seed, and a deal the bag steered regenerates differently from its
+// seed alone — so the reload swapped the grid and silently dropped the found word.
+test('a board the coverage bag steered comes back identical after a reload', async ({ page }) => {
+  await page.goto('/?seed=1&subject=nature/birds');
+  // 80 of 105 words already drawn this cycle, so the next ordinary deal is steered.
+  await page.evaluate(() => localStorage.setItem('wordfinder-progress-v1', JSON.stringify({
+    v: 1, puzzles: 0, favourLeastSeen: true,
+    bags: { 'nature/birds': { n: 105, c: 0, d: '/////////////w==' } }, sizes: {},
+  })));
+  await page.goto('/?subject=nature/birds');
+  await page.waitForSelector('#letters .cell');
+  const board = await page.locator('#letters').textContent();
+
+  // What the seed alone deals. Were it the same board, this test would prove nothing.
+  const { seed, size, count } = await page.evaluate(() => JSON.parse(localStorage.getItem('wordfinder-save-v1') || '{}'));
+  const shape = size === PRESETS.compact.size ? PRESETS.compact : PRESETS.full;
+  const reseeded = buildPuzzle({ name: '', pool: NATURE['nature/birds'].split(','), rng: makeRng(seed), size, count, mix: shape.mix });
+  expect(reseeded.cells.join(''), 'the fixture bag must steer this deal').not.toBe(board);
+
+  // Find a word only the steered board has, where there is one: the word the reload lost.
+  const words = (await page.locator('.w').allTextContents()).map(w => w.toUpperCase());
+  await findAndDrag(page, words.find(w => !reseeded.words.includes(w)) ?? words[0]);
+  await expect(page.locator('.w.done')).toHaveCount(1);
+
+  await page.goto('/');   // not reload(): with ?subject= still in the URL, boot deals afresh
+  await page.waitForSelector('#letters .cell');
+  expect(await page.locator('#letters').textContent()).toBe(board);
+  await expect(page.locator('.w.done')).toHaveCount(1);
+});
+
 // "Topic" named the internal concept twice over: once for the word list, once for
 // the UI's appearance. Pinned as a test because both meanings have now moved on.
+// "Theme" is now the Settings pane's word for a colour scheme, by request, so it is
+// allowed there and nowhere else: a subject is still never a theme.
 test('the visible copy talks about games and subjects, never topics or themes', async ({ page }) => {
   await page.goto('/?seed=1&subject=nature/birds');
   await expect(page.locator('#newbtn')).toHaveText(/New game/);
   await expect(page.locator('#winbtn')).toHaveText(/Play a new game/);
   await expect(page.locator('#picker-start')).toHaveText('Start');
   await expect(page.locator('#picker-cancel')).toHaveText('Cancel');
-  await expect(page.locator('body')).not.toContainText(/theme/i);
+  await expect(page.locator('#settings label[for="settings-theme"]')).toHaveText('Theme');
+  const outsideSettings = await page.evaluate(() => {
+    const body = /** @type {HTMLElement} */ (document.body.cloneNode(true));
+    body.querySelector('#settings')?.remove();
+    return body.textContent ?? '';
+  });
+  expect(outsideSettings).not.toMatch(/theme/i);
   await expect(page.locator('body')).not.toContainText(/topic/i);
 });
 

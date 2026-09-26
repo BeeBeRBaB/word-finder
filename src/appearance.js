@@ -11,10 +11,16 @@ export const PREF_KEY = 'wordfinder-appearance';
 /** @type {readonly ['light','dark']} */
 export const PREFS = ['light', 'dark'];
 
+export const THEME_KEY = 'wordfinder-theme';
+/** Every theme, default first. Each has a dark and a light block in styles.css except the
+ * default, which is the base palettes themselves; tokens.test.js holds the two in step.
+ * @type {readonly string[]} */
+export const THEMES = ['phosphor', 'broadsheet', 'sticker', 'drafting', 'grove', 'plum', 'graphite'];
+
 /**
  * @typedef {'light'|'dark'} Pref
  * @typedef {Pick<Storage,'getItem'|'setItem'>} PrefStore
- * @typedef {{dataset:{appearance?:string}}} Root
+ * @typedef {{dataset:{appearance?:string, theme?:string}}} Root
  */
 
 /** @param {string} s @returns {string} */
@@ -30,6 +36,17 @@ export function normalizePref(pref) {
   return PREFS.some(p => p === pref) ? /** @type {Pref} */ (pref) : 'dark';
 }
 
+/** Same contract as normalizePref: an unknown or retired theme falls back to the default,
+ * matching index.html's inline resolver.
+ * @param {string|null|undefined} theme @returns {string} */
+export function normalizeTheme(theme) {
+  return THEMES.find(t => t === theme) ?? THEMES[0];
+}
+
+/** Display name for the theme picker.
+ * @param {string} theme @returns {string} */
+export const themeName = (theme) => title(normalizeTheme(theme));
+
 /** The other of the two. Total over any input, because it normalizes first.
  * @param {string|null|undefined} pref @returns {Pref} */
 export function nextPref(pref) {
@@ -44,7 +61,7 @@ export function appearanceLabel(pref) {
 }
 
 /**
- * @param {{store?:PrefStore|null, root?:Root, onApply?:(mode:Pref)=>void}} [deps]
+ * @param {{store?:PrefStore|null, root?:Root, onApply?:(mode:Pref, theme:string)=>void}} [deps]
  */
 export function makeAppearance(deps = {}) {
   const store = deps.store === undefined ? defaultStore() : deps.store;
@@ -56,11 +73,14 @@ export function makeAppearance(deps = {}) {
   // A disabled, full or throwing store must degrade to "appearance not remembered",
   // never into the game — same contract as makeStorage.
   try { pref = normalizePref(store ? store.getItem(PREF_KEY) : null); } catch { pref = 'dark'; }
+  let theme = THEMES[0];
+  try { theme = normalizeTheme(store ? store.getItem(THEME_KEY) : null); } catch { theme = THEMES[0]; }
 
   /** @returns {void} */
   function apply() {
     root.dataset.appearance = pref;
-    onApply(pref);
+    root.dataset.theme = theme;
+    onApply(pref, theme);
   }
 
   /** @param {string} p @returns {void} */
@@ -70,12 +90,22 @@ export function makeAppearance(deps = {}) {
     apply();
   }
 
+  /** @param {string} t @returns {void} */
+  function setTheme(t) {
+    theme = normalizeTheme(t);
+    try { if (store) store.setItem(THEME_KEY, theme); } catch { /* not remembered */ }
+    apply();
+  }
+
   // Deliberately plain functions closing over `pref` rather than methods using `this`,
   // so a destructured `const {cycle} = makeAppearance()` still works.
   return {
     /** @returns {Pref} */
     get: () => pref,
     set,
+    /** @returns {string} */
+    getTheme: () => theme,
+    setTheme,
     /** @returns {Pref} */
     cycle() { set(nextPref(pref)); return pref; },
     /** Apply now. Nothing to subscribe to any more: with `system` gone the preference is
