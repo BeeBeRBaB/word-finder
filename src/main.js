@@ -492,6 +492,8 @@ function hideWin() {
   dealGen++;
   // Unblock Play: a superseded deal may still be loading, and must not hold the button.
   dealing = false;
+  // Hiding the focused Play button would drop focus to <body>; give it to New game.
+  if (els.win.contains(document.activeElement)) must('newbtn').focus({ preventScroll: true });
   els.win.style.display = 'none';
 }
 winbtn.addEventListener('click', advance);

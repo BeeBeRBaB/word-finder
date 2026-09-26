@@ -580,12 +580,24 @@ label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12
     #picker-select::picker-icon,#settings-theme::picker-icon{display:none}
     #picker-select::picker(select),#settings-theme::picker(select){margin-top:6px;padding:6px;
       background:var(--bg);color:var(--text);border:1.5px solid var(--accent);border-radius:12px;
-      box-shadow:var(--card-shadow);overflow-y:auto}
-    /* Capped only where there is room: in a short window the UA's own sizing keeps the
-       list below its control instead of sliding up over it. */
-    @media (min-height:600px){
-      #picker-select::picker(select),#settings-theme::picker(select){max-height:min(60vh,420px)}
-    }
+      box-shadow:var(--card-shadow);overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--muted) transparent}
+    /* No author max-height: the UA's own stretch sizing keeps the list below its control
+       at every height, scrolling when it must. A cap larger than the space below made the
+       engine slide the list up over the control instead. */
+    /* The placeholder and all 25 categories as two columns of 13 rows at 28px (379px), so
+       the list is whole rather than scrolled: macOS hides scrollbars until you scroll, and
+       a list cut at a row edge read as the entire list, one cut mid-row as a bug. 379px
+       fits below the control on a 1366x768 laptop (640px viewport) even with the progress
+       warning showing. Filled by column, so Down moves down, in source order. 13 is
+       ceil((categories + placeholder) / 2); tokens.test.js holds it to the catalog.
+       :open only: on the bare ::picker it overrode the UA's display:none for the closed
+       popover, and the invisible list sat over Cancel and Start taking every click. The
+       closed control already shows the choice, so the tick goes to make room. */
+    #picker-select:open::picker(select){display:grid;grid-auto-flow:column;grid-template-rows:repeat(13,auto);
+      grid-template-columns:repeat(2,minmax(0,1fr));column-gap:4px;align-content:start}
+    /* #picker in front: the shared option rule below has equal specificity and comes later. */
+    #picker #picker-select option{min-height:28px;block-size:28px;padding:0 10px;line-height:28px}
+    #picker-select option::checkmark{display:none}
     #picker-select option,#settings-theme option{box-sizing:border-box;min-height:40px;padding:8px 12px;border-radius:8px;
       font-size:15px;color:var(--text);background:transparent;cursor:pointer}
     #picker-select option:hover,#settings-theme option:hover,

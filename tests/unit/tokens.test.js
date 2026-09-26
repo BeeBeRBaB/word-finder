@@ -105,6 +105,15 @@ test('the numbers shared between a module and the stylesheet agree', () => {
     'main.js strikes a word through at a different moment than the glow ends');
 });
 
+// The category list is laid out as a fixed number of rows so it fills by column. Adding a
+// category without updating it would spill into a third, implicit column off the list.
+test('the category list rows match the catalog', async () => {
+  const { CATEGORIES } = await import('../../src/catalog.js');
+  const m = css.match(/#picker-select:open::picker\(select\)\{[^}]*grid-template-rows:repeat\((\d+),auto\)/);
+  assert.ok(m, 'could not find the category list row count in styles.css');
+  assert.equal(Number(m[1]), Math.ceil((CATEGORIES.length + 1) / 2));
+});
+
 // The old palette lived as bare literals in styles.css, view.js and effects.js.
 // Any survivor is a colour that cannot follow the appearance setting. The two palette
 // blocks can appear in either order in the stylesheet (dark leads as of the

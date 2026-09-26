@@ -76,6 +76,7 @@ test('a win counts down and deals the next puzzle on its own', async ({ page }) 
   await expect(page.locator('#winstats')).toContainText('Next puzzle in 5 seconds');
   await expect(page.locator('#win')).toBeHidden({ timeout: 8000 });
   await expect(page.locator('.w.done')).toHaveCount(0);
+  await expect(page.locator('#newbtn')).toBeFocused();   // not dropped to <body> with the card
   expect(await page.locator('#letters').textContent()).not.toBe(before);
 });
 
