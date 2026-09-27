@@ -10,6 +10,36 @@
 
 const DIRS = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+/**
+ * Where a word goes. Least-used directions are tried first, ties in random order: drawing a
+ * direction at random and retrying on failure let long words pile into whichever directions
+ * still had room — 4.5 of 12 words shared one direction on the average full board. Within
+ * the direction, every position the word fits is equally likely.
+ * @param {(string|null)[][]} g @param {string} w @param {number} size @param {number[]} used
+ * @param {Rng} rng @returns {{x0:number, y0:number, d:number}|null}
+ */
+function choosePlacement(g, w, size, used, rng) {
+  // Stable sort after a shuffle: ties keep their shuffled order.
+  const order = rng.shuffle(DIRS.map((_, i) => i)).sort((a, b) => used[a] - used[b]);
+  const span = w.length - 1;
+  for (const d of order) {
+    const [dx, dy] = DIRS[d];
+    const xmin = dx < 0 ? span : 0, xmax = dx > 0 ? size - 1 - span : size - 1;
+    const ymin = dy < 0 ? span : 0, ymax = dy > 0 ? size - 1 - span : size - 1;
+    /** @type {{x0:number, y0:number}[]} */
+    const fits = [];
+    for (let y0 = ymin; y0 <= ymax; y0++) for (let x0 = xmin; x0 <= xmax; x0++) {
+      let ok = true;
+      for (let j = 0; j < w.length && ok; j++) { const c = g[y0 + dy * j][x0 + dx * j]; if (c && c !== w[j]) ok = false; }
+      if (ok) fits.push({ x0, y0 });
+    }
+    if (!fits.length) continue;
+    const pick = fits[rng.int(fits.length)];
+    return { x0: pick.x0, y0: pick.y0, d };
+  }
+  return null;
+}
+
 
 /** @param {string} s @returns {string} */
 export function cap(s) { return s.charAt(0) + s.slice(1).toLowerCase(); }
@@ -108,29 +138,20 @@ export function buildPuzzle({ name, pool, rng, size, count, mix, undrawn }) {
   /** @type {Placement[]} */
   const placements = [];
   let swaps = 0;
+  // Words placed so far in each of the eight directions.
+  const used = DIRS.map(() => 0);
 
   for (let i = 0; i < words.length; i++) {
     let placed = false;
     while (!placed) {
       const w = words[i];
-      for (let attempt = 0; attempt < 400; attempt++) {
-        const [dx, dy] = DIRS[rng.int(8)];
-        const span = w.length - 1;
-        const xmin = dx < 0 ? span : 0, xmax = dx > 0 ? size - 1 - span : size - 1;
-        const ymin = dy < 0 ? span : 0, ymax = dy > 0 ? size - 1 - span : size - 1;
-        if (xmax < xmin || ymax < ymin) continue;
-        const x0 = xmin + rng.int(xmax - xmin + 1);
-        const y0 = ymin + rng.int(ymax - ymin + 1);
-        let ok = true;
-        for (let j = 0; j < w.length; j++) {
-          const c = g[y0 + dy * j][x0 + dx * j];
-          if (c && c !== w[j]) { ok = false; break; }
-        }
-        if (!ok) continue;
-        for (let j = 0; j < w.length; j++) g[y0 + dy * j][x0 + dx * j] = w[j];
-        placements.push({ word: w, x0, y0, dx, dy });
+      const spot = choosePlacement(g, w, size, used, rng);
+      if (spot) {
+        const [dx, dy] = DIRS[spot.d];
+        for (let j = 0; j < w.length; j++) g[spot.y0 + dy * j][spot.x0 + dx * j] = w[j];
+        placements.push({ word: w, x0: spot.x0, y0: spot.y0, dx, dy });
+        used[spot.d]++;
         placed = true;
-        break;
       }
       // Swap, never drop: dropping produced boards quietly one word short.
       if (placed) break;   // skips the swap below; the while alone would not

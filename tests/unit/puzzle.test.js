@@ -288,3 +288,25 @@ test('buildPuzzle threads undrawn through to the draw', () => {
   });
   for (const w of p.words) assert.ok(undrawn.has(w), `${w} should have come from the bag`);
 });
+
+// Words used to pile into whichever directions still had room: on the average full board
+// 4.5 of the 12 shared one direction and only 5 of the 8 were used. Placement now tries
+// the least-used directions first. Sampled across real subjects at both presets.
+test('a board mixes all eight directions rather than repeating a few', async () => {
+  const { PRESETS } = await import('../../src/layout.js');
+  const { WORDS } = await import('../../src/subjects/nature.js');
+  const { WORDS: SPORT } = await import('../../src/subjects/sports.js');
+  const pools = [...Object.entries(WORDS), ...Object.entries(SPORT)].map(([id, v]) => [id, v.split(',')]);
+  for (const [name, p] of Object.entries(PRESETS)) {
+    for (const [id, pool] of pools) for (let seed = 1; seed <= 4; seed++) {
+      const pz = buildPuzzle({ name: id, pool, rng: makeRng(seed), size: p.size, count: p.count, mix: p.mix });
+      /** @type {Record<string, number>} */
+      const per = {};
+      for (const pl of pz.placements) per[`${pl.dx},${pl.dy}`] = (per[`${pl.dx},${pl.dy}`] || 0) + 1;
+      const most = Math.max(...Object.values(per));
+      // One over the even share: a long word sometimes fits only in a direction already used.
+      assert.ok(most <= Math.ceil(p.count / 8) + 1, `${name} ${id} seed ${seed}: ${most} words share one direction`);
+      assert.ok(Object.keys(per).length >= 6, `${name} ${id} seed ${seed}: only ${Object.keys(per).length} directions`);
+    }
+  }
+});
