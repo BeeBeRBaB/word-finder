@@ -167,3 +167,38 @@ test('no word is sprayed across the whole corpus', async () => {
   assert.equal(violations.length, 0,
     `${violations.length} word(s) over the corpus ceiling of ${CORPUS_CEILING}:\n${violations.join('\n')}`);
 });
+
+// The placement rules on every real subject, at both presets: parallel words never touch,
+// all eight directions appear, none takes more than its even share. A new word list heavy
+// in long words is where these would first give way, so it is checked here with the content.
+test('every subject lays out under the placement rules at both presets', async () => {
+  const { buildPuzzle } = await import('../../src/puzzle.js');
+  const { makeRng } = await import('../../src/rng.js');
+  const { PRESETS } = await import('../../src/layout.js');
+  const { readdirSync } = await import('node:fs');
+  const dir = new URL('../../src/subjects/', import.meta.url);
+  for (const f of readdirSync(dir)) {
+    const { WORDS } = await import(new URL(f, dir).href);
+    for (const [id, list] of Object.entries(WORDS)) for (const [name, p] of Object.entries(PRESETS)) for (let seed = 1; seed <= 3; seed++) {
+      const pz = buildPuzzle({ name: id, pool: list.split(','), rng: makeRng(seed), size: p.size, count: p.count, mix: p.mix });
+      /** @type {Record<string, number>} */
+      const per = {};
+      for (const pl of pz.placements) per[pl.dx + ',' + pl.dy] = (per[pl.dx + ',' + pl.dy] || 0) + 1;
+      assert.equal(Object.keys(per).length, 8, `${name} ${id} seed ${seed}: not all eight directions`);
+      assert.ok(Math.max(...Object.values(per)) <= Math.ceil(p.count / 8), `${name} ${id} seed ${seed}: over the even share`);
+      const own = new Map();
+      pz.placements.forEach((pl, i) => { for (let j = 0; j < pl.word.length; j++) own.set((pl.y0 + pl.dy * j) * p.size + pl.x0 + pl.dx * j, [...(own.get((pl.y0 + pl.dy * j) * p.size + pl.x0 + pl.dx * j) || []), i]); });
+      pz.placements.forEach((pl, i) => {
+        for (let j = 0; j < pl.word.length; j++) for (let oy = -1; oy <= 1; oy++) for (let ox = -1; ox <= 1; ox++) {
+          const x = pl.x0 + pl.dx * j + ox, y = pl.y0 + pl.dy * j + oy;
+          if (x < 0 || y < 0 || x >= p.size || y >= p.size) continue;
+          for (const k of own.get(y * p.size + x) || []) {
+            const q = pz.placements[k];
+            const parallel = k !== i && ((q.dx === pl.dx && q.dy === pl.dy) || (q.dx === -pl.dx && q.dy === -pl.dy));
+            assert.ok(!parallel, `${name} ${id} seed ${seed}: ${pl.word} touches ${q.word}`);
+          }
+        }
+      });
+    }
+  }
+});

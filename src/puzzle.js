@@ -10,27 +10,107 @@
 
 const DIRS = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+// Fresh layouts tried as-is, then allowing swaps, before any rule may relax. Real subjects
+// never needed more than 7 of the first; only synthetic pools built to defeat it reach the end.
+const BOARD_TRIES = 25, SWAP_TRIES = 100;
+/** Which of the four lines a direction runs along: a word and its reverse share one.
+ * @param {number} d @returns {number} */
+const axisOf = (d) => d >> 1;
+
 /**
  * Where a word goes. Least-used directions are tried first, ties in random order: drawing a
  * direction at random and retrying on failure let long words pile into whichever directions
  * still had room — 4.5 of 12 words shared one direction on the average full board. Within
- * the direction, every position the word fits is equally likely.
+ * the direction, every position the word fits is equally likely, except one that touches a
+ * word running along the same line: `halo[axis]` marks every cell within one step of those.
+ * Only when nothing fits anywhere under that rule is it dropped, so a word is never lost.
  * @param {(string|null)[][]} g @param {string} w @param {number} size @param {number[]} used
- * @param {Rng} rng @returns {{x0:number, y0:number, d:number}|null}
+ * @param {Rng} rng @param {Uint8Array[]} halo
+ * @returns {{x0:number, y0:number, d:number}|null}
  */
-function choosePlacement(g, w, size, used, rng) {
+function choosePlacement(g, w, size, used, rng, halo) {
+  return placeIn(g, w, size, used, rng, halo, true) ?? placeIn(g, w, size, used, rng, halo, false);
+}
+
+/**
+ * @typedef {{g:(string|null)[][], placements:Placement[]}} Laid
+ * Lay every word on an empty grid. 'strict' keeps every rule and fails the whole layout
+ * (null) when a word has no legal spot, so the caller can start over. 'swap' keeps every
+ * rule too, but first trades that word for a spare of the same length. 'relaxed' is only
+ * reached by a pool outside the content contract: a word may touch a parallel one, and one
+ * with no spot at all is swapped, never dropped — dropping made boards one word short.
+ * @param {string[]} words @param {string[]} spare @param {number} size @param {Rng} rng
+ * @param {'strict'|'swap'|'relaxed'} mode @param {string} name @returns {Laid|null}
+ */
+function lay(words, spare, size, rng, mode, name) {
+  const strict = mode !== 'relaxed';
+  /** @type {(string|null)[][]} */
+  const g = Array.from({ length: size }, () => new Array(size).fill(null));
+  /** @type {Placement[]} */
+  const placements = [];
+  let swaps = 0;
+  // Words placed so far in each of the eight directions, and per line (axis) the cells
+  // within one step of a word on it, which another word on that line may not enter.
+  const used = DIRS.map(() => 0);
+  const halo = [0, 1, 2, 3].map(() => new Uint8Array(size * size));
+  // The even share per direction, the same rule at every board size: 1 for 8 words, 2 for 12.
+  const share = Math.ceil(words.length / DIRS.length);
+  for (let i = 0; i < words.length; i++) {
+    for (;;) {
+      const w = words[i];
+      const spot = strict
+        ? placeIn(g, w, size, used, rng, halo, true, share, words.length - i - 1)
+        : choosePlacement(g, w, size, used, rng, halo);
+      if (spot) {
+        const [dx, dy] = DIRS[spot.d], ring = halo[axisOf(spot.d)];
+        for (let j = 0; j < w.length; j++) {
+          const x = spot.x0 + dx * j, y = spot.y0 + dy * j;
+          g[y][x] = w[j];
+          for (let oy = -1; oy <= 1; oy++) for (let ox = -1; ox <= 1; ox++) {
+            if (x + ox >= 0 && x + ox < size && y + oy >= 0 && y + oy < size) ring[(y + oy) * size + x + ox] = 1;
+          }
+        }
+        placements.push({ word: w, x0: spot.x0, y0: spot.y0, dx, dy });
+        used[spot.d]++;
+        break;
+      }
+      if (mode === 'strict') return null;
+      const alt = spare.findIndex(s => s.length === w.length);
+      if (mode === 'swap' && (alt === -1 || ++swaps > MAX_SWAPS)) return null;
+      if (alt === -1 || ++swaps > MAX_SWAPS) {
+        throw new Error(`could not place ${w} in a ${size}x${size} grid for "${name}"`);
+      }
+      words[i] = spare.splice(alt, 1)[0];
+    }
+  }
+  return { g, placements };
+}
+
+/** @param {(string|null)[][]} g @param {string} w @param {number} size @param {number[]} used
+ * @param {Rng} rng @param {Uint8Array[]} halo @param {boolean} apart
+ * @param {number} [share] strict layouts only: no direction past this many words
+ * @param {number} [left] strict layouts only: words still to place after this one. A used
+ *   direction is allowed only while enough remain to reach every unused one.
+ * @returns {{x0:number, y0:number, d:number}|null} */
+function placeIn(g, w, size, used, rng, halo, apart, share = Infinity, left = Infinity) {
+  const unused = used.filter(n => n === 0).length;
   // Stable sort after a shuffle: ties keep their shuffled order.
   const order = rng.shuffle(DIRS.map((_, i) => i)).sort((a, b) => used[a] - used[b]);
   const span = w.length - 1;
   for (const d of order) {
+    if (used[d] >= share || (used[d] > 0 && left < unused)) continue;
     const [dx, dy] = DIRS[d];
+    const near = halo[axisOf(d)];
     const xmin = dx < 0 ? span : 0, xmax = dx > 0 ? size - 1 - span : size - 1;
     const ymin = dy < 0 ? span : 0, ymax = dy > 0 ? size - 1 - span : size - 1;
     /** @type {{x0:number, y0:number}[]} */
     const fits = [];
     for (let y0 = ymin; y0 <= ymax; y0++) for (let x0 = xmin; x0 <= xmax; x0++) {
       let ok = true;
-      for (let j = 0; j < w.length && ok; j++) { const c = g[y0 + dy * j][x0 + dx * j]; if (c && c !== w[j]) ok = false; }
+      for (let j = 0; j < w.length && ok; j++) {
+        const x = x0 + dx * j, y = y0 + dy * j, c = g[y][x];
+        if ((c && c !== w[j]) || (apart && near[y * size + x])) ok = false;
+      }
       if (ok) fits.push({ x0, y0 });
     }
     if (!fits.length) continue;
@@ -133,35 +213,13 @@ export function buildPuzzle({ name, pool, rng, size, count, mix, undrawn }) {
   const words = chosen.slice().sort((a, b) => b.length - a.length);
   const spare = rng.shuffle(fits.filter(w => !chosen.includes(w)));
 
-  /** @type {(string|null)[][]} */
-  const g = Array.from({ length: size }, () => new Array(size).fill(null));
-  /** @type {Placement[]} */
-  const placements = [];
-  let swaps = 0;
-  // Words placed so far in each of the eight directions.
-  const used = DIRS.map(() => 0);
-
-  for (let i = 0; i < words.length; i++) {
-    let placed = false;
-    while (!placed) {
-      const w = words[i];
-      const spot = choosePlacement(g, w, size, used, rng);
-      if (spot) {
-        const [dx, dy] = DIRS[spot.d];
-        for (let j = 0; j < w.length; j++) g[spot.y0 + dy * j][spot.x0 + dx * j] = w[j];
-        placements.push({ word: w, x0: spot.x0, y0: spot.y0, dx, dy });
-        used[spot.d]++;
-        placed = true;
-      }
-      // Swap, never drop: dropping produced boards quietly one word short.
-      if (placed) break;   // skips the swap below; the while alone would not
-      const alt = spare.findIndex(s => s.length === w.length);
-      if (alt === -1 || ++swaps > MAX_SWAPS) {
-        throw new Error(`could not place ${w} in a ${size}x${size} grid for "${name}"`);
-      }
-      words[i] = spare.splice(alt, 1)[0];
-    }
-  }
+  // Parallel words never touch, every direction is used, and none takes more than its even
+  // share. Fresh layouts first, then fresh layouts that may trade a stuck word for a spare
+  // of the same length; only a pool with no spares (outside the content contract) relaxes.
+  let laid = null;
+  for (let t = 0; t < BOARD_TRIES && !laid; t++) laid = lay(words, spare, size, rng, 'strict', name);
+  for (let t = 0; t < SWAP_TRIES && !laid; t++) laid = lay(words, spare, size, rng, 'swap', name);
+  const { g, placements } = laid ?? /** @type {Laid} */ (lay(words, spare, size, rng, 'relaxed', name));
 
   /** @type {string[]} */
   const cells = [];

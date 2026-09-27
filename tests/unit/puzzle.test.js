@@ -304,9 +304,35 @@ test('a board mixes all eight directions rather than repeating a few', async () 
       const per = {};
       for (const pl of pz.placements) per[`${pl.dx},${pl.dy}`] = (per[`${pl.dx},${pl.dy}`] || 0) + 1;
       const most = Math.max(...Object.values(per));
-      // One over the even share: a long word sometimes fits only in a direction already used.
-      assert.ok(most <= Math.ceil(p.count / 8) + 1, `${name} ${id} seed ${seed}: ${most} words share one direction`);
+      // The even share, at every board size: 1 per direction for 8 words, 2 for 12.
+      assert.ok(most <= Math.ceil(p.count / 8), `${name} ${id} seed ${seed}: ${most} words share one direction`);
       assert.ok(Object.keys(per).length >= 6, `${name} ${id} seed ${seed}: only ${Object.keys(per).length} directions`);
+    }
+  }
+});
+
+// Words on the same line (a direction or its reverse) used to lie side by side: every
+// sampled full board had at least one such pair, ~5 on average. They may now never touch,
+// not even diagonally. Checked independently of the halo the generator uses.
+test('no two words on the same line touch, at either preset', async () => {
+  const { PRESETS } = await import('../../src/layout.js');
+  const pools = [];
+  for (const cat of ['nature', 'sports', 'history', 'food']) {
+    const { WORDS } = await import(`../../src/subjects/${cat}.js`);
+    for (const [id, v] of Object.entries(WORDS)) pools.push([id, v.split(',')]);
+  }
+  /** @param {import('../../src/puzzle.js').Placement} p @returns {number[][]} */
+  const path = (p) => Array.from({ length: p.word.length }, (_, j) => [p.x0 + p.dx * j, p.y0 + p.dy * j]);
+  for (const [name, p] of Object.entries(PRESETS)) {
+    for (const [id, pool] of pools) for (let seed = 1; seed <= 5; seed++) {
+      const pz = buildPuzzle({ name: id, pool, rng: makeRng(seed), size: p.size, count: p.count, mix: p.mix });
+      const pl = pz.placements;
+      for (let i = 0; i < pl.length; i++) for (let k = i + 1; k < pl.length; k++) {
+        const a = pl[i], b = pl[k];
+        if (!((a.dx === b.dx && a.dy === b.dy) || (a.dx === -b.dx && a.dy === -b.dy))) continue;
+        const touch = path(a).some(([ax, ay]) => path(b).some(([bx, by]) => Math.max(Math.abs(ax - bx), Math.abs(ay - by)) <= 1));
+        assert.ok(!touch, `${name} ${id} seed ${seed}: ${a.word} and ${b.word} run side by side`);
+      }
     }
   }
 });
