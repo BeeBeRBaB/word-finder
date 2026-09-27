@@ -5,7 +5,7 @@ const sw = /** @type {ServiceWorkerGlobalScope} */ (/** @type {unknown} */ (self
 // Bump when a change couples markup, styles and modules. Code is stale-while-revalidate
 // and each entry refreshes independently, so a torn pair can ship; install's atomic
 // addAll into a fresh cache is the only thing that swaps them as one set.
-const CACHE='wordfinder-v14';
+const CACHE='wordfinder-v15';
 // Unversioned on purpose: versioning it would make the activate sweep throw away every
 // downloaded category on every deploy.
 const SUBJECT_CACHE='wordfinder-subjects';
@@ -53,14 +53,17 @@ sw.addEventListener('fetch',e=>{
     return;
   }
   const req=e.request;
+  // Same-origin entries are keyed by path. Matching with ignoreSearch but storing under the
+  // full URL let the first ?subject= visit pin an index.html that no later refresh updated.
+  const key=url.origin===sw.location.origin?url.origin+url.pathname:req;
   e.respondWith(caches.open(CACHE).then(async cache=>{
-    const cached=await cache.match(req,{ignoreSearch:true});
+    const cached=await cache.match(key);
     // Icons and fonts only change when renamed, so never revalidate them.
     if(cached&&!isCode(new URL(req.url)))return cached;
     const fresh=revalidate(req).then(res=>{
       // Never cache a deploy-time 404/500. Opaque (cross-origin font) responses report
       // status 0 but are cacheable.
-      if(res&&(res.ok||res.type==='opaque'))cache.put(req,res.clone());
+      if(res&&(res.ok||res.type==='opaque'))cache.put(key,res.clone());
       return res;
     });
     if(cached){e.waitUntil(fresh.catch(()=>{}));return cached}

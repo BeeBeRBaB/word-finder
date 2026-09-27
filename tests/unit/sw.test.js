@@ -90,3 +90,12 @@ test('word pools live in their own cache, which the activate sweep spares', () =
 test('a subject module is routed to the subject cache, cache-first', () => {
   assert.match(sw, /isSubject/, 'the fetch handler needs to recognise a word pool');
 });
+
+// Matching with ignoreSearch while storing under the full URL let a ?subject= visit pin an
+// index.html that later refreshes never replaced; a coupled deploy then broke every launch.
+test('same-origin code is read and refreshed under one path-only key', () => {
+  assert.ok(!/ignoreSearch\s*:/.test(sw), 'a search-blind match reads entries that refreshes never write');
+  assert.match(sw, /const key=url\.origin===sw\.location\.origin\?url\.origin\+url\.pathname:req;/);
+  assert.match(sw, /cache\.match\(key\)/);
+  assert.match(sw, /cache\.put\(key,res\.clone\(\)\)/);
+});
