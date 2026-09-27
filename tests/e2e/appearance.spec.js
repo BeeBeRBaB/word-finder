@@ -285,6 +285,7 @@ test('exactly one icon shows for any data-pref, including values this build reti
         .map(s => s.getAttribute('class'));
     }, pref);
     expect(shown, `data-pref="${pref}" must show exactly one icon`).toHaveLength(1);
-    expect(shown[0]).toBe(pref === 'light' ? 'i-light' : 'i-dark');
+    // One gear now, carrying both old classes so either old rule still shows it.
+    expect(shown[0]).toContain('i-look');
   }
 });

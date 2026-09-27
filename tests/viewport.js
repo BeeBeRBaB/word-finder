@@ -20,6 +20,10 @@ export const DEVICES = [
   { name: 'iPad Mini portrait', w: 744, h: 1053 },
   { name: 'iPad Mini landscape', w: 1133, h: 664 },
   { name: 'Desktop', w: 1440, h: 900 },
+  // The two edges the others miss: the narrowest phone still in use, and a window whose rail
+  // sits at its 320px floor, where the word-list header row is tightest.
+  { name: 'iPhone SE portrait', w: 320, h: 568 },
+  { name: 'Narrow laptop window', w: 980, h: 740 },
 ];
 
 /** @param {string} name @returns {Device} */

@@ -111,25 +111,26 @@ test('the win card counter is empty at first paint and fills on a win', async ({
   await expect(page.locator('#winstats')).toHaveText(/^1 puzzle solved(\. Next puzzle in 5 seconds\.)?$/);
 });
 
-test('the checkbox reflects and persists the stored setting', async ({ page }) => {
+// Least-seen is a standing preference, so it lives in Settings, not the New game pane.
+test('the least-seen checkbox in Settings reflects and persists the stored setting', async ({ page }) => {
   await page.goto('/');
   await page.waitForSelector('#letters .cell');
-  await page.locator('#catbtn').click();
-  const box = page.locator('#picker-least-box');
+  await page.locator('#appearance').click();
+  const box = page.locator('#settings-least-box');
   await expect(box, 'on by default').toBeChecked();
 
   await box.uncheck();
   expect((await record(page)).favourLeastSeen).toBe(false);
 
-  // Unlike the category select, this must NOT reset when the dialog reopens.
-  await page.locator('#picker-cancel').click();
-  await page.locator('#catbtn').click();
+  await page.keyboard.press('Escape');
+  await page.locator('#appearance').click();
   await expect(box).not.toBeChecked();
 
   await page.reload();
   await page.waitForSelector('#letters .cell');
-  await page.locator('#catbtn').click();
-  await expect(page.locator('#picker-least-box'), 'survives a reload').not.toBeChecked();
+  await page.locator('#appearance').click();
+  await expect(page.locator('#settings-least-box'), 'survives a reload').not.toBeChecked();
+  await expect(page.locator('#picker-least-box'), 'and it is gone from the New game pane').toHaveCount(0);
 });
 
 test('a fully covered category is marked done in the select', async ({ page }) => {
@@ -202,20 +203,21 @@ test('the picker action buttons stay reachable on a short landscape phone', asyn
   await expect(page.locator('#picker')).toBeHidden();
 });
 
-test('the checkbox row is a control, not a second field label', async ({ page }) => {
-  // #pickercard label was (1,0,1) and silently beat #picker-least's (1,0,0), rendering
-  // this row as tracked uppercase orange -- visually a second CATEGORY heading, with the
-  // box jammed against the text because `display` never became flex either.
+test('a Settings checkbox row is a control, not a field label', async ({ page }) => {
+  // A label rule once outranked a checkbox row and rendered it as tracked uppercase orange,
+  // visually a second heading, with the box jammed against the text.
   await page.goto('/');
   await page.waitForSelector('#letters .cell');
-  await page.locator('#catbtn').click();
-  const style = await page.locator('#picker-least').evaluate((el) => {
+  await page.locator('#appearance').click();
+  const style = await page.locator('#settings-auto').evaluate((el) => {
     const cs = getComputedStyle(el);
     return { display: cs.display, transform: cs.textTransform, size: cs.fontSize };
   });
   expect(style.display).toBe('flex');
   expect(style.transform).toBe('none');
   expect(style.size).toBe('14.5px');
+  await page.keyboard.press('Escape');
+  await page.locator('#catbtn').click();
 
   // ...and the Category label above it is untouched.
   const cat = await page.locator('label[for="picker-select"]').evaluate(

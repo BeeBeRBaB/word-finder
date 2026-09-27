@@ -180,3 +180,19 @@ test('the rail leaves room for the longest subject title beside the action butto
   assert.ok(roomy.sideWidth - ACTIONS - GAP_TO_TITLE >= WIDEST_TITLE,
     `rail ${roomy.sideWidth} leaves only ${roomy.sideWidth - ACTIONS - GAP_TO_TITLE}px for a ${WIDEST_TITLE}px title`);
 });
+
+test('difficulty picks the word mix: Normal is the preset, Easy leans short, Hard leans long', async () => {
+  const { mixFor, MIXES } = await import('../../src/layout.js');
+  /** @param {import('../../src/layout.js').Bucket[]} mix */
+  const avg = (mix) => mix.reduce((s, b) => s + b.take * (b.min + b.max) / 2, 0) / mix.reduce((s, b) => s + b.take, 0);
+  for (const [name, p] of Object.entries(PRESETS)) {
+    assert.equal(mixFor(p, 'normal'), p.mix);
+    for (const level of /** @type {const} */ (['easy', 'hard'])) {
+      const mix = mixFor(p, level);
+      assert.equal(mix, MIXES[level][/** @type {'full'|'compact'} */ (name)]);
+      assert.equal(mix.reduce((s, b) => s + b.take, 0), p.count, `${name} ${level}: must deal ${p.count} words`);
+      assert.ok(Math.max(...mix.map(b => b.max)) <= p.size - 1, `${name} ${level}: a word longer than the grid allows`);
+    }
+    assert.ok(avg(mixFor(p, 'easy')) < avg(p.mix) && avg(p.mix) < avg(mixFor(p, 'hard')), `${name}: easy < normal < hard`);
+  }
+});

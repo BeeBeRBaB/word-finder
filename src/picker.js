@@ -7,16 +7,13 @@
  * @param {{
  *   root:HTMLElement, select:HTMLSelectElement, warning:HTMLElement, error:HTMLElement,
  *   start:HTMLElement, cancel:HTMLElement, categories:Category[],
- *   leastBox:HTMLInputElement,
  *   isUnavailable:(categoryId:string)=>boolean,
  *   isComplete:(categoryId:string)=>boolean,
- *   leastDefault:()=>boolean,
- *   onLeast:(on:boolean)=>void,
  *   onStart:(categoryId:string|null)=>Promise<void>,
  *   opener?:HTMLElement,
  * }} deps
  */
-export function makePicker({ root, select, warning, error, start, cancel, categories, leastBox, isUnavailable, isComplete, leastDefault, onLeast, onStart, opener }) {
+export function makePicker({ root, select, warning, error, start, cancel, categories, isUnavailable, isComplete, onStart, opener }) {
   // A disabled placeholder, then the real categories. Random is the header's one-click New
   // game, so the list holds only things you can choose — no action hiding among the values.
   select.innerHTML = '';
@@ -83,12 +80,10 @@ export function makePicker({ root, select, warning, error, start, cancel, catego
   /** @param {boolean} inProgress @returns {void} */
   function open(inProgress) {
     // Reset on every open. Choosing a category is an act, not a setting: a remembered
-    // choice would silently narrow every later game to it. The checkbox below is the
-    // deliberate opposite — it IS a setting, so it reflects the stored value instead of
-    // being reset. Do not "fix" the inconsistency; the two controls differ on purpose.
+    // choice would silently narrow every later game to it. (Least-seen IS a setting, which
+    // is why it lives in Settings rather than here.)
     select.value = '';
     labelOptions();
-    leastBox.checked = leastDefault();
     syncDisabled();
     warning.style.display = inProgress ? '' : 'none';
     error.hidden = true;
@@ -119,7 +114,6 @@ export function makePicker({ root, select, warning, error, start, cancel, catego
   }
 
   select.addEventListener('change', syncDisabled);
-  leastBox.addEventListener('change', () => onLeast(leastBox.checked));
   // The label from `categories`, not from the option's text: labelOptions() may have
   // appended "(done)" to that, which would then read back in the failure message as
   // "Nature (done) isn't available offline yet."

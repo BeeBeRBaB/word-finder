@@ -174,13 +174,15 @@ test('no word is sprayed across the whole corpus', async () => {
 test('every subject lays out under the placement rules at both presets', async () => {
   const { buildPuzzle } = await import('../../src/puzzle.js');
   const { makeRng } = await import('../../src/rng.js');
-  const { PRESETS } = await import('../../src/layout.js');
+  const { PRESETS, mixFor } = await import('../../src/layout.js');
   const { readdirSync } = await import('node:fs');
   const dir = new URL('../../src/subjects/', import.meta.url);
   for (const f of readdirSync(dir)) {
     const { WORDS } = await import(new URL(f, dir).href);
-    for (const [id, list] of Object.entries(WORDS)) for (const [name, p] of Object.entries(PRESETS)) for (let seed = 1; seed <= 3; seed++) {
-      const pz = buildPuzzle({ name: id, pool: list.split(','), rng: makeRng(seed), size: p.size, count: p.count, mix: p.mix });
+    // Every difficulty's word mix, one seed each: Hard (more long words) is where the rules
+    // would first give way, and a 7-long-word Hard did, on thousands of boards.
+    for (const [id, list] of Object.entries(WORDS)) for (const [name, p] of Object.entries(PRESETS)) for (const [seed, level] of /** @type {const} */ ([[1, 'easy'], [2, 'normal'], [3, 'hard']])) {
+      const pz = buildPuzzle({ name: id, pool: list.split(','), rng: makeRng(seed), size: p.size, count: p.count, mix: mixFor(p, level) });
       /** @type {Record<string, number>} */
       const per = {};
       for (const pl of pz.placements) per[pl.dx + ',' + pl.dy] = (per[pl.dx + ',' + pl.dy] || 0) + 1;

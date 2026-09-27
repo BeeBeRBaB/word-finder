@@ -158,3 +158,85 @@ test('Escape in an open themed dropdown closes the list, not the pane', async ({
   await page.keyboard.press('Escape');
   await expect(page.locator('#settings')).toBeHidden();
 });
+
+/** Open Settings and press one option of a segmented setting.
+ * @param {Page} page @param {string} key @param {string} value */
+async function pick(page, key, value) {
+  if (!(await page.locator('#settings').isVisible())) await page.locator('#appearance').click();
+  await page.locator(`.seg[data-setting="${key}"] button[data-value="${value}"]`).click();
+  await expect(page.locator(`.seg[data-setting="${key}"] button[data-value="${value}"]`)).toHaveAttribute('aria-pressed', 'true');
+}
+
+test('Board size deals the chosen board from the next game, and is remembered', async ({ page }) => {
+  await page.goto('/?seed=1&subject=nature/birds');
+  await page.waitForSelector('#letters .cell');
+  await expect(page.locator('.cell')).toHaveCount(169);        // desktop's own board
+  await pick(page, 'board', 'compact');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.cell')).toHaveCount(169);        // not until the next game
+  await page.locator('#newbtn').click();
+  await expect(page.locator('.cell')).toHaveCount(100);
+  await page.reload();
+  await page.locator('#newbtn').click();
+  await expect(page.locator('.cell')).toHaveCount(100);
+});
+
+test('Easy deals shorter words than Hard, in every direction', async ({ page }) => {
+  await page.goto('/?seed=1&subject=nature/birds');
+  await page.waitForSelector('#letters .cell');
+  /** @param {string} level @returns {Promise<{len:number, dirs:Set<string>}>} */
+  const play = async (level) => {
+    await pick(page, 'difficulty', level);
+    await page.keyboard.press('Escape');
+    let len = 0, n = 0; const dirs = new Set();
+    for (let i = 0; i < 6; i++) {
+      const before = await page.evaluate(() => JSON.parse(localStorage.getItem('wordfinder-save-v1') || '{}').seed);
+      await page.locator('#newbtn').click();
+      await page.waitForFunction((s) => JSON.parse(localStorage.getItem('wordfinder-save-v1') || '{}').seed !== s, before);
+      const pl = await page.evaluate(() => JSON.parse(localStorage.getItem('wordfinder-save-v1') || '{}').placements);
+      for (const p of pl) { len += p.word.length; n++; dirs.add(`${p.dx},${p.dy}`); }
+    }
+    return { len: len / n, dirs };
+  };
+  const easy = await play('easy'), hard = await play('hard');
+  expect(easy.len).toBeLessThan(hard.len - 1);
+  expect(easy.dirs.size, 'difficulty is the words, never the directions').toBe(8);
+  expect(hard.dirs.size).toBe(8);
+});
+
+test('Large letters enlarge the board letters without changing the board', async ({ page }) => {
+  await page.goto('/?seed=1&subject=nature/birds');
+  await page.waitForSelector('#letters .cell');
+  const size = () => page.locator('.cell').first().evaluate(el => parseFloat(getComputedStyle(el).fontSize));
+  const box = () => page.locator('#gridbox').boundingBox();
+  const [f0, b0] = [await size(), await box()];
+  await pick(page, 'letters', 'large');
+  expect(await size()).toBeGreaterThan(f0 * 1.2);
+  expect(await box()).toEqual(b0);
+});
+
+test('Reveal, sound, vibrate and motion toggles take effect and persist', async ({ page }) => {
+  await page.goto('/?seed=1&subject=nature/birds');
+  await page.waitForSelector('#letters .cell');
+  await page.locator('#appearance').click();
+  await page.locator('#settings-reveal-box').uncheck();
+  await expect(page.locator('#reveal')).toBeHidden();
+  await page.locator('#settings-motion-box').check();
+  await expect(page.locator('html')).toHaveAttribute('data-motion', 'reduce');
+  await page.locator('#settings-sound-box').uncheck();
+  await page.reload();
+  await page.waitForSelector('#letters .cell');
+  await expect(page.locator('#reveal')).toBeHidden();
+  await expect(page.locator('html')).toHaveAttribute('data-motion', 'reduce');
+  await page.locator('#appearance').click();
+  await expect(page.locator('#settings-sound-box')).not.toBeChecked();
+  await expect(page.locator('#settings-motion-box')).toBeChecked();
+});
+
+test('the Settings button is a gear, and Settings has Look, Game and Feedback sections', async ({ page }) => {
+  await page.goto('/?seed=1&subject=nature/birds');
+  await page.waitForSelector('#letters .cell');
+  await expect(page.locator('#appearance svg.i-look')).toBeVisible();
+  await page.locator('#appearance').click();
+  await expect(page.locator('#settings .panesection')).toHaveText(['Look', 'Game', 'Feedback']);
+});

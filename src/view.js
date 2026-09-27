@@ -1,6 +1,7 @@
 // Rendering. Everything here writes to the DOM and returns nothing; it holds no
 // state of its own, so what you see is a pure function of the arguments passed in.
 import { cap, lineIndices } from './puzzle.js';
+import { artFor, spriteRects, ILLUSTRATIONS } from './art.js';
 
 /**
  * @typedef {import('./puzzle.js').Puzzle} Puzzle
@@ -14,6 +15,7 @@ import { cap, lineIndices } from './puzzle.js';
  *   subject:HTMLElement, category:HTMLElement, win:HTMLElement, winmsg:HTMLElement,
  *   winstats:HTMLElement,
  *   picker:HTMLElement, winclose:HTMLElement, appearance:HTMLElement, solved:HTMLElement,
+ *   art:HTMLElement, railart:HTMLElement,
  * }} Els
  */
 
@@ -43,11 +45,12 @@ export function applyLayout(els, dims) {
 
 /** Rebuild every letter cell at the current cell size.
  * @param {Els} els @param {Puzzle} puzzle @param {LayoutDims} dims @param {number} size @param {number} pad
+ * @param {number} [scale] letter size as a share of the cell: .46, or .58 for Large
  * @returns {void} */
-export function renderGrid(els, puzzle, dims, size, pad) {
+export function renderGrid(els, puzzle, dims, size, pad, scale = 0.46) {
   const cell = dims.cell;
   els.letters.innerHTML = '';
-  const fs = Math.round(cell * 0.46);
+  const fs = Math.round(cell * scale);
   for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
     const s = document.createElement('span');
     s.className = 'cell';
@@ -137,4 +140,38 @@ export function renderList(els, puzzle, state, justFound) {
     if (state.found[w]) s.className = w === justFound ? 'w glow' : 'w done';
     els.list.appendChild(s);
   });
+}
+
+// Where the corner-anchored board art sits: it bleeds a tenth past two edges, so it reads as
+// scenery rather than a stamp in the middle of the letters.
+const CORNERS = [['-10%', '-10%'], ['32%', '-10%'], ['-10%', '32%'], ['32%', '32%']];
+
+/** Draw the subject's category art into both hosts; CSS and placeArt decide which shows.
+ * `style` is the Background setting: an illustration (pixel sprite where a category has none),
+ * the pixel sprite, or nothing.
+ * @param {Els} els @param {string} subjectId @param {'illustrated'|'pixel'|'none'} style
+ * @returns {void} */
+export function renderArt(els, subjectId, style) {
+  const a = artFor(subjectId);
+  if (!a || style === 'none') { els.art.innerHTML = ''; els.railart.innerHTML = ''; return; }
+  const illo = style === 'illustrated' ? ILLUSTRATIONS[a.motif] : undefined;
+  const [left, top] = CORNERS[a.corner];
+  const body = illo
+    ? (a.flip ? `<g transform="translate(64 0) scale(-1 1)">${illo}</g>` : illo)
+    : spriteRects(a.rows, a.flip);
+  const kind = illo ? 'illustrated' : 'pixel';
+  const svg = (/** @type {string} */ fit, /** @type {string} */ css) =>
+    `<svg viewBox="0 0 ${illo ? 64 : 16} ${illo ? 64 : 16}" preserveAspectRatio="${fit}" class="hue-${a.hue}" data-motif="${a.motif}" data-kind="${kind}"${illo ? '' : ' shape-rendering="crispEdges"'}${css}>${body}</svg>`;
+  els.art.innerHTML = svg('xMidYMid meet', ` style="left:${left};top:${top}"`);
+  els.railart.innerHTML = svg(a.flip ? 'xMinYMax meet' : 'xMaxYMax meet', '');
+}
+
+// Below this the rail's spare height would show the sprite as a speck; the board takes it.
+const RAIL_ART_MIN = 110;
+
+/** Rail when the landscape rail has real room under the list, board otherwise. Measured, not
+ * computed: the list's height depends on the words and the font.
+ * @param {Els} els @param {LayoutDims} dims @returns {void} */
+export function placeArt(els, dims) {
+  els.app.dataset.art = dims.landscape && els.railart.clientHeight >= RAIL_ART_MIN ? 'rail' : 'board';
 }

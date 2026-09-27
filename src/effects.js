@@ -13,6 +13,8 @@
  * @returns {void}
  */
 export function burst(fxEl, s, count, dims, pad) {
+  // The OS asking, or Settings' Reduce motion (which main.js mirrors onto <html>).
+  if (document.documentElement.dataset.motion === 'reduce') return;
   if (globalThis.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const cell = dims.cell;
   const cx = pad + ((s.x0 + s.x1) / 2 + 0.5) * cell, cy = pad + ((s.y0 + s.y1) / 2 + 0.5) * cell;
@@ -44,6 +46,9 @@ let ac = null;
 /** A short arpeggio: two notes for a find, four for the win.
  * @param {boolean} win @returns {void} */
 export function pop(win) {
+  // Automated browsers (tests, reviewers, verifiers) play games hundreds of finds a minute;
+  // on a real speaker that is a continuous ring. navigator.webdriver is set only for them.
+  if (navigator.webdriver) return;
   try {
     // `webkitAudioContext` is the pre-standard Safari global and is not in TS's DOM lib,
     // so the fallback is typed by hand rather than widened to `any`.

@@ -1,0 +1,565 @@
+// Category art: one 16x16 pixel sprite per category, drawn large and faint beside or
+// behind the board. Pure: it picks and describes the art; view.js puts it on the page.
+//
+// Rows are 16 chars: '.' empty, 'a' main tone, 'b' shade, 'c' highlight. tests/unit/art.test.js
+// holds every category in the catalog to having a well-formed sprite here.
+
+/** @type {Record<string, string[]>} */
+export const SPRITES = {
+  nature: [ // tree
+    '.....aaaaaa.....',
+    '...aaaaaaaaaa...',
+    '..aacaaaaaaaaa..',
+    '.acccaaaaaaaaaa.',
+    '.accaaaaaaaaaaa.',
+    'aaaaaaaaaaaaaaab',
+    'aaaaaaaaaaaaaaab',
+    'aaaaaaaaaaaaaaab',
+    '.aaaaaaaaaaaaab.',
+    '.abaaaaaaaaaabb.',
+    '..bbaaaaaaaabb..',
+    '...bb.aabb.bb...',
+    '......aabb......',
+    '......aabb......',
+    '.....aaabbb.....',
+    '....aaaaabbb....',
+  ],
+  food: [ // apple
+    '...........aa...',
+    '........baaaa...',
+    '........baa.....',
+    '........b.......',
+    '...aaaa.baaaa...',
+    '..acaaaaaaaaab..',
+    '.accaaaaaaaaaab.',
+    '.acaaaaaaaaaaab.',
+    '.aaaaaaaaaaaaab.',
+    '.aaaaaaaaaaaaab.',
+    '.aaaaaaaaaaaaab.',
+    '.aaaaaaaaaaaaab.',
+    '..aaaaaaaaaaab..',
+    '..aaaaaaaaaaab..',
+    '...bbaaaaaabb...',
+    '....bbb..bbb....',
+  ],
+  sports: [ // trophy
+    '................',
+    '..bbbbbbbbbbbb..',
+    'aaaaccaaaaaabbaa',
+    'aa.accaaaaaab.aa',
+    'aa.accaaaaaab.aa',
+    '.aa.caaaaaab.aa.',
+    '...aaaaaaaabb...',
+    '....aaaaaabb....',
+    '.....aaaabb.....',
+    '......aabb......',
+    '.......ab.......',
+    '.......ab.......',
+    '.....aaaabb.....',
+    '....aaaaaabb....',
+    '...aaaaaaaabb...',
+    '...bbbbbbbbbb...',
+  ],
+  animals: [ // paw print
+    '....aa....aa....',
+    '...acaa..acaa...',
+    '...aaaa..aaaa...',
+    '...aaab..aaab...',
+    '.aa.bb....bb.aa.',
+    'acaa........acaa',
+    'aaaa........aaaa',
+    'aaab........aaab',
+    '.bb...aaaa...bb.',
+    '.....acaaaa.....',
+    '....acaaaaaa....',
+    '...aaaaaaaaaa...',
+    '..aaaaaaaaaaaa..',
+    '..aaaaaaaaaaab..',
+    '..baaaaaaaaabb..',
+    '...bbbb..bbbb...',
+  ],
+  home: [ // house
+    '................',
+    '.......aa..bb...',
+    '......aaaa.bb...',
+    '.....aaaaaabb...',
+    '....aaaaaaaab...',
+    '...aaaaaaaaaa...',
+    '..aaaaaaaaaaaa..',
+    '.aaaaaaaaaaaaaa.',
+    'bbbbbbbbbbbbbbbb',
+    '..aaaaaaaaaaab..',
+    '..aaaaaaaaaaab..',
+    '..acca....accb..',
+    '..acca....accb..',
+    '..aaaa....aaab..',
+    '..aaaa....aaab..',
+    '..bbbb....bbbb..',
+  ],
+  travel: [ // airplane
+    '.......aa.......',
+    '......acab......',
+    '......acab......',
+    '......aaab......',
+    '......aaab......',
+    '.....aaaaba.....',
+    '...aaaaaabaaa...',
+    '..aaaaaaabaaaa..',
+    '.aaabbaaabbbaaa.',
+    'aabb..aaab..bbaa',
+    'bb....aaab....bb',
+    '......aaab......',
+    '.....aaaaba.....',
+    '....aaaaabaa....',
+    '...bbbaaabbbb...',
+    '.......ab.......',
+  ],
+  science: [ // erlenmeyer flask
+    '................',
+    '.....bbbbbb.....',
+    '......aaab......',
+    '......aaab......',
+    '......aaab......',
+    '.....aaaaab.....',
+    '.....aaaaab.....',
+    '....acaaaaab....',
+    '....acaaaaab....',
+    '...aaaaaaaaab...',
+    '...aaaaacaaab...',
+    '..aacaaaaaaaab..',
+    '..aaaaaaacaaab..',
+    '.aaaacaaaaaaaab.',
+    '.aaaaaaaaaaaaab.',
+    '..bbbbbbbbbbbb..',
+  ],
+  space: [ // ringed planet with stars
+    '..c.............',
+    '..c.............',
+    'ccccc...........',
+    '..c...aaaa......',
+    '..c..caaaaabbb..',
+    '....caaaaaaa.bbb',
+    '...aaaaaaaaa.bbb',
+    '...aaaaaaaaabbb.',
+    '..baaaaaaaabbb..',
+    '.bb.aaaaabbba...',
+    'bbb.aabbbbba....',
+    'bbbbbbbbbaa.....',
+    '.bbb..aaaa...c..',
+    '............ccc.',
+    '.............c..',
+    '................',
+  ],
+  music: [ // two beamed notes
+    '................',
+    '...........bbbb.',
+    '........bbbbbbb.',
+    '.....bbbbbbbbbb.',
+    '.....bbbbbb..aa.',
+    '.....aaa.....aa.',
+    '.....aa......aa.',
+    '.....aa......aa.',
+    '.....aa.....aaa.',
+    '.....aa...acaaa.',
+    '....aaa..acaaaa.',
+    '..acaaa..aaaab..',
+    '.acaaaa...bbb...',
+    '.aaaab..........',
+    '..bbb...........',
+    '................',
+  ],
+  art: [ // palette with brush
+    '..............bb',
+    '.............bbb',
+    '............bbb.',
+    '...........bbb..',
+    '..........ccc...',
+    '....aaaa.ccc....',
+    '..aaaaaabbb.....',
+    '.aaccaabbbaa....',
+    'aaaccaabbaaaaa..',
+    'aaaaaaaaaaaccaa.',
+    'aaaaaaaaaaaccaa.',
+    'aaa..aaaaaaaaaa.',
+    'aa...aaaaaaaaaa.',
+    '.....aaabbaaaa..',
+    '....aaaabbaaa...',
+    '......aaaaa.....',
+  ],
+  books: [ // open book
+    '................',
+    '................',
+    '.aa..........aa.',
+    '.aaaa......aaaa.',
+    '.aaaaaa..aaaaaa.',
+    'baaaaaabbaaaaaab',
+    'baaaaaabbaaaaaab',
+    'babbbbabbabbbbab',
+    'baaaaaabbaaaaaab',
+    'babbbbabbabbbbab',
+    'baaaaaabbaaaaaab',
+    'babbbbabbabbbbab',
+    'baaaaaabbaaaaaab',
+    'bbbaaaabbaaaabbb',
+    '.bbbbbbbbbbbbbb.',
+    '................',
+  ],
+  movies: [ // clapperboard
+    '.............bb.',
+    '.........bbaaba.',
+    '.....bbaabaabaa.',
+    '.bbaabaabaabb...',
+    '.baabaabb.......',
+    '.aabb...........',
+    '.bbaabbaabbaabb.',
+    '.baabbaabbaabba.',
+    '.aaaaaaaaaaaaaa.',
+    '.aaaaaaaaaaaaaa.',
+    '.aaaaaaaaaaaaaa.',
+    '.aaaaaaaaaaaaaa.',
+    '.aaaaaaaaaaaaaa.',
+    '.aaaaaaaaaaaaaa.',
+    '.bbbbbbbbbbbbbb.',
+    '................',
+  ],
+  jobs: [ // briefcase
+    '................',
+    '................',
+    '.....bbbbbb.....',
+    '....bbbbbbbb....',
+    '....bb....bb....',
+    '.aaaaaaaaaaaaaa.',
+    'aacaaaaaaaaaaaab',
+    'acaaaaaaaaaaaaab',
+    'aaaaaaaaaaaaaaab',
+    'bbbbbbbccbbbbbbb',
+    'aaaaaaaccaaaaaab',
+    'aaaaaaaaaaaaaaab',
+    'aaaaaaaaaaaaaaab',
+    'aaaaaaaaaaaaaaab',
+    '.bbbbbbbbbbbbbb.',
+    '................',
+  ],
+  school: [ // pencil
+    '................',
+    '...........acaa.',
+    '..........bbaaa.',
+    '.........abbbaa.',
+    '........aaabbb..',
+    '.......aaaaab...',
+    '......aaaaab....',
+    '.....aaaaab.....',
+    '....aaaaab......',
+    '...caaaab.......',
+    '...ccaab........',
+    '..ccccb.........',
+    '.ccccc..........',
+    '.bcc............',
+    'bb..............',
+    '................',
+  ],
+  body: [ // open hand
+    '................',
+    '.......aa.......',
+    '....aa.aa.aa....',
+    '....aa.aa.aa....',
+    '....aa.aa.aa.aa.',
+    '....aa.aa.aa.aa.',
+    'aa..aa.aa.aa.aa.',
+    'aaa.aa.aa.aa.aa.',
+    '.aa.aaaaaaaaaab.',
+    '.aaaaaaaaaaaaab.',
+    '..aaaaaaaaaaaab.',
+    '...aaaaaaaaaaab.',
+    '....aaaaaaaaab..',
+    '....aaaaaaaaab..',
+    '.....aaaaaaab...',
+    '.....aaaaaaab...',
+  ],
+  health: [ // heart with a cross
+    '................',
+    '..aaaa....aaaa..',
+    '.acaaaa..aaaaaa.',
+    'acaaaaaaaaaaaaaa',
+    'acaaaaa..aaaaaab',
+    'aaaaaaa..aaaaaab',
+    'aaaaa......aaaab',
+    '.aaaa......aaab.',
+    '.aaaaaa..aaaaab.',
+    '..aaaaa..aaaab..',
+    '...aaaaaaaaab...',
+    '....aaaaaaab....',
+    '.....aaaaab.....',
+    '......aabb......',
+    '.......bb.......',
+    '................',
+  ],
+  tech: [ // robot head
+    '......bbbb......',
+    '......bbbb......',
+    '.......bb.......',
+    '.......bb.......',
+    '..aaaaaaaaaaaa..',
+    '..acaaaaaaaaaa..',
+    '..aa...aa...aa..',
+    'bbaa...aa...aabb',
+    'bbaa...aa...aabb',
+    'bbaaaaaaaaaaaabb',
+    'bbaaaaaaaaaaaabb',
+    '..aaa......aaa..',
+    '..aaaaaaaaaaaa..',
+    '..bbbbbbbbbbbb..',
+    '.....bbbbbb.....',
+    '................',
+  ],
+  vehicles: [ // car side view
+    '................',
+    '................',
+    '................',
+    '.....aaaaaa.....',
+    '....acccaccca...',
+    '...accccacccca..',
+    '.aaaaaaaaaaaaaa.',
+    'aaaaaaaaaaaaaaac',
+    'baaaaaaaaaaaaaaa',
+    'aaaaaaaaaaaaaaaa',
+    'a.bbb.aaaa.bbb.a',
+    '.bbbbb....bbbbb.',
+    '.bbcbb....bbcbb.',
+    '.bbbbb....bbbbb.',
+    '..bbb......bbb..',
+    '................',
+  ],
+  clothing: [ // t-shirt
+    '................',
+    '...aaa....aaa...',
+    '..aaaab..baaaa..',
+    '.aaaaaabbaaaaaa.',
+    'aaaaaaaaaaaaaaaa',
+    'acaaaaaaaaaaaaab',
+    'aacaaaaaaaaaaaab',
+    'bbbcaaaaaaaaabbb',
+    '...caaaaaaaaab..',
+    '...caaaaaaaaab..',
+    '...caaaaaaaaab..',
+    '...caaaaaaaaab..',
+    '...caaaaaaaaab..',
+    '...caaaaaaaaab..',
+    '...aaaaaaaaaab..',
+    '...bbbbbbbbbbb..',
+  ],
+  celebrations: [ // balloon
+    '.....aaaaaa.....',
+    '...aaaaaaaaaa...',
+    '..aacaaaaaaaaa..',
+    '.acccaaaaaaaaab.',
+    '.accaaaaaaaaaab.',
+    '.acaaaaaaaaaaab.',
+    '.aaaaaaaaaaaaab.',
+    '..aaaaaaaaaaab..',
+    '..aaaaaaaaaaab..',
+    '...aaaaaaaaab...',
+    '....aaaaaaab....',
+    '.....aaaaab.....',
+    '......aaab......',
+    '......bbbb......',
+    '.......b........',
+    '........b.......',
+  ],
+  myth: [ // castle with flag
+    '.......bcccc....',
+    '.......bcc......',
+    '.......b........',
+    '.....a.aa.a.....',
+    '.....aaaaab.....',
+    'a.aa.aaccab.aa.b',
+    'aaab.aaccab.aaab',
+    'acab.aaaaab.acab',
+    'acabaaaaaaaaacab',
+    'aaaaaaaaaaaaaaab',
+    'aaaaaaa..aaaaaab',
+    'aaaaaa....aaaaab',
+    'aaaaaa....aaaaab',
+    'aaaaaa....aaaaab',
+    'aaaaaa....aaaaab',
+    'bbbbbb....bbbbbb',
+  ],
+  history: [ // greek column
+    '................',
+    '.aaaaaaaaaaaaaa.',
+    'aaaaaaaaaaaaaaaa',
+    'aba.bbbbbbbb.aba',
+    'aaa.cabaabab.aaa',
+    '....cabaabab....',
+    '....cabaabab....',
+    '....cabaabab....',
+    '....cabaabab....',
+    '....cabaabab....',
+    '....cabaabab....',
+    '....cabaabab....',
+    '...bbbbbbbbbb...',
+    '..aaaaaaaaaaaa..',
+    '.aaaaaaaaaaaaaa.',
+    'bbbbbbbbbbbbbbbb',
+  ],
+  places: [ // city skyline
+    '......a.........',
+    '......a.........',
+    '.....aaa........',
+    '.....aaa....bb..',
+    '....aaaaa..bbbb.',
+    '....acaca..bbbb.',
+    '....aaaaa..bbbb.',
+    '.bb.acaca..bbbb.',
+    'bbbbaaaaabbbbbbb',
+    'bbbbacacabbaaaaa',
+    'bbbbaaaaabbacaca',
+    'aaaaacacabbaaaaa',
+    'acaaaaaaabbacaca',
+    'aaaaacacabbaaaaa',
+    'aaaaaaaaaaaaaaaa',
+    'bbbbbbbbbbbbbbbb',
+  ],
+  feelings: [ // smiley face
+    '.....aaaaaa.....',
+    '...aaaaaaaaaa...',
+    '..acaaaaaaaaaa..',
+    '.accaaaaaaaaaaa.',
+    '.aca..aaaa..aaa.',
+    'aaaa..aaaa..aaaa',
+    'aaaa..aaaa..aaab',
+    'aaaaaaaaaaaaaaab',
+    'aaaaaaaaaaaaaaab',
+    'aaa.aaaaaaaa.aab',
+    'aaa..aaaaaa..aab',
+    '.aaa........aab.',
+    '.aaaaa....aaaab.',
+    '..aaaaaaaaaabb..',
+    '...aaaaaaaabb...',
+    '.....bbbbbb.....',
+  ],
+  garden: [ // flower
+    '......aaaa......',
+    '.....aaaaaa.....',
+    '.aaa.aaaaaa.aaa.',
+    'aaaaa.aaaa.aaaaa',
+    'aaaaaabbbbaaaaaa',
+    'aaaaabbccbbaaaaa',
+    '.aaaabbbbbbaaaa.',
+    '...aaabbbbaaa...',
+    '..aaaaa..aaaaa..',
+    '..aaaa.aa.aaaa..',
+    '...aa..aa..aa...',
+    '.......aa...bbb.',
+    '.bbb...aa.bbbbb.',
+    '.bbbbb.aabbbb...',
+    '...bbbbaa.......',
+    '.......aa.......',
+  ],
+};
+
+/** Flat vector illustrations, inner SVG for a 0 0 64 64 viewBox, by category. Shapes carry
+ * class t-a (main), t-b (shade), t-c (highlight) or ln (stroked detail); CSS gives each its
+ * share of the art's opacity. A category missing here falls back to its pixel sprite.
+ * @type {Record<string, string>} */
+export const ILLUSTRATIONS = {
+  // tree on a hill with the sun
+  nature: '<path class="t-b" d="M37.9 46.1A48 48 0 0 1 64 45.5L64 61.2A60 60 0 0 0 37.9 46.1Z"/><path class="t-a" d="M0 48.2A60 60 0 0 1 64 61.2L64 64H0Z"/><path class="t-b" d="M20.5 49 C21.5 44 22 39 21.5 34 L19 30.5 C18.6 29.8 19.4 29.2 20 29.8 L23 33 L25.5 29 C26 28.3 27 28.8 26.6 29.6 L25.4 33.5 C25.3 39 26 44.5 27.5 49 Z"/><path class="t-a" fill-rule="evenodd" d="M40.7 21.6A7.5 7.5 0 0 1 32.1 33.4A8.5 8.5 0 0 1 15.6 32.4A8 8 0 0 1 7.6 18.7A8.5 8.5 0 0 1 17.6 6.4A8.5 8.5 0 0 1 33.9 8.1A8 8 0 0 1 40.7 21.6ZM10.4 17.7A4.2 2.3 -48 1 0 16 11.5A4.2 2.3 -48 1 0 10.4 17.7ZM17.1 9.6a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0Z"/><path class="t-c" d="M10.4 17.7A4.2 2.3 -48 1 0 16 11.5A4.2 2.3 -48 1 0 10.4 17.7ZM17.1 9.6a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0Z"/><path class="t-b" d="M43 15.3A8 8 0 0 1 40.7 21.6A7.5 7.5 0 0 1 32.1 33.4A8.5 8.5 0 0 1 15.6 32.4A8 8 0 0 1 9.1 32.3A21 21 0 0 0 43 15.3Z"/><path class="t-a" fill-rule="evenodd" d="M44 13a7 7 0 1 0 14 0a7 7 0 1 0 -14 0ZM46.1 10.5a2.4 2.4 0 1 0 4.8 0a2.4 2.4 0 1 0 -4.8 0Z"/><path class="t-c" d="M46.1 10.5a2.4 2.4 0 1 0 4.8 0a2.4 2.4 0 1 0 -4.8 0Z"/><path class="ln" d="M60.2 16.8L63.2 18.1M54.8 22.2L56.1 25.2M47.2 22.2L45.9 25.2M41.8 16.8L38.8 18.1M41.8 9.2L38.8 7.9M47.2 3.8L45.9 0.8M54.8 3.8L56.1 0.8M60.2 9.2L63.2 7.9"/><path class="ln" d="M42.5 34q2.6-2.8 5.2 0q2.6-2.8 5.2 0"/>',
+  // cupcake with a cherry
+  food: '<path class="t-a" fill-rule="evenodd" d="M54.2 39.6A5.6 5.6 0 0 1 47.6 39.5A5.6 5.6 0 0 1 37.3 40.9A5.6 5.6 0 0 1 26.7 40.9A5.6 5.6 0 0 1 16.4 39.5A5.6 5.6 0 0 1 9.8 39.6L15.5 58Q16 61 19 61H45Q48 61 48.5 58Z"/><path class="t-b" d="M18 47.5L16.9 60.9H20.9L21.4 47.5ZM27.3 47.5L26.9 60.9H30.8L30.9 47.5ZM36.2 47.5L36.1 60.9H40.1L40.2 47.5ZM45.5 47.5L44.6 60.9H47.2L49 47.5Z"/><path class="t-a" fill-rule="evenodd" d="M48.1 19A7 7 0 0 1 53.7 30.1A5.6 5.6 0 1 1 47.6 39.5A5.6 5.6 0 0 1 37.3 40.9A5.6 5.6 0 0 1 26.7 40.9A5.6 5.6 0 0 1 16.4 39.5A5.6 5.6 0 1 1 10.3 30.1A7 7 0 0 1 15.9 19A7.2 7.2 0 0 1 25.7 11.3A6.4 6.4 0 0 1 38.3 11.3A7.2 7.2 0 0 1 48.1 19ZM17.4 20.3A3.6 2 -52 1 0 21.8 14.7A3.6 2 -52 1 0 17.4 20.3ZM11 29.3A2.8 1.7 -80 1 0 12 23.7A2.8 1.7 -80 1 0 11 29.3Z"/><path class="t-c" d="M17.4 20.3A3.6 2 -52 1 0 21.8 14.7A3.6 2 -52 1 0 17.4 20.3ZM11 29.3A2.8 1.7 -80 1 0 12 23.7A2.8 1.7 -80 1 0 11 29.3Z"/><path class="t-b" d="M47.8 15.5A7.2 7.2 0 0 1 48.1 19A7 7 0 0 1 53.7 30.1A5.6 5.6 0 1 1 47.6 39.5A5.6 5.6 0 0 1 41.2 43.7A26 26 0 0 0 47.8 15.5Z"/><path class="ln" d="M14.5 31.5C22 35.5 42 35.5 49.5 31.5M20 22.5C27 25.5 37 25.5 44 22.5"/><path class="t-b" d="M26.6 7.6a5.4 5.4 0 1 0 10.8 0a5.4 5.4 0 1 0 -10.8 0Z"/><path class="t-c" d="M28.6 5.8a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0 -3.2 0Z"/><path class="ln" d="M33.5 2.6C34.5 1.2 36.5 0.8 38.5 1.4"/>',
+  // trophy with a star
+  sports: '<path class="t-a" fill-rule="evenodd" d="M15 9H49V17C49 29.5 42 37.5 34 39H30C22 37.5 15 29.5 15 17ZM20 13H23.5V20C23.5 25 25 29 27.5 32.5C23 30.5 20 25.5 20 19Z"/><path class="t-c" d="M20 13H23.5V20C23.5 25 25 29 27.5 32.5C23 30.5 20 25.5 20 19Z"/><path class="t-b" d="M44.5 13H49V17C49 28 43 36.5 35 38.8C41 34 44.5 26 44.5 17Z"/><path class="t-b" d="M32 15L33.8 19.5L38.7 19.8L34.9 23L36.1 27.7L32 25.1L27.9 27.7L29.1 23L25.3 19.8L30.2 19.5Z"/><path class="t-b" d="M16.5 12.5H10.5C6.5 12.5 4 15.5 4 19.5C4 26.5 10 31 17.5 32.5L19 28.3C13.5 27 8.8 24 8.8 19.5C8.8 17.8 9.8 17 11.2 17H16.5ZM47.5 12.5H53.5C57.5 12.5 60 15.5 60 19.5C60 26.5 54 31 46.5 32.5L45 28.3C50.5 27 55.2 24 55.2 19.5C55.2 17.8 54.2 17 52.8 17H47.5Z"/><path class="t-b" d="M12.5 6.5H51.5Q53.5 6.5 53.5 8.5V9.5Q53.5 11.5 51.5 11.5H12.5Q10.5 11.5 10.5 9.5V8.5Q10.5 6.5 12.5 6.5Z"/><path class="t-a" d="M29.5 39H34.5V43.5C34.5 45.5 36 47 38.5 48H25.5C28 47 29.5 45.5 29.5 43.5Z"/><path class="t-b" d="M27.5 41.5H36.5V44H27.5Z"/><path class="t-a" d="M22.5 48H41.5L44 53.5H20Z"/><path class="t-b" d="M17.5 53.5H46.5Q48.5 53.5 48.5 55.5V59Q48.5 61 46.5 61H17.5Q15.5 61 15.5 59V55.5Q15.5 53.5 17.5 53.5Z"/><path class="t-c" d="M26 55.8H38Q39 55.8 39 56.8V57.8Q39 58.8 38 58.8H26Q25 58.8 25 57.8V56.8Q25 55.8 26 55.8Z"/><path class="ln" d="M6 3.5V8.5M3.5 6H8.5M58 36V40M56 38H60M7 38.5V41.5M5.5 40H8.5"/>',
+  // friendly cat face
+  animals: '<path class="t-a" fill-rule="evenodd" d="M32 59C17 59 6 50.5 6 38.5C6 31.5 8 26 11.5 21.5L10.5 8.5Q10.3 4.8 13.6 6.4L24.5 14.2Q28 13.3 32 13.3Q36 13.3 39.5 14.2L50.4 6.4Q53.7 4.8 53.5 8.5L52.5 21.5C56 26 58 31.5 58 38.5C58 50.5 47 59 32 59ZM14.2 11.2L21.8 16.6Q17.5 18.3 15 20.8ZM49.8 11.2L42.2 16.6Q46.5 18.3 49 20.8ZM32 40.4A6.4 6.4 0 1 0 32 50.6A6.4 6.4 0 1 0 32 40.4Z"/><path class="t-c" d="M14.2 11.2L21.8 16.6Q17.5 18.3 15 20.8ZM49.8 11.2L42.2 16.6Q46.5 18.3 49 20.8ZM32 40.4A6.4 6.4 0 1 0 32 50.6A6.4 6.4 0 1 0 32 40.4Z"/><path class="t-b" d="M58 38.5C58 50.5 47 59 32 59C43.5 56 53 49 56.6 33.2C57.5 35 58 36.5 58 38.5Z"/><path class="t-b" d="M17.9 33.5a3.6 4.4 0 1 0 7.2 0a3.6 4.4 0 1 0 -7.2 0ZM38.9 33.5a3.6 4.4 0 1 0 7.2 0a3.6 4.4 0 1 0 -7.2 0Z"/><path class="t-c" d="M18.9 31.8a1.4 1.4 0 1 0 2.8 0a1.4 1.4 0 1 0 -2.8 0ZM39.9 31.8a1.4 1.4 0 1 0 2.8 0a1.4 1.4 0 1 0 -2.8 0Z"/><path class="t-b" d="M28.3 40.2H35.7Q37.2 40.2 36.2 41.5L33.1 44.8Q32 45.9 30.9 44.8L27.8 41.5Q26.8 40.2 28.3 40.2Z"/><path class="ln" d="M32 45.5V47.2M27.8 47.8Q30.2 50.2 32 47.4Q33.8 50.2 36.2 47.8"/><path class="ln" d="M17.5 42.5L3.5 40.5M18 46.5L4.5 49M46.5 42.5L60.5 40.5M46 46.5L59.5 49"/><path class="ln" d="M32 16.5V21.5M27 17.3L28 21.2M37 17.3L36 21.2"/>',
+  // cosy house with smoking chimney
+  home: '<path class="t-a" d="M41 13.5H48.5V28H41Z"/><path class="t-b" d="M39.8 10.5H49.7Q50.7 10.5 50.7 11.5V13.3Q50.7 14.3 49.7 14.3H39.8Q38.8 14.3 38.8 13.3V11.5Q38.8 10.5 39.8 10.5Z"/><path class="t-a" fill-rule="evenodd" d="M13 34H51V58H13ZM16.5 39.5h3.4v3.4h-3.4ZM21.1 39.5h3.4v3.4h-3.4ZM16.5 44.1h3.4v3.4h-3.4ZM21.1 44.1h3.4v3.4h-3.4ZM39.5 39.5h3.4v3.4h-3.4ZM44.1 39.5h3.4v3.4h-3.4ZM39.5 44.1h3.4v3.4h-3.4ZM44.1 44.1h3.4v3.4h-3.4Z"/><path class="t-c" d="M16.5 39.5h3.4v3.4h-3.4ZM21.1 39.5h3.4v3.4h-3.4ZM16.5 44.1h3.4v3.4h-3.4ZM21.1 44.1h3.4v3.4h-3.4ZM39.5 39.5h3.4v3.4h-3.4ZM44.1 39.5h3.4v3.4h-3.4ZM39.5 44.1h3.4v3.4h-3.4ZM44.1 44.1h3.4v3.4h-3.4Z"/><path class="t-b" fill-rule="evenodd" d="M6.5 36.5Q3.5 36.5 5.5 34.2L30 11.5Q32 9.8 34 11.5L58.5 34.2Q60.5 36.5 57.5 36.5ZM28.4 25.5a3.6 3.6 0 1 0 7.2 0a3.6 3.6 0 1 0 -7.2 0Z"/><path class="t-c" d="M28.4 25.5a3.6 3.6 0 1 0 7.2 0a3.6 3.6 0 1 0 -7.2 0Z"/><path class="ln" d="M28.4 25.5H35.6M32 21.9V29.1"/><path class="t-b" d="M27.5 58V47.5A4.5 4.5 0 0 1 36.5 47.5V58Z"/><path class="t-c" d="M33.3 52a0.9 0.9 0 1 0 1.8 0a0.9 0.9 0 1 0 -1.8 0Z"/><path class="t-b" d="M15.5 48.4H26V50.2H15.5ZM38 48.4H48.5V50.2H38Z"/><path class="t-b" d="M3 59.5Q3 57.5 5 57.5H59Q61 57.5 61 59.5V60Q61 62 59 62H5Q3 62 3 60Z"/><path class="t-b" d="M48.6 36.5H51V58H48.6Z"/><path class="t-c" d="M43.7 7.3a2.3 2.3 0 1 0 4.6 0a2.3 2.3 0 1 0 -4.6 0ZM47.7 4.2a2.8 2.8 0 1 0 5.6 0a2.8 2.8 0 1 0 -5.6 0ZM53.5 3.3a3.1 3.1 0 1 0 6.2 0a3.1 3.1 0 1 0 -6.2 0Z"/>',
+  // hot-air balloon among clouds
+  travel: '<path class="t-a" fill-rule="evenodd" d="M32 3C44.5 3 53 12 53 23C53 32.5 45.5 38.5 39.5 44H24.5C18.5 38.5 11 32.5 11 23C11 12 19.5 3 32 3ZM32 3C25 7 21 16 21.5 25C22 33 25 39.5 28 44H24.5C18.5 38.5 11 32.5 11 23C11 12 19.5 3 32 3Z"/><path class="t-c" d="M32 3C25 7 21 16 21.5 25C22 33 25 39.5 28 44H24.5C18.5 38.5 11 32.5 11 23C11 12 19.5 3 32 3Z"/><path class="t-b" d="M32 3C39 7 43 16 42.5 25C42 33 39 39.5 36 44H39.5C45.5 38.5 53 32.5 53 23C53 12 44.5 3 32 3Z"/><path class="t-b" d="M24 43H40Q41 43 41 44V45.5Q41 46.5 40 46.5H24Q23 46.5 23 45.5V44Q23 43 24 43Z"/><path class="ln" d="M25.5 46.5L28 52M38.5 46.5L36 52M32 46.5V52"/><path class="t-a" d="M26.5 52H37.5L36.5 59.5Q36.3 61 34.8 61H29.2Q27.7 61 27.5 59.5Z"/><path class="t-b" d="M26 51.5H38Q39 51.5 39 52.5V53.5Q39 54.5 38 54.5H26Q25 54.5 25 53.5V52.5Q25 51.5 26 51.5Z"/><path class="t-c" d="M42.8 60.5C39 60.5 38.4 55 42 54.2C42 49.4 47.6 47.5 50.5 50.6C52.5 45.5 60 45.7 61 51.2C64.3 51.8 64 60.5 60 60.5ZM3.5 50.5C0.5 50.5 0.5 45.5 3.8 45.2C4.2 41.5 8.8 40.5 11 43C13 39.8 18.5 40.8 18.8 44.8C22 45.2 22 50.5 18.5 50.5Z"/>',
+  // bubbling flask
+  science: '<circle class="t-a" cx="36.5" cy="9" r="3.4"/><circle class="t-a" cx="27.5" cy="5.5" r="2.4"/><circle class="t-a" cx="40.5" cy="2.4" r="1.6"/><path class="t-a" d="M27 19L27 30L10.3 54Q6.1 60 13 60L51 60Q57.9 60 53.7 54L37 30L37 19Z"/><path class="t-b" d="M37 30L45.3 42L41.3 42L34 31.4L34 19L37 19Z"/><path class="t-b" d="M18.7 42Q25 38.5 32 42Q39 45.5 45.3 42L53.7 54Q57.9 60 51 60L13 60Q6.1 60 10.3 54Z"/><circle class="t-c" cx="24" cy="52" r="2.6"/><circle class="t-c" cx="34" cy="48.5" r="1.8"/><circle class="t-c" cx="41" cy="54.5" r="2.2"/><circle class="t-c" cx="30" cy="56" r="1.2"/><rect class="t-b" x="22.5" y="14" width="19" height="6" rx="3"/><rect class="t-c" x="29" y="22" width="2.4" height="8" rx="1.2"/><ellipse class="t-c" cx="21" cy="36.5" rx="1.8" ry="4.6" transform="rotate(35 21 36.5)"/>',
+  // ringed planet, stars, rocket
+  space: '<path class="t-c" d="M53 6Q53 12 59 12Q53 12 53 18Q53 12 47 12Q53 12 53 6Z"/><path class="t-c" d="M57 51.5Q57 56 61.5 56Q57 56 57 60.5Q57 56 52.5 56Q57 56 57 51.5Z"/><circle class="t-c" cx="36" cy="6" r="1.3"/><circle class="t-c" cx="6" cy="57" r="1.3"/><circle class="t-c" cx="60" cy="37" r="1.1"/><g transform="translate(28 38) rotate(-20)"><path class="t-b" d="M-27 0A27 8 0 0 1 27 0L21 0A21 4.5 0 0 0 -21 0Z"/><circle class="t-a" cx="0" cy="0" r="15"/><path class="t-b" d="M14.1 -5.1A15 15 0 0 1 -5.1 14.1A18 18 0 0 0 14.1 -5.1Z"/><ellipse class="t-c" cx="-6" cy="-8" rx="3.6" ry="2.2" transform="rotate(-35 -6 -8)"/><path class="t-b" d="M-27 2A27 8 0 0 0 27 2L21 2A21 4.5 0 0 1 -21 2Z"/><path class="t-c" d="M-27 0A27 8 0 0 0 27 0L21 0A21 4.5 0 0 1 -21 0Z"/></g><g transform="translate(14 15) rotate(40)"><path class="t-c" d="M-3 5.5Q0 16 3 5.5Z"/><path class="t-b" d="M-4.4 -1L-8.4 6.5L-3.8 5.5ZM4.4 -1L8.4 6.5L3.8 5.5Z"/><path class="t-a" d="M0 -12.5Q6.8 -5.5 4.4 5.5L-4.4 5.5Q-6.8 -5.5 0 -12.5Z"/><path class="t-b" d="M0 -12.5Q6.8 -5.5 4.4 5.5L1.6 5.5Q3.4 -4.5 0 -12.5Z"/><circle class="t-c" cx="0" cy="-2.5" r="2.2"/></g>',
+  // beamed notes
+  music: '<path class="t-a" d="M22 14L54 5Q57 4.2 57 7.3L57 14Q57 16 55 16.6L25 25Z"/><rect class="t-a" x="22" y="15" width="5" height="36" rx="1"/><rect class="t-a" x="52" y="7" width="5" height="36" rx="1"/><ellipse class="t-a" cx="17" cy="51" rx="10" ry="7.5" transform="rotate(-22 17 51)"/><ellipse class="t-a" cx="47" cy="43" rx="10" ry="7.5" transform="rotate(-22 47 43)"/><path class="t-b" d="M8.2 55.6Q12 60.6 20 58.4Q27.7 56 27 49Q25 55 18 56.5Q12 57.6 8.2 55.6Z"/><path class="t-b" d="M38.2 47.6Q42 52.6 50 50.4Q57.7 48 57 41Q55 47 48 48.5Q42 49.6 38.2 47.6Z"/><ellipse class="t-c" cx="13" cy="48" rx="3.5" ry="2" transform="rotate(-22 13 48)"/><ellipse class="t-c" cx="43" cy="40" rx="3.5" ry="2" transform="rotate(-22 43 40)"/><rect class="t-c" x="53.4" y="19" width="1.8" height="16" rx=".9"/><path class="t-b" d="M25 25L57 16.6L57 12L25 20.4Z"/><path class="ln" d="M6 22Q3 28 6 34M11 24Q9 28 11 32"/><path class="t-c" d="M9 4Q9 8 13 8Q9 8 9 12Q9 8 5 8Q9 8 9 4Z"/><path class="t-c" d="M58 53.5Q58 57 61.5 57Q58 57 58 60.5Q58 57 54.5 57Q58 57 58 53.5Z"/>',
+  // palette with brush
+  art: '<path class="t-b" fill-rule="evenodd" d="M31.5 15C48.5 14 62.5 24 61.5 38C60.5 51 50.5 60 37.5 60C31.5 60 29.5 56 31.5 52C33.5 48 30.5 44 25.5 46C20.5 48 17.5 53 12.5 52C7 51 5 45 6 38C7.5 24 17.5 15.6 31.5 15ZM14.3 34A4.2 4.2 0 1 0 22.7 34A4.2 4.2 0 1 0 14.3 34ZM30 12C47 11 61 21 60 35C59 48 49 57 36 57C30 57 28 53 30 49C32 45 29 41 24 43C19 45 16 50 11 49C5.5 48 3.5 42 4.5 35C6 21 16 12.6 30 12ZM12.8 31A4.2 4.2 0 1 0 21.2 31A4.2 4.2 0 1 0 12.8 31Z"/><path class="t-a" fill-rule="evenodd" d="M30 12C47 11 61 21 60 35C59 48 49 57 36 57C30 57 28 53 30 49C32 45 29 41 24 43C19 45 16 50 11 49C5.5 48 3.5 42 4.5 35C6 21 16 12.6 30 12ZM12.8 31A4.2 4.2 0 1 0 21.2 31A4.2 4.2 0 1 0 12.8 31Z"/><circle class="t-b" cx="21" cy="20" r="4.6"/><circle class="t-c" cx="33" cy="18" r="4.4"/><circle class="t-b" cx="51" cy="36" r="4.4"/><circle class="t-c" cx="40" cy="48" r="4.2"/><g transform="translate(32 37) rotate(40)"><path class="t-b" d="M-3 -17L-2.2 -41Q0 -43.5 2.2 -41L3 -17Z"/><rect class="t-c" x="-3.5" y="-18" width="7" height="7" rx="1.2"/><path class="t-b" d="M0 1C-4.2 -3 -4.4 -8 -3.5 -11.5L3.5 -11.5C4.4 -8 4.2 -3 0 1Z"/><path class="t-c" d="M-1.8 -10.5L-.6 -10.5L-.8 -4Z"/></g>',
+  // open book, bookmark
+  books: '<path class="t-b" d="M2 14L2 56Q18 52 32 59Q46 52 62 56L62 14L59 14L59 53Q45 48 32 56Q19 48 5 53L5 14Z"/><path class="t-c" d="M5 51Q19 46 32 54Q45 46 59 51L59 53Q45 48 32 56Q19 48 5 53Z"/><path class="t-a" d="M32 16Q19 7 5 11L5 51Q19 46 32 54Z"/><path class="t-a" d="M32 16Q45 7 59 11L59 51Q45 46 32 54Z"/><path class="t-b" d="M32 16Q29.2 13.9 26.5 12.7L26.5 49.9Q29.2 51.3 32 54Z"/><path class="ln" d="M10 19Q16 17 22 18.6M10 26Q16 24 22 25.6M10 33Q16 31 22 32.6M10 40Q16 38 22 39.6"/><path class="ln" d="M47 18.6Q50 17.5 54 17.5M47 25.6Q50 24.5 54 24.5M47 32.6Q50 31.5 54 31.5M47 39.6Q50 38.5 54 38.5"/><path class="t-c" d="M37 12.4L43 10.9L43 62L40 58.5L37 62Z"/>',
+  // clapperboard
+  movies: '<g transform="translate(0 2)"><path class="t-b" fill-rule="evenodd" d="M10 33.5H54Q58 33.5 58 37.5V56.5Q58 60.5 54 60.5H10Q6 60.5 6 56.5V37.5Q6 33.5 10 33.5ZM10 30H54Q58 30 58 34V53Q58 57 54 57H10Q6 57 6 53V34Q6 30 10 30Z"/><path class="t-a" d="M10 30H54Q58 30 58 34V53Q58 57 54 57H10Q6 57 6 53V34Q6 30 10 30Z"/><rect class="t-c" x="6" y="22" width="52" height="9" rx="2"/><polygon class="t-b" points="13,22 19,22 14,31 8,31"/><polygon class="t-b" points="25,22 31,22 26,31 20,31"/><polygon class="t-b" points="37,22 43,22 38,31 32,31"/><polygon class="t-b" points="49,22 55,22 50,31 44,31"/><g transform="rotate(-14 7 21)"><rect class="t-c" x="6" y="11" width="52" height="9" rx="2"/><polygon class="t-b" points="13,11 19,11 14,20 8,20"/><polygon class="t-b" points="25,11 31,11 26,20 20,20"/><polygon class="t-b" points="37,11 43,11 38,20 32,20"/><polygon class="t-b" points="49,11 55,11 50,20 44,20"/></g><circle class="t-a" cx="8.5" cy="21" r="2.6"/><path class="ln" d="M13 39H51M13 47H28M35 47H51"/></g>',
+  // hard hat and wrench
+  jobs: '<g transform="translate(32 53.5) rotate(-7)"><rect class="t-b" x="-21" y="-3.2" width="42" height="6.4" rx="3.2"/><path class="t-b" d="M-30.3,-3H-26.5A3,3 0 0 1 -26.5,3H-30.3A7,7 0 1 0 -30.3,-3Z"/><path class="t-b" transform="scale(-1 1)" d="M-30.3,-3H-26.5A3,3 0 0 1 -26.5,3H-30.3A7,7 0 1 0 -30.3,-3Z"/><rect class="t-c" x="-15" y="-1" width="30" height="2" rx="1"/></g><path class="t-a" d="M10,37C10,17.5 19.5,6 32,6C44.5,6 54,17.5 54,37Z"/><path class="t-b" d="M42.5,8.8C50,13 54,23 54,37H45.5C45.5,25 45,15.5 42.5,8.8Z"/><path class="t-c" d="M16,29C16,20 20,13.5 25.5,10.5C23,15.5 21.5,22 21.5,29Z"/><rect class="t-a" x="26.5" y="5" width="11" height="32" rx="5.5"/><rect class="t-c" x="29.3" y="8" width="3.2" height="24" rx="1.6"/><rect class="t-a" x="3" y="34" width="58" height="9.5" rx="4.75"/><path class="t-b" d="M3.6,40.5C5,42.5 6.5,43.5 8.5,43.5H55.5C57.5,43.5 59,42.5 60.4,40.5Z"/><rect class="t-c" x="8" y="35.6" width="15" height="2.6" rx="1.3"/>',
+  // backpack and pencil
+  school: '<g transform="rotate(20 47 20)"><rect class="t-a" x="43.5" y="8" width="7" height="22"/><path class="t-c" d="M43.5,8.2L47,1L50.5,8.2Z"/><path class="t-b" d="M45.7,4.5L47,1.5L48.3,4.5Z"/><rect class="t-b" x="47" y="8" width="3.5" height="22"/></g><path class="ln" stroke-width="3.5" d="M25,12C25,4.5 37,4.5 37,12"/><rect class="t-b" x="6" y="25" width="9" height="29" rx="4.5"/><rect class="t-b" x="49" y="25" width="9" height="29" rx="4.5"/><rect class="t-a" x="11" y="10" width="42" height="52" rx="13"/><path class="t-b" d="M53,36V49C53,56.2 48.2,62 40,62H24C18,62 13.5,59 12,55C22,57.5 42,55 53,36Z"/><path class="t-c" d="M14.5,36H18.5V50C18.5,51.5 17.5,52 16.5,52C15.5,52 14.5,51.5 14.5,50Z"/><path class="t-b" d="M11,23C11,15.5 17,10 24,10H40C47,10 53,15.5 53,23V30C53,32.5 51,34 48.5,34H15.5C13,34 11,32.5 11,30Z"/><path class="t-a" d="M11,23C11,15.5 17,10 24,10H40C47,10 53,15.5 53,23V27.5C53,30 51,31.5 48.5,31.5H15.5C13,31.5 11,30 11,27.5Z"/><path class="t-c" d="M16,23C16,17.5 19,14.5 24,14H30C24,15 21,18 21,23Z"/><rect class="t-c" x="28" y="27" width="8" height="8.5" rx="2.5"/><rect class="t-b" x="20" y="41" width="24" height="15" rx="5.5"/><rect class="t-a" x="20" y="39.5" width="24" height="14" rx="5.5"/><path class="ln" stroke-width="1.8" d="M23,45.5H41"/><rect class="t-c" x="30.5" y="44" width="3" height="5.5" rx="1.5"/>',
+  // waving hand
+  body: '<path class="ln" stroke-width="2.5" d="M8,24C5.5,18.5 6,13 9.5,8.5M14,25.5C12.5,21.5 12.8,18 15,15"/><path class="ln" stroke-width="2.5" d="M56,23C58.5,17.5 58,12 54.5,7.5M50,24.5C51.5,20.5 51.2,17 49,14"/><g transform="rotate(-12 32 46)"><path class="t-a" d="M25,66C23.5,59 20,55 18.9,47.1L10,40.6A4.4,4.4 0 0 1 15.2,33.5L20.8,37.5L16,18.5A4,4 0 0 1 23.8,16.5L26.8,28.8L26,12.2A4,4 0 0 1 33.9,11.8L34.8,27.3L36.5,14.6A4,4 0 0 1 44.5,15.7L42.4,30.3L45,23.5A3.7,3.7 0 0 1 51.9,26.2L47.5,37.8C49,46 47,53 43,57L42,66Z"/><path class="t-b" d="M48,41C48,49 46,54 43,57L42.5,60H24.5C24,58.5 23.5,57.5 22.5,56.5C33,56 44,51 48,41Z"/><path class="ln" d="M27,45.5C30,48 35,48 38,45.5"/><rect class="t-c" x="18.5" y="18" width="3" height="10" rx="1.5" transform="rotate(-14 20 23)"/><rect class="t-b" x="21" y="57" width="25" height="9" rx="3"/><rect class="t-c" x="24" y="59" width="9" height="2.2" rx="1.1"/></g>',
+  // heart with a pulse line
+  health: '<path class="t-a" fill-rule="evenodd" d="M32,58C19,48.5 5,38 5,23.5C5,14 11.5,7 20,7C25.5,7 29.5,10 32,14.5C34.5,10 38.5,7 44,7C52.5,7 59,14 59,23.5C59,38 45,48.5 32,58ZM1,34.9L17.1,34.9L20.5,28.8L27.7,52.2L33.8,26.9L39.1,43L44.1,33L46.3,34.9L63,34.9L63,31.1L47.7,31.1L42.9,27L39.9,33L33.2,13.1L27.3,37.8L21.5,19.2L14.9,31.1L1,31.1Z"/><path class="t-b" d="M57.3,37C53,45 42.5,52 32,58C29,55.7 26,53.4 23,51C35,50 50,45 57.3,37Z"/><path class="t-c" d="M11,20C11.5,15 15,12 19.5,12C17,14 15.5,17 15.5,21C14,21.5 12,21.5 11,20Z"/><circle class="t-c" cx="13" cy="25" r="1.8"/>',
+  // friendly robot
+  tech: '<path class="ln" stroke-width="2.5" d="M32,12V7"/><circle class="t-a" cx="32" cy="5.5" r="3.5"/><rect class="t-b" x="6.5" y="19" width="7" height="12" rx="3"/><rect class="t-b" x="50.5" y="19" width="7" height="12" rx="3"/><path class="t-a" fill-rule="evenodd" d="M21,11H43A10,10 0 0 1 53,21V30A10,10 0 0 1 43,40H21A10,10 0 0 1 11,30V21A10,10 0 0 1 21,11ZM23.5,16.5H40.5A6.5,6.5 0 0 1 47,23V28A6.5,6.5 0 0 1 40.5,34.5H23.5A6.5,6.5 0 0 1 17,28V23A6.5,6.5 0 0 1 23.5,16.5Z"/><path class="t-b" fill-rule="evenodd" d="M23.5,16H40.5A7,7 0 0 1 47.5,23V28A7,7 0 0 1 40.5,35H23.5A7,7 0 0 1 16.5,28V23A7,7 0 0 1 23.5,16ZM21.2,24A3.8,3.8 0 1 0 28.8,24A3.8,3.8 0 1 0 21.2,24ZM35.2,24A3.8,3.8 0 1 0 42.8,24A3.8,3.8 0 1 0 35.2,24ZM26.5,29.5C29.5,32 34.5,32 37.5,29.5C35,33.8 29,33.8 26.5,29.5Z"/><circle class="t-c" cx="25" cy="24" r="3.8"/><circle class="t-c" cx="39" cy="24" r="3.8"/><path class="t-c" d="M26.5,29.5C29.5,32 34.5,32 37.5,29.5C35,33.8 29,33.8 26.5,29.5Z"/><rect class="t-c" x="14" y="13.5" width="8" height="2" rx="1"/><rect class="t-b" x="27" y="39" width="10" height="4"/><rect class="t-b" x="7" y="44" width="7" height="15" rx="3.5" transform="rotate(12 10.5 45)"/><rect class="t-b" x="50" y="44" width="7" height="15" rx="3.5" transform="rotate(-12 53.5 45)"/><path class="t-a" fill-rule="evenodd" d="M21,42H43A7,7 0 0 1 50,49V56A7,7 0 0 1 43,63H21A7,7 0 0 1 14,56V49A7,7 0 0 1 21,42ZM23.5,47H29.5A2.5,2.5 0 0 1 32,49.5V52.5A2.5,2.5 0 0 1 29.5,55H23.5A2.5,2.5 0 0 1 21,52.5V49.5A2.5,2.5 0 0 1 23.5,47ZM42.6,49A2.4,2.4 0 1 0 47.4,49A2.4,2.4 0 1 0 42.6,49Z"/><path class="t-b" d="M50,50V56C50,60 47,63 43,63H21C17,63 14.8,61 14.2,58.5C24,59.5 40,58 50,50Z"/><rect class="t-c" x="21" y="47" width="11" height="8" rx="2.5"/><circle class="t-b" cx="39" cy="49" r="2.4"/><circle class="t-c" cx="45" cy="49" r="2.4"/>',
+  // cartoon car
+  vehicles: '<path class="ln" stroke-width="2.5" d="M2,36H8M3,42H7"/><ellipse class="t-b" cx="35" cy="60.5" rx="26" ry="2"/><path class="t-a" fill-rule="evenodd" d="M8,43C8,37.5 11,34.5 16,33.5L21,32.5C24,22.5 29,15 37,15H42C48,15 52,20 55,30.5L58,31.2C61.5,32 63,35.5 63,40V45C63,48 62,50 60,50A10,10 0 0 0 40,50H31A10,10 0 0 0 11,50C9,50 8,48.5 8,46ZM25.5,31C28,24 31,19.5 36.5,19.5H37.5V31ZM41,19.5H42C46,19.5 48.5,23 50.5,31H41Z"/><path class="t-c" d="M25.5,31C28,24 31,19.5 36.5,19.5H37.5V31Z"/><path class="t-c" d="M41,19.5H42C46,19.5 48.5,23 50.5,31H41Z"/><path class="t-c" d="M12,38C13,36 15,35 18,35H24V37.5H17C15,37.5 13.5,38 12,38Z"/><path class="t-b" d="M8,44H13A10,10 0 0 0 11,50C9,50 8,48.5 8,46ZM29,44H42A10,10 0 0 0 40,50H31A10,10 0 0 0 29,44ZM58,44H63V45C63,48 62,50 60,50A10,10 0 0 0 58,44Z"/><rect class="t-b" x="41" y="35.5" width="5" height="2" rx="1"/><ellipse class="t-c" cx="60" cy="37.5" rx="2" ry="2.5"/><rect class="t-b" x="6.5" y="36" width="3" height="4.5" rx="1.5"/><path class="t-b" fill-rule="evenodd" d="M12.5,50A8.5,8.5 0 1 0 29.5,50A8.5,8.5 0 1 0 12.5,50ZM17,50A4,4 0 1 0 25,50A4,4 0 1 0 17,50Z"/><circle class="t-a" cx="21" cy="50" r="4"/><circle class="t-c" cx="21" cy="50" r="1.6"/><path class="t-b" fill-rule="evenodd" d="M41.5,50A8.5,8.5 0 1 0 58.5,50A8.5,8.5 0 1 0 41.5,50ZM46,50A4,4 0 1 0 54,50A4,4 0 1 0 46,50Z"/><circle class="t-a" cx="50" cy="50" r="4"/><circle class="t-c" cx="50" cy="50" r="1.6"/>',
+  // t-shirt on a hanger
+  clothing: '<path class="ln" d="M32 19V13A5 5 0 0 0 27 8A5 5 0 0 0 22 13" stroke-width="2.4"/><path class="t-a" d="M23 16Q32 25 41 16L50 19Q54 20.5 56 24L59.5 30Q60 32 58 33L50 37Q48 37.8 47 36L46 35V55Q46 58 43 58H21Q18 58 18 55V35L17 36Q16 37.8 14 37L6 33Q4 32 4.5 30L8 24Q10 20.5 14 19Z"/><path class="t-b" d="M23 16Q32 25 41 16Q32 19.5 23 16Z"/><path class="t-c" d="M23 16Q32 25 41 16L43 16.7Q32 28 21 16.7Z"/><path class="t-b" d="M59.5 30Q60 32 58 33L50 37L48.3 34.4L57.7 27.4Z"/><path class="t-b" d="M4.5 30Q4 32 6 33L14 37L15.7 34.4L6.3 27.4Z"/><path class="t-b" d="M18 52.5H46V55Q46 58 43 58H21Q18 58 18 55Z"/><path class="t-b" d="M46 35V52.5H42.5V37.5Q44.5 37 46 35Z"/><rect class="t-c" x="21" y="24" width="3" height="25" rx="1.5"/><rect class="t-b" x="34.5" y="29" width="7" height="7" rx="1.5"/><rect class="t-c" x="34.5" y="29" width="7" height="2" rx="1"/>',
+  // balloons and a party hat
+  celebrations: '<path class="ln" d="M38 30.3C35 36 41 40 38 46S36 55 39 62" stroke-width="1.4"/><path class="ln" d="M55 39.3C58 45 52 49 55 55S54 60 52 63" stroke-width="1.4"/><path class="t-b" fill-rule="evenodd" d="M55 17.5C59.8 17.5 63 22.25 63 26.52C63 32.23 58.2 36.02 55 36.5C51.8 36.02 47 32.23 47 26.52C47 22.25 50.2 17.5 55 17.5ZM54 17.8C57.84 17.8 60.4 21.75 60.4 25.3C60.4 30.05 56.56 33.2 54 33.6C51.44 33.2 47.6 30.05 47.6 25.3C47.6 21.75 50.16 17.8 54 17.8Z"/><path class="t-a" d="M54 17.8C57.84 17.8 60.4 21.75 60.4 25.3C60.4 30.05 56.56 33.2 54 33.6C51.44 33.2 47.6 30.05 47.6 25.3C47.6 21.75 50.16 17.8 54 17.8Z"/><ellipse class="t-c" cx="51.4" cy="23.01" rx="1.8" ry="3.4" transform="rotate(28 51.4 23.01)"/><polygon class="t-b" points="55,35.9 57.3,39.3 52.7,39.3"/><path class="t-b" fill-rule="evenodd" d="M38 2.5C44.3 2.5 48.5 8.75 48.5 14.38C48.5 21.88 42.2 26.88 38 27.5C33.8 26.88 27.5 21.88 27.5 14.38C27.5 8.75 31.7 2.5 38 2.5ZM37 2.8C42.34 2.8 45.9 8.25 45.9 13.15C45.9 19.7 40.56 24.05 37 24.6C33.440 24.05 28.1 19.7 28.1 13.15C28.1 8.25 31.66 2.8 37 2.8Z"/><path class="t-a" d="M37 2.8C42.34 2.8 45.9 8.25 45.9 13.15C45.9 19.7 40.56 24.05 37 24.6C33.44 24.05 28.1 19.7 28.1 13.15C28.1 8.25 31.66 2.8 37 2.8Z"/><ellipse class="t-c" cx="33.27" cy="9.75" rx="1.8" ry="3.4" transform="rotate(28 33.27 9.75)"/><polygon class="t-b" points="38,26.9 40.3,30.3 35.7,30.3"/><path class="t-a" d="M17 29L29 55Q17 59.5 5 55Z"/><path class="t-b" d="M14.2 35Q17 36.3 19.8 35L21.6 39Q17 41 12.4 39Z"/><path class="t-b" d="M10.1 44Q17 46.5 23.9 44L25.8 48Q17 51 8.2 48Z"/><ellipse class="t-b" cx="17" cy="56" rx="13" ry="3.8"/><circle class="t-b" cx="17" cy="28" r="4.2"/><circle class="t-c" cx="15.6" cy="26.6" r="1.3"/><path class="ln" d="M4 9q3-4 6 0t6 0" stroke-width="1.8"/><rect class="t-b" x="20" y="5" width="3" height="5.5" rx=".8" transform="rotate(30 21.5 7.75)"/><circle class="t-a" cx="7" cy="19" r="2"/><rect class="t-a" x="24" y="19" width="3" height="5" rx=".8" transform="rotate(-25 25.5 21.5)"/><path class="ln" d="M5 30v5M2.5 32.5h5" stroke-width="1.6"/><circle class="t-b" cx="47" cy="50" r="1.6"/><rect class="t-a" x="58" y="46" width="3" height="5" rx=".8" transform="rotate(35 59.5 48.5)"/><path class="ln" d="M44 58v4M42 60h4" stroke-width="1.5"/>',
+  // friendly dragon
+  myth: '<path class="t-b" d="M22 34C18 22 12 14 3 12C5.5 17 5 21 2.5 24.5C8 23.5 10 26.5 9 30.5C13.5 28.5 16.5 31.5 16 36Z"/><path class="t-a" d="M18.5 54C11 58.5 3.5 55.5 3.5 48C3.5 44.5 5 42 7.5 40.5C7.5 45 8 50.5 13 51C15 51.2 17 50.5 18.5 49.5Z"/><path class="t-b" d="M7.5 42C4 40 3.2 36.6 6.8 32.6C10.4 36.2 10.8 39.5 7.5 42Z"/><path class="t-a" d="M26 30C36 30 42 40 42 48C42 56 36 60 28 60C19 60 14 55 14 47C14 38 18 30 26 30Z"/><path class="t-b" d="M40.5 41C42.2 46 42.2 50.5 41 53.5C39 57.5 35 60 28 60C34.5 57 39.5 51.5 40.5 41Z"/><ellipse class="t-a" cx="33" cy="30" rx="7" ry="8"/><path class="t-b" d="M31.5 12Q29 7 25.5 5Q32 4.2 35.5 10Z"/><path class="t-b" d="M39.5 9.5Q41 4.5 45 2.5Q46.5 7.5 44 11Z"/><polygon class="t-b" points="28.6,16 23.5,16.5 28,20.5"/><polygon class="t-b" points="27,23 22,24.5 26.6,27.5"/><circle class="t-a" cx="38" cy="19" r="10"/><ellipse class="t-a" cx="48" cy="23" rx="9" ry="6.5"/><path class="t-b" d="M39.5 28Q48 31.5 56.5 25.5Q54 30 46.5 30.8Q42 31 39.5 28Z"/><ellipse class="t-c" cx="33.5" cy="14" rx="2.6" ry="1.5" transform="rotate(-40 33.5 14)"/><ellipse class="t-c" cx="31.5" cy="47" rx="7.5" ry="10" transform="rotate(-8 31.5 47)"/><path class="ln" d="M26 41.5q5.5 2 11 0M24.8 46.5q6.5 2 13 0M25.5 51.5q5.5 2 11 0" stroke-width="1.3"/><ellipse class="t-a" cx="38.5" cy="41" rx="2.8" ry="5.2" transform="rotate(32 38.5 41)"/><circle class="t-c" cx="35.8" cy="45" r=".9"/><ellipse class="t-b" cx="30" cy="61.6" rx="19" ry="2.2"/><ellipse class="t-a" cx="22" cy="58.6" rx="6" ry="3.4"/><ellipse class="t-a" cx="37" cy="58.8" rx="6.5" ry="3.4"/><circle class="t-c" cx="18.5" cy="59.2" r="1"/><circle class="t-c" cx="21.5" cy="60" r="1"/><circle class="t-c" cx="40.5" cy="59.4" r="1"/><circle class="t-c" cx="43.3" cy="58.4" r="1"/><ellipse class="t-b" cx="41.5" cy="18" rx="2.7" ry="3.3"/><circle class="t-c" cx="42.6" cy="16.6" r="1.1"/><ellipse class="t-b" cx="53.5" cy="20.2" rx="1.3" ry="1" transform="rotate(-20 53.5 20.2)"/><path class="ln" d="M45 26Q50 28.5 55 25.5" stroke-width="1.6"/><circle class="ln" cx="58.5" cy="13" r="1.6" stroke-width="1.4"/><circle class="ln" cx="61" cy="7" r="2.2" stroke-width="1.4"/>',
+  // greek temple front
+  history: '<polygon class="t-a" points="32,4 61,19 3,19"/><polygon class="t-c" points="32,4 3,19 7.2,19 32,6.4"/><polygon class="t-b" points="32,8.6 51.5,17.3 12.5,17.3"/><circle class="t-c" cx="32" cy="13.6" r="2"/><rect class="t-a" x="5" y="19" width="54" height="7"/><rect class="t-c" x="3" y="19" width="58" height="1.6" rx=".8"/><rect class="t-b" x="12.5" y="21.5" width="2" height="3" rx=".5"/><rect class="t-b" x="24.83" y="21.5" width="2" height="3" rx=".5"/><rect class="t-b" x="37.17" y="21.5" width="2" height="3" rx=".5"/><rect class="t-b" x="49.5" y="21.5" width="2" height="3" rx=".5"/><rect class="t-b" x="6" y="26" width="52" height="2"/><rect class="t-a" x="8.5" y="28" width="10" height="3" rx="1"/><rect class="t-a" x="10" y="31" width="7" height="20"/><rect class="t-b" x="14.6" y="31" width="2.4" height="20"/><rect class="t-c" x="11.2" y="32" width="1.4" height="19"/><rect class="t-b" x="10" y="31" width="7" height="1"/><rect class="t-a" x="8.5" y="51" width="10" height="2.5" rx=".8"/><rect class="t-a" x="20.83" y="28" width="10" height="3" rx="1"/><rect class="t-a" x="22.33" y="31" width="7" height="20"/><rect class="t-b" x="26.93" y="31" width="2.4" height="20"/><rect class="t-c" x="23.53" y="32" width="1.4" height="19"/><rect class="t-b" x="22.33" y="31" width="7" height="1"/><rect class="t-a" x="20.83" y="51" width="10" height="2.5" rx=".8"/><rect class="t-a" x="33.17" y="28" width="10" height="3" rx="1"/><rect class="t-a" x="34.67" y="31" width="7" height="20"/><rect class="t-b" x="39.27" y="31" width="2.4" height="20"/><rect class="t-c" x="35.87" y="32" width="1.4" height="19"/><rect class="t-b" x="34.67" y="31" width="7" height="1"/><rect class="t-a" x="33.17" y="51" width="10" height="2.5" rx=".8"/><rect class="t-a" x="45.5" y="28" width="10" height="3" rx="1"/><rect class="t-a" x="47" y="31" width="7" height="20"/><rect class="t-b" x="51.6" y="31" width="2.4" height="20"/><rect class="t-c" x="48.2" y="32" width="1.4" height="19"/><rect class="t-b" x="47" y="31" width="7" height="1"/><rect class="t-a" x="45.5" y="51" width="10" height="2.5" rx=".8"/><rect class="t-a" x="4" y="53.5" width="56" height="3.8"/><rect class="t-c" x="4" y="53.5" width="56" height="1"/><rect class="t-a" x="1.5" y="57.3" width="61" height="4.5"/><rect class="t-c" x="1.5" y="57.3" width="61" height="1"/><rect class="t-b" x="1.5" y="60.8" width="61" height="1.2"/>',
+  // city skyline with a bridge
+  places: '<polygon class="t-a" points="25.5,2 28.2,10 22.8,10"/><path class="t-a" d="M30 22.5A4 4 0 0 1 38 22.5Z"/><path class="ln" d="M42.5 14V8" stroke-width="1.6"/><rect class="t-a" x="13" y="26" width="8" height="18"/><rect class="t-a" x="21" y="10" width="9" height="34"/><rect class="t-a" x="30" y="22" width="8" height="22"/><rect class="t-a" x="38" y="14" width="9" height="30"/><rect class="t-a" x="47" y="30" width="5" height="14"/><path class="t-b" d="M19 26h2v18h-2zM28 10h2v34h-2zM36 22h2v22h-2zM45 14h2v30h-2zM50 30h2v14h-2z"/><path class="t-c" d="M14.6 29h1.8v2.2h-1.8zM17.4 29h1.8v2.2h-1.8zM14.6 33.2h1.8v2.2h-1.8zM17.4 33.2h1.8v2.2h-1.8zM14.6 37.4h1.8v2.2h-1.8zM17.4 37.4h1.8v2.2h-1.8zM22.6 13h1.8v2.2h-1.8zM25.4 13h1.8v2.2h-1.8zM22.6 17.2h1.8v2.2h-1.8zM25.4 17.2h1.8v2.2h-1.8zM22.6 21.4h1.8v2.2h-1.8zM25.4 21.4h1.8v2.2h-1.8zM22.6 25.6h1.8v2.2h-1.8zM25.4 25.6h1.8v2.2h-1.8zM22.6 29.8h1.8v2.2h-1.8zM25.4 29.8h1.8v2.2h-1.8zM22.6 34h1.8v2.2h-1.8zM25.4 34h1.8v2.2h-1.8zM22.6 38.2h1.8v2.2h-1.8zM25.4 38.2h1.8v2.2h-1.8zM31.6 25h1.8v2.2h-1.8zM34.4 25h1.8v2.2h-1.8zM31.6 29.2h1.8v2.2h-1.8zM34.4 29.2h1.8v2.2h-1.8zM31.6 33.4h1.8v2.2h-1.8zM34.4 33.4h1.8v2.2h-1.8zM31.6 37.6h1.8v2.2h-1.8zM34.4 37.6h1.8v2.2h-1.8zM39.6 17h1.8v2.2h-1.8zM42.4 17h1.8v2.2h-1.8zM39.6 21.2h1.8v2.2h-1.8zM42.4 21.2h1.8v2.2h-1.8zM39.6 25.4h1.8v2.2h-1.8zM42.4 25.4h1.8v2.2h-1.8zM39.6 29.6h1.8v2.2h-1.8zM42.4 29.6h1.8v2.2h-1.8zM39.6 33.8h1.8v2.2h-1.8zM42.4 33.8h1.8v2.2h-1.8zM39.6 38h1.8v2.2h-1.8zM42.4 38h1.8v2.2h-1.8zM48.4 33h1.8v2.2h-1.8zM48.4 37.2h1.8v2.2h-1.8z"/><path class="ln" d="M14 27.1V44M20 34.3V44M26 38.6V44M38 38.6V44M44 34.3V44M50 27.1V44" stroke-width="1.2"/><path class="ln" d="M0 40Q5 33 8 17Q32 63 56 17Q59 33 64 40" stroke-width="1.8"/><rect class="t-b" x="5.4" y="16.5" width="1.9" height="38" rx=".6"/><rect class="t-b" x="8.7" y="16.5" width="1.9" height="38" rx=".6"/><rect class="t-b" x="4.8" y="15.5" width="6.4" height="2.6" rx=".8"/><rect class="t-b" x="5.4" y="27" width="5.2" height="2"/><rect class="t-b" x="5.4" y="37" width="5.2" height="2"/><rect class="t-b" x="53.4" y="16.5" width="1.9" height="38" rx=".6"/><rect class="t-b" x="56.7" y="16.5" width="1.9" height="38" rx=".6"/><rect class="t-b" x="52.8" y="15.5" width="6.4" height="2.6" rx=".8"/><rect class="t-b" x="53.4" y="27" width="5.2" height="2"/><rect class="t-b" x="53.4" y="37" width="5.2" height="2"/><rect class="t-b" x="0" y="44" width="64" height="3.4"/><rect class="t-c" x="0" y="44" width="64" height="1"/><path class="ln" d="M1 57q3.5-2.4 7 0t7 0t7 0t7 0t7 0t7 0t7 0t7 0t7 0" stroke-width="1.6"/><path class="ln" d="M12 62q3-2 6 0t6 0M36 62q3-2 6 0t6 0" stroke-width="1.4"/>',
+  // smiling face with hearts
+  feelings: '<circle class="t-a" cx="29" cy="37" r="21.5"/><path class="t-b" fill-rule="evenodd" d="M7.5 37a21.5 21.5 0 1 0 43 0a21.5 21.5 0 1 0-43 0ZM8.1 35.9a20 20 0 1 0 40 0a20 20 0 1 0-40 0Z"/><ellipse class="t-c" cx="18" cy="23.5" rx="5" ry="2.6" transform="rotate(-38 18 23.5)"/><path class="ln" d="M15.5 33.5q4.5-6 9 0M32.5 33.5q4.5-6 9 0" stroke-width="2.6"/><ellipse class="t-c" cx="14" cy="41" rx="3.6" ry="2.3"/><ellipse class="t-c" cx="42.5" cy="41" rx="3.6" ry="2.3"/><path class="t-b" d="M18 42Q28.5 44 39 42Q37.5 53.5 28.5 53.5Q19.5 53.5 18 42Z"/><path class="t-c" d="M22.8 50.2Q28.5 45.8 34.2 50.2Q31.6 53.2 28.5 53.2Q25.4 53.2 22.8 50.2Z"/><g transform="translate(53 13) rotate(15) scale(8.5)"><path class="t-b" d="M0 .9C-.35 .62-1 .2-1-.3C-1-.72-.68-.98-.42-.98C-.18-.98 0-.8 0-.58C0-.8 .18-.98 .42-.98C.68-.98 1-.72 1-.3C1 .2 .35 .62 0 .9Z" transform="translate(.09 .09)"/><path class="t-a" d="M0 .9C-.35 .62-1 .2-1-.3C-1-.72-.68-.98-.42-.98C-.18-.98 0-.8 0-.58C0-.8 .18-.98 .42-.98C.68-.98 1-.72 1-.3C1 .2 .35 .62 0 .9Z"/><ellipse class="t-c" cx="-.52" cy="-.45" rx=".17" ry=".3" transform="rotate(35 -.52 -.45)"/></g><g transform="translate(9 11) rotate(-15) scale(5.5)"><path class="t-b" d="M0 .9C-.35 .62-1 .2-1-.3C-1-.72-.68-.98-.42-.98C-.18-.98 0-.8 0-.58C0-.8 .18-.98 .42-.98C.68-.98 1-.72 1-.3C1 .2 .35 .62 0 .9Z" transform="translate(.09 .09)"/><path class="t-a" d="M0 .9C-.35 .62-1 .2-1-.3C-1-.72-.68-.98-.42-.98C-.18-.98 0-.8 0-.58C0-.8 .18-.98 .42-.98C.68-.98 1-.72 1-.3C1 .2 .35 .62 0 .9Z"/><ellipse class="t-c" cx="-.52" cy="-.45" rx=".17" ry=".3" transform="rotate(35 -.52 -.45)"/></g><g transform="translate(57.5 38) rotate(20) scale(4.5)"><path class="t-b" d="M0 .9C-.35 .62-1 .2-1-.3C-1-.72-.68-.98-.42-.98C-.18-.98 0-.8 0-.58C0-.8 .18-.98 .42-.98C.68-.98 1-.72 1-.3C1 .2 .35 .62 0 .9Z" transform="translate(.09 .09)"/><path class="t-a" d="M0 .9C-.35 .62-1 .2-1-.3C-1-.72-.68-.98-.42-.98C-.18-.98 0-.8 0-.58C0-.8 .18-.98 .42-.98C.68-.98 1-.72 1-.3C1 .2 .35 .62 0 .9Z"/><ellipse class="t-c" cx="-.52" cy="-.45" rx=".17" ry=".3" transform="rotate(35 -.52 -.45)"/></g>',
+  // flower in a pot
+  garden: '<path class="ln" d="M32 24Q29.5 34 32 43" stroke-width="3"/><path class="t-b" d="M31 39Q22 33 13 31Q20 42 31 39Z"/><path class="t-a" d="M31 39Q24 27 13 31Q22 33 31 39Z"/><path class="t-b" d="M31.5 35Q41 29 51 27Q45 38 31.5 35Z"/><path class="t-a" d="M31.5 35Q40 24 51 27Q41 29 31.5 35Z"/><path class="t-b" d="M34.7 9.5C32.9 7.2 34 3.8 35.3 2.9C36.6 1.9 38.8 2.8 39 4.4C39.2 6 37.6 9.1 34.7 9.5ZM38.5 13.3C38.9 10.4 42 8.8 43.6 9C45.2 9.2 46.1 11.4 45.1 12.7C44.2 14 40.8 15.1 38.5 13.3ZM38.5 18.7C40.8 16.9 44.2 18 45.1 19.3C46.1 20.6 45.2 22.8 43.6 23C42 23.2 38.9 21.6 38.5 18.7ZM34.7 22.5C37.6 22.9 39.2 26 39 27.6C38.8 29.2 36.6 30.1 35.3 29.1C34 28.2 32.9 24.8 34.7 22.5ZM29.3 22.5C31.1 24.8 30 28.2 28.7 29.1C27.4 30.1 25.2 29.2 25 27.6C24.8 26 26.4 22.9 29.3 22.5ZM25.5 18.7C25.1 21.6 22 23.2 20.4 23C18.8 22.8 17.9 20.6 18.9 19.3C19.8 18 23.2 16.9 25.5 18.7ZM25.5 13.3C23.2 15.1 19.8 14 18.9 12.7C17.9 11.4 18.8 9.2 20.4 9C22 8.8 25.1 10.4 25.5 13.3ZM29.3 9.5C26.4 9.1 24.8 6 25 4.4C25.2 2.8 27.4 1.9 28.7 2.9C30 3.8 31.1 7.2 29.3 9.5Z"/><path class="t-a" d="M32 10.5C28 9 27.6 5 28.6 3.2C29.6 1.4 34.4 1.4 35.4 3.2C36.4 5 36 9 32 10.5ZM35.9 12.1C34.1 8.2 36.7 5.1 38.6 4.5C40.6 4 44 7.4 43.5 9.4C42.9 11.3 39.8 13.9 35.9 12.1ZM37.5 16C39 12 43 11.6 44.8 12.6C46.6 13.6 46.6 18.4 44.8 19.4C43 20.4 39 20 37.5 16ZM35.9 19.9C39.8 18.1 42.9 20.7 43.5 22.6C44 24.6 40.6 28 38.6 27.5C36.7 26.9 34.1 23.8 35.9 19.9ZM32 21.5C36 23 36.4 27 35.4 28.8C34.4 30.6 29.6 30.6 28.6 28.8C27.6 27 28 23 32 21.5ZM28.1 19.9C29.9 23.8 27.3 26.9 25.4 27.5C23.4 28 20 24.6 20.5 22.6C21.1 20.7 24.2 18.1 28.1 19.9ZM26.5 16C25 20 21 20.4 19.2 19.4C17.4 18.4 17.4 13.6 19.2 12.6C21 11.6 25 12 26.5 16ZM28.1 12.1C24.2 13.9 21.1 11.3 20.5 9.4C20 7.4 23.4 4 25.4 4.5C27.3 5.1 29.9 8.2 28.1 12.1Z"/><circle class="t-b" cx="32" cy="16" r="6"/><circle class="t-c" cx="30.2" cy="14.2" r="1.3"/><circle class="t-c" cx="33.8" cy="15" r=".9"/><circle class="t-c" cx="31.5" cy="18" r=".9"/><path class="t-a" d="M17.5 49H46.5L43 60.5Q42.6 62 41 62H23Q21.4 62 21 60.5Z"/><path class="t-b" d="M40 51.2H45.9L43 60.5Q42.6 62 41 62H38.5Z"/><path class="t-b" d="M17.5 49H46.5L45.9 51.2H18.1Z"/><rect class="t-a" x="15" y="42" width="34" height="7.5" rx="2"/><rect class="t-b" x="43" y="42" width="6" height="7.5" rx="2"/><rect class="t-c" x="17.5" y="43.6" width="11" height="1.8" rx=".9"/><path class="t-c" d="M22.5 53H25L26.3 59H24Z"/>',
+};
+
+/** The Background setting's values, default first.
+ * @type {readonly ['illustrated', 'pixel', 'none']} */
+export const ART_STYLES = ['illustrated', 'pixel', 'none'];
+
+/** Anything unrecognised is the default, like the theme and mode preferences.
+ * @param {string|null|undefined} s @returns {'illustrated'|'pixel'|'none'} */
+export function normalizeArtStyle(s) {
+  return ART_STYLES.find(x => x === s) ?? ART_STYLES[0];
+}
+
+// Each tone's opacity as a share of the art's own opacity token, so 'b' is the densest.
+/** @type {Record<string, number>} */
+const TONE = { a: 0.72, b: 1, c: 0.4 };
+
+/** Same string hash main.js uses for the subject's underline hue.
+ * @param {string} s @returns {number} */
+function hash(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h;
+}
+
+/**
+ * The art for a subject: its category's sprite, and a hue, mirror and corner that vary by
+ * subject so two subjects in one category do not look identical. Null for an unknown category.
+ * @param {string} subjectId e.g. 'space/jupiter'
+ * @returns {{motif:string, rows:string[], hue:number, flip:boolean, corner:number}|null}
+ */
+export function artFor(subjectId) {
+  const motif = subjectId.split('/')[0];
+  const rows = SPRITES[motif];
+  if (!rows) return null;
+  const h = hash(subjectId);
+  return { motif, rows, hue: h % 4 + 1, flip: ((h >>> 3) & 1) === 1, corner: (h >>> 5) % 4 };
+}
+
+/** The sprite as SVG rects in a 16x16 viewBox, one rect per filled pixel, mirrored if asked.
+ * @param {string[]} rows @param {boolean} flip @returns {string} */
+export function spriteRects(rows, flip) {
+  let out = '';
+  rows.forEach((row, y) => {
+    for (let x = 0; x < row.length; x++) {
+      const t = TONE[row[x]];
+      if (t) out += `<rect x="${flip ? 15 - x : x}" y="${y}" width="1.02" height="1.02" fill-opacity="${t}"/>`;
+    }
+  });
+  return out;
+}

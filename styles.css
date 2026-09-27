@@ -38,6 +38,8 @@
   --found-shadow:0 0 10px var(--glow); --board-outline:none; --board-outline-offset:0px; --board-texture:none;
   --pill-ring-1:inset 0 0 0 1px var(--pill-edge); --pill-ring-2:inset 0 0 0 1px var(--pill-edge);
   --pill-ring-3:inset 0 0 0 1px var(--pill-edge); --pill-ring-4:inset 0 0 0 1px var(--pill-edge);
+  /* Category art: the opacity of its densest tone behind the board and beside it. */
+  --art-board:.18; --art-rail:.22;
 }
 /* An orange light enough to feel warm on paper cannot carry white button text, so
    --accent is measured against the white --accent-ink it is actually read on (5.08:1),
@@ -62,6 +64,7 @@
   --found-shadow:0 0 10px var(--glow); --board-outline:none; --board-outline-offset:0px; --board-texture:none;
   --pill-ring-1:inset 0 0 0 1px var(--pill-edge); --pill-ring-2:inset 0 0 0 1px var(--pill-edge);
   --pill-ring-3:inset 0 0 0 1px var(--pill-edge); --pill-ring-4:inset 0 0 0 1px var(--pill-edge);
+  --art-board:.17; --art-rail:.25;
 }
 /* Six more themes. Same token names as the two palettes above, and the same shape: the
    bare [data-theme] selector is the dark default, and the [data-appearance="light"] one
@@ -81,6 +84,7 @@
   --ctl-edge:var(--border); --ctl-width:1px; --ctl-shadow:none; --found-shadow:none;
   --board-outline:1px solid #e9e2d3; --board-outline-offset:4px; --board-texture:none;
   --pill-ring-1:none; --pill-ring-2:none; --pill-ring-3:none; --pill-ring-4:none;
+  --art-board:.18; --art-rail:.22;
 }
 :root[data-theme="broadsheet"][data-appearance="light"]{
   color-scheme:light; --bg:#ece7dc; --surface:#faf8f3; --border:#1c1a16; --text:#1c1a16;
@@ -96,6 +100,7 @@
   --ctl-shadow:none; --found-shadow:none; --board-outline:1px solid #1c1a16;
   --board-outline-offset:4px; --board-texture:none; --pill-ring-1:none; --pill-ring-2:none;
   --pill-ring-3:none; --pill-ring-4:none;
+  --art-board:.17; --art-rail:.25;
 }
 :root[data-theme="sticker"], :root[data-theme="sticker"][data-appearance="dark"]{
   color-scheme:dark; --bg:#1b1433; --surface:#281e4a; --border:#07040f; --text:#efe9ff;
@@ -112,6 +117,7 @@
   --board-outline-offset:0px; --board-texture:none; --pill-ring-1:inset 0 0 0 2px #07040f;
   --pill-ring-2:inset 0 0 0 2px #07040f; --pill-ring-3:inset 0 0 0 2px #07040f;
   --pill-ring-4:inset 0 0 0 2px #07040f;
+  --art-board:.18; --art-rail:.22;
 }
 :root[data-theme="sticker"][data-appearance="light"]{
   color-scheme:light; --bg:#fff1d6; --surface:#ffffff; --border:#1d1638; --text:#1d1638;
@@ -128,6 +134,7 @@
   --board-outline-offset:0px; --board-texture:none; --pill-ring-1:inset 0 0 0 2px #1d1638;
   --pill-ring-2:inset 0 0 0 2px #1d1638; --pill-ring-3:inset 0 0 0 2px #1d1638;
   --pill-ring-4:inset 0 0 0 2px #1d1638;
+  --art-board:.17; --art-rail:.25;
 }
 :root[data-theme="drafting"], :root[data-theme="drafting"][data-appearance="dark"]{
   color-scheme:dark; --bg:#0a1b2c; --surface:#0e2540; --border:#2c4a6b; --text:#d6e6f4;
@@ -145,6 +152,7 @@
   --board-texture:linear-gradient(rgba(127,211,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(127,211,255,.07) 1px,transparent 1px);
   --pill-ring-1:inset 0 0 0 1.5px #ffbe46; --pill-ring-2:inset 0 0 0 1.5px #5adcff;
   --pill-ring-3:inset 0 0 0 1.5px #ff786e; --pill-ring-4:inset 0 0 0 1.5px #aae65a;
+  --art-board:.18; --art-rail:.22;
 }
 :root[data-theme="drafting"][data-appearance="light"]{
   color-scheme:light; --bg:#e4ebee; --surface:#f6f9fa; --border:#a9bbc3; --text:#132430;
@@ -162,6 +170,7 @@
   --board-texture:linear-gradient(rgba(10,95,138,.10) 1px,transparent 1px),linear-gradient(90deg,rgba(10,95,138,.10) 1px,transparent 1px);
   --pill-ring-1:inset 0 0 0 1.5px #b87108; --pill-ring-2:inset 0 0 0 1.5px #0b7fa3;
   --pill-ring-3:inset 0 0 0 1.5px #b8332f; --pill-ring-4:inset 0 0 0 1.5px #4f8a12;
+  --art-board:.17; --art-rail:.25;
 }
 :root[data-theme="grove"], :root[data-theme="grove"][data-appearance="dark"]{
   color-scheme:dark; --bg:#131B15; --surface:#1A241C; --border:#2F3D31; --text:#E2E5D4;
@@ -178,6 +187,7 @@
   --ctl-edge:var(--accent); --ctl-width:1.5px; --ctl-shadow:none; --found-shadow:none;
   --board-outline:none; --board-outline-offset:0px; --board-texture:none; --pill-ring-1:none;
   --pill-ring-2:none; --pill-ring-3:none; --pill-ring-4:none;
+  --art-board:.18; --art-rail:.22;
 }
 :root[data-theme="grove"][data-appearance="light"]{
   color-scheme:light; --bg:#F3EEE1; --surface:#FBF8EF; --border:#CFC8AE; --text:#253022;
@@ -193,6 +203,7 @@
   --ctl-edge:var(--accent); --ctl-width:1.5px; --ctl-shadow:none; --found-shadow:none;
   --board-outline:none; --board-outline-offset:0px; --board-texture:none; --pill-ring-1:none;
   --pill-ring-2:none; --pill-ring-3:none; --pill-ring-4:none;
+  --art-board:.17; --art-rail:.25;
 }
 :root[data-theme="plum"], :root[data-theme="plum"][data-appearance="dark"]{
   color-scheme:dark; --bg:#1c1220; --surface:#261a2b; --border:#3d2b44; --text:#f1e4ec;
@@ -209,6 +220,7 @@
   --ctl-edge:var(--accent); --ctl-width:1.5px; --ctl-shadow:none; --found-shadow:none;
   --board-outline:none; --board-outline-offset:0px; --board-texture:none; --pill-ring-1:none;
   --pill-ring-2:none; --pill-ring-3:none; --pill-ring-4:none;
+  --art-board:.18; --art-rail:.22;
 }
 :root[data-theme="plum"][data-appearance="light"]{
   color-scheme:light; --bg:#f7ebee; --surface:#fdf6f7; --border:#e3cdd4; --text:#2b1a2e;
@@ -225,6 +237,7 @@
   --ctl-edge:var(--accent); --ctl-width:1.5px; --ctl-shadow:none; --found-shadow:none;
   --board-outline:none; --board-outline-offset:0px; --board-texture:none; --pill-ring-1:none;
   --pill-ring-2:none; --pill-ring-3:none; --pill-ring-4:none;
+  --art-board:.17; --art-rail:.25;
 }
 :root[data-theme="graphite"], :root[data-theme="graphite"][data-appearance="dark"]{
   color-scheme:dark; --bg:#111112; --surface:#1A1A1C; --border:#303033; --text:#E7E7E5;
@@ -240,6 +253,7 @@
   --ctl-edge:var(--accent); --ctl-width:1.5px; --ctl-shadow:none; --found-shadow:none;
   --board-outline:none; --board-outline-offset:0px; --board-texture:none; --pill-ring-1:none;
   --pill-ring-2:none; --pill-ring-3:none; --pill-ring-4:none;
+  --art-board:.18; --art-rail:.22;
 }
 :root[data-theme="graphite"][data-appearance="light"]{
   color-scheme:light; --bg:#E9E9E8; --surface:#F6F6F5; --border:#C6C6C4; --text:#1B1B1C;
@@ -257,6 +271,7 @@
   --board-outline:none; --board-outline-offset:0px; --board-texture:none;
   --pill-ring-1:inset 0 0 0 1.5px #8FA10F; --pill-ring-2:inset 0 0 0 1.5px #D9731C;
   --pill-ring-3:inset 0 0 0 1.5px #2F6FE0; --pill-ring-4:inset 0 0 0 1.5px #C42E2E;
+  --art-board:.17; --art-rail:.25;
 }
 
 /* Lock the viewport: no page scroll or rubber-band on iPad / iOS standalone. */
@@ -322,6 +337,12 @@ body{position:fixed;inset:0;width:100%;height:100%}
 #subject{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1 1 auto;min-width:5ch}
 /* A phone has ~190px beside the buttons. The app's own name is the one thing there the
    player does not need, so the label line becomes just the category. */
+/* A 320px phone has 300px for two content-sized columns of 19px words, which peak at 316px
+   (tests/viewport.js "iPhone SE portrait" clipped 26px). Smaller type and padding there only. */
+@media (max-width:359px){
+  #list .w{font-size:16px;padding:3px 8px}
+  #list{column-gap:8px;margin-left:-8px}
+}
 @media (max-width:479px){
   #kicker{display:none}
   /* #kickerline in front: the base '/ ' rule sits later in the file at equal specificity. */
@@ -396,6 +417,29 @@ body{position:fixed;inset:0;width:100%;height:100%}
 #gridbox{grid-area:grid;position:relative;background:var(--surface);background-image:var(--board-texture);background-size:9px 9px;border:1px solid var(--border);border-radius:var(--radius-board);box-shadow:var(--shadow);
   outline:var(--board-outline);outline-offset:var(--board-outline-offset);touch-action:none;cursor:pointer;flex:none}
 #pills,#fx{position:absolute;inset:0;pointer-events:none}
+/* Category art (art.js). #art sits first in #gridbox, so the pills and letters paint over
+   it; #railart fills the landscape rail below the list. placeArt picks one by setting
+   #app[data-art]; the other keeps its box (visibility, not display) so it can be measured. */
+#art,#railart{pointer-events:none}
+#art{display:block;position:absolute;inset:0;overflow:hidden;border-radius:inherit}
+#art svg{position:absolute;width:78%;height:78%;opacity:var(--art-board)}
+#railart{display:none}
+#app[data-landscape] #side{display:flex;flex-direction:column}
+#app[data-landscape] #railart{display:block;flex:1 1 0;min-height:0;margin-top:20px}
+#railart svg{display:block;width:100%;height:100%;opacity:var(--art-rail)}
+#app[data-art="rail"] #art{display:none}
+#app[data-art="board"] #railart{visibility:hidden}
+.hue-1{fill:var(--confetti-2);color:var(--confetti-2)}
+.hue-2{fill:var(--confetti-3);color:var(--confetti-3)}
+.hue-3{fill:var(--confetti-4);color:var(--confetti-4)}
+.hue-4{fill:var(--confetti-5);color:var(--confetti-5)}
+/* Illustration tones, as shares of the art's opacity (the pixel sprites set theirs inline). */
+#art .t-a,#railart .t-a{fill-opacity:.72}
+#art .t-b,#railart .t-b{fill-opacity:1}
+#art .t-c,#railart .t-c{fill-opacity:.4}
+#art .ln,#railart .ln{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+/* A default only: a path's own stroke-width attribute must win, and any author rule would beat it. */
+#art .ln:not([stroke-width]),#railart .ln:not([stroke-width]){stroke-width:2}
 /* Pill colours are class-driven so they live in the palette; as rgba literals in JS
    they were tuned for a dark surface and all but invisible on paper. */
 .pill{position:absolute;border-radius:var(--radius-pill);box-shadow:inset 0 0 0 1px var(--pill-edge)}
@@ -417,16 +461,27 @@ body{position:fixed;inset:0;width:100%;height:100%}
   background-size:300% 100%;background-position:100% 0}
 #gridbox.sweep::after{animation:sweep .9s ease-out}
 @keyframes sweep{0%{opacity:0;background-position:100% 0}20%{opacity:1}80%{opacity:1}100%{opacity:0;background-position:-50% 0}}
-#side{grid-area:side;flex:none}
+/* min-width:0, or its header row's min-content (WORDS + count + Reveal, ~314px) widens the
+   portrait track past a 320px screen instead of letting Reveal ellipsise. */
+#side{grid-area:side;flex:none;min-width:0}
 /* Everything in the rail lines up on one edge. .w carries 12px of pill padding for the
    found-glow, so #list is pulled back by exactly that below and the header sits at 0. */
 #listhdr{display:flex;justify-content:flex-start;align-items:baseline;gap:9px;margin:6px 2px 8px 0}
 #listhdr b{font-family:var(--utility);font-weight:700;font-size:13px;letter-spacing:.16em;color:var(--label)}
 /* Monospace is functional here: this string rewrites on every find, and proportional
    digits make it jitter sideways as the count climbs. */
-#count{font-family:var(--utility);font-size:14px;color:var(--muted)}
+/* One line always: layout.js reserves this row at 21px. The count never wraps; on a narrow
+   rail or a 320px phone it is Reveal that gives up width (ellipsis), not the row its height. */
+#count{font-family:var(--utility);font-size:14px;color:var(--muted);white-space:nowrap;flex:none}
 /* Delimiter in CSS so #count's textContent stays the bare "n of 12 found" the specs match. */
 #count::before{content:'— ';opacity:.55}
+/* Reveal a word. A full 44px target whose negative margins give the height back, so the
+   header row stays 21px: layout.js's portrait reserve counts it at that. */
+#reveal{margin:-12px 0 -12px 4px;min-height:44px;padding:0 8px;border:none;background:transparent;
+  color:var(--accent-text);font-family:var(--utility);font-size:13px;text-decoration:underline;
+  text-underline-offset:3px;cursor:pointer;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
+#reveal:hover{color:var(--text-strong)}
+#reveal[disabled]{visibility:hidden}
 #list{display:grid;gap:6px 14px;margin-left:-12px}
 .w{justify-self:start;font-weight:700;font-size:19px;line-height:1.2;padding:4px 12px;border-radius:999px;cursor:default;color:var(--text)}
 .w.done{text-decoration:line-through;color:var(--done-text)}
@@ -496,22 +551,30 @@ body{position:fixed;inset:0;width:100%;height:100%}
 .panehead h2{font-family:var(--display);font-weight:700;font-size:20px;color:var(--text-strong);margin:0}
 .paneclose{width:44px;height:44px;margin:-10px -12px 0 0;border:none;background:transparent;color:var(--muted);font-size:22px;line-height:1;cursor:pointer}
 .paneclose:hover{color:var(--text-strong)}
-label[for="settings-theme"],.panelabel{display:block;font-family:var(--utility);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--label)}
-.panelabel{margin-top:8px}
+label[for="settings-theme"],label[for="settings-art"],.panelabel{display:block;font-family:var(--utility);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--label)}
+.panelabel,label[for="settings-art"]{margin-top:8px}
+.panesection{margin:10px 0 0;padding-top:12px;border-top:1px solid var(--border);font-family:var(--display);font-size:15px;font-weight:700;color:var(--text-strong)}
+.panehead + .panesection{margin-top:0;padding-top:0;border-top:none}
+.panenote{margin:-2px 0 0;font-size:13px;line-height:1.4;color:var(--hint)}
+.check[hidden]{display:none}
+#app[data-reveal="off"] #reveal{display:none}
 #settings-swatches{display:flex;gap:6px}
 #settings-swatches i{width:28px;height:12px;border-radius:999px;box-shadow:inset 0 0 0 1px var(--border)}
 #settings-swatches .p1{background:var(--pill-1)}
 #settings-swatches .p2{background:var(--pill-2)}
 #settings-swatches .p3{background:var(--pill-3)}
 #settings-swatches .p4{background:var(--pill-4)}
-#settings-mode{display:flex;gap:8px}
-#settings-mode button{flex:1;min-height:44px;display:flex;align-items:center;justify-content:center;gap:8px;
+/* #settings-mode and #settings-auto are the pre-.seg/.check ids, kept for one release so an old
+   index.html paired with this sheet during an update still gets styled controls. */
+.seg,#settings-mode{display:flex;gap:8px}
+.seg button,#settings-mode button{flex:1;min-height:44px;display:flex;align-items:center;justify-content:center;gap:8px;
   border:var(--ctl-width) solid var(--border);border-radius:var(--radius-ctl);background:transparent;color:var(--text);
   font-family:inherit;font-weight:700;font-size:15px;cursor:pointer}
-#settings-mode button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-#settings-mode svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-#settings-auto{display:flex;align-items:center;gap:10px;min-height:48px;margin-top:6px;font-size:14.5px;color:var(--text);cursor:pointer}
-#settings-auto input{width:20px;height:20px;flex:none;accent-color:var(--accent);cursor:pointer;margin:0}
+.seg button[aria-pressed="true"],#settings-mode button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.seg button[disabled]{opacity:.45;cursor:not-allowed}
+.seg svg,#settings-mode svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.check,#settings-auto,#picker-least{display:flex;align-items:center;gap:10px;min-height:44px;font-size:14.5px;color:var(--text);cursor:pointer}
+.check input,#settings-auto input,#picker-least input{width:20px;height:20px;flex:none;accent-color:var(--accent);cursor:pointer;margin:0}
 /* Capped, and genuinely scrollable. The card gained a checkbox row, and a short landscape
    phone leaves ~300px of usable height. box-sizing matters: without it the cap applies to
    the CONTENT box, so 60px of padding and 2px of border sat outside it and the card ended
@@ -531,15 +594,8 @@ label[for="settings-theme"],.panelabel{display:block;font-family:var(--utility);
   #pickercard h2{font-size:19px;margin-bottom:8px}
   #picker-warning{margin-bottom:8px}
   #picker-field{margin-bottom:8px}
-  #picker-least{margin-bottom:6px}
   #picker-error{margin:-4px 0 8px}
 }
-/* One label so the text is part of the hit area; 48px clears Apple's 44pt, Material's
-   48dp, WCAG 2.2 AAA's 44px and BBC GEL's 44px simultaneously. */
-#picker-least{display:flex;align-items:center;gap:10px;min-height:48px;margin:0 0 12px;
-  font-family:inherit;font-size:14.5px;font-weight:400;color:var(--text);text-align:left;
-  cursor:pointer;text-transform:none;letter-spacing:normal}
-#picker-least input{width:20px;height:20px;flex:none;accent-color:var(--accent);cursor:pointer;margin:0}
 #pickercard h2{font-family:var(--display);font-weight:700;font-size:22px;color:var(--text-strong);margin:0 0 14px}
 #picker-warning{font-size:14.5px;color:var(--muted);margin:0 0 18px;max-width:260px}
 /* Scoped to the Category label by its `for`, NOT `#pickercard label`: that was (1,0,1)
@@ -554,7 +610,7 @@ label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12
 .selectfield{position:relative}
 #picker-field::after,.selectfield::after{content:'';position:absolute;right:18px;top:50%;width:9px;height:9px;margin-top:-7px;
   border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);pointer-events:none}
-#picker-select,#settings-theme{appearance:none;-webkit-appearance:none;width:100%;box-sizing:border-box;display:block;
+#picker-select,#settings-theme,#settings-art{appearance:none;-webkit-appearance:none;width:100%;box-sizing:border-box;display:block;
   background:var(--bg);color:var(--text);border:1.5px solid var(--muted);border-radius:12px;
   padding:11px 40px 11px 14px;font-family:inherit;font-size:15px;min-height:44px;cursor:pointer}
 #picker-error{font-size:13px;color:var(--pill-miss);margin:-12px 0 16px;max-width:260px}
@@ -575,10 +631,10 @@ label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12
    any in-page list. Everything else keeps the native popup. */
 @media (pointer:fine){
   @supports (appearance:base-select){
-    #picker-select,#settings-theme,#picker-select::picker(select),#settings-theme::picker(select){appearance:base-select}
+    #picker-select,#settings-theme,#settings-art,#picker-select::picker(select),#settings-theme::picker(select),#settings-art::picker(select){appearance:base-select}
     /* The wrapper already draws a chevron. */
-    #picker-select::picker-icon,#settings-theme::picker-icon{display:none}
-    #picker-select::picker(select),#settings-theme::picker(select){margin-top:6px;padding:6px;
+    #picker-select::picker-icon,#settings-theme::picker-icon,#settings-art::picker-icon{display:none}
+    #picker-select::picker(select),#settings-theme::picker(select),#settings-art::picker(select){margin-top:6px;padding:6px;
       background:var(--bg);color:var(--text);border:1.5px solid var(--accent);border-radius:12px;
       box-shadow:var(--card-shadow);overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--muted) transparent}
     /* No author max-height: the UA's own stretch sizing keeps the list below its control
@@ -598,15 +654,15 @@ label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12
     /* #picker in front: the shared option rule below has equal specificity and comes later. */
     #picker #picker-select option{min-height:28px;block-size:28px;padding:0 10px;line-height:28px}
     #picker-select option::checkmark{display:none}
-    #picker-select option,#settings-theme option{box-sizing:border-box;min-height:40px;padding:8px 12px;border-radius:8px;
+    #picker-select option,#settings-theme option,#settings-art option{box-sizing:border-box;min-height:40px;padding:8px 12px;border-radius:8px;
       font-size:15px;color:var(--text);background:transparent;cursor:pointer}
-    #picker-select option:hover,#settings-theme option:hover,
-    #picker-select option:focus-visible,#settings-theme option:focus-visible{background:var(--accent-wash);outline:none}
-    #picker-select option:checked,#settings-theme option:checked{color:var(--accent-text);font-weight:700}
-    #picker-select option::checkmark,#settings-theme option::checkmark{color:var(--accent-text)}
+    #picker-select option:hover,#settings-theme option:hover,#settings-art option:hover,
+    #picker-select option:focus-visible,#settings-theme option:focus-visible,#settings-art option:focus-visible{background:var(--accent-wash);outline:none}
+    #picker-select option:checked,#settings-theme option:checked,#settings-art option:checked{color:var(--accent-text);font-weight:700}
+    #picker-select option::checkmark,#settings-theme option::checkmark,#settings-art option::checkmark{color:var(--accent-text)}
     /* Accent text on the wash is 4.33:1 in Phosphor light; the strongest text colour is not. */
-    #picker-select option:checked:is(:hover,:focus-visible),#settings-theme option:checked:is(:hover,:focus-visible){color:var(--text-strong)}
-    #picker-select option:disabled,#settings-theme option:disabled{color:var(--muted);cursor:default;background:transparent}
+    #picker-select option:checked:is(:hover,:focus-visible),#settings-theme option:checked:is(:hover,:focus-visible),#settings-art option:checked:is(:hover,:focus-visible){color:var(--text-strong)}
+    #picker-select option:disabled,#settings-theme option:disabled,#settings-art option:disabled{color:var(--muted);cursor:default;background:transparent}
   }
 }
 /* After both cards' own rules on purpose: their `padding` and `border` shorthands would
@@ -636,3 +692,9 @@ label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12
   /* main.js already skips sweep() under reduced motion; this is the belt to that braces. */
   #gridbox.sweep::after{animation:none}
 }
+/* The same, when Settings asks for it on a device whose OS does not. */
+:root[data-motion="reduce"] #wincard,:root[data-motion="reduce"] #pickercard,
+:root[data-motion="reduce"] #settingscard,:root[data-motion="reduce"] .w.glow,
+:root[data-motion="reduce"] #gridbox.sweep::after{animation:none}
+:root[data-motion="reduce"] #winbar{display:none}
+:root[data-motion="reduce"] .pill{transition:none}

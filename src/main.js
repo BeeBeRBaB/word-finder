@@ -5,12 +5,13 @@ import { CATEGORIES, categoryOf } from './catalog.js';
 import { loadCategory, loadSubject, SubjectLoadError } from './subjects.js';
 import { makeRng, resolveSeed, resolveTarget } from './rng.js';
 import { buildPuzzle, cap, matchWord, snap } from './puzzle.js';
-import { computeLayout, pickPreset, PRESETS } from './layout.js';
-import { applyLayout, renderGrid, renderList, renderPills, renderFoundCells, renderSolvedShape } from './view.js';
+import { computeLayout, pickPreset, PRESETS, mixFor } from './layout.js';
+import { applyLayout, renderGrid, renderList, renderPills, renderFoundCells, renderSolvedShape, renderArt, placeArt } from './view.js';
 import { burst, pop } from './effects.js';
 import { makeStorage, defaultStore } from './storage.js';
 import { makeProgress, chooseSubject } from './progress.js';
 import { makeAppearance, THEMES, themeName } from './appearance.js';
+import { makeSettings } from './settings.js';
 import { makePicker } from './picker.js';
 
 /**
@@ -40,16 +41,26 @@ const PAD = 10;
 // never changes it. Governs new games only; a restored board keeps the size it was
 // saved at.
 const PRESET = pickPreset({ screenW: screen.width, screenH: screen.height });
+// The player's preferences (settings.js). Read at the moment each one matters.
+const cfg = makeSettings();
+/** The board the next deal uses: the device's own unless Settings picks a size.
+ * @returns {Preset} */
+const shapeFor = () => {
+  const b = cfg.get().board;
+  // A phone never gets the 13x13 board: at its 30px floor it overflows the screen, and a long
+  // word then needs more finger travel than is on show. Large is disabled there too.
+  if (b === 'auto' || (b === 'full' && PRESET === PRESETS.compact)) return PRESET;
+  return PRESETS[b];
+};
 // How long a found word glows before it strikes through. Matches the `foundGlow`
 // animation duration in styles.css.
 const GLOW_MS = 900;
 // How long the win card waits before dealing the next puzzle on its own. Matches the
 // `drain` animation on #winbar in styles.css.
 const AUTO_NEXT_MS = 5000;
-const AUTO_KEY = 'wordfinder-autonext';
 /** @returns {boolean} */
-const prefersReducedMotion = () =>
-  !!(globalThis.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+const prefersReducedMotion = () => cfg.get().motion === 'reduce'
+  || !!(globalThis.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 
 /** Makes a missing element fail at startup rather than as a null deref later.
  * @param {string} id @returns {HTMLElement} */
@@ -63,7 +74,7 @@ const els = {
   app: must('app'), gridbox: must('gridbox'), pills: must('pills'), letters: must('letters'), fx: must('fx'),
   list: must('list'), side: must('side'), count: must('count'),
   subject: must('subject'), category: must('category'), win: must('win'), winmsg: must('winmsg'),
-  winstats: must('winstats'),
+  winstats: must('winstats'), art: must('art'), railart: must('railart'),
   picker: must('picker'), winclose: must('winclose'), appearance: must('appearance'),
   solved: must('solved'),
 };
@@ -73,8 +84,8 @@ const els = {
 /** @type {State} */
 const state = {
   puzzle: null,
-  size: PRESET.size,
-  minCell: PRESET.minCell,
+  size: shapeFor().size,
+  minCell: shapeFor().minCell,
   found: {},
   foundOrder: [],
   sel: null,
@@ -145,7 +156,9 @@ function newPuzzle(seed, subject, shape, useBag = true, dealt) {
   state.found = {}; state.foundOrder = []; state.sel = null; state.miss = null; state.drag = null;
   state.puzzle = dealt ?? buildPuzzle({
     name: subject.name, pool: subject.words, rng,
-    size: shape.size, count: shape.count, mix: shape.mix,
+    size: shape.size, count: shape.count,
+    // Difficulty only for an ordinary deal: a pinned ?seed= must deal every player the same board.
+    mix: useBag ? mixFor(shape, cfg.get().difficulty) : shape.mix,
     undrawn: useBag ? progress.bagFor(subject.id, subject.words) : undefined,
   });
   // At deal time, not at the win: the bag records what you were SHOWN. Solving is a
@@ -155,6 +168,7 @@ function newPuzzle(seed, subject, shape, useBag = true, dealt) {
   els.subject.textContent = cap(state.puzzle.name);
   els.subject.dataset.accent = String(accentSlot(state.puzzle.name));
   els.category.textContent = subject.categoryName;
+  renderArt(els, subject.id, cfg.get().art);
   // Or a stale timer drops the win overlay over the fresh grid, swallowing every tap.
   if (state.winTimer) { clearTimeout(state.winTimer); state.winTimer = null; }
   hideWin();
@@ -194,6 +208,7 @@ function layout() {
     size: state.size, pad: PAD, count: state.puzzle.words.length, minCell: state.minCell,
   });
   applyLayout(els, state.dims);
+  placeArt(els, state.dims);
   // Unchanged means the rebuild would be byte-identical — true on nearly every resize
   // frame. Keyed on the puzzle object, not just its shape, or a new board at the same
   // size would keep the old letters. Size needs no check of its own: only newPuzzle
@@ -201,7 +216,7 @@ function layout() {
   const r = state.rendered;
   if (r.puzzle === state.puzzle && r.cell === state.dims.cell) return;
   state.rendered = { puzzle: state.puzzle, cell: state.dims.cell };
-  renderGrid(els, state.puzzle, state.dims, state.size, PAD);
+  renderGrid(els, state.puzzle, state.dims, state.size, PAD, cfg.get().letters === 'large' ? 0.58 : 0.46);
   // renderGrid rebuilds every cell, so found-ness has to be reapplied after it.
   renderFoundCells(els, state, state.size);
   pills();
@@ -222,6 +237,8 @@ const pills = () => renderPills(els, state, state.dims, PAD);
 function list() {
   if (!state.puzzle) return;
   renderList(els, state.puzzle, state, justFound);
+  revealBtn.disabled = state.foundOrder.length === state.puzzle.words.length;
+  placeArt(els, state.dims);   // the list's height decides whether the rail has room
 }
 
 /** Briefly show the attempted selection as a red miss pill, then clear it.
@@ -261,59 +278,81 @@ els.gridbox.addEventListener('pointermove', (e) => {
   }
 });
 
+/** Record a found word and play everything that follows: cells, burst, glow, strike, save,
+ * and the win card if it was the last. Shared by a drag and by Reveal.
+ * @param {string} hit @param {Selection} s @returns {void} */
+function claim(hit, s) {
+  // A local, so the narrowing survives into the win timer's closure, the same reason
+  // effects.js aliases `ac`.
+  const puzzle = /** @type {Puzzle} */ (state.puzzle);
+  state.found[hit] = { sel: s };
+  state.foundOrder.push(hit);
+  renderFoundCells(els, state, state.size);
+  const won = state.foundOrder.length === puzzle.words.length;
+  if (won) progress.addSolve();
+  burst(els.fx, s, won ? 90 : 34, state.dims, PAD);
+  if (cfg.get().sound) pop(won);
+  if (cfg.get().vibrate) navigator.vibrate?.(won ? [30, 50, 90] : 18);
+  // Glow, then strike through. The timer only clears if `hit` is still the one
+  // glowing; a second find resets justFound and that word's own timer strikes it.
+  if (prefersReducedMotion()) {
+    justFound = null;
+  } else {
+    justFound = hit;
+    setTimeout(() => { if (justFound === hit) { justFound = null; list(); } }, GLOW_MS);
+  }
+  list();
+  persist();
+  // newPuzzle() cancels state.winTimer before replacing state.puzzle, so by the time
+  // this fires `puzzle` is still the one that was just won.
+  if (won) state.winTimer = setTimeout(() => {
+    state.winTimer = null;
+    els.winmsg.textContent = 'You found every ' + cap(puzzle.name) + ' word.';
+    // Written here rather than in the markup so the live region is empty until there is
+    // something to announce. The count is the only number shown anywhere — no
+    // fractions, which are what turn a record into a target.
+    const n = progress.get().puzzles;
+    const paneOpen = els.picker.style.display === 'flex' || settings.style.display === 'flex';
+    const counting = !paneOpen && startAutoNext();
+    els.winstats.textContent = `${n} ${n === 1 ? 'puzzle' : 'puzzles'} solved`;
+    // One announcement, including the countdown, rather than a live digit every second.
+    // Visually hidden: the countdown row already shows it.
+    if (counting) {
+      const sr = document.createElement('span');
+      sr.className = 'sr';
+      sr.textContent = `. Next puzzle in ${AUTO_NEXT_MS / 1000} seconds.`;
+      els.winstats.appendChild(sr);
+    }
+    renderSolvedShape(els, state, state.size);
+    els.win.style.display = 'flex';
+    if (!paneOpen) winbtn.focus({ preventScroll: true });
+  }, 700);
+}
+
+/** Reveal a word: find one of the words still hidden, at random, as if the player had.
+ * @returns {void} */
+function revealWord() {
+  const puzzle = state.puzzle;
+  if (!puzzle || state.drag) return;
+  const left = puzzle.placements.filter(p => !state.found[p.word]);
+  if (!left.length) return;
+  const p = left[Math.floor(Math.random() * left.length)];
+  const n = p.word.length - 1;
+  hideToast();   // like any move on the board, this accepts a one-click deal
+  claim(p.word, { x0: p.x0, y0: p.y0, x1: p.x0 + p.dx * n, y1: p.y0 + p.dy * n });
+  pills();
+}
+
 /** @returns {void} */
 function endDrag() {
   if (!state.drag) return;
   state.drag = null;
   if (!state.sel || !state.puzzle) { state.sel = null; pills(); return; }
   const s = state.sel;
-  // Aliased to a local so the narrowing to non-null survives inside the setTimeout
-  // closures below, the same reason effects.js aliases `ac`.
-  const puzzle = state.puzzle;
-  const hit = matchWord(puzzle.placements, state.found, state.size, s);
+  const hit = matchWord(state.puzzle.placements, state.found, state.size, s);
   state.sel = null;
   if (hit) {
-    state.found[hit] = { sel: s };
-    state.foundOrder.push(hit);
-    renderFoundCells(els, state, state.size);
-    const won = state.foundOrder.length === puzzle.words.length;
-    if (won) progress.addSolve();
-    burst(els.fx, s, won ? 90 : 34, state.dims, PAD);
-    pop(won);
-    // Glow, then strike through. The timer only clears if `hit` is still the one
-    // glowing; a second find resets justFound and that word's own timer strikes it.
-    if (prefersReducedMotion()) {
-      justFound = null;
-    } else {
-      justFound = hit;
-      setTimeout(() => { if (justFound === hit) { justFound = null; list(); } }, GLOW_MS);
-    }
-    list();
-    persist();
-    // newPuzzle() cancels state.winTimer before replacing state.puzzle, so by the time
-    // this fires `puzzle` is still the one that was just won.
-    if (won) state.winTimer = setTimeout(() => {
-      state.winTimer = null;
-      els.winmsg.textContent = 'You found every ' + cap(puzzle.name) + ' word.';
-      // Written here rather than in the markup so the live region is empty until there is
-      // something to announce. The count is the only number shown anywhere — no
-      // fractions, which are what turn a record into a target.
-      const n = progress.get().puzzles;
-      const paneOpen = els.picker.style.display === 'flex' || settings.style.display === 'flex';
-      const counting = !paneOpen && startAutoNext();
-      els.winstats.textContent = `${n} ${n === 1 ? 'puzzle' : 'puzzles'} solved`;
-      // One announcement, including the countdown, rather than a live digit every second.
-      // Visually hidden: the countdown row already shows it.
-      if (counting) {
-        const sr = document.createElement('span');
-        sr.className = 'sr';
-        sr.textContent = `. Next puzzle in ${AUTO_NEXT_MS / 1000} seconds.`;
-        els.winstats.appendChild(sr);
-      }
-      renderSolvedShape(els, state, state.size);
-      els.win.style.display = 'flex';
-      if (!paneOpen) winbtn.focus({ preventScroll: true });
-    }, 700);
+    claim(hit, s);
   } else if (!(s.x0 === s.x1 && s.y0 === s.y1)) {
     // A plain tap's 1-cell selection can never match, so it is not a miss.
     flashMiss(s);
@@ -321,6 +360,8 @@ function endDrag() {
   pills();
 }
 els.gridbox.addEventListener('pointerup', endDrag);
+const revealBtn = /** @type {HTMLButtonElement} */ (must('reveal'));
+revealBtn.addEventListener('click', revealWord);
 els.gridbox.addEventListener('pointercancel', endDrag);
 
 /** Say why a deal failed, in the one place a subject name would otherwise sit. Shared by
@@ -385,7 +426,7 @@ async function newGame(categoryId, stillWanted = () => true) {
     progress.get().favourLeastSeen, Math.random);
   const subject = await loadSubject(pick);
   if (!stillWanted()) return false;
-  newPuzzle(Date.now() >>> 0, subject, PRESET);
+  newPuzzle(Date.now() >>> 0, subject, shapeFor());
   return true;
 }
 // newGame rejects when a category cannot be fetched; the picker catches that to keep
@@ -398,11 +439,8 @@ const picker = makePicker({
   start: must('picker-start'),
   cancel: must('picker-cancel'),
   categories: CATEGORIES,
-  leastBox: /** @type {HTMLInputElement} */ (must('picker-least-box')),
   isUnavailable: (id) => unavailableCategories.has(id),
   isComplete: (id) => progress.isComplete(id),
-  leastDefault: () => progress.get().favourLeastSeen,
-  onLeast: (on) => progress.setFavourLeastSeen(on),
   onStart: async (categoryId) => { await newGame(categoryId); },
   opener: must('catbtn'),
 });
@@ -441,8 +479,6 @@ let dealing = false;
 // board is dealt). A win-card deal still loading checks it and quietly drops its result.
 let dealGen = 0;
 const prefs = defaultStore();
-let autoNext = true;
-try { autoNext = prefs?.getItem(AUTO_KEY) !== 'off'; } catch { /* default on */ }
 
 /** @returns {void} */
 function cancelAutoNext() {
@@ -473,7 +509,7 @@ function advance() {
  * @returns {boolean} whether it started */
 function startAutoNext() {
   cancelAutoNext();
-  if (!autoNext || document.hidden || els.picker.style.display === 'flex' || settings.style.display === 'flex') return false;
+  if (!cfg.get().autoNext || document.hidden || els.picker.style.display === 'flex' || settings.style.display === 'flex') return false;
   const deadline = performance.now() + AUTO_NEXT_MS;
   wincount.textContent = String(AUTO_NEXT_MS / 1000);
   winnext.hidden = false;
@@ -531,6 +567,7 @@ function reinstate(snap) {
   els.subject.textContent = cap(snap.puzzle.name);
   els.subject.dataset.accent = String(accentSlot(snap.puzzle.name));
   els.category.textContent = snap.category;
+  renderArt(els, snap.subjectId, cfg.get().art);
   hideWin();
   layout();   // a different puzzle object, so this rebuilds the cells
   renderFoundCells(els, state, state.size);
@@ -622,7 +659,15 @@ const themeColorMeta = document.querySelector('meta[name="theme-color"]');
 const settings = must('settings');
 const themeSelect = /** @type {HTMLSelectElement} */ (must('settings-theme'));
 const modeLight = must('mode-light'), modeDark = must('mode-dark');
-const autoBox = /** @type {HTMLInputElement} */ (must('settings-auto-box'));
+const leastBox = /** @type {HTMLInputElement} */ (must('settings-least-box'));
+// Vibration is a no-op where unsupported (iOS Safari, most desktops); do not offer it there.
+if (!('vibrate' in navigator)) must('settings-vibrate').hidden = true;
+// This screen's own board is the compact one, so the large board is not on offer.
+if (PRESET === PRESETS.compact) {
+  const large = /** @type {HTMLButtonElement} */ (settings.querySelector('[data-setting="board"] [data-value="full"]'));
+  large.disabled = true;
+  large.title = 'Needs a larger screen';
+}
 for (const t of THEMES) {
   const o = document.createElement('option');
   o.value = t;
@@ -647,7 +692,7 @@ function openSettings() {
   cancelAutoNext();
   dealGen++;
   picker.close();
-  autoBox.checked = autoNext;
+  syncSettings();
   anchorPane(settings);
   settings.style.display = 'flex';
   els.appearance.setAttribute('aria-expanded', 'true');
@@ -667,11 +712,55 @@ els.appearance.addEventListener('click', () => {
 themeSelect.addEventListener('change', () => appearance.setTheme(themeSelect.value));
 modeLight.addEventListener('click', () => appearance.set('light'));
 modeDark.addEventListener('click', () => appearance.set('dark'));
-autoBox.addEventListener('change', () => {
-  autoNext = autoBox.checked;
-  if (!autoNext) cancelAutoNext();
-  try { prefs?.setItem(AUTO_KEY, autoNext ? 'on' : 'off'); } catch { /* not remembered */ }
+/** Show the stored settings in the pane's controls. Every control under [data-setting] is a
+ * settings.js field: a checkbox (data-on/data-off map it to a two-value choice), a select,
+ * or a .seg group of buttons. @returns {void} */
+function syncSettings() {
+  const now = /** @type {Record<string, unknown>} */ (cfg.get());
+  for (const el of settings.querySelectorAll('[data-setting]')) {
+    const v = now[/** @type {HTMLElement} */ (el).dataset.setting ?? ''];
+    if (el instanceof HTMLInputElement) el.checked = el.dataset.on ? v === el.dataset.on : v === true;
+    else if (el instanceof HTMLSelectElement) el.value = String(v);
+    else for (const btn of el.querySelectorAll('button[data-value]')) {
+      btn.setAttribute('aria-pressed', String(/** @type {HTMLElement} */ (btn).dataset.value === v));
+    }
+  }
+  leastBox.checked = progress.get().favourLeastSeen;
+}
+/** Make a changed setting take effect now, where it has something to change now.
+ * @param {string} key @returns {void} */
+function applySetting(key) {
+  const now = cfg.get();
+  if (key === 'art') { if (subjectId) renderArt(els, subjectId, now.art); placeArt(els, state.dims); }
+  if (key === 'letters') { state.rendered = { puzzle: null, cell: 0 }; layout(); }
+  if (key === 'reveal') els.app.dataset.reveal = now.reveal ? 'on' : 'off';
+  if (key === 'motion') document.documentElement.dataset.motion = now.motion;
+  if (key === 'autoNext' && !now.autoNext) cancelAutoNext();
+}
+/** @param {string} key @param {unknown} value @returns {void} */
+function changeSetting(key, value) {
+  cfg.set(/** @type {any} */ (key), /** @type {any} */ (value));
+  syncSettings();
+  applySetting(key);
+}
+settings.addEventListener('click', (e) => {
+  const btn = e.target instanceof Element ? e.target.closest('.seg[data-setting] button[data-value]') : null;
+  if (!btn) return;
+  const group = /** @type {HTMLElement} */ (btn.closest('[data-setting]'));
+  changeSetting(group.dataset.setting ?? '', /** @type {HTMLElement} */ (btn).dataset.value);
 });
+settings.addEventListener('change', (e) => {
+  const el = e.target;
+  if (el === leastBox) { progress.setFavourLeastSeen(leastBox.checked); return; }
+  if (!(el instanceof HTMLInputElement || el instanceof HTMLSelectElement) || !el.dataset.setting) return;
+  const value = el instanceof HTMLInputElement
+    ? (el.dataset.on ? (el.checked ? el.dataset.on : el.dataset.off) : el.checked)
+    : el.value;
+  changeSetting(el.dataset.setting, value);
+});
+// Settings that shape the page before any game is dealt.
+applySetting('reveal');
+applySetting('motion');
 must('settings-close').addEventListener('click', closeSettings);
 settings.addEventListener('click', (e) => { if (e.target === settings) closeSettings(); });
 document.addEventListener('keydown', (e) => {
@@ -726,7 +815,7 @@ async function boot() {
       // ?subject= or ?category= on their own are seeded by the clock and are therefore
       // ordinary play of that subject — bypassing them too would mean anyone who
       // bookmarks a subject link never accrues coverage at all.
-      newPuzzle(seed, await loadSubject(id), PRESET, !params.has('seed'));
+      newPuzzle(seed, await loadSubject(id), shapeFor(), !params.has('seed'));
       return;
     }
     const saved = store.load();

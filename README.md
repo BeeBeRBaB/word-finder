@@ -26,6 +26,8 @@ have no DOM access at all, which is what makes them cheap to unit-test:
 | `src/view.js` | Renders cells, selection pills and the word list. | DOM |
 | `src/effects.js` | Confetti and the WebAudio chime. | DOM |
 | `src/picker.js` | The category dialog. Reports a category id; owns no game state. | DOM |
+| `src/settings.js` | Player preferences (background art, letter size, board size, difficulty, sound, vibrate, motion, Reveal, auto-start) as one validated record; theme and mode stay in `appearance.js`, least-seen in `progress.js`. | pure |
+| `src/art.js` | One 16x16 pixel sprite per category, and the per-subject hue, mirror and corner that vary it. `view.js` draws it beside the board (landscape rail) or faintly behind it. | pure |
 | `src/main.js` | Entry point: owns game state, wires events, registers the SW. | DOM |
 | `src/catalog.js` | The 25 category names. No subjects, no words — loads on every visit. | data |
 | `src/subjects/*.js` | One category's word pools, 40+ words per subject. Lazily imported. | data |

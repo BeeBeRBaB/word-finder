@@ -20,6 +20,29 @@ export const PRESETS = {
   },
 };
 
+// Difficulty is the words, not their directions: Easy leans short, Hard leans long. Every
+// subject can fill each mix (thinnest pools: 8 of 3-5, 12 of 6-8, 8 of 9-12 letters), and
+// pickWords backfills a short bucket anyway. Normal is each preset's own mix.
+/** @type {Record<'easy'|'hard', {full:Bucket[], compact:Bucket[]}>} */
+export const MIXES = {
+  easy: {
+    full: [{ min: 3, max: 5, take: 6 }, { min: 6, max: 8, take: 6 }],
+    compact: [{ min: 3, max: 4, take: 4 }, { min: 5, max: 6, take: 4 }],
+  },
+  hard: {
+    full: [{ min: 3, max: 5, take: 2 }, { min: 6, max: 8, take: 5 }, { min: 9, max: 12, take: 5 }],
+    compact: [{ min: 3, max: 4, take: 1 }, { min: 5, max: 6, take: 3 }, { min: 7, max: 9, take: 4 }],
+  },
+};
+
+/** The word mix a deal of this shape draws at this difficulty.
+ * @param {{size:number, mix:Bucket[]}} shape @param {'easy'|'normal'|'hard'} difficulty
+ * @returns {Bucket[]} */
+export function mixFor(shape, difficulty) {
+  if (difficulty === 'normal') return shape.mix;
+  return MIXES[difficulty][shape.size === PRESETS.compact.size ? 'compact' : 'full'];
+}
+
 /**
  * Which board this DEVICE plays. `screen`, not the viewport: tracking the window would
  * re-deal the board mid-drag, and make an iPad in Slide Over a different game. `min()`
