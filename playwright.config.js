@@ -33,6 +33,14 @@ export default defineConfig({
     // palettes, dialogs) is viewport-independent, and running it twice only bought
     // a slower suite. `layout.spec.js` sets its own viewports and skips outside
     // `desktop`, so it must not be listed here.
+    // Layout again in WebKit: Safari applied no stylesheet until the cross-origin font sheet
+    // arrived, so the first layout sized the board without #app's padding and overflowed.
+    // Chromium cannot show that, so only this engine catches it.
+    {
+      name: 'safari',
+      testMatch: /layout\.spec\.js/,
+      use: { ...devices['Desktop Safari'], viewport: { width: device('Desktop').w, height: device('Desktop').h } },
+    },
     {
       name: 'mobile',
       testMatch: /(gameplay|smoke)\.spec\.js/,

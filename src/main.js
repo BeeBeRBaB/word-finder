@@ -685,6 +685,8 @@ document.addEventListener('keydown', (e) => {
     picker.close(); closeSettings();
   }
 });
+// Styles or fonts that land after boot change the chrome around the board; re-measure once.
+window.addEventListener('load', onResize);
 window.addEventListener('resize', () => {
   onResize();
   // An open pane's inline offsets were measured for the old shape.
@@ -697,6 +699,15 @@ window.addEventListener('resize', () => {
  * @returns {Promise<void>} */
 async function boot() {
   const params = new URLSearchParams(location.search);
+  // WebKit can run this module before any stylesheet applies: styles.css is parsed but held
+  // back while the cross-origin font sheet loads, so the first layout read #app's padding as
+  // 0 and sized the board 20px too wide. Wait until it is live, or the page has loaded.
+  const css = document.querySelector('link[rel="stylesheet"][href="styles.css"]');
+  const live = () => [...document.styleSheets].some(s => s.ownerNode === css);
+  if (css && !live()) await new Promise((done) => {
+    window.addEventListener('load', done, { once: true });
+    setTimeout(done, 2000);   // never hold the board for a font server
+  });
   try {
     if (params.has('seed') || params.has('subject') || params.has('category')) {
       const seed = resolveSeed(location.search);

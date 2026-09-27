@@ -12,7 +12,7 @@ for (const d of DEVICES) {
     test.use({ viewport: { width: d.w, height: d.h } });
 
     test('layout fits', async ({ page }, testInfo) => {
-      test.skip(testInfo.project.name !== 'desktop', 'viewport is set explicitly');
+      test.skip(!['desktop', 'safari'].includes(testInfo.project.name), 'viewport is set explicitly');
       // Pinned so the shape under test is the only variable: a random deal would vary
       // the longest word and the subject-name length, both of which move the layout.
       await page.goto('/?subject=nature/birds');
@@ -33,7 +33,7 @@ for (const d of DEVICES) {
     // min(viewport) under 480 is the compact board. Asserted per device because
     // "the layout fits" passes just as well when the wrong board is on screen.
     test('deals the board this device should get', async ({ page }, testInfo) => {
-      test.skip(testInfo.project.name !== 'desktop', 'viewport is set explicitly');
+      test.skip(!['desktop', 'safari'].includes(testInfo.project.name), 'viewport is set explicitly');
       await page.goto('/?subject=nature/birds');   // pinned; see the note on the test above
       await expect(page.locator('.cell')).toHaveCount(Math.min(d.w, d.h) < 480 ? 100 : 169);
     });
