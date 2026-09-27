@@ -487,6 +487,9 @@ body{position:fixed;inset:0;width:100%;height:100%}
 /* Both panes drop from the top edge: full width on a phone, a card under the header's
    buttons on anything wider. JS only ever toggles display; everything else is here. */
 #picker,#settings{position:fixed;inset:0;background:var(--scrim);display:none;align-items:flex-start;justify-content:center;z-index:60}
+/* Settings exists to preview themes, so it does not dim the page it is changing. The layer
+   still covers the page, so a click outside closes it. */
+#settings{background:transparent}
 @keyframes dropIn{from{transform:translateY(-24px);opacity:0}to{transform:none;opacity:1}}
 #settingscard{background:var(--surface);border:1px solid var(--accent);box-shadow:var(--card-shadow);padding:22px 24px 24px;
   display:flex;flex-direction:column;gap:10px;text-align:left;box-sizing:border-box;overflow-y:auto;
