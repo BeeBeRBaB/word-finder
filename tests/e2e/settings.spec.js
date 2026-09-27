@@ -240,3 +240,27 @@ test('the Settings button is a gear, and Settings has Look, Game and Feedback se
   await page.locator('#appearance').click();
   await expect(page.locator('#settings .panesection')).toHaveText(['Look', 'Game', 'Feedback']);
 });
+
+test('Settings fits a laptop without scrolling, and is a full-screen page with Back on a phone', async ({ page }) => {
+  for (const [w, h] of [[1366, 768], [1440, 900]]) {
+    await page.setViewportSize({ width: w, height: h });
+    await page.goto('/?seed=1&subject=sports/golf');
+    await page.waitForSelector('#letters .cell');
+    await page.locator('#appearance').click();
+    const card = page.locator('#settingscard');
+    await expect(page.locator('#settings-back')).toBeHidden();
+    expect(await card.evaluate(c => c.scrollHeight - c.clientHeight), `${w}x${h} scrolls`).toBeLessThanOrEqual(0);
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/?seed=1&subject=sports/golf');
+  await page.waitForSelector('#letters .cell');
+  await page.locator('#appearance').click();
+  await expect(page.locator('#settings-close')).toBeHidden();
+  // Measured once the slide-in has finished, not part-way across.
+  await page.locator('#settingscard').evaluate(c => Promise.all(c.getAnimations().map(a => a.finished)));
+  const box = await page.locator('#settingscard').boundingBox();
+  expect(box).toEqual({ x: 0, y: 0, width: 390, height: 844 });
+  await page.locator('#settings-back').click();
+  await expect(page.locator('#settings')).toBeHidden();
+  await expect(page.locator('#appearance')).toBeFocused();
+});

@@ -543,27 +543,31 @@ body{position:fixed;inset:0;width:100%;height:100%}
    buttons on anything wider. JS only ever toggles display; everything else is here. */
 #picker,#settings{position:fixed;inset:0;background:var(--scrim);display:none;align-items:flex-start;justify-content:center;z-index:60}
 @keyframes dropIn{from{transform:translateY(-24px);opacity:0}to{transform:none;opacity:1}}
-#settingscard{background:var(--surface);border:1px solid var(--accent);box-shadow:var(--card-shadow);padding:22px 24px 24px;
-  display:flex;flex-direction:column;gap:10px;text-align:left;box-sizing:border-box;overflow-y:auto;
+#settingscard{background:var(--surface);border:1px solid var(--accent);box-shadow:var(--card-shadow);padding:18px 22px 20px;
+  display:flex;flex-direction:column;gap:12px;text-align:left;box-sizing:border-box;overflow-y:auto;overscroll-behavior:contain;
   max-height:calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 16px);
   max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 16px)}
-.panehead{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px}
-.panehead h2{font-family:var(--display);font-weight:700;font-size:20px;color:var(--text-strong);margin:0}
-.paneclose{width:44px;height:44px;margin:-10px -12px 0 0;border:none;background:transparent;color:var(--muted);font-size:22px;line-height:1;cursor:pointer}
+.panehead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.panehead h2{flex:1;font-family:var(--display);font-weight:700;font-size:20px;color:var(--text-strong);margin:0}
+.paneclose{width:44px;height:44px;margin:-10px -12px -10px 0;border:none;background:transparent;color:var(--muted);font-size:22px;line-height:1;cursor:pointer}
 .paneclose:hover{color:var(--text-strong)}
-label[for="settings-theme"],label[for="settings-art"],.panelabel{display:block;font-family:var(--utility);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--label)}
-.panelabel,label[for="settings-art"]{margin-top:8px}
-.panesection{margin:10px 0 0;padding-top:12px;border-top:1px solid var(--border);font-family:var(--display);font-size:15px;font-weight:700;color:var(--text-strong)}
-.panehead + .panesection{margin-top:0;padding-top:0;border-top:none}
-.panenote{margin:-2px 0 0;font-size:13px;line-height:1.4;color:var(--hint)}
+/* Back replaces the close cross only where Settings is a full-screen page. */
+.paneback{display:none;align-items:center;gap:2px;min-height:44px;margin:0 0 0 -10px;padding:0 10px 0 4px;border:none;background:transparent;
+  color:var(--accent-text);font-family:inherit;font-weight:700;font-size:16px;cursor:pointer}
+.paneback svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+label[for="settings-theme"],label[for="settings-art"],.panelabel{display:block;font-family:var(--utility);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--label)}
+#settings-body{display:grid;gap:14px 28px;align-items:start}
+/* A container, so a row stacks its label over the control when its column is too narrow
+   for a three-way switch, whatever made it narrow. */
+.panegroup{display:flex;flex-direction:column;gap:6px;min-width:0;container-type:inline-size}
+.panegroup + .panegroup{padding-top:12px;border-top:1px solid var(--border)}
+.panesection{margin:0 0 2px;font-family:var(--display);font-size:15px;font-weight:700;color:var(--text-strong)}
+.row{display:grid;grid-template-columns:92px minmax(0,1fr);align-items:center;column-gap:10px}
+@container (max-width:335px){.row{grid-template-columns:minmax(0,1fr);row-gap:4px}}
+.panenote{margin:0;font-size:13px;line-height:1.35;color:var(--hint)}
+.checks{display:flex;flex-wrap:wrap;column-gap:20px}
 .check[hidden]{display:none}
 #app[data-reveal="off"] #reveal{display:none}
-#settings-swatches{display:flex;gap:6px}
-#settings-swatches i{width:28px;height:12px;border-radius:999px;box-shadow:inset 0 0 0 1px var(--border)}
-#settings-swatches .p1{background:var(--pill-1)}
-#settings-swatches .p2{background:var(--pill-2)}
-#settings-swatches .p3{background:var(--pill-3)}
-#settings-swatches .p4{background:var(--pill-4)}
 /* #settings-mode and #settings-auto are the pre-.seg/.check ids, kept for one release so an old
    index.html paired with this sheet during an update still gets styled controls. */
 .seg,#settings-mode{display:flex;gap:8px}
@@ -682,6 +686,36 @@ label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12
   #pickercard,#settingscard{padding-top:16px;
     max-height:calc(100vh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     max-height:calc(100dvh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
+}
+/* Settings grows past the picker: two columns where the window is wide enough, one card
+   width below that. After the shared pane rules above, which set the same properties. */
+@media (min-width:600px){
+  #settingscard{width:420px}
+}
+@media (min-width:820px){
+  #settingscard{width:760px}
+}
+@media (min-width:820px), (min-width:600px) and (max-height:420px){
+  #settings-body{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"look game" "feedback game"}
+  #settings-look{grid-area:look}
+  #settings-game{grid-area:game;padding-top:0;border-top:none}
+  #settings-feedback{grid-area:feedback}
+}
+/* A phone, or any screen too short for a card, gets a full-screen page with Back instead: the
+   card scrolled there. The header stays put while the page scrolls under it. */
+@keyframes pageIn{from{transform:translateX(28px);opacity:0}to{transform:none;opacity:1}}
+@media (max-width:599px), (max-height:420px){
+  #settings{padding:0;align-items:stretch}
+  #settingscard{width:100%;height:100%;max-height:none;border:none;border-radius:0;box-shadow:none;animation:pageIn .22s ease-out;
+    padding:0 calc(18px + env(safe-area-inset-right)) calc(20px + env(safe-area-inset-bottom)) calc(18px + env(safe-area-inset-left))}
+  #settingscard .panehead{position:sticky;top:0;z-index:1;background:var(--surface);border-bottom:1px solid var(--border);
+    margin:0 calc(-18px - env(safe-area-inset-right)) 0 calc(-18px - env(safe-area-inset-left));
+    padding:calc(6px + env(safe-area-inset-top)) calc(18px + env(safe-area-inset-right)) 6px calc(18px + env(safe-area-inset-left))}
+  #settingscard .panehead h2{text-align:center;font-size:18px}
+  .paneback{display:flex}
+  #settings-close{display:none}
+  /* Balances Back so the title sits in the middle. */
+  #settingscard .panehead::after{content:"";width:74px}
 }
 @media (prefers-reduced-motion: reduce){
   #wincard{animation:none}

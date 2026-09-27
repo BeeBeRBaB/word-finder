@@ -446,13 +446,15 @@ const picker = makePicker({
 });
 // Unconditional, unlike the confirm it replaces: the dialog is now how a game is started,
 // and the warning is one line inside it rather than a reason to show it.
+// Where Settings is a full-screen page rather than a card. Must match styles.css.
+const SETTINGS_PAGE = matchMedia('(max-width:599px), (max-height:420px)');
 /** On a wide screen a pane drops from under the header's buttons, which in landscape sit
  * at the end of the rail rather than the window's edge. Phones keep the CSS full-width
  * sheet, and a short landscape screen keeps its CSS top offset.
  * @param {HTMLElement} pane @returns {void} */
 function anchorPane(pane) {
   pane.style.paddingRight = pane.style.paddingTop = '';
-  if (innerWidth < 600) return;
+  if (innerWidth < 600 || (pane.id === 'settings' && SETTINGS_PAGE.matches)) return;
   const r = must('actions').getBoundingClientRect();
   pane.style.paddingRight = Math.max(8, innerWidth - r.right) + 'px';
   if (innerHeight > 420) pane.style.paddingTop = (r.bottom + 8) + 'px';
@@ -762,6 +764,7 @@ settings.addEventListener('change', (e) => {
 applySetting('reveal');
 applySetting('motion');
 must('settings-close').addEventListener('click', closeSettings);
+must('settings-back').addEventListener('click', closeSettings);
 settings.addEventListener('click', (e) => { if (e.target === settings) closeSettings(); });
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
