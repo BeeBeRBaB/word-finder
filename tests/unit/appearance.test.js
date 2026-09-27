@@ -129,3 +129,29 @@ test('a throwing store still yields the default theme', () => {
   a.setTheme('plum');
   assert.equal(a.getTheme(), 'plum', 'applied for the session even though it cannot be stored');
 });
+
+test('palettes: default first, unknown values normalize to it, and a choice persists and is applied', async () => {
+  const { PALETTES, PALETTE_KEY, normalizePalette, paletteName } = await import('../../src/appearance.js');
+  assert.equal(PALETTES[0], 'classic');
+  assert.equal(normalizePalette('jewel'), 'jewel');
+  assert.equal(normalizePalette('neon'), 'classic');
+  assert.equal(normalizePalette(undefined), 'classic');
+  assert.equal(paletteName('duotone'), 'Duotone');
+  const store = memStore();
+  const root = fakeRoot();
+  /** @type {string[]} */
+  const seen = [];
+  const a = makeAppearance({ store, root, onApply: (_m, _t, p) => seen.push(p) });
+  a.start();
+  assert.equal(/** @type {any} */ (root).dataset.palette, 'classic');
+  a.setPalette('calm');
+  assert.equal(store.getItem(PALETTE_KEY), 'calm');
+  assert.equal(/** @type {any} */ (root).dataset.palette, 'calm');
+  assert.deepEqual(seen, ['classic', 'calm']);
+  assert.equal(makeAppearance({ store, root: fakeRoot() }).getPalette(), 'calm', 'read back on construction');
+  const bad = { getItem() { throw new Error('blocked'); }, setItem() { throw new Error('blocked'); } };
+  const b = makeAppearance({ store: bad, root: fakeRoot() });
+  assert.equal(b.getPalette(), 'classic');
+  b.setPalette('jewel');
+  assert.equal(b.getPalette(), 'jewel', 'applied for the session even though it cannot be stored');
+});

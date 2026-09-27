@@ -289,3 +289,25 @@ test('exactly one icon shows for any data-pref, including values this build reti
     expect(shown[0]).toContain('i-look');
   }
 });
+
+// A palette recolours whichever theme is on, and the <head> resolver applies a stored one
+// before any module runs, like the theme, so it never flashes the classic colours first.
+test('a palette recolours the theme, is remembered, and is applied at first paint', async ({ page }) => {
+  await page.goto('/?seed=1&subject=nature/birds');
+  await page.waitForSelector('#letters .cell');
+  const bg = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--bg').trim());
+  const classic = await bg();
+  await page.locator('#appearance').click();
+  await page.locator('#settings-palette').selectOption('jewel');
+  await expect(page.locator('html')).toHaveAttribute('data-palette', 'jewel');
+  expect(await bg()).toBe('#3d200c');
+  expect(await page.locator('meta[name="theme-color"]').getAttribute('content')).toBe('#3d200c');
+  await page.locator('#settings-theme').selectOption('grove');
+  const jewelGrove = await bg();
+  expect(jewelGrove).not.toBe(classic);
+  await page.route('**/src/main.js', route => route.abort());
+  await page.reload();
+  await expect(page.locator('.cell')).toHaveCount(0);   // only the inline resolver ran
+  await expect(page.locator('html')).toHaveAttribute('data-palette', 'jewel');
+  expect(await bg()).toBe(jewelGrove);
+});

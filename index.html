@@ -9,10 +9,10 @@
      the migration for the 'system' setting this app used to offer. There is no OS query —
      dropping `system` removed the only reason to ask. The storage read still needs its own
      inner try: a throwing getItem (iOS "Block All Cookies") must fall through to the
-     default, not abort the script. The theme is resolved the same way and must stay
-     equivalent to normalizeTheme(): anything not in the list is the default. Covered by
+     default, not abort the script. Theme and palette are resolved the same way and must stay
+     equivalent to normalizeTheme() and normalizePalette(): anything not listed is the default. Covered by
      appearance.spec.js. -->
-<script>try{var p=null,t=null;try{p=localStorage.getItem('wordfinder-appearance');t=localStorage.getItem('wordfinder-theme')}catch(e){}if(p!=='light')p='dark';if(['broadsheet','sticker','drafting','grove','plum','graphite'].indexOf(t)<0)t='phosphor';document.documentElement.dataset.appearance=p;document.documentElement.dataset.theme=t}catch(e){}</script>
+<script>try{var p=null,t=null,c=null;try{p=localStorage.getItem('wordfinder-appearance');t=localStorage.getItem('wordfinder-theme');c=localStorage.getItem('wordfinder-palette')}catch(e){}if(p!=='light')p='dark';if(['broadsheet','sticker','drafting','grove','plum','graphite'].indexOf(t)<0)t='phosphor';document.documentElement.dataset.appearance=p;if(['jewel','duotone','calm'].indexOf(c)<0)c='classic';document.documentElement.dataset.theme=t;document.documentElement.dataset.palette=c}catch(e){}</script>
 <!-- Hold the first paint until main.js has laid the board out. The shell paints
      portrait with an unsized grid, and JS then flips orientation and sizes it, which
      measured CLS 0.66 — one shift moving #gridbox, #hdr and #side at once. Its own
@@ -96,6 +96,8 @@
   <section id="settings-look" class="panegroup" aria-labelledby="sec-look"><h3 class="panesection" id="sec-look">Look</h3>
     <div class="row"><label for="settings-theme">Theme</label>
       <div id="settings-field" class="selectfield"><select id="settings-theme"></select></div></div>
+    <div class="row"><label for="settings-palette">Palette</label>
+      <div class="selectfield"><select id="settings-palette"></select></div></div>
     <div class="row"><span class="panelabel" id="settings-mode-label">Mode</span>
       <div id="settings-mode" class="seg" role="group" aria-labelledby="settings-mode-label">
         <button id="mode-light" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.6"/><path d="M12 2v2.6M12 19.4V22M2 12h2.6M19.4 12H22M4.9 4.9l1.9 1.9M17.2 17.2l1.9 1.9M19.1 4.9l-1.9 1.9M6.8 17.2l-1.9 1.9"/></svg>Light</button>

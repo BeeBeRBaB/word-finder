@@ -17,10 +17,16 @@ export const THEME_KEY = 'wordfinder-theme';
  * @type {readonly string[]} */
 export const THEMES = ['phosphor', 'broadsheet', 'sticker', 'drafting', 'grove', 'plum', 'graphite'];
 
+export const PALETTE_KEY = 'wordfinder-palette';
+/** Colour sets every theme comes in, default first. The default is the theme blocks
+ * themselves; each other one has a [data-palette] block per theme and mode in styles.css.
+ * @type {readonly string[]} */
+export const PALETTES = ['classic', 'jewel', 'duotone', 'calm'];
+
 /**
  * @typedef {'light'|'dark'} Pref
  * @typedef {Pick<Storage,'getItem'|'setItem'>} PrefStore
- * @typedef {{dataset:{appearance?:string, theme?:string}}} Root
+ * @typedef {{dataset:{appearance?:string, theme?:string, palette?:string}}} Root
  */
 
 /** @param {string} s @returns {string} */
@@ -43,6 +49,14 @@ export function normalizeTheme(theme) {
   return THEMES.find(t => t === theme) ?? THEMES[0];
 }
 
+/** @param {string|null|undefined} palette @returns {string} */
+export function normalizePalette(palette) {
+  return PALETTES.find(p => p === palette) ?? PALETTES[0];
+}
+
+/** @param {string} palette @returns {string} */
+export const paletteName = (palette) => title(normalizePalette(palette));
+
 /** Display name for the theme picker.
  * @param {string} theme @returns {string} */
 export const themeName = (theme) => title(normalizeTheme(theme));
@@ -61,7 +75,7 @@ export function appearanceLabel(pref) {
 }
 
 /**
- * @param {{store?:PrefStore|null, root?:Root, onApply?:(mode:Pref, theme:string)=>void}} [deps]
+ * @param {{store?:PrefStore|null, root?:Root, onApply?:(mode:Pref, theme:string, palette:string)=>void}} [deps]
  */
 export function makeAppearance(deps = {}) {
   const store = deps.store === undefined ? defaultStore() : deps.store;
@@ -75,12 +89,15 @@ export function makeAppearance(deps = {}) {
   try { pref = normalizePref(store ? store.getItem(PREF_KEY) : null); } catch { pref = 'dark'; }
   let theme = THEMES[0];
   try { theme = normalizeTheme(store ? store.getItem(THEME_KEY) : null); } catch { theme = THEMES[0]; }
+  let palette = PALETTES[0];
+  try { palette = normalizePalette(store ? store.getItem(PALETTE_KEY) : null); } catch { palette = PALETTES[0]; }
 
   /** @returns {void} */
   function apply() {
     root.dataset.appearance = pref;
     root.dataset.theme = theme;
-    onApply(pref, theme);
+    root.dataset.palette = palette;
+    onApply(pref, theme, palette);
   }
 
   /** @param {string} p @returns {void} */
@@ -97,6 +114,13 @@ export function makeAppearance(deps = {}) {
     apply();
   }
 
+  /** @param {string} p @returns {void} */
+  function setPalette(p) {
+    palette = normalizePalette(p);
+    try { if (store) store.setItem(PALETTE_KEY, palette); } catch { /* not remembered */ }
+    apply();
+  }
+
   // Deliberately plain functions closing over `pref` rather than methods using `this`,
   // so a destructured `const {cycle} = makeAppearance()` still works.
   return {
@@ -106,6 +130,9 @@ export function makeAppearance(deps = {}) {
     /** @returns {string} */
     getTheme: () => theme,
     setTheme,
+    /** @returns {string} */
+    getPalette: () => palette,
+    setPalette,
     /** @returns {Pref} */
     cycle() { set(nextPref(pref)); return pref; },
     /** Apply now. Nothing to subscribe to any more: with `system` gone the preference is

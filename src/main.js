@@ -10,7 +10,7 @@ import { applyLayout, renderGrid, renderList, renderPills, renderFoundCells, ren
 import { burst, pop } from './effects.js';
 import { makeStorage, defaultStore } from './storage.js';
 import { makeProgress, chooseSubject } from './progress.js';
-import { makeAppearance, THEMES, themeName } from './appearance.js';
+import { makeAppearance, THEMES, themeName, PALETTES, paletteName } from './appearance.js';
 import { makeSettings } from './settings.js';
 import { makePicker } from './picker.js';
 
@@ -447,14 +447,15 @@ const picker = makePicker({
 // Unconditional, unlike the confirm it replaces: the dialog is now how a game is started,
 // and the warning is one line inside it rather than a reason to show it.
 // Where Settings is a full-screen page rather than a card. Must match styles.css.
-const SETTINGS_PAGE = matchMedia('(max-width:599px), (max-height:420px)');
+const SETTINGS_PAGE = '(max-width:599px), (max-height:420px)';
 /** On a wide screen a pane drops from under the header's buttons, which in landscape sit
  * at the end of the rail rather than the window's edge. Phones keep the CSS full-width
  * sheet, and a short landscape screen keeps its CSS top offset.
  * @param {HTMLElement} pane @returns {void} */
 function anchorPane(pane) {
   pane.style.paddingRight = pane.style.paddingTop = '';
-  if (innerWidth < 600 || (pane.id === 'settings' && SETTINGS_PAGE.matches)) return;
+  // Queried fresh: WebKit reports a stored MediaQueryList's previous state inside resize.
+  if (innerWidth < 600 || (pane.id === 'settings' && matchMedia(SETTINGS_PAGE).matches)) return;
   const r = must('actions').getBoundingClientRect();
   pane.style.paddingRight = Math.max(8, innerWidth - r.right) + 'px';
   if (innerHeight > 420) pane.style.paddingTop = (r.bottom + 8) + 'px';
@@ -660,6 +661,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) cance
 const themeColorMeta = document.querySelector('meta[name="theme-color"]');
 const settings = must('settings');
 const themeSelect = /** @type {HTMLSelectElement} */ (must('settings-theme'));
+const paletteSelect = /** @type {HTMLSelectElement} */ (must('settings-palette'));
 const modeLight = must('mode-light'), modeDark = must('mode-dark');
 const leastBox = /** @type {HTMLInputElement} */ (must('settings-least-box'));
 // Vibration is a no-op where unsupported (iOS Safari, most desktops); do not offer it there.
@@ -676,16 +678,22 @@ for (const t of THEMES) {
   o.textContent = themeName(t);
   themeSelect.appendChild(o);
 }
+for (const p of PALETTES) paletteSelect.appendChild(new Option(paletteName(p), p));
+/** The browser chrome takes the ground colour. Skipped while no stylesheet applies (WebKit
+ * holds it back at boot), when --bg reads empty; boot() calls it again once it is live.
+ * @returns {void} */
+function syncThemeColor() {
+  const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+  if (themeColorMeta && bg) themeColorMeta.setAttribute('content', bg);
+}
 const appearance = makeAppearance({
-  onApply(mode, theme) {
+  onApply(mode, theme, palette) {
     els.appearance.dataset.pref = mode;
     modeLight.setAttribute('aria-pressed', String(mode === 'light'));
     modeDark.setAttribute('aria-pressed', String(mode === 'dark'));
     themeSelect.value = theme;
-    if (themeColorMeta) {
-      const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
-      themeColorMeta.setAttribute('content', bg);
-    }
+    paletteSelect.value = palette;
+    syncThemeColor();
   },
 });
 appearance.start();
@@ -712,6 +720,7 @@ els.appearance.addEventListener('click', () => {
   if (settings.style.display === 'flex') closeSettings(); else openSettings();
 });
 themeSelect.addEventListener('change', () => appearance.setTheme(themeSelect.value));
+paletteSelect.addEventListener('change', () => appearance.setPalette(paletteSelect.value));
 modeLight.addEventListener('click', () => appearance.set('light'));
 modeDark.addEventListener('click', () => appearance.set('dark'));
 /** Show the stored settings in the pane's controls. Every control under [data-setting] is a
@@ -778,7 +787,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 // Styles or fonts that land after boot change the chrome around the board; re-measure once.
-window.addEventListener('load', onResize);
+window.addEventListener('load', () => { onResize(); syncThemeColor(); });
 window.addEventListener('resize', () => {
   onResize();
   // An open pane's inline offsets were measured for the old shape.
@@ -800,6 +809,7 @@ async function boot() {
     window.addEventListener('load', done, { once: true });
     setTimeout(done, 2000);   // never hold the board for a font server
   });
+  syncThemeColor();
   try {
     if (params.has('seed') || params.has('subject') || params.has('category')) {
       const seed = resolveSeed(location.search);
