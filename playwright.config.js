@@ -1,7 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 import { device } from './tests/viewport.js';
 
-const BASE = 'http://localhost:5173';
+// PORT moves the whole run, server included (tests/server.mjs reads it too), so a second
+// checkout can test itself instead of reusing a server another checkout left on 5173.
+const BASE = `http://localhost:${process.env.PORT || 5173}`;
 
 export default defineConfig({
   testDir: './tests/e2e',
