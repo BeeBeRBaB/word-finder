@@ -47,13 +47,13 @@ const GAP = 20;        // must equal #app[data-landscape]'s column-gap; tokens.t
 // 320 is measured, not guessed: rendering the 12 longest words of all 600 subjects as two
 // content-sized columns, the widest is 316px (sports/archery), median 275.
 const MIN_SIDE = 320;
-// Rail ceiling. 580, not 380: in landscape the header shares this track with the two
-// action buttons (then 168px, 210px since the split New game control), so a 380px rail left the title ~200px and ellipsised the subject
-// name at EVERY width — still truncating at 1700px with 659px of the window sitting empty.
-// The widest title in the corpus is 375px ("Artificial Intelligence"), so 580 leaves 402
-// after the buttons and the gap. Above this the rail stops growing and the spare width
-// stays margin, which is what keeps an ultrawide from stretching the list to the horizon.
-const LIST_MAX = 580;
+// No rail ceiling: the rail takes every pixel the board leaves, so the header's buttons sit
+// at the window's edge. The list stays two content-sized columns, so a wide rail widens
+// the header, not the list.
+// Largest cell. The board grows to fill the height; this only stops a large monitor from
+// dealing letters the size of the rail's headings. It was 54, which left a 1440x900
+// laptop with an eighth of its height and ~100px of width unused.
+const CELL_MAX = 96;
 const BORDER = 2;      // #gridbox's content-box border, 1px each side
 // Content-sized, not `1fr 1fr`: a fr split puts the second column wherever the viewport
 // ends. Portrait shares it so the orientations cannot drift.
@@ -74,15 +74,15 @@ export function computeLayout({ vw, vh, size, pad, count, minCell = 16 }) {
     // the tracks then overflowed the viewport for CSS to sweep up.
     const byHeight = Math.floor((vh - 2 * pad - BORDER) / size);
     const byWidth = Math.floor((vw - GAP - MIN_SIDE - 2 * pad) / size);
-    cell = Math.max(minCell, Math.min(54, byHeight, byWidth));
+    cell = Math.max(minCell, Math.min(CELL_MAX, byHeight, byWidth));
     const gridSize = size * cell + 2 * pad;
-    sideWidth = Math.min(Math.max(MIN_SIDE, vw - gridSize - GAP), LIST_MAX);
+    sideWidth = Math.max(MIN_SIDE, vw - gridSize - GAP);
     const scroll = size * cell + 2 * pad + BORDER > vh || gridSize + GAP + sideWidth > vw;
     return { landscape, cell, gridSize, sideWidth, listColumns: LIST_COLUMNS, scroll };
   }
   const availW = vw - 2 * pad - BORDER;
   const availH = vh - reservePortrait(count) - 2 * pad - BORDER;
-  cell = Math.max(minCell, Math.min(54, Math.floor(Math.min(availW, availH) / size)));
+  cell = Math.max(minCell, Math.min(CELL_MAX, Math.floor(Math.min(availW, availH) / size)));
   const gridSize = size * cell + 2 * pad;
   // avail* already exclude padding, border and the list reserve, so compare the raw run.
   const scroll = size * cell > availW || size * cell > availH;

@@ -54,12 +54,15 @@ test('grid fits within the available space on every in-scope device', () => {
   }
 });
 
-test('cells stay within [16, 54] and reach 54 on desktop', () => {
+test('cells stay within [16, 96], and a laptop board fills its height', () => {
   for (const d of DEVICES) {
     const { cell } = at(d.vw, d.vh);
-    assert.ok(cell >= 16 && cell <= 54, `${d.name}: cell ${cell}`);
+    assert.ok(cell >= 16 && cell <= 96, `${d.name}: cell ${cell}`);
   }
-  assert.equal(at(1420, 880).cell, 54);
+  // 1440x900 inside #app: the board is height-bound, (880 - 2*10 - 2) / 13 = 66.
+  assert.equal(at(1420, 880).cell, 66);
+  const d = at(1420, 880);
+  assert.ok(880 - (d.gridSize + 2) < 13, `${880 - d.gridSize - 2}px of height left under the board`);
 });
 
 test('non-zero insets shrink the usable space and still fit', () => {
@@ -155,9 +158,16 @@ test('when the rail and grid cannot both fit, the layout scrolls rather than cli
   }
 });
 
-test('the rail stops growing, so an ultrawide does not stretch the list to the horizon', () => {
-  assert.equal(at(2400, 900).sideWidth, at(3400, 900).sideWidth,
-    'the rail must reach a ceiling rather than tracking the viewport');
+test('the rail reaches the window edge in landscape, so the header buttons sit at it', () => {
+  for (const [vw, vh] of [[1133, 644], [1420, 880], [1900, 1000], [3400, 900]]) {
+    const d = at(vw, vh);
+    if (d.scroll) continue;
+    assert.equal(d.gridSize + 20 + d.sideWidth, vw, `${vw}x${vh}: board + gap + rail leaves ${vw - d.gridSize - 20 - d.sideWidth}px`);
+  }
+});
+
+test('a large monitor stops the board at 96px cells', () => {
+  assert.equal(at(3400, 1800).cell, 96);
 });
 
 test('the rail leaves room for the longest subject title beside the action buttons', () => {
