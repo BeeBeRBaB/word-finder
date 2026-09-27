@@ -5,9 +5,6 @@ import { makeRng } from '../../src/rng.js';
 import { PRESETS } from '../../src/layout.js';
 import { WORDS } from '../../src/subjects/home.js';
 
-// The server this run started; see PORT in playwright.config.js.
-const ORIGIN = `http://localhost:${process.env.PORT || 5173}`;
-
 // Regression for 43c8402. Winning schedules the overlay on a 700ms timer. Starting
 // a new puzzle inside that window used to let the stale timer drop the overlay over
 // a fresh grid, where it swallowed every pointer event and made the game unplayable.
@@ -114,13 +111,13 @@ test('the service worker only falls back to index.html for navigations', async (
 // Regression for 121de94 + 60b5099. Code is stale-while-revalidate: a changed asset
 // must reach the user with no CACHE bump. Icons stay cache-first and must not
 // generate revalidation traffic.
-test('code revalidates in the background, icons stay cache-first', async ({ page }) => {
+test('code revalidates in the background, icons stay cache-first', async ({ page, baseURL }) => {
   await page.goto('/');
   await page.evaluate(async () => {
     for (const r of await navigator.serviceWorker.getRegistrations()) await r.unregister();
     for (const k of await caches.keys()) await caches.delete(k);
   });
-  await fetch(`${ORIGIN}/__reset`);
+  await fetch(`${baseURL}/__reset`);
   await page.goto('/');
   await page.evaluate(async () => {
     await navigator.serviceWorker.register('./sw.js');
@@ -141,19 +138,19 @@ test('code revalidates in the background, icons stay cache-first', async ({ page
   expect(probe.third).not.toBe(probe.first);     // refreshed with no CACHE bump
 
   // The icon is precached; repeat requests must never reach the origin again.
-  const before = await (await fetch(`${ORIGIN}/__stats`)).json();
+  const before = await (await fetch(`${baseURL}/__stats`)).json();
   await page.evaluate(() => fetch('./icon-192.png').then(r => r.arrayBuffer()));
   await page.waitForTimeout(800);
-  const after = await (await fetch(`${ORIGIN}/__stats`)).json();
+  const after = await (await fetch(`${baseURL}/__stats`)).json();
   expect(after['/icon-192.png'] || 0).toBe(before['/icon-192.png'] || 0);
 });
 
 // Guard for the src/ split. A path typo in the precache list breaks offline support
 // SILENTLY — install rejects, the old worker keeps serving, and nothing surfaces an
 // error. Parse the shipped list and prove every entry actually resolves.
-test('every asset in the service worker precache list actually resolves', async ({ page }) => {
+test('every asset in the service worker precache list actually resolves', async ({ page, baseURL }) => {
   await page.goto('/');
-  const sw = await (await fetch(`${ORIGIN}/sw.js`)).text();
+  const sw = await (await fetch(`${baseURL}/sw.js`)).text();
   const assetsMatch = sw.match(/const ASSETS=(\[[^\]]*\])/);
   if (!assetsMatch) throw new Error('could not find ASSETS list in sw.js');
   /** @type {string[]} */
@@ -177,7 +174,7 @@ test('every asset in the service worker precache list actually resolves', async 
 // green, and offline silently 404s on the forgotten module with no error anywhere.
 // Collect the same-origin resources the page really loaded and prove each one is
 // covered by the parsed ASSETS list, so a forgotten entry fails loudly by name.
-test('every same-origin asset the app loads is covered by the precache list', async ({ page }) => {
+test('every same-origin asset the app loads is covered by the precache list', async ({ page, baseURL }) => {
   // networkidle + the full cell count together prove main.js and its entire ES
   // module import graph (rng/puzzle/layout/view/effects/catalog/subjects) actually
   // ran, not just that the top-level script tag resolved. Pinned to a subject rather
@@ -190,7 +187,7 @@ test('every same-origin asset the app loads is covered by the precache list', as
   const cells = await page.locator('.cell').count();
   expect([100, 169]).toContain(cells);
 
-  const sw = await (await fetch(`${ORIGIN}/sw.js`)).text();
+  const sw = await (await fetch(`${baseURL}/sw.js`)).text();
   const assetsMatch = sw.match(/const ASSETS=(\[[^\]]*\])/);
   if (!assetsMatch) throw new Error('could not find ASSETS list in sw.js');
   /** @type {string[]} */
