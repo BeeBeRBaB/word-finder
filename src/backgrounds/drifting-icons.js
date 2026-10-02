@@ -15,7 +15,8 @@ import { iconSvg, iconsFor, variantOf, withHero } from './icon-scene.js';
 /** @type {{name:string, style:'pixel'|'modern', animated:boolean}} */
 export const meta = { name: 'Drifting icons', style: 'modern', animated: true };
 
-const SPRITE = 64;   // largest drawn edge in CSS px
+const SPRITE = 80;   // largest drawn edge in CSS px
+const FRAME = 1000 / 30;
 
 /**
  * @param {HTMLElement} host positioned element the canvas fills
@@ -44,7 +45,7 @@ export function start(host, opts) {
   const sprites = ids.map(() => null);
   /** @type {Drifter[]} */
   const parts = [];
-  let W = 0, H = 0, dpr = 1, raf = 0, last = 0, t = 0, dead = false, next = 0;
+  let W = 0, H = 0, dpr = 1, raf = 0, last = 0, due = 0, t = 0, dead = false, next = 0;
 
   /** Sprites are drawn at the device pixel ratio they were made for; a change remakes them.
    * @returns {void} */
@@ -80,12 +81,12 @@ export function start(host, opts) {
     const remake = d !== dpr || !parts.length;
     W = w; H = h; dpr = d;
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
-    const n = Math.max(8, Math.min(36, Math.round(W * H / 26000)));
+    const n = Math.max(10, Math.min(30, Math.round(W * H / 30000)));
     parts.length = 0;
     for (let i = 0; i < n; i++) {
       const z = (i + rng.random()) / n;   // spread evenly over depth; far ones drawn first
       /** @type {Drifter} */
-      const p = { k: 0, d: z, size: 22 + z * 40, speed: 9 + z * 20, along: 0, across: 0,
+      const p = { k: 0, d: z, size: 28 + z * 52, speed: 10 + z * 22, along: 0, across: 0,
         sway: 6 + rng.random() * 18, swayF: 0.15 + rng.random() * 0.25, tilt: 5 + rng.random() * 12,
         tiltF: 0.2 + rng.random() * 0.3, ph: rng.random() * 6.3, alpha: 0.32 + z * 0.38 };
       spawn(p, true);
@@ -128,7 +129,9 @@ export function start(host, opts) {
   /** @param {number} now @returns {void} */
   function frame(now) {
     raf = requestAnimationFrame(frame);
-    if (last && now - last < 30) return;   // ~30 fps
+    // Exactly 30fps at any refresh rate: frames fall due on a 1/30s grid, with 1ms of slack.
+    if (due && now < due - 1) return;
+    due = now - due < FRAME ? due + FRAME : now + FRAME;
     const dt = last ? Math.min(0.1, (now - last) / 1000) : 0;
     last = now;
     step(dt); draw();
@@ -137,7 +140,7 @@ export function start(host, opts) {
   /** @returns {void} */
   function play() {
     if (dead || reduced || raf || document.hidden) return;
-    last = 0; raf = requestAnimationFrame(frame);
+    last = 0; due = 0; raf = requestAnimationFrame(frame);
   }
   /** @returns {void} */
   function pause() { cancelAnimationFrame(raf); raf = 0; }
