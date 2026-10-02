@@ -72,14 +72,19 @@ test('a new palette restarts it, and a new deal restarts only a perDeal backgrou
   await bd.show('aurora', host('bg'), { ...OPTS, subject: 'food/fruit', seed: 2, colors: ['#333333'] });
   assert.deepEqual(f.log, ['start aurora-drift bg', 'stop aurora-drift', 'start aurora-drift bg']);
 
-  const scene = { id: 'scene', name: 'Scene', animated: false, file: 'scene', glyph: '', perDeal: true };
   const g = fakeImports();
-  const sd = makeBackdrop({ importFn: g.importFn, list: [...BACKGROUNDS, scene] });
+  const sd = makeBackdrop({ importFn: g.importFn });
   assert.equal(await sd.show('scene', host('bg'), OPTS), true, 'a still background with a module runs it');
   await sd.show('scene', host('bg'), OPTS);
   await sd.show('scene', host('bg'), { ...OPTS, seed: 2 });
   await sd.show('scene', host('bg'), { ...OPTS, seed: 2, subject: 'food/fruit' });
-  assert.deepEqual(g.log, ['start scene bg', 'stop scene', 'start scene bg', 'stop scene', 'start scene bg']);
+  // The board corner is another host, so an orientation flip restarts the scene there.
+  await sd.show('scene', host('art'), { ...OPTS, seed: 2, subject: 'food/fruit', corner: true });
+  await sd.show('drift', host('bg'), OPTS);
+  await sd.show('drift', host('bg'), { ...OPTS, seed: 3 });
+  assert.deepEqual(g.log, ['start subject-scene bg', 'stop subject-scene', 'start subject-scene bg', 'stop subject-scene',
+    'start subject-scene bg', 'stop subject-scene', 'start subject-scene art', 'stop subject-scene',
+    'start drifting-icons bg', 'stop drifting-icons', 'start drifting-icons bg']);
 });
 
 test('a show overtaken while its module loads never starts', async () => {

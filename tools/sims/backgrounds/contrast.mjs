@@ -35,11 +35,13 @@ const ROLES = {
 const ICONS = ['#appearance svg', '#catbtn svg'];
 
 // A background with a module runs in either area; plain still art only leaves the board corner
-// for Full screen, and in Word list it is behind no text.
+// for Full screen, and in Word list it is behind no text. Nor is the Subject scene in Word list
+// on a phone held upright, where it keeps the board corner too.
 const jobs = [];
 for (const shape of SHAPES) for (const mode of MODES) for (const area of AREAS) for (const id of IDS) {
   const bg = BACKGROUNDS.find(b => b.id === id);
-  if (bg && (bg.file || area === 'full')) jobs.push({ shape, mode, area, bg });
+  const corner = area === 'list' && (!bg?.file || (id === 'scene' && shape === 'phone'));
+  if (bg && !corner) jobs.push({ shape, mode, area, bg });
 }
 
 const site = await serve();

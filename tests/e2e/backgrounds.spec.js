@@ -5,6 +5,19 @@ import { test, expect } from '@playwright/test';
 // The animated modules load on first use; a cached copy must not stand in for the one under test.
 test.use({ serviceWorkers: 'block' });
 
+/** Whether every icon drawn in `sel` is one of the dealt subject's. @param {Page} page @param {string} sel */
+const ownIcons = (page, sel) => page.evaluate(async ([sel, mod]) => {
+  const { iconsFor } = await import(mod);
+  const ids = iconsFor(JSON.parse(localStorage.getItem('wordfinder-save-v1') ?? '{}').subjectId);
+  const drawn = [...document.querySelectorAll(`${sel} [data-icon]`)].map(g => g.getAttribute('data-icon') ?? '');
+  return drawn.length > 0 && drawn.every(id => ids.includes(id));
+}, [sel, '/src/backgrounds/icon-scene.js']);
+/** Whether the canvas in `sel` has anything drawn on it. @param {Page} page @param {string} sel */
+const painted = (page, sel) => page.locator(sel).evaluate(c => {
+  const cv = /** @type {HTMLCanvasElement} */ (c);
+  return !!cv.getContext('2d')?.getImageData(0, 0, cv.width, cv.height).data.some((v, i) => i % 4 === 3 && v > 0);
+});
+
 /** @param {Page} page */
 async function openPage(page) {
   await page.locator('#appearance').click();
@@ -17,7 +30,7 @@ test('the Background page has a tile per background, marked Still or Animated', 
   await openPage(page);
   await expect(page.locator('#settings-body')).toBeHidden();
   const tiles = page.locator('.bgtile');
-  await expect(tiles).toHaveCount(12);
+  await expect(tiles).toHaveCount(14);
   await expect(page.locator('.bgtile[data-bg="aurora"] .bgbadge')).toHaveText('Animated');
   await expect(page.locator('.bgtile[data-bg="pixel"] .bgbadge')).toHaveText('Still');
   // The current choice has focus, so the arrow keys move through the choices at once.
@@ -100,4 +113,66 @@ test('on a phone the page is full screen with Back, and Full screen still art le
   const art = await page.locator('#art svg').boundingBox();
   const board = await page.locator('#gridbox').boundingBox();
   expect((art?.y ?? 0) + (art?.height ?? 0)).toBeGreaterThan((board?.y ?? 0) + (board?.height ?? 0));
+});
+
+test('the subject backgrounds draw the subject\'s icons, and a new deal draws the new subject\'s', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto('/?seed=1&subject=space/jupiter');
+  await openPage(page);
+  await expect(page.locator('.bgtile[data-bg="scene"] .bgbadge')).toHaveText('Still');
+  await expect(page.locator('.bgtile[data-bg="drift"] .bgbadge')).toHaveText('Animated');
+  await page.locator('.bgtile[data-bg="scene"]').click();
+  // Behind the list in the rail: a picture of several icons, and no category art in the corner.
+  await expect(page.locator('#bgside > svg g')).not.toHaveCount(0);
+  await expect(page.locator('#art svg, #railart svg')).toHaveCount(0);
+  expect(await ownIcons(page, '#bgside')).toBe(true);
+  const before = await page.locator('#bgside > svg').innerHTML();
+  await page.keyboard.press('Escape');
+  await page.locator('#newbtn').click();
+  await expect(page.locator('#subject')).not.toHaveText('Jupiter');
+  await expect.poll(() => page.locator('#bgside > svg').innerHTML()).not.toBe(before);
+  await expect(page.locator('#bgside > svg')).toHaveCount(1);
+  expect(await ownIcons(page, '#bgside')).toBe(true);
+
+  await openPage(page);
+  await page.locator('.bgtile[data-bg="drift"]').click();
+  await expect(page.locator('#bgside > canvas')).toHaveCount(1);
+  await expect(page.locator('#bgside > svg')).toHaveCount(0);
+  await expect.poll(() => painted(page, '#bgside > canvas')).toBe(true);
+  const canvas = await page.locator('#bgside canvas').elementHandle();
+  await page.keyboard.press('Escape');
+  await page.locator('#newbtn').click();
+  // Restarted for the new subject, unlike the other animated backgrounds.
+  await expect.poll(() => page.evaluate(c => c?.isConnected, canvas)).toBe(false);
+  await expect(page.locator('#bgside > canvas')).toHaveCount(1);
+  await expect.poll(() => painted(page, '#bgside > canvas')).toBe(true);
+});
+
+test('on a phone with Word list the scene keeps the board corner, and moves to the rail in landscape', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 664 });
+  await page.goto('/?seed=1&subject=space/jupiter');
+  await openPage(page);
+  await page.locator('.bgtile[data-bg="scene"]').click();
+  await page.locator('#bg-back').click();
+  await page.locator('#settings-back').click();
+  // One icon in the corner, faded like the category art, and nothing behind the list.
+  const corner = page.locator('#art > svg');
+  await expect(corner).toHaveCount(1);
+  await expect(corner).toBeVisible();
+  expect(await corner.getAttribute('data-kind')).toBeNull();
+  await expect(corner.locator('[data-icon]')).toHaveCount(1);
+  expect(await ownIcons(page, '#art')).toBe(true);
+  expect(Number(await corner.evaluate(el => getComputedStyle(el).opacity))).toBeLessThan(0.3);
+  await expect(page.locator('#bgside > *')).toHaveCount(0);
+  await page.setViewportSize({ width: 844, height: 390 });
+  await expect(page.locator('#bgside > svg')).toHaveCount(1);
+  await expect(page.locator('#art > svg')).toHaveCount(0);
+  await page.setViewportSize({ width: 390, height: 664 });
+  await expect(page.locator('#art > svg')).toHaveCount(1);
+  await expect(page.locator('#bgside > *')).toHaveCount(0);
+  // Back to Illustrated: the category art takes the corner again.
+  await openPage(page);
+  await page.locator('.bgtile[data-bg="illustrated"]').click();
+  await expect(page.locator('#art > svg')).toHaveCount(1);
+  expect(await page.locator('#art > svg').getAttribute('data-kind')).toBe('illustrated');
 });

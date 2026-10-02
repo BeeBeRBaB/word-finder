@@ -3,8 +3,9 @@
 // host a background draws into is passed in.
 
 /**
- * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed:number}} BackgroundOptions
+ * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed:number, corner?:boolean}} BackgroundOptions
  * `colors` are the palette's six confetti colours; `subject` and `seed` are the dealt puzzle's.
+ * `corner` asks a scene for its main icon alone, placed by the host's CSS like the category art.
  */
 /** @typedef {{start:(host:HTMLElement, opts:BackgroundOptions)=>()=>void}} BackgroundModule */
 /**
@@ -20,6 +21,10 @@ export const BACKGROUNDS = Object.freeze([
     glyph: '<circle class="g2" cx="35" cy="9" r="5"/><path class="g1" d="M3 29l12-15 8 9 6-6 16 12z"/>' },
   { id: 'pixel', name: 'Pixel art', animated: false,
     glyph: '<path class="g3" d="M14 8h4v4h-4zM30 8h4v4h-4zM10 12h28v4H10zM6 16h36v4H6zM6 20h4v4H6zM38 20h4v4h-4zM14 20h20v4H14zM18 24h4v4h-4zM26 24h4v4h-4z"/>' },
+  { id: 'scene', file: 'subject-scene', name: 'Subject scene', animated: false, perDeal: true,
+    glyph: '<circle class="g2" cx="10" cy="10" r="6"/><path class="g1" d="M33 3l2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.1 5.9-.8z"/><path class="g3" d="M15 30c-6-4-9-6.6-9-10a4.5 4.5 0 0 1 9-.6 4.5 4.5 0 0 1 9 .6c0 3.4-3 6-9 10z"/><path class="g4" d="M38 30c-6 0-8-5-5-11 3 2 8 4 8 8 0 2-1 3-3 3z"/>' },
+  { id: 'drift', file: 'drifting-icons', name: 'Drifting icons', animated: true, perDeal: true,
+    glyph: '<path class="ln" d="M10 31v-5M25 31v-8M39 31v-4"/><circle class="g2" cx="10" cy="18" r="5"/><path class="g1" d="M25 2l2.4 4.9 5.4.8-3.9 3.8.9 5.3-4.8-2.5-4.8 2.5.9-5.3-3.9-3.8 5.4-.8z"/><path class="g3" d="M39 23c-5-3.4-7.5-5.6-7.5-8.4a3.8 3.8 0 0 1 7.5-.5 3.8 3.8 0 0 1 7.5.5c0 2.8-2.5 5-7.5 8.4z"/>' },
   { id: 'starfield', file: 'pixel-starfield', name: 'Starfield', animated: true,
     glyph: '<path class="g2" d="M6 6h2v2H6zM20 4h2v2h-2zM38 8h2v2h-2zM12 18h2v2h-2zM30 16h3v3h-3zM42 22h2v2h-2zM8 27h2v2H8zM24 26h2v2h-2z"/><path class="g4" d="M16 11h1v1h-1zM35 26h1v1h-1zM44 3h1v1h-1z"/>' },
   { id: 'skyline', file: 'pixel-skyline', name: 'Skyline', animated: true,

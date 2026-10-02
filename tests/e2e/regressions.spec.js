@@ -129,6 +129,8 @@ test('code revalidates in the background, icons stay cache-first', async ({ page
   const probe = await page.evaluate(async () => {
     const get = async () => (await (await fetch('./__probe.js')).text()).trim();
     const first = await get();                                  // miss -> network, cached
+    // The worker answers a miss before its cache.put lands; asking again sooner races it.
+    for (let i = 0; i < 20 && !(await caches.match('./__probe.js')); i++) await new Promise(r => setTimeout(r, 50));
     const second = await get();                                 // cached, revalidates
     await new Promise(r => setTimeout(r, 1500));
     const third = await get();                                  // now the fresh copy

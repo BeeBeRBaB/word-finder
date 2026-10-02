@@ -39,7 +39,7 @@ test("the install handler forces reload-mode requests, not a bare addAll(ASSETS)
   );
 });
 
-test('the shell precache lists catalog.js and every src module, but no word pool', () => {
+test('the shell precache lists catalog.js and every src module, but no word pool or background', () => {
   const list = assets();
   assert.ok(list.includes('./src/catalog.js'), 'the picker needs names on every visit');
   assert.ok(list.includes('./src/subjects.js'), 'the loader is shell code, not content');
@@ -47,6 +47,10 @@ test('the shell precache lists catalog.js and every src module, but no word pool
   assert.ok(
     !list.some(a => a.startsWith('./src/subjects/')),
     'word pools must not be precached: they are the whole reason the catalog is separate',
+  );
+  assert.ok(
+    !list.some(a => a.startsWith('./src/backgrounds/')),
+    'backgrounds and their icon library load when picked; precaching them would put ~350KB in every install',
   );
 });
 

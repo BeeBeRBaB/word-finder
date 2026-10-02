@@ -19,7 +19,8 @@ current default marked), and don't build on an assumption.
 ## What is live (main, verified on GitHub Pages)
 - **Settings:** a compact two-column card (fits 1366x768), and a full-screen page with Back on phones and short screens. Its Theme and Background rows each open a page inside the card (`subpage.js`). Opening a pane focuses its title, never a dropdown, which an iPhone would open at once.
 - **Theme page** (`lookpicker.js`): 7 themes x 4 palettes (Classic, Jewel, Duotone, Calm) as one choice, each tile previewed in its own colours, read off the stylesheet once per mode. Storage keeps the two keys, `wordfinder-theme` and `wordfinder-palette`. Known gaps: the first open in each mode spends about 80ms reading the 28 looks (300–600ms at 6x CPU throttle), so split it across frames if a slow phone shows it; and a tile shows checked and focus only through `:has()` (absent before Firefox 121).
-- **Background page** (`bgpicker.js`): Area (Word list / Full screen) and a tile per registry background. The nine animations run behind the word list (`#bgside`) or the page (`#bg`), at exactly 30fps. Text over them keeps a 2.5px ring of the ground colour and the header's controls are filled, so every look passes AA over every background (`node tools/sims/backgrounds/contrast.mjs`, about 50 minutes).
+- **Background page** (`bgpicker.js`): Area (Word list / Full screen) and a tile per registry background. The ten animations run behind the word list (`#bgside`) or the page (`#bg`), at exactly 30fps. Text over them keeps a 2.5px ring of the ground colour and the header's controls are filled, so every look passes AA over every background (`node tools/sims/backgrounds/contrast.mjs`, about 50 minutes).
+- **Subject backgrounds:** Subject scene (still) and Drifting icons (animated) draw the dealt subject's own icons, else its category's (233 icons in `src/backgrounds/icons.js`, mapped in `subject-icons.js`). Both restart on every deal, and the seed picks one of six variants per subject (`icon-scene.js`). With Word list and the list under the board, the Subject scene shows only its main icon in the board corner, like the category art (question 3). None of `src/backgrounds/` is precached, so a change to an export of the shared `icon-scene.js` needs a CACHE bump.
 - **Service worker:** the code cache is keyed by path, and CACHE is `wordfinder-v16`.
 - **Tests:** `PORT=<port> npx playwright test` moves the whole e2e run.
 
@@ -34,9 +35,9 @@ These are committed so a thread can pick them up from GitHub.
   - cloud had 5 defects, fixed by its reviewer.
   - scorecard was reviewed on 2026-10-02 with no logic defects. Its open layout and contrast findings are in `tools/levels-review/README.md`.
 - **Art sources:**
-  - `tools/art-src/icons/part*.json` hold 218 icons. Run `node tools/art-src/icons/check.mjs <part.json>` to validate one and render a preview.
+  - `tools/art-src/icons/part*.json` hold 233 icons. Run `node tools/art-src/icons/check.mjs <part.json>` to validate one and render a preview.
   - `tools/art-src/iconmap/<category>.json` gives all 600 subjects 4–6 icons each, hero first. Check with `node tools/art-src/iconmap/check.mjs <category>`.
-  - `wishlist.json` ranks the icons still missing; `round2-10.json` is a batch that was never drawn.
+  - `wishlist.json` ranks the icons once missing; all are drawn now (`round2-10.json` became `part10.json`). `node tools/art-src/iconmap/merge.mjs` folds drawn wishlist icons into the maps, and `node tools/art-src/iconmap/emit.mjs` rewrites the two modules (`--check` exits 1 when they are stale; a unit test runs it).
 - **Palette sources:** `tools/palettes/set1-3.json` and `tocss.mjs` (`node tools/palettes/tocss.mjs`) generate the `[data-palette]` CSS.
 
 ## Old scratch archive
@@ -63,7 +64,7 @@ These are committed so a thread can pick them up from GitHub.
    - Check word-list contrast over the animations, and lower the host opacity if needed.
    - Update art.spec, which drives the old `#settings-art` select.
    - Then run the cascade-and-cache-reviewer and bump CACHE.
-2. **Subject art.**
+2. **Subject art.** Done 2026-10-02 (see What is live).
    - Draw the missing batch from `round2-10.json`: music-notes, snowflake, whistle, flame, invitation-card, bed, stage-spotlight, frog, cupcake, wheelbarrow, spotlight, wifi-signal, easel-canvas, bookshelf, mitten. Its agent stalled, as did two others. Keep icon batches small, and have each agent write partial results as it goes.
    - Script-merge the round-2 icons into the mapping: prepend each new icon on the subjects that asked for it (wishlist `subjects`), capped at 6.
    - Emit lazy `src/backgrounds/icons.js` and `subject-icons.js`.
