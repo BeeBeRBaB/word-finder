@@ -8,7 +8,7 @@
 // Usage (from the repo root):
 //   node tools/art-src/prototypes/check.mjs                  every animated registry entry
 //   node tools/art-src/prototypes/check.mjs pixel-skyline    one or more src/backgrounds/ files
-//   ... --hz=165       fake a 165Hz display (rAF on a timer), for the frame-cap question
+//   ... --hz=165       fake a 165Hz display (rAF on a timer); then each must draw 30fps (+-1)
 //   ... --big          also per-frame cost and main-thread busy % at 1920x1080 and 3840x2160
 //   ... --shots[=dir]  screenshots dark/light/rm/phone (default dir .shots/backgrounds/)
 //   ... --webkit       run in WebKit instead of Chromium (no busy %)
@@ -142,6 +142,8 @@ async function run() {
     const live = await page.evaluate(() => { const w = /** @type {any} */ (window); return { calls: w.__calls, drawn: w.__drawn, cost: w.__cost }; });
     const fps = live.drawn / 2;
     if (fps < 5) bad.push(`only ${fps} fps`);
+    // The cap is exactly 30 at any refresh rate (handoff question 5), measurable once rAF is faked.
+    if (hz && Math.abs(fps - 30) > 1) bad.push(`${fps} fps at ${hz}Hz, not 30`);
 
     await page.evaluate(() => /** @type {any} */ (window).__setHidden(true));
     await pause(100);

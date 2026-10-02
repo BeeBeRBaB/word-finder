@@ -1,11 +1,13 @@
 // Shared by the pixel backgrounds, and not a background itself: one canvas of 4-8px cells
-// scaled up with pixelated rendering, run by a loop capped near 30fps.
+// scaled up with pixelated rendering, run by a loop capped at 30fps.
 
 /**
  * @typedef {{resize:(W:number, H:number) => void, step:(dt:number) => void, draw:() => void}} Scene
  * resize repaints for a W x H cell grid, step advances dt seconds, draw paints one frame.
  * @typedef {{ctx:CanvasRenderingContext2D, run:(scene:Scene, still:boolean) => () => void}} Stage
  */
+
+const STEP = 1000 / 30;
 
 /**
  * The display canvas for `host`. Nothing is added to the page until `run`, which draws,
@@ -23,12 +25,14 @@ export function pixelStage(host) {
 
   /** @param {Scene} scene @param {boolean} still @returns {() => void} stop */
   function run(scene, still) {
-    let raf = 0, last = 0, pw = 0, ph = 0;
+    let raf = 0, last = 0, due = 0, pw = 0, ph = 0;
 
     /** @param {number} now @returns {void} */
     function frame(now) {
       raf = requestAnimationFrame(frame);
-      if (now - last < 30) return; // ~30fps
+      if (now < due - 2) return;
+      // Exactly 30fps at any refresh rate: each draw books the next 1/30s slot; a pause resyncs.
+      due = (now - due > STEP ? now : due) + STEP;
       scene.step(Math.min(0.1, (now - last) / 1000));
       last = now;
       scene.draw();

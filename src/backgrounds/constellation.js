@@ -36,7 +36,7 @@ export function start(host, opts) {
   const adj = new Float32Array(MAX * MAX); // link strength 0..1, upper triangle only
 
   let w = 0, h = 0, dpr = 1, n = 0, seeded = 0, link = 130;
-  let raf = 0, last = 0, t = 0, alive = true;
+  let raf = 0, last = 0, due = 0, t = 0, alive = true;
 
   /** @param {number} i @returns {void} */
   function seed(i) {
@@ -147,8 +147,10 @@ export function start(host, opts) {
   /** @param {number} now @returns {void} */
   function tick(now) {
     raf = requestAnimationFrame(tick);
+    if (now < due - 2) return;
+    // Exactly 30fps at any refresh rate: each draw books the next 1/30s slot; a pause resyncs.
+    due = (now - due > FRAME ? now : due) + FRAME;
     const el = now - last;
-    if (el < FRAME - 4) return; // ~30 fps cap on any refresh rate
     last = now;
     const dt = Math.min(el, 100) / 1000;
     t += dt;
