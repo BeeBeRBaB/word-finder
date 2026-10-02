@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readdirSync } from 'node:fs';
 import { BACKGROUNDS, findBackground, makeBackdrop } from '../../src/backgrounds.js';
 
-const OPTS = { colors: [], dark: true, reducedMotion: false };
+const OPTS = { colors: ['#111111', '#222222'], dark: true, reducedMotion: false, subject: 'space/jupiter', seed: 1 };
 /** @param {string} id */
 const host = (id) => /** @type {HTMLElement} */ (/** @type {unknown} */ ({ id }));
 
@@ -24,7 +24,8 @@ function fakeImports() {
 test('every animated background names a module that exists, and ids are unique', () => {
   const files = readdirSync(new URL('../../src/backgrounds/', import.meta.url)).map(f => f.replace(/\.js$/, ''));
   for (const b of BACKGROUNDS) {
-    assert.equal(b.animated, !!b.file, `${b.id}: animated exactly when it has a module`);
+    // A still background may have a module too (a scene drawn once); an animated one must.
+    if (b.animated) assert.ok(b.file, `${b.id}: animated but no module`);
     if (b.file) assert.ok(files.includes(b.file), `${b.id}: no src/backgrounds/${b.file}.js`);
     assert.ok(b.glyph.length > 20, `${b.id}: no picker picture`);
   }
@@ -60,6 +61,25 @@ test('a new host, mode or motion setting restarts it', async () => {
   await bd.show('bokeh', host('bg'), { ...OPTS, dark: false, reducedMotion: true });
   assert.equal(f.log.filter(l => l.startsWith('start')).length, 4);
   assert.equal(f.log.filter(l => l.startsWith('stop')).length, 3);
+});
+
+test('a new palette restarts it, and a new deal restarts only a perDeal background', async () => {
+  const f = fakeImports();
+  const bd = makeBackdrop({ importFn: f.importFn });
+  await bd.show('aurora', host('bg'), OPTS);
+  await bd.show('aurora', host('bg'), { ...OPTS, subject: 'food/fruit', seed: 2 });
+  assert.equal(f.log.length, 1, 'a deal leaves an ordinary background running');
+  await bd.show('aurora', host('bg'), { ...OPTS, subject: 'food/fruit', seed: 2, colors: ['#333333'] });
+  assert.deepEqual(f.log, ['start aurora-drift bg', 'stop aurora-drift', 'start aurora-drift bg']);
+
+  const scene = { id: 'scene', name: 'Scene', animated: false, file: 'scene', glyph: '', perDeal: true };
+  const g = fakeImports();
+  const sd = makeBackdrop({ importFn: g.importFn, list: [...BACKGROUNDS, scene] });
+  assert.equal(await sd.show('scene', host('bg'), OPTS), true, 'a still background with a module runs it');
+  await sd.show('scene', host('bg'), OPTS);
+  await sd.show('scene', host('bg'), { ...OPTS, seed: 2 });
+  await sd.show('scene', host('bg'), { ...OPTS, seed: 2, subject: 'food/fruit' });
+  assert.deepEqual(g.log, ['start scene bg', 'stop scene', 'start scene bg', 'stop scene', 'start scene bg']);
 });
 
 test('a show overtaken while its module loads never starts', async () => {

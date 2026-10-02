@@ -298,11 +298,13 @@ test('a palette recolours the theme, is remembered, and is applied at first pain
   const bg = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--bg').trim());
   const classic = await bg();
   await page.locator('#appearance').click();
-  await page.locator('#settings-palette').selectOption('jewel');
+  await page.locator('#settings-theme').click();
+  await page.locator('.looktile[data-look="phosphor/jewel"]').click();
   await expect(page.locator('html')).toHaveAttribute('data-palette', 'jewel');
   expect(await bg()).toBe('#3d200c');
   expect(await page.locator('meta[name="theme-color"]').getAttribute('content')).toBe('#3d200c');
-  await page.locator('#settings-theme').selectOption('grove');
+  await page.locator('.looktile[data-look="grove/jewel"]').click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'grove');
   const jewelGrove = await bg();
   expect(jewelGrove).not.toBe(classic);
   await page.route('**/src/main.js', route => route.abort());

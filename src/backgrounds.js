@@ -2,12 +2,16 @@
 // src/backgrounds/, which load only when picked. Pure: the import is injected, and the
 // host a background draws into is passed in.
 
-/** @typedef {{colors:string[], dark:boolean, reducedMotion:boolean}} BackgroundOptions */
+/**
+ * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed:number}} BackgroundOptions
+ * `colors` are the palette's six confetti colours; `subject` and `seed` are the dealt puzzle's.
+ */
 /** @typedef {{start:(host:HTMLElement, opts:BackgroundOptions)=>()=>void}} BackgroundModule */
 /**
- * @typedef {{id:string, name:string, animated:boolean, file?:string, glyph:string}} Background
+ * @typedef {{id:string, name:string, animated:boolean, file?:string, glyph:string, perDeal?:boolean}} Background
  * `file` is the module under src/backgrounds/; `glyph` is the picker tile's picture, the inner
- * markup of a 48x32 SVG whose g1..g4 classes take the palette's confetti colours.
+ * markup of a 48x32 SVG whose g1..g4 classes take the palette's confetti colours. `perDeal`
+ * restarts it for every new subject or seed; the others keep running across deals.
  */
 
 /** @type {readonly Background[]} */
@@ -38,16 +42,16 @@ export const BACKGROUNDS = Object.freeze([
     glyph: '<circle class="ln" cx="24" cy="16" r="10"/><path class="ln" d="M17 23l14-14"/>' },
 ]);
 
-/** @param {unknown} id @returns {Background} */
-export function findBackground(id) {
-  return BACKGROUNDS.find(b => b.id === id) ?? BACKGROUNDS[0];
+/** @param {unknown} id @param {readonly Background[]} [list] @returns {Background} */
+export function findBackground(id, list = BACKGROUNDS) {
+  return list.find(b => b.id === id) ?? list[0];
 }
 
 /**
  * Runs at most one animated background at a time. show() resolves once the new one is
  * drawing, or immediately for a still choice; a show() overtaken by a later call never
  * starts. A module that fails to load (offline, say) leaves nothing running.
- * @param {{importFn?:(file:string)=>Promise<BackgroundModule>}} [deps]
+ * @param {{importFn?:(file:string)=>Promise<BackgroundModule>, list?:readonly Background[]}} [deps]
  */
 export function makeBackdrop(deps = {}) {
   const importFn = deps.importFn ?? (file => import(`./backgrounds/${file}.js`));
@@ -69,8 +73,9 @@ export function makeBackdrop(deps = {}) {
     /** @param {string} id @param {HTMLElement|null} host @param {BackgroundOptions} opts
      * @returns {Promise<boolean>} whether an animated background is now running */
     async show(id, host, opts) {
-      const bg = findBackground(id);
-      const next = bg.file && host ? `${bg.id}|${host.id}|${opts.dark}|${opts.reducedMotion}` : '';
+      const bg = findBackground(id, deps.list);
+      const deal = bg.perDeal ? `|${opts.subject}|${opts.seed}` : '';
+      const next = bg.file && host ? `${bg.id}|${host.id}|${opts.dark}|${opts.reducedMotion}|${opts.colors}${deal}` : '';
       if (next && next === key && stop) return true;
       halt();
       if (!next || !bg.file || !host) return false;

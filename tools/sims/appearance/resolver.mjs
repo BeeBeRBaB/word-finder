@@ -4,13 +4,14 @@
 //  2. Throwing localStorage still yields the defaults.
 //  3. theme-color meta tracks --bg at boot and after palette, mode and theme changes.
 //   node tools/sims/appearance/resolver.mjs           Exits 1 on any problem.
+//   ENGINES=chromium node tools/sims/appearance/resolver.mjs   where WebKit is not installed.
 import { chromium, webkit } from '@playwright/test';
 import { serve } from '../site.mjs';
 const site = await serve();
 const URL_ = site.url + '/?seed=3&subject=sports/golf';
 let failed = 0;
 const inputs = [null, 'classic', 'jewel', 'duotone', 'calm', 'Jewel', 'neon', '', ' jewel', 'jewel ', '"><img src=x onerror=alert(1)>', 'toString', 'constructor', '__proto__', 'undefined', 'null'];
-for (const bt of [chromium, webkit]) {
+for (const bt of [chromium, webkit].filter(e => (process.env.ENGINES || 'chromium,webkit').split(',').includes(e.name()))) {
   const b = await bt.launch();
   const bad = [];
   // 1. inline resolver only (main.js aborted)
@@ -52,18 +53,21 @@ for (const bt of [chromium, webkit]) {
     await page.addInitScript(([p, t, m]) => { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1'); localStorage.setItem('wordfinder-palette', p); localStorage.setItem('wordfinder-theme', t); localStorage.setItem('wordfinder-appearance', m); } }, [pal, theme, mode]);
     await page.goto(URL_);
     await page.waitForSelector('.cell');
-    const snap = () => page.evaluate(() => ({ meta: document.querySelector('meta[name="theme-color"]').getAttribute('content'), bg: getComputedStyle(document.documentElement).getPropertyValue('--bg').trim(), sel: document.getElementById('settings-palette').value, pal: document.documentElement.dataset.palette }));
+    const snap = () => page.evaluate(() => ({ meta: document.querySelector('meta[name="theme-color"]').getAttribute('content'), bg: getComputedStyle(document.documentElement).getPropertyValue('--bg').trim(), sel: document.querySelector('input[name="look"]:checked')?.value.split('/')[1], pal: document.documentElement.dataset.palette }));
     let s = await snap();
     if (s.meta !== s.bg || s.sel !== pal) bad.push(`boot ${pal}:${theme}:${mode}: ${JSON.stringify(s)}`);
     await page.locator('#appearance').click();
     const next = pal === 'jewel' ? 'calm' : 'jewel';
-    await page.locator('#settings-palette').selectOption(next);
+    await page.locator('#settings-theme').click();
+    await page.locator(`.looktile[data-look="${theme}/${next}"]`).click();
+    await page.locator('#theme-back').click();
     s = await snap();
     if (s.meta !== s.bg || s.pal !== next) bad.push(`after palette change ${next}:${theme}:${mode}: ${JSON.stringify(s)}`);
     await page.locator(mode === 'dark' ? '#mode-light' : '#mode-dark').click();
     s = await snap();
     if (s.meta !== s.bg) bad.push(`after mode change: ${JSON.stringify(s)}`);
-    await page.locator('#settings-theme').selectOption('graphite');
+    await page.locator('#settings-theme').click();
+    await page.locator(`.looktile[data-look="graphite/${next}"]`).click();
     s = await snap();
     if (s.meta !== s.bg) bad.push(`after theme change: ${JSON.stringify(s)}`);
     const stored = await page.evaluate(() => localStorage.getItem('wordfinder-palette'));

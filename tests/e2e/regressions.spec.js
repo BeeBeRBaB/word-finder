@@ -308,3 +308,34 @@ function findGhostRun(puzzle, size, placed) {
   }
   return null;
 }
+
+// At 320px the win card's 260px minimum plus 84px of padding put its right edge 26px off the
+// screen, and the level score card inside it was squeezed to 200px.
+// 320x400 also meets the short-screen block, which sets the card's padding there.
+for (const height of [568, 400]) test(`the win card and the score card in it fit a 320x${height} screen`, async ({ page }) => {
+  await page.setViewportSize({ width: 320, height });
+  await page.goto('/?seed=7&subject=nature/birds');
+  const words = await page.locator('.w').allTextContents();
+  for (const w of words) await findAndDrag(page, w.toUpperCase());
+  await expect(page.locator('#win')).toBeVisible();
+  const inside = async () => {
+    const b = await page.locator('#wincard').boundingBox();
+    expect(b && b.x).toBeGreaterThanOrEqual(0);
+    expect(b && b.x + b.width).toBeLessThanOrEqual(320);
+  };
+  await inside();
+  // The score card, mounted under the title where the levels wiring will put it.
+  await page.evaluate(async () => {
+    const card = '/src/scorecard.js', scoring = '/src/scoring.js';
+    const { playBreakdown } = await import(card);
+    const { scoreLevel } = await import(scoring);
+    const W = ['SPARROW', 'ROBIN', 'EAGLE', 'HERON', 'FINCH', 'OWL', 'PELICAN', 'WREN', 'CRANE', 'SWALLOW', 'MAGPIE', 'KESTREL'];
+    const bd = scoreLevel({ events: W.map((w, i) => ({ word: w, at: 9000 * (i + 1), revealed: i === 7 })), elapsedMs: 118000, difficulty: 'normal', wordCount: 12 });
+    const host = document.createElement('div');
+    document.querySelector('#wincard h2')?.after(host);
+    playBreakdown(host, bd, { onNext() {}, onStay() {} }).skip();
+  });
+  await inside();
+  const sc = await page.locator('.sc').boundingBox();
+  expect(sc && sc.width).toBeGreaterThanOrEqual(240);
+});

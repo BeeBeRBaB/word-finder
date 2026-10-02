@@ -10,6 +10,16 @@ test.use({ serviceWorkers: 'block' });
 /** @param {Page} page @returns {Promise<string>} */
 const bgOf = (page) => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--bg').trim());
 
+/** Open Settings if it is closed, then the Theme page, and pick a theme in a palette.
+ * @param {Page} page @param {string} theme @param {string} [palette] */
+async function pickLook(page, theme, palette = 'classic') {
+  if (!(await page.locator('#settings').isVisible())) await page.locator('#appearance').click();
+  if (!(await page.locator('#settings-themepage').isVisible())) await page.locator('#settings-theme').click();
+  await page.locator(`.looktile[data-look="${theme}/${palette}"]`).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+  await expect(page.locator('html')).toHaveAttribute('data-palette', palette);
+}
+
 /** @param {Page} page @returns {Promise<void>} */
 async function solve(page) {
   for (const w of await page.locator('.w').allTextContents()) await findAndDrag(page, w.toUpperCase());
@@ -23,7 +33,8 @@ test('the header button opens Settings, and Escape closes it with focus returned
   await btn.click();
   await expect(page.locator('#settings')).toBeVisible();
   await expect(btn).toHaveAttribute('aria-expanded', 'true');
-  await expect(page.locator('#settings-theme')).toBeFocused();
+  // The title, not a select: focusing a select from a tap opens it at once on an iPhone.
+  await expect(page.locator('#settings-title')).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(page.locator('#settings')).toBeHidden();
   await expect(btn).toBeFocused();
@@ -32,15 +43,15 @@ test('the header button opens Settings, and Escape closes it with focus returned
 test('every theme repaints in both modes, and no two share a background', async ({ page }) => {
   await page.goto('/?seed=1&subject=nature/birds');
   await page.locator('#appearance').click();
-  const themes = await page.locator('#settings-theme option').evaluateAll(os => os.map(o => /** @type {HTMLOptionElement} */ (o).value));
+  const themes = await page.locator('.lookgroup').evaluateAll(gs => gs.map(g => g.getAttribute('aria-labelledby')?.slice(5)));
   expect(themes.length).toBeGreaterThanOrEqual(7);
   /** @type {Set<string>} */
   const seen = new Set();
   for (const mode of ['dark', 'light']) {
+    if (await page.locator('#settings-themepage').isVisible()) await page.locator('#theme-back').click();
     await page.locator(`#mode-${mode}`).click();
     for (const t of themes) {
-      await page.locator('#settings-theme').selectOption(t);
-      await expect(page.locator('html')).toHaveAttribute('data-theme', t);
+      await pickLook(page, /** @type {string} */ (t));
       const bg = await bgOf(page);
       expect(seen.has(bg), `${t}/${mode} repeats background ${bg}`).toBe(false);
       seen.add(bg);
@@ -50,8 +61,7 @@ test('every theme repaints in both modes, and no two share a background', async 
 
 test('a chosen theme is applied at first paint, before any module runs', async ({ page }) => {
   await page.goto('/?seed=1&subject=nature/birds');
-  await page.locator('#appearance').click();
-  await page.locator('#settings-theme').selectOption('grove');
+  await pickLook(page, 'grove');
   const groveBg = await bgOf(page);
   await page.route('**/src/main.js', route => route.abort());
   await page.reload();
@@ -147,16 +157,15 @@ test('a slow win-card deal the player walked away from never replaces their next
 // It must close the list and leave the pane around it open.
 test('Escape in an open themed dropdown closes the list, not the pane', async ({ page }) => {
   await page.goto('/?seed=1&subject=nature/birds');
-  await page.locator('#appearance').click();
-  await page.locator('#settings-theme').click();
-  const open = await page.locator('#settings-theme').evaluate(s => { try { return s.matches(':open'); } catch { return null; } });
-  test.skip(open === null, 'this engine draws a native popup, which never reaches the page');
-  expect(open).toBe(true);
+  await page.locator('#catbtn').click();
+  await page.locator('#picker-select').click();
+  const open = await page.locator('#picker-select').evaluate(s => { try { return s.matches(':open'); } catch { return null; } });
+  test.skip(!open, 'a touch screen, or an engine that draws a native popup, which never reaches the page');
   await page.keyboard.press('Escape');
-  await expect(page.locator('#settings')).toBeVisible();
-  expect(await page.locator('#settings-theme').evaluate(s => s.matches(':open'))).toBe(false);
+  await expect(page.locator('#picker')).toBeVisible();
+  expect(await page.locator('#picker-select').evaluate(s => s.matches(':open'))).toBe(false);
   await page.keyboard.press('Escape');
-  await expect(page.locator('#settings')).toBeHidden();
+  await expect(page.locator('#picker')).toBeHidden();
 });
 
 /** Open Settings and press one option of a segmented setting.

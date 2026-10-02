@@ -35,6 +35,8 @@
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+<!-- Background hosts: #bg behind the whole page, #bgside behind the word list. -->
+<div id="bg" aria-hidden="true"></div>
 <div id="app">
   <div id="hdr">
     <!-- The category is its own element, not a ::before on #subject: #subject's
@@ -56,7 +58,7 @@
     </div>
   </div>
   <div id="gridbox"><div id="art" aria-hidden="true" hidden></div><div id="pills"></div><div id="letters"></div><div id="fx"></div></div>
-  <div id="side">
+  <div id="side"><div id="bgside" aria-hidden="true"></div>
     <div id="listhdr"><b>WORDS</b><span id="count"></span><button id="reveal" type="button">Reveal a word</button></div>
     <div id="list"></div>
     <!-- The category's art, where the rail has room below the list; else it goes in #art.
@@ -90,21 +92,19 @@
 <div id="settings"><div id="settingscard" role="dialog" aria-modal="true" aria-labelledby="settings-title">
   <div class="panehead">
     <button id="settings-back" class="paneback" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Back</button>
-    <h2 id="settings-title">Settings</h2>
+    <h2 id="settings-title" tabindex="-1">Settings</h2>
     <button id="settings-close" class="paneclose" type="button" aria-label="Close">&times;</button></div>
   <div id="settings-body">
   <section id="settings-look" class="panegroup" aria-labelledby="sec-look"><h3 class="panesection" id="sec-look">Look</h3>
-    <div class="row"><label for="settings-theme">Theme</label>
-      <div id="settings-field" class="selectfield"><select id="settings-theme"></select></div></div>
-    <div class="row"><label for="settings-palette">Palette</label>
-      <div class="selectfield"><select id="settings-palette"></select></div></div>
+    <div class="row"><span class="panelabel" id="lbl-theme">Theme</span>
+      <button id="settings-theme" class="navrow" type="button" aria-labelledby="lbl-theme settings-theme-now" aria-controls="settings-themepage"><span id="settings-theme-now" class="navnow"></span><svg class="navchev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button></div>
     <div class="row"><span class="panelabel" id="settings-mode-label">Mode</span>
       <div id="settings-mode" class="seg" role="group" aria-labelledby="settings-mode-label">
         <button id="mode-light" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.6"/><path d="M12 2v2.6M12 19.4V22M2 12h2.6M19.4 12H22M4.9 4.9l1.9 1.9M17.2 17.2l1.9 1.9M19.1 4.9l-1.9 1.9M6.8 17.2l-1.9 1.9"/></svg>Light</button>
         <button id="mode-dark" type="button" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1z"/></svg>Dark</button>
       </div></div>
-    <div class="row"><label for="settings-art">Background</label>
-      <div class="selectfield"><select id="settings-art" data-setting="art"><option value="illustrated">Illustrated</option><option value="pixel">Pixel art</option><option value="none">None</option></select></div></div>
+    <div class="row"><span class="panelabel" id="lbl-bg">Background</span>
+      <button id="settings-bg" class="navrow" type="button" aria-labelledby="lbl-bg settings-bg-now" aria-controls="settings-bgpage"><span id="settings-bg-now" class="navnow"></span><svg class="navchev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button></div>
     <div class="row"><span class="panelabel" id="lbl-letters">Letters</span>
       <div class="seg" role="group" aria-labelledby="lbl-letters" data-setting="letters"><button type="button" data-value="normal" aria-pressed="false">Normal</button><button type="button" data-value="large" aria-pressed="false">Large</button></div></div>
   </section>
@@ -126,15 +126,31 @@
     </div>
   </section>
   </div>
+  <!-- The Theme and Background pages take the card's place while open; lookpicker.js and
+       bgpicker.js supply their tiles. -->
+  <div id="settings-themepage" class="subpage" hidden>
+    <div class="panehead"><button id="theme-back" class="paneback" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Back</button>
+      <h2 id="theme-title">Theme</h2>
+      <button id="theme-close" class="paneclose" type="button" aria-label="Close">&times;</button></div>
+    <div id="theme-tiles" role="radiogroup" aria-labelledby="theme-title"></div>
+  </div>
+  <div id="settings-bgpage" class="subpage" hidden>
+    <div class="panehead"><button id="bg-back" class="paneback" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Back</button>
+      <h2 id="bg-title">Background</h2>
+      <button id="bg-close" class="paneclose" type="button" aria-label="Close">&times;</button></div>
+    <div class="row"><span class="panelabel" id="lbl-area">Area</span>
+      <div class="seg" role="group" aria-labelledby="lbl-area" data-setting="area"><button type="button" data-value="list" aria-pressed="false">Word list</button><button type="button" data-value="full" aria-pressed="false">Full screen</button></div></div>
+    <div id="bg-tiles" class="tiles" role="radiogroup" aria-labelledby="bg-title"></div>
+  </div>
   <!-- Lived under the word list until the grid needed its 46px on a phone. -->
   <p id="hint"><b>How to play.</b> Drag across a word in the grid, in any of eight directions. Found words are crossed off the list.</p>
 </div></div>
 <div id="picker"><div id="pickercard">
-  <h2>New game</h2>
+  <h2 id="picker-title" tabindex="-1">New game</h2>
   <p id="picker-warning">Start a new game? Your progress will be lost.</p>
   <label for="picker-select">Category</label>
   <!-- A native select rather than a grid of chips: 25 categories is one control at any
-       count, renders as the system wheel picker on iOS, and brings keyboard and
+       count, opens the system's own picker on a phone, and brings keyboard and
        screen-reader support with it. -->
   <div id="picker-field"><select id="picker-select"></select></div>
   <p id="picker-error" hidden></p>

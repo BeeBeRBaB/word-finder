@@ -107,17 +107,12 @@ export function makeAppearance(deps = {}) {
     apply();
   }
 
-  /** @param {string} t @returns {void} */
-  function setTheme(t) {
+  /** A theme and one of its palettes, chosen together on the Theme page and applied once.
+   * @param {string} t @param {string} p @returns {void} */
+  function setLook(t, p) {
     theme = normalizeTheme(t);
-    try { if (store) store.setItem(THEME_KEY, theme); } catch { /* not remembered */ }
-    apply();
-  }
-
-  /** @param {string} p @returns {void} */
-  function setPalette(p) {
     palette = normalizePalette(p);
-    try { if (store) store.setItem(PALETTE_KEY, palette); } catch { /* not remembered */ }
+    try { if (store) { store.setItem(THEME_KEY, theme); store.setItem(PALETTE_KEY, palette); } } catch { /* not remembered */ }
     apply();
   }
 
@@ -129,10 +124,9 @@ export function makeAppearance(deps = {}) {
     set,
     /** @returns {string} */
     getTheme: () => theme,
-    setTheme,
     /** @returns {string} */
     getPalette: () => palette,
-    setPalette,
+    setLook,
     /** @returns {Pref} */
     cycle() { set(nextPref(pref)); return pref; },
     /** Apply now. Nothing to subscribe to any more: with `system` gone the preference is

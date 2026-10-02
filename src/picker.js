@@ -4,8 +4,9 @@
 /** @typedef {import('./catalog.js').Category} Category */
 
 /**
+ * `heading` takes focus on open: focusing the select instead opened it at once on an iPhone.
  * @param {{
- *   root:HTMLElement, select:HTMLSelectElement, warning:HTMLElement, error:HTMLElement,
+ *   root:HTMLElement, heading:HTMLElement, select:HTMLSelectElement, warning:HTMLElement, error:HTMLElement,
  *   start:HTMLElement, cancel:HTMLElement, categories:Category[],
  *   isUnavailable:(categoryId:string)=>boolean,
  *   isComplete:(categoryId:string)=>boolean,
@@ -13,7 +14,7 @@
  *   opener?:HTMLElement,
  * }} deps
  */
-export function makePicker({ root, select, warning, error, start, cancel, categories, isUnavailable, isComplete, onStart, opener }) {
+export function makePicker({ root, heading, select, warning, error, start, cancel, categories, isUnavailable, isComplete, onStart, opener }) {
   // A disabled placeholder, then the real categories. Random is the header's one-click New
   // game, so the list holds only things you can choose — no action hiding among the values.
   select.innerHTML = '';
@@ -60,7 +61,7 @@ export function makePicker({ root, select, warning, error, start, cancel, catego
 
   /** Rewrite the option labels, marking categories the player has fully covered.
    *
-   * Called from open(), BEFORE select.focus(), and never while the control is live.
+   * Called from open(), before the dialog takes focus, and never while the control is live.
    * Changing a focused control's accessible name is not reliably announced — JAWS+Chrome
    * and NVDA+Firefox have both been measured failing on it, and devtools hide the bug by
    * showing the new name while the screen reader still reports the old one. Rewriting
@@ -89,7 +90,7 @@ export function makePicker({ root, select, warning, error, start, cancel, catego
     error.hidden = true;
     root.style.display = 'flex';
     opener?.setAttribute('aria-expanded', 'true');
-    select.focus();
+    heading.focus();
   }
 
   /** @param {string|null} chosen @param {string} label @returns {Promise<void>} */

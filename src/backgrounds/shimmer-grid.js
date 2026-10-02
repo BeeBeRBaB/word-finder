@@ -7,6 +7,7 @@
 
 /** @type {{name:string, style:'pixel'|'modern', animated:boolean}} */
 export const meta = { name: 'Shimmer Grid', style: 'pixel', animated: true };
+const STEP = 1000 / 30;
 
 // 3x5 glyphs A-Z, one octal digit per row, high bit = left column.
 const FONT = '25755 65656 34443 65556 74647 74644 34553 55755 72227 11152 55655 44447 57755 65555 25552 65644 25573 65655 34216 72222 55557 55552 55775 55255 55222 71247'.split(' ');
@@ -54,7 +55,7 @@ export function start(host, opts = {}) {
   /** @type {Found[]} */
   const found = [];
   let cw = 0, ch = 0, cols = 0, rows = 0, ox = 0, oy = 0;
-  let raf = 0, last = 0, t = ri(60), next = 1, dead = false;
+  let raf = 0, last = 0, due = 0, t = ri(60), next = 1, dead = false;
 
   /** @param {number} c @param {number} r @param {number} g glyph index @returns {void} */
   function setCell(c, r, g) {
@@ -156,7 +157,9 @@ export function start(host, opts = {}) {
   /** @param {number} now @returns {void} */
   function frame(now) {
     raf = requestAnimationFrame(frame);
-    if (last && now - last < 31) return; // ~30 fps
+    if (now < due - 2) return;
+    // Exactly 30fps at any refresh rate: each draw books the next 1/30s slot; a pause resyncs.
+    due = (now - due > STEP ? now : due) + STEP;
     const dt = last ? Math.min(0.1, (now - last) / 1000) : 0;
     last = now;
     step(dt); draw();

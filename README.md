@@ -30,6 +30,10 @@ have no DOM access at all, which is what makes them cheap to unit-test:
 | `src/view.js` | Renders cells, selection pills and the word list. | DOM |
 | `src/effects.js` | Confetti and the WebAudio chime. | DOM |
 | `src/picker.js` | The category dialog. Reports a category id; owns no game state. | DOM |
+| `src/subpage.js` | A page inside the Settings card, opened from a row on the main page (Theme, Background): it takes the card's place until Back. Owns no setting. | DOM |
+| `src/lookpicker.js` | The Theme page: a group per theme with a tile per palette, each previewed in its own colours, read off the live stylesheet once per mode. | DOM |
+| `src/bgpicker.js` | The Background page's markup: a tile per entry in the backgrounds registry, badged Animated or Still, and the row's summary. | pure |
+| `src/backgrounds.js` | The backgrounds registry (id, name, tile glyph, module) and `makeBackdrop()`, which runs one background at a time in its host. The modules in `src/backgrounds/` load on first use. | pure-ish |
 | `src/levelplay.js` | Levels mode's bookkeeping: deals a signed-in player's next level (an unfinished one resumes by its saved subject), times it in active play only, records finds and reveals, then scores and banks it, keeping this device's copy and the cloud's together. Not wired in yet. | pure |
 | `src/account.js` | The Account section of Settings (Sign in, or the account's level and points with Sign out) and the sign-in form, which also creates accounts. Renders into hosts main.js gives it and talks only to `levelplay.js`. Not wired in yet. | DOM |
 | `src/scorecard.js` | The end-of-level score card inside the win card: plays `scoring.js`'s breakdown a line at a time (Skip jumps to the end), then counts down to the next level, with Stay to cancel. Owns its timers; pauses while the page is hidden. | DOM |
@@ -40,7 +44,7 @@ have no DOM access at all, which is what makes them cheap to unit-test:
 | `src/catalog.js` | The 25 category names. No subjects, no words — loads on every visit. | data |
 | `src/subjects/*.js` | One category's word pools, 40+ words per subject. Lazily imported. | data |
 | `src/subjects.js` | Resolves a subject id to its pool, memoising each category module. | pure-ish |
-| `src/appearance.js` | Light / dark preference: resolve and persist. | DOM |
+| `src/appearance.js` | Mode (light / dark), theme and palette: resolve and persist. | DOM |
 
 ### Reproducible puzzles
 

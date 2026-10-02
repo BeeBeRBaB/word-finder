@@ -84,7 +84,7 @@ export function start(host, opts = {}) {
     alpha: dark ? span(0.38, 0.52) : span(0.45, 0.6),
   }));
 
-  let w = 1, h = 1, raf = 0, last = 0, t = span(0, 60000);
+  let w = 1, h = 1, raf = 0, last = 0, due = 0, t = span(0, 60000);
 
   /** @returns {void} */
   function draw() {
@@ -121,8 +121,10 @@ export function start(host, opts = {}) {
   /** @param {number} now @returns {void} */
   function frame(now) {
     raf = requestAnimationFrame(frame);
+    if (now < due - 2) return;
+    // Exactly 30fps at any refresh rate: each draw books the next 1/30s slot; a pause resyncs.
+    due = (now - due > FRAME ? now : due) + FRAME;
     const dt = now - last;
-    if (dt < FRAME - 3) return;
     last = now;
     t += Math.min(dt, 100);
     draw();

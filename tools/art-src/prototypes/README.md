@@ -11,6 +11,7 @@ directly, so nothing here can drift from what ships. Run from the repo root.
 
 `--serve` uses a new port each run, so no service worker from an app visit can answer.
 
-Measured 2026-10-02 with `--hz` (handoff question 5): all nine draw 30fps at 60Hz and 120Hz.
-At 100Hz and 165Hz, starfield, skyline, aquarium, confetti and constellation draw 33fps, while
-shimmer-grid, aurora-drift, silk-bokeh and letter-bubbles draw 25fps and 27.5fps.
+All nine are capped at exactly 30fps at any refresh rate (handoff question 5, answered yes on
+2026-10-02): each draw books the next 1/30s slot. With `--hz=N` the check fails any module that
+draws more than 1fps away from 30. Measured at 60, 100, 120, 144 and 165Hz, all draw 30fps; run
+one `--hz` at a time, since parallel runs starve the first module of frames.

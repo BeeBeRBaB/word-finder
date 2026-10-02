@@ -11,6 +11,7 @@
 
 /** @type {{name:string, style:'pixel'|'modern', animated:boolean}} */
 export const meta = { name: 'Letter Bubbles', style: 'modern', animated: true };
+const STEP = 1000 / 30;
 
 const DARK = ['#ff7aa2', '#ffb35c', '#ffe46b', '#6ee7b7', '#67c8ff', '#b79cff'];
 const LIGHT = ['#d63f73', '#d8701a', '#b08a00', '#169a68', '#1a82c8', '#7250d6'];
@@ -43,7 +44,7 @@ export function start(host, opts) {
   const ctx = c2d;
   /** @type {Bubble[]} */
   const parts = [];
-  let W = 0, H = 0, dpr = 1, n = 0, raf = 0, last = 0, t = 0, dead = false;
+  let W = 0, H = 0, dpr = 1, n = 0, raf = 0, last = 0, due = 0, t = 0, dead = false;
   /** @param {number} a @param {number} b @returns {number} */
   const rnd = (a, b) => a + Math.random() * (b - a);
 
@@ -144,7 +145,9 @@ export function start(host, opts) {
   /** @param {number} now @returns {void} */
   function frame(now) {
     raf = requestAnimationFrame(frame);
-    if (last && now - last < 31) return;   // ~30 fps
+    if (now < due - 2) return;
+    // Exactly 30fps at any refresh rate: each draw books the next 1/30s slot; a pause resyncs.
+    due = (now - due > STEP ? now : due) + STEP;
     const dt = last ? Math.min(0.1, (now - last) / 1000) : 0;
     last = now;
     step(dt); draw();

@@ -36,21 +36,24 @@ test('a new subject redraws the art for its category', async ({ page }) => {
   await expect(page.locator('#railart svg')).toHaveAttribute('data-motif', 'food');
 });
 
-test('the Background setting switches the art and is remembered', async ({ page }) => {
+test('the Background page switches the art and is remembered', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/?seed=1&subject=space/jupiter');
   await page.waitForSelector('#letters .cell');
   await page.locator('#appearance').click();
-  await page.locator('#settings-art').selectOption('pixel');
+  await page.locator('#settings-bg').click();
+  await page.locator('.bgtile[data-bg="pixel"]').click();
   await expect(page.locator('#railart svg')).toHaveAttribute('data-kind', 'pixel');
-  await page.locator('#settings-art').selectOption('none');
+  await page.locator('.bgtile[data-bg="none"]').click();
   await expect(page.locator('#railart svg')).toHaveCount(0);
   await expect(page.locator('#art svg')).toHaveCount(0);
   await page.reload();
   await page.waitForSelector('#letters .cell');
   await expect(page.locator('#railart svg')).toHaveCount(0);
   await page.locator('#appearance').click();
-  await expect(page.locator('#settings-art')).toHaveValue('none');
+  await expect(page.locator('#settings-bg')).toHaveAccessibleName('Background None');
+  await page.locator('#settings-bg').click();
+  await expect(page.locator('.bgtile[data-bg="none"] input')).toBeChecked();
 });
 
 test('Reveal a word finds one hidden word, and the last one wins', async ({ page }) => {
