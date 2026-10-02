@@ -31,7 +31,7 @@ export function start(host, opts) {
     const rng = makeRng(seed), k = rng.int(4), c = colors.length > 4 ? colors[1 + rng.int(4)] : colors[0];
     svg.setAttribute('viewBox', '0 0 64 64');
     svg.style.cssText = `--ax:${k & 1 ? '32%' : '-10%'};--ay:${k & 2 ? '32%' : '-10%'}`;
-    svg.innerHTML = `<g fill="${c}" color="${c}">${markup.get(ids[0])}</g>`;
+    svg.innerHTML = `<g fill="${c}" color="${c}" data-icon="${ids[0]}">${markup.get(ids[0])}</g>`;
     host.appendChild(svg);
     return () => svg.remove();
   }
@@ -51,7 +51,7 @@ export function start(host, opts) {
       const c = colors[p.hue % colors.length], s = p.size / 64;
       return `<g transform="translate(${(p.x - p.size / 2).toFixed(1)} ${(p.y - p.size / 2).toFixed(1)}) ` +
         `rotate(${p.rot.toFixed(1)} ${(p.size / 2).toFixed(1)} ${(p.size / 2).toFixed(1)}) scale(${s.toFixed(3)})" ` +
-        `fill="${c}" color="${c}" opacity="${p.alpha}">${markup.get(p.id)}</g>`;
+        `fill="${c}" color="${c}" opacity="${p.alpha}" data-icon="${p.id}">${markup.get(p.id)}</g>`;
     }).join('');
   }
 

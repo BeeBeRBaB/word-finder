@@ -17,6 +17,7 @@ export const meta = { name: 'Drifting icons', style: 'modern', animated: true };
 
 const SPRITE = 80;   // largest drawn edge in CSS px
 const FRAME = 1000 / 30;
+const MAX = 30;      // icons made; a small host draws an even spread of them over depth
 
 /**
  * @param {HTMLElement} host positioned element the canvas fills
@@ -45,9 +46,11 @@ export function start(host, opts) {
   const sprites = ids.map(() => null);
   /** @type {Drifter[]} */
   const parts = [];
+  /** @type {boolean[]} which of parts the host's size has room for */
+  let shown = [];
   let W = 0, H = 0, dpr = 1, raf = 0, last = 0, due = 0, t = 0, dead = false, next = 0;
 
-  /** Sprites are drawn at the device pixel ratio they were made for; a change remakes them.
+  /** Sprites are drawn at the device pixel ratio of the last resize that changed it.
    * @returns {void} */
   function makeSprites() {
     const px = Math.round(SPRITE * dpr);
@@ -79,12 +82,14 @@ export function start(host, opts) {
     const d = Math.min(2, devicePixelRatio || 1);
     if (w === W && h === H && d === dpr && parts.length) return;
     const remake = d !== dpr || !parts.length;
+    // Icons in flight keep their place, scaled to the new size, so dragging a window edge
+    // does not reshuffle the field.
+    const sx = W ? w / W : 1, sy = H ? h / H : 1;
+    for (const p of parts) { p.along *= dir === 2 ? sx : sy; p.across *= dir === 2 ? sy : sx; }
     W = w; H = h; dpr = d;
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
-    const n = Math.max(10, Math.min(30, Math.round(W * H / 30000)));
-    parts.length = 0;
-    for (let i = 0; i < n; i++) {
-      const z = (i + rng.random()) / n;   // spread evenly over depth; far ones drawn first
+    while (parts.length < MAX) {
+      const z = (parts.length + rng.random()) / MAX;   // spread evenly over depth; far ones drawn first
       /** @type {Drifter} */
       const p = { k: 0, d: z, size: 28 + z * 52, speed: 10 + z * 22, along: 0, across: 0,
         sway: 6 + rng.random() * 18, swayF: 0.15 + rng.random() * 0.25, tilt: 5 + rng.random() * 12,
@@ -92,6 +97,8 @@ export function start(host, opts) {
       spawn(p, true);
       parts.push(p);
     }
+    const n = Math.max(10, Math.min(MAX, Math.round(W * H / 30000)));
+    shown = parts.map((_, i) => Math.floor((i + 1) * n / MAX) > Math.floor(i * n / MAX));
     if (remake) makeSprites(); else draw();
   }
 
@@ -109,9 +116,9 @@ export function start(host, opts) {
   function draw() {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, cv.width, cv.height);
-    for (const p of parts) {
-      const spr = sprites[p.k];
-      if (!spr) continue;
+    for (let i = 0; i < parts.length; i++) {
+      const p = parts[i], spr = sprites[p.k];
+      if (!spr || !shown[i]) continue;
       const off = Math.sin(t * p.swayF * 6.28 + p.ph) * p.sway;
       let x, y;
       if (dir === 2) { x = back ? W - p.along : p.along; y = p.across + off; }
