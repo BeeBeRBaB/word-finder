@@ -857,6 +857,16 @@ body{position:fixed;inset:0;width:100%;height:100%}
 #app[data-bgarea="full"][data-art] #art{display:block;position:fixed;z-index:-1;border-radius:0}
 #app[data-bgarea="full"] #art svg{left:auto;top:auto;right:-4vmin;bottom:-4vmin;width:min(72vmin,640px);height:min(72vmin,640px)}
 #app[data-bgarea="full"] #railart{display:none}
+/* Text over a background keeps a 2.5px ring of the ground colour, so a star or a glow passing
+   behind a letter never takes it under AA; tools/sims/backgrounds/contrast.mjs measures it. */
+#side,#side button,#app[data-bgarea="full"] :is(#titles,#newbtn){text-shadow:
+  1.25px 0 var(--bg),0.88px 0.88px var(--bg),0 1.25px var(--bg),-0.88px 0.88px var(--bg),-1.25px 0 var(--bg),-0.88px -0.88px var(--bg),0 -1.25px var(--bg),0.88px -0.88px var(--bg),
+  2.5px 0 var(--bg),2.31px 0.96px var(--bg),1.77px 1.77px var(--bg),0.96px 2.31px var(--bg),0 2.5px var(--bg),-0.96px 2.31px var(--bg),-1.77px 1.77px var(--bg),-2.31px 0.96px var(--bg),
+  -2.5px 0 var(--bg),-2.31px -0.96px var(--bg),-1.77px -1.77px var(--bg),-0.96px -2.31px var(--bg),0 -2.5px var(--bg),0.96px -2.31px var(--bg),1.77px -1.77px var(--bg),2.31px -0.96px var(--bg),
+  0 0 4px var(--bg)}
+/* The header's controls are filled with the ground instead: their icons cannot take a text-shadow. */
+#app[data-bgarea="full"] :is(#newgroup,#appearance){background-color:var(--bg)}
+#app[data-bgarea="full"] #appearance:hover{background-image:linear-gradient(var(--accent-wash),var(--accent-wash))}
 .hue-1{fill:var(--confetti-2);color:var(--confetti-2)}
 .hue-2{fill:var(--confetti-3);color:var(--confetti-3)}
 .hue-3{fill:var(--confetti-4);color:var(--confetti-4)}
@@ -902,7 +912,7 @@ body{position:fixed;inset:0;width:100%;height:100%}
    rail or a 320px phone it is Reveal that gives up width (ellipsis), not the row its height. */
 #count{font-family:var(--utility);font-size:14px;color:var(--muted);white-space:nowrap;flex:none}
 /* Delimiter in CSS so #count's textContent stays the bare "n of 12 found" the specs match. */
-#count::before{content:'— ';opacity:.55}
+#count::before{content:'— ';color:color-mix(in srgb,currentColor 55%,transparent)}
 /* Reveal a word. A full 44px target whose negative margins give the height back, so the
    header row stays 21px: layout.js's portrait reserve counts it at that. */
 #reveal{margin:-12px 0 -12px 4px;min-height:44px;padding:0 8px;border:none;background:transparent;
