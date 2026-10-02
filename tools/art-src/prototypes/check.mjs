@@ -28,7 +28,7 @@ const flag = (k) => args.find((a) => a === `--${k}` || a.startsWith(`--${k}=`));
 const value = (k) => flag(k)?.split('=').slice(1).join('=') || '';
 const hz = Number(value('hz')) || 0;
 const names = args.filter((a) => !a.startsWith('--'));
-const files = names.length ? names : BACKGROUNDS.filter((b) => b.file).map((b) => b.file);
+const files = names.length ? names : BACKGROUNDS.filter((b) => b.file && b.animated).map((b) => b.file);
 const shotsDir = flag('shots') ? (value('shots') || join(ROOT, '.shots/backgrounds')) : '';
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.png': 'image/png' };

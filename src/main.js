@@ -204,6 +204,7 @@ function persist() {
 /** @returns {void} */
 function layout() {
   if (!state.puzzle) return;
+  const wasLandscape = state.dims.landscape;
   const cs = getComputedStyle(els.app);
   const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
   const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
@@ -214,6 +215,7 @@ function layout() {
   });
   applyLayout(els, state.dims);
   placeArt(els, state.dims);
+  if (state.dims.landscape !== wasLandscape) showBackdrop();   // the scene moves between corner and rail
   // Unchanged means the rebuild would be byte-identical — true on nearly every resize
   // frame. Keyed on the puzzle object, not just its shape, or a new board at the same
   // size would keep the old letters. Size needs no check of its own: only newPuzzle
@@ -694,10 +696,12 @@ function showBackdrop() {
   els.app.dataset.bgarea = s.area;
   if (!subjectId) return;   // nothing dealt yet; the deal calls again
   const root = getComputedStyle(document.documentElement);
-  void backdrop.show(s.art, s.area === 'full' ? bgFull : bgList, {
+  // With the list under the board, the still scene keeps the board corner as the category art does.
+  const corner = s.art === 'scene' && s.area !== 'full' && !state.dims.landscape;
+  void backdrop.show(s.art, corner ? els.art : s.area === 'full' ? bgFull : bgList, {
     colors: [1, 2, 3, 4, 5, 6].map(i => root.getPropertyValue(`--confetti-${i}`).trim()),
     dark: document.documentElement.dataset.appearance !== 'light', reducedMotion: prefersReducedMotion(),
-    subject: subjectId, seed: currentSeed,
+    subject: subjectId, seed: currentSeed, corner,
   });
 }
 globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').addEventListener?.('change', showBackdrop);
