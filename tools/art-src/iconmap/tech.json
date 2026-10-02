@@ -11,7 +11,7 @@
     "tech/computers": ["microchip", "keyboard-and-mouse", "laptop", "gear", "television", "smartphone"],
     "tech/smartphones": ["smartphone", "speech-bubble", "camera", "battery", "microphone", "alarm-clock"],
     "tech/laptops": ["microchip", "keyboard-and-mouse", "laptop", "battery", "smartphone", "gear"],
-    "tech/internet": ["padlock", "laptop", "speech-bubble", "smartphone", "satellite"],
+    "tech/internet": ["padlock", "wifi-signal", "laptop", "speech-bubble", "smartphone", "satellite"],
     "tech/software": ["laptop", "gear", "smartphone", "lightbulb"],
     "tech/hardware": ["microchip", "keyboard-and-mouse", "battery", "gear", "laptop", "smartphone"],
     "tech/robots": ["robot", "microchip", "gear", "wheel", "battery", "laptop"],
@@ -26,12 +26,12 @@
     "tech/drones": ["airplane", "camera", "battery", "smartphone"],
     "tech/wearables": ["heart", "sneaker", "alarm-clock", "smartphone", "battery"],
     "tech/keyboards": ["keyboard-and-mouse", "laptop", "lightbulb", "smartphone", "gear"],
-    "tech/networking": ["satellite", "laptop", "smartphone", "gear"],
+    "tech/networking": ["wifi-signal", "satellite", "laptop", "smartphone", "gear"],
     "tech/artificial-intelligence": ["robot", "microchip", "brain", "speech-bubble", "eye", "laptop"],
     "tech/virtual-reality": ["eye", "game-controller", "laptop", "gear"],
-    "tech/smart-home": ["padlock", "lightbulb", "smartphone", "lamp", "siren", "camera"],
+    "tech/smart-home": ["padlock", "wifi-signal", "lightbulb", "smartphone", "lamp", "siren"],
     "tech/cybersecurity": ["padlock", "shield", "eye", "laptop", "smartphone", "gear"],
-    "tech/streaming": ["headphones", "television", "film-reel", "popcorn", "laptop", "smartphone"]
+    "tech/streaming": ["headphones", "wifi-signal", "television", "film-reel", "popcorn", "laptop"]
   },
   "wishlist": [
     {

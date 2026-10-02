@@ -2,10 +2,10 @@
   "category": ["armchair", "lamp", "pillow", "candle", "book-stack"],
   "subjects": {
     "home/living-room": ["chandelier", "fireplace", "armchair", "lamp", "television", "pillow"],
-    "home/bedroom": ["pillow", "alarm-clock", "lamp", "crescent-moon", "book-stack"],
+    "home/bedroom": ["bed", "pillow", "alarm-clock", "lamp", "crescent-moon", "book-stack"],
     "home/bathroom": ["faucet", "tooth", "first-aid-kit", "pill", "candle"],
     "home/dining-room": ["chandelier", "dinner-plate", "champagne-flutes", "candle", "flower", "coffee-cup"],
-    "home/furniture": ["armchair", "park-bench", "pillow", "book-stack", "lamp"],
+    "home/furniture": ["bed", "armchair", "park-bench", "pillow", "book-stack", "lamp"],
     "home/cleaning": ["washing-machine", "armchair", "lamp", "pillow"],
     "home/laundry": ["washing-machine", "dress", "pillow", "armchair"],
     "home/tools": ["wrench", "toolbox", "hammer", "saw", "gear", "shovel"],
@@ -19,11 +19,11 @@
     "home/plumbing": ["wrench", "faucet", "gear", "washing-machine", "armchair", "lamp"],
     "home/electrical": ["battery", "lightbulb", "lamp", "gear"],
     "home/carpentry": ["hammer", "saw", "pencil", "park-bench", "tree", "armchair"],
-    "home/bedding": ["pillow", "crescent-moon", "yarn-ball", "thread-spool"],
+    "home/bedding": ["bed", "pillow", "crescent-moon", "yarn-ball", "thread-spool"],
     "home/curtains": ["armchair", "pillow", "lamp", "candle"],
     "home/home-office": ["laptop", "smartphone", "pencil", "book-stack", "lamp"],
     "home/garage": ["wrench", "car", "padlock", "toolbox", "lawnmower", "steering-wheel"],
-    "home/fireplace": ["fireplace", "candle", "armchair", "pillow", "book-stack"],
+    "home/fireplace": ["flame", "fireplace", "candle", "armchair", "pillow", "book-stack"],
     "home/sewing": ["scissors", "thread-spool", "yarn-ball", "dress", "lamp"]
   },
   "wishlist": [

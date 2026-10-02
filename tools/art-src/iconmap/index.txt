@@ -14,12 +14,14 @@ balloons: bunch of three balloons
 bandage: adhesive bandage
 bat: bat with outstretched wings
 battery: charging battery with a lightning bolt
+bed: bed with a quilt and headboard
 bee: fuzzy bumblebee in flight
 belt-buckle: coiled leather belt with a brass buckle
 bicycle: bicycle side view
 bird: round songbird on a branch
 bone: cartoon bone
 book-stack: stack of books with reading glasses
+bookshelf: wooden bookshelf packed with spines
 boot: laced leather boot
 brain: brain with folds
 bread: loaf of bread with a slice
@@ -55,6 +57,7 @@ crab: crab waving its claws
 crescent-moon: crescent moon with craters and stars
 croissant: flaky croissant
 crown: jewelled royal crown
+cupcake: frosted cupcake with sprinkles
 deer: stag with antlers
 dice: pair of dice
 dinner-plate: plate with a fork and knife
@@ -64,6 +67,7 @@ dress: party dress with a flared skirt
 drum: drum with crossed sticks
 drum-kit: full drum kit with cymbals and hi-hat
 dumbbell: dumbbell weight
+easel-canvas: canvas on a wooden easel with a half-finished landscape
 eye: eye with lashes
 faucet: tap with water running
 film-reel: film reel with unspooling film
@@ -72,6 +76,7 @@ firework: bursting firework with sparks
 first-aid-kit: first-aid kit with a cross
 fish: cartoon fish with bubbles
 fishing-rod: fishing rod with a bobber and a line
+flame: flickering cooking flame
 flask: bubbling conical lab flask
 flexed-arm: flexed arm showing a bicep
 flower: five-petal flower on a stem
@@ -79,6 +84,7 @@ footprints: pair of bare footprints
 fountain: tiered stone fountain with splashing water
 fox: red fox with a bushy tail
 framed-painting: ornate gilt-framed painting on a wall
+frog: frog sitting on a lily pad
 frying-pan: frying pan with a sizzling egg
 game-controller: video game controller
 gear: two meshing cogs
@@ -95,6 +101,7 @@ heart: glossy heart with sparkles
 horse: galloping horse with a flowing mane
 house: little house with a glowing window
 hug: two figures in a warm hug
+invitation-card: envelope with a card peeking out
 keyboard-and-mouse: computer keyboard with a mouse beside it
 knight-helmet: plumed knight's helmet with visor
 lamp: table lamp glowing
@@ -114,12 +121,14 @@ medal: prize medal on a ribbon
 microchip: square chip with pins on every side
 microphone: handheld microphone
 microscope: lab microscope
+mitten: pair of knitted mittens
 molecule: ball-and-stick molecule model
 monkey: monkey swinging from a branch
 mountain: snow-capped peaks
 mouth: smiling lips with a tongue
 movie-camera: vintage cine camera on a tripod with two reels on top
 mushroom: spotted toadstool with a little one
+music-notes: pair of beamed music notes
 open-book: open book with pages fanning up
 owl: wide-eyed owl on a branch
 padlock: closed padlock with a key
@@ -166,12 +175,15 @@ sketchbook: open sketchbook with a doodle and an eraser
 smartphone: smartphone with app icons, buzzing
 smiley: grinning smiley face
 sneaker: high-top sneaker with laces
+snowflake: six-armed snowflake
 soccer-ball: patched football
 sock: striped sock
 sparkler: hand-held sparkler throwing stars
 speech-bubble: chatting speech bubbles
+spotlight: stage spotlight throwing a cone of light
 sprout: seedling sprouting from soil
 stage-curtain: red velvet stage curtains drawn open
+stage-spotlight: stage with red curtains under a spotlight beam
 statue: marble bust on a plinth
 steering-wheel: car steering wheel
 stethoscope: stethoscope with a little heart
@@ -211,7 +223,10 @@ wave: curling ocean wave
 whale: smiling whale with a spout
 wheat-sheaf: tied sheaf of wheat
 wheel: rolling tyre and rim
+wheelbarrow: wheelbarrow heaped with soil
 whisk: balloon whisk in a mixing bowl
+whistle: coach's whistle on a lanyard
+wifi-signal: wifi fan of arcs over a dot
 wizard-hat: pointy wizard hat with stars and a moon
 wrench: adjustable wrench
 yarn-ball: ball of yarn with knitting needles

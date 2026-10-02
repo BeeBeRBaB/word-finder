@@ -3,7 +3,7 @@
   "subjects": {
     "health/exercise": ["stopwatch", "dumbbell", "flexed-arm", "sneaker", "water-bottle", "medal"],
     "health/healthy-eating": ["apple", "dinner-plate", "leaf", "fish", "bread", "heart"],
-    "health/sleep": ["pillow", "crescent-moon", "alarm-clock", "lamp", "heart"],
+    "health/sleep": ["bed", "pillow", "crescent-moon", "alarm-clock", "lamp", "heart"],
     "health/stretching": ["flexed-arm", "sneaker", "heart", "water-bottle"],
     "health/yoga": ["flower", "candle", "heart", "water-bottle"],
     "health/walking": ["footprints", "sneaker", "signpost", "map", "park-bench", "street-lamp"],
@@ -22,7 +22,7 @@
     "health/breathing-exercises": ["lungs", "flower", "candle", "brain", "heart"],
     "health/sunscreen": ["sun", "palm-island", "wave", "water-bottle", "heart"],
     "health/hiking": ["sun", "mountain", "compass", "map", "pine-tree", "signpost"],
-    "health/napping": ["pillow", "armchair", "alarm-clock", "heart"],
+    "health/napping": ["bed", "pillow", "armchair", "alarm-clock", "heart"],
     "health/self-care": ["candle", "book-stack", "coffee-cup", "flower", "smiley", "heart"],
     "health/grocery-shopping": ["storefront", "apple", "bread", "heart"]
   },

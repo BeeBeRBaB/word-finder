@@ -23,7 +23,7 @@
     "vehicles/trailers": ["car", "wheel", "suitcase", "pine-tree", "steering-wheel", "signpost"],
     "vehicles/convertibles": ["sun", "car", "steering-wheel", "wheel", "palm-island", "signpost"],
     "vehicles/golf-carts": ["steering-wheel", "battery", "tree", "wheel"],
-    "vehicles/snowmobiles": ["mountain", "pine-tree", "compass", "signpost"],
+    "vehicles/snowmobiles": ["snowflake", "mountain", "pine-tree", "compass", "signpost"],
     "vehicles/rickshaws": ["bicycle", "wheel", "storefront", "street-lamp", "traffic-cone", "signpost"]
   },
   "wishlist": [

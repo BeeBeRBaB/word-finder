@@ -1,7 +1,7 @@
 {
   "category": ["wizard-hat", "castle", "treasure-chest", "shield", "crown", "shooting-star"],
   "subjects": {
-    "myth/dragons": ["treasure-chest", "mountain", "castle", "shield"],
+    "myth/dragons": ["flame", "treasure-chest", "mountain", "castle", "shield"],
     "myth/wizards": ["potion-bottle", "magic-wand", "wizard-hat", "owl", "book-stack", "crescent-moon"],
     "myth/witches": ["bat", "potion-bottle", "cat", "wizard-hat", "crescent-moon", "cooking-pot"],
     "myth/castles": ["knight-helmet", "castle", "shield", "crown", "treasure-chest"],
@@ -23,7 +23,7 @@
     "myth/genies": ["potion-bottle", "shooting-star", "amphora", "treasure-chest", "crescent-moon"],
     "myth/goblins": ["treasure-chest", "crescent-moon", "mountain", "castle"],
     "myth/griffins": ["bird", "mountain", "shield", "crown"],
-    "myth/phoenixes": ["bird", "firework", "candle", "shooting-star"],
+    "myth/phoenixes": ["flame", "bird", "firework", "candle", "shooting-star"],
     "myth/potions": ["potion-bottle", "cooking-pot", "amphora", "leaf", "wizard-hat"]
   },
   "wishlist": [

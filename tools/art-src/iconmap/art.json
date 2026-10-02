@@ -2,9 +2,9 @@
   "category": ["paintbrush", "pencil", "camera", "amphora", "quill", "thread-spool"],
   "subjects": {
     "art/drawing": ["sketchbook", "pencil", "quill", "chalkboard", "paintbrush"],
-    "art/painting": ["palette", "framed-painting", "paintbrush", "pencil", "mountain", "quill"],
-    "art/watercolor": ["palette", "paintbrush", "flower", "pencil", "quill"],
-    "art/oil-painting": ["palette", "framed-painting", "paintbrush", "mountain", "pencil", "amphora"],
+    "art/painting": ["palette", "easel-canvas", "framed-painting", "paintbrush", "pencil", "mountain"],
+    "art/watercolor": ["palette", "easel-canvas", "paintbrush", "flower", "pencil", "quill"],
+    "art/oil-painting": ["palette", "easel-canvas", "framed-painting", "paintbrush", "mountain", "pencil"],
     "art/sculpture": ["fountain", "amphora", "pencil", "paintbrush"],
     "art/pottery": ["amphora", "coffee-cup", "paintbrush", "pencil"],
     "art/ceramics": ["amphora", "dinner-plate", "coffee-cup", "paintbrush"],
