@@ -688,7 +688,7 @@
 /* Lock the viewport: no page scroll or rubber-band on iPad / iOS standalone. */
 html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);font-family:'Atkinson Hyperlegible',sans-serif;overscroll-behavior:none;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
 /* touch-action is not inherited, but a touch intersects it up the ancestor chain, so
-   `none` above stopped iOS ever opening a <select>'s wheel. Give the controls it back. */
+   `none` above stopped iOS ever opening a <select>. Give the controls it back. */
 button,select,label{touch-action:manipulation;-webkit-user-select:auto;user-select:auto}
 body{position:fixed;inset:0;width:100%;height:100%}
 /* One ring for every control rather than per-element rules, so a keyboard reaches
@@ -962,6 +962,9 @@ body{position:fixed;inset:0;width:100%;height:100%}
 .panehead h2{flex:1;font-family:var(--display);font-weight:700;font-size:20px;color:var(--text-strong);margin:0}
 .paneclose{width:44px;height:44px;margin:-10px -12px -10px 0;border:none;background:transparent;color:var(--muted);font-size:22px;line-height:1;cursor:pointer}
 .paneclose:hover{color:var(--text-strong)}
+/* Opening a pane focuses its title rather than its first control: focusing a select from a
+   tap opens it at once on an iPhone. The title is not a control, so it draws no ring. */
+#settings-title:focus,#picker-title:focus{outline:none}
 /* Back replaces the close cross only where Settings is a full-screen page. */
 .paneback{display:none;align-items:center;gap:2px;min-height:44px;margin:0 0 0 -10px;padding:0 10px 0 4px;border:none;background:transparent;
   color:var(--accent-text);font-family:inherit;font-weight:700;font-size:16px;cursor:pointer}
@@ -1041,9 +1044,9 @@ label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12
    the closed control takes --muted and the open list --accent (both 4:1+ in all 14).
    The list sits on --bg, not the card's --surface, so it reads as a layer above it. */
 /* The open list of both dropdowns, in the theme's colours, where the browser can draw it
-   (Chromium and Safari support base-select). Mouse and trackpad only: on a touch screen
-   the native picker stays, which on an iPhone is the wheel and suits a thumb better than
-   any in-page list. Everything else keeps the native popup. */
+   (Chromium and Safari support base-select). Mouse and trackpad only: its 28px rows are
+   too small for a finger, so a touch screen keeps the system's own picker, as does
+   everything else. */
 @media (pointer:fine){
   @supports (appearance:base-select){
     #picker-select,#settings-theme,#settings-art,#picker-select::picker(select),#settings-theme::picker(select),#settings-art::picker(select),#settings-palette,#settings-palette::picker(select){appearance:base-select}

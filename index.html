@@ -90,7 +90,7 @@
 <div id="settings"><div id="settingscard" role="dialog" aria-modal="true" aria-labelledby="settings-title">
   <div class="panehead">
     <button id="settings-back" class="paneback" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Back</button>
-    <h2 id="settings-title">Settings</h2>
+    <h2 id="settings-title" tabindex="-1">Settings</h2>
     <button id="settings-close" class="paneclose" type="button" aria-label="Close">&times;</button></div>
   <div id="settings-body">
   <section id="settings-look" class="panegroup" aria-labelledby="sec-look"><h3 class="panesection" id="sec-look">Look</h3>
@@ -130,11 +130,11 @@
   <p id="hint"><b>How to play.</b> Drag across a word in the grid, in any of eight directions. Found words are crossed off the list.</p>
 </div></div>
 <div id="picker"><div id="pickercard">
-  <h2>New game</h2>
+  <h2 id="picker-title" tabindex="-1">New game</h2>
   <p id="picker-warning">Start a new game? Your progress will be lost.</p>
   <label for="picker-select">Category</label>
   <!-- A native select rather than a grid of chips: 25 categories is one control at any
-       count, renders as the system wheel picker on iOS, and brings keyboard and
+       count, opens the system's own picker on a phone, and brings keyboard and
        screen-reader support with it. -->
   <div id="picker-field"><select id="picker-select"></select></div>
   <p id="picker-error" hidden></p>

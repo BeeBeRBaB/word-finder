@@ -23,7 +23,8 @@ test('the header button opens Settings, and Escape closes it with focus returned
   await btn.click();
   await expect(page.locator('#settings')).toBeVisible();
   await expect(btn).toHaveAttribute('aria-expanded', 'true');
-  await expect(page.locator('#settings-theme')).toBeFocused();
+  // The title, not a select: focusing a select from a tap opens it at once on an iPhone.
+  await expect(page.locator('#settings-title')).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(page.locator('#settings')).toBeHidden();
   await expect(btn).toBeFocused();

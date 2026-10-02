@@ -433,6 +433,7 @@ async function newGame(categoryId, stillWanted = () => true) {
 // itself open, so the rejection must survive rather than being swallowed here.
 const picker = makePicker({
   root: els.picker,
+  heading: must('picker-title'),
   select: /** @type {HTMLSelectElement} */ (must('picker-select')),
   warning: must('picker-warning'),
   error: must('picker-error'),
@@ -706,7 +707,8 @@ function openSettings() {
   anchorPane(settings);
   settings.style.display = 'flex';
   els.appearance.setAttribute('aria-expanded', 'true');
-  themeSelect.focus({ preventScroll: true });
+  // The title, not the first control: focusing a select from a tap opens it on an iPhone.
+  must('settings-title').focus({ preventScroll: true });
 }
 /** @returns {void} */
 function closeSettings() {

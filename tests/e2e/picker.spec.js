@@ -115,6 +115,8 @@ test('the category chevron opens the pane and reports it', async ({ page }) => {
   await chev.click();
   await expect(page.locator('#picker')).toBeVisible();
   await expect(chev).toHaveAttribute('aria-expanded', 'true');
+  // The title, not the select: focusing a select from a tap opens it at once on an iPhone.
+  await expect(page.locator('#picker-title')).toBeFocused();
   await page.locator('#picker-cancel').click();
   await expect(chev).toHaveAttribute('aria-expanded', 'false');
   await expect(chev).toBeFocused();
