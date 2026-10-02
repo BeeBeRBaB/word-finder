@@ -2,8 +2,8 @@
   "tests": ["tests/unit/scoring.test.js"],
   "mutants": [
     ["window < not <=","src/scoring.js","at - lastFind <= SCORING.streakWindowMs","at - lastFind < SCORING.streakWindowMs"],
-    ["reveal keeps level","src/scoring.js","      level = 0;\n      continue;","      continue;"],
-    ["reveal is a previous find","src/scoring.js","      level = 0;\n      continue;","      level = 0; lastFind = ms(e.at);\n      continue;"],
+    ["reveal keeps the chain","src/scoring.js","      lastFind = null;\n      continue;","      continue;"],
+    ["reveal is a previous find","src/scoring.js","      lastFind = null;\n      continue;","      lastFind = ms(e.at);\n      continue;"],
     ["streak cap off by one","src/scoring.js","SCORING.streak.length - 1) : 0","SCORING.streak.length) : 0"],
     ["gap drops one level, not to 0","src/scoring.js","SCORING.streak.length - 1) : 0","SCORING.streak.length - 1) : Math.max(level - 1, 0)"],
     ["lastFind starts at 0","src/scoring.js","let lastFind = null;","let lastFind = 0;"],

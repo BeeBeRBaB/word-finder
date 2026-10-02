@@ -9,11 +9,14 @@ const CACHE='wordfinder-v16';
 // Unversioned on purpose: versioning it would make the activate sweep throw away every
 // downloaded category on every deploy.
 const SUBJECT_CACHE='wordfinder-subjects';
-const ASSETS=['./','./index.html','./styles.css','./src/main.js','./src/rng.js','./src/puzzle.js','./src/layout.js','./src/view.js','./src/effects.js','./src/catalog.js','./src/subjects.js','./src/storage.js','./src/progress.js','./src/appearance.js','./src/picker.js','./src/art.js','./src/settings.js','./src/subpage.js','./src/bgpicker.js','./src/lookpicker.js','./src/backgrounds.js','./src/scoring.js','./src/levels.js','./src/cloud.js','./src/scorecard.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
+const ASSETS=['./','./index.html','./styles.css','./src/main.js','./src/rng.js','./src/puzzle.js','./src/layout.js','./src/view.js','./src/effects.js','./src/catalog.js','./src/subjects.js','./src/storage.js','./src/progress.js','./src/appearance.js','./src/picker.js','./src/art.js','./src/settings.js','./src/subpage.js','./src/bgpicker.js','./src/lookpicker.js','./src/backgrounds.js','./src/scoring.js','./src/levels.js','./src/cloud.js','./src/scorecard.js','./src/levelplay.js','./src/account.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 
 /** A lazily-imported word pool. Matched by directory so the catalog can grow without
  * sw.js growing with it. @param {URL} u @returns {boolean} */
 const isSubject=u=>u.pathname.includes('/src/subjects/');
+
+/** @param {URL} u @returns {boolean} */
+const isFont=u=>u.hostname==='fonts.googleapis.com'||u.hostname==='fonts.gstatic.com';
 
 // Code is stale-while-revalidate; icons and fonts are cache-first. Serving code
 // cache-first pinned visitors to the last build until CACHE was bumped by hand.
@@ -37,6 +40,9 @@ sw.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.al
 sw.addEventListener('fetch',e=>{
   if(e.request.method!=='GET')return;
   const url=new URL(e.request.url);
+  // Fonts are the only cross-origin files worth caching. Firestore documents have no
+  // extension, so cache-first would serve every account a device's first copy forever.
+  if(url.origin!==sw.location.origin&&!isFont(url))return;
   // Word pools: cache-first, own cache. They never change in place, so revalidating
   // would spend a request to learn nothing.
   if(url.origin===sw.location.origin&&isSubject(url)){

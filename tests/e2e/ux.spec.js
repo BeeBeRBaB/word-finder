@@ -82,6 +82,8 @@ test('progress and puzzle survive a reload', async ({ page }) => {
 // seed alone — so the reload swapped the grid and silently dropped the found word.
 test('a board the coverage bag steered comes back identical after a reload', async ({ page }) => {
   await page.goto('/?seed=1&subject=nature/birds');
+  // Loading the category saves progress, so a late load would overwrite the fixture below.
+  await page.waitForSelector('#letters .cell');
   // 80 of 105 words already drawn this cycle, so the next ordinary deal is steered.
   await page.evaluate(() => localStorage.setItem('wordfinder-progress-v1', JSON.stringify({
     v: 1, puzzles: 0, favourLeastSeen: true,

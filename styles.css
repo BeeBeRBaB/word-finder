@@ -1303,3 +1303,28 @@ label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12
 :root[data-motion="reduce"] .sc-row.sc-in{animation:none}
 :root[data-motion="reduce"] .sc-bar{display:none}
 /* End level score card */
+/* Account */
+/* account.js's Account section in Settings and its sign-in form. Unused until levels mode is wired in. */
+.acct-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.acct-who{min-width:0;font-size:15px;line-height:1.3;color:var(--text)}
+.acct-name{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+b.acct-name{color:var(--text-strong)}
+.acct-line{display:block;font-size:13px;color:var(--muted)}
+.acct-seg{flex:none}
+.acct-seg button{padding:0 18px;white-space:nowrap}
+.acct-warn[hidden],.acct-err[hidden]{display:none}
+.acct-form{display:flex;flex-direction:column;gap:14px}
+.acct-field{display:flex;flex-direction:column;gap:6px}
+/* 16px, or iOS zooms the page in when the field takes focus. html,body turn off touch-action and
+   selection for the board, so a field needs both back, as button and select already have. */
+.acct-field input{min-height:44px;box-sizing:border-box;padding:11px 14px;border:1.5px solid var(--muted);border-radius:12px;
+  background:var(--bg);color:var(--text);font-family:inherit;font-size:16px;touch-action:manipulation;-webkit-user-select:text;user-select:text}
+.acct-field input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.acct-err{margin:0;padding:10px 12px;border-left:3px solid var(--pill-miss);background:var(--bg);font-size:13.5px;color:var(--text)}
+.acct-submit{min-height:44px;padding:12px 22px;border:none;border-radius:var(--radius-ctl);background:var(--accent);color:var(--accent-ink);
+  font-family:inherit;font-weight:700;font-size:15px;cursor:pointer}
+.acct-swap{text-align:center}
+.acct-toggle{min-height:44px;padding:0 10px;border:none;background:transparent;color:var(--accent-text);font-family:inherit;font-size:14px;
+  font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.acct-form[aria-busy="true"] .acct-submit,.acct-form button[disabled]{opacity:.6;cursor:progress}
+/* End account */

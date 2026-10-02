@@ -1,5 +1,5 @@
 // Independent reference written straight from the spec, then diffed against scoreLevel over
-// 200k random levels. A change to the scoring rules (e.g. handoff question 4) must change ref() too.
+// 200k random levels. A change to the scoring rules must change ref() too.
 import { scoreLevel, SCORING as S } from '../../src/scoring.js';
 import { makeRng } from '../../src/rng.js';
 
@@ -9,7 +9,7 @@ function ref({ events, elapsedMs, difficulty, wordCount }) {
   const base = w => 10 * w.length;
   let words = 0, streak = 0, lvl = 0, prev = null, k = 0, cost = 0, found = 0;
   for (const e of events) {
-    if (e.revealed) { k++; cost += Math.round(base(e.word) * S.reveal[Math.min(k, 3) - 1] * dm); lvl = 0; continue; }
+    if (e.revealed) { k++; cost += Math.round(base(e.word) * S.reveal[Math.min(k, 3) - 1] * dm); prev = null; continue; }
     const at = clamp(e.at);
     if (prev !== null && at - prev <= 20000) lvl = Math.min(lvl + 1, 3); else lvl = 0;
     prev = at; found++;
