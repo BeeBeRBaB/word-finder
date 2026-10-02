@@ -1,0 +1,159 @@
+[
+ {
+  "id": "magnifying-glass",
+  "motif": "round magnifying glass with a handle",
+  "for": [
+   "books/mystery-novels",
+   "books/proofreading",
+   "books/encyclopedias",
+   "books/dictionaries",
+   "feelings/curiosity",
+   "history/archaeology"
+  ]
+ },
+ {
+  "id": "wheat-sheaf",
+  "motif": "tied sheaf of wheat",
+  "for": [
+   "celebrations/harvest-festivals",
+   "food/bread",
+   "food/baking",
+   "food/pasta",
+   "jobs/farmers",
+   "jobs/bakers"
+  ]
+ },
+ {
+  "id": "envelope",
+  "motif": "handwritten letter in an envelope with a wax seal",
+  "for": [
+   "books/handwriting",
+   "books/memoirs",
+   "feelings/missing-someone",
+   "feelings/gratitude",
+   "feelings/love",
+   "jobs/postal-workers"
+  ]
+ },
+ {
+  "id": "hard-hat",
+  "motif": "yellow construction hard hat",
+  "for": [
+   "jobs/builders",
+   "jobs/engineers",
+   "jobs/electricians",
+   "vehicles/bulldozers",
+   "vehicles/cranes",
+   "vehicles/forklifts"
+  ]
+ },
+ {
+  "id": "rainbow",
+  "motif": "arched rainbow between two clouds",
+  "for": [
+   "feelings/happiness",
+   "feelings/hope",
+   "myth/unicorns",
+   "nature/weather",
+   "nature/sky"
+  ]
+ },
+ {
+  "id": "bicycle",
+  "motif": "bicycle side view",
+  "for": [
+   "health/cycling",
+   "sports/cycling",
+   "travel/bicycles",
+   "vehicles/rickshaws",
+   "vehicles/scooters"
+  ]
+ },
+ {
+  "id": "volcano",
+  "motif": "erupting volcano with lava",
+  "for": [
+   "nature/mountains",
+   "nature/rocks",
+   "space/venus",
+   "space/mars",
+   "space/earth"
+  ]
+ },
+ {
+  "id": "mouth",
+  "motif": "smiling lips with a tongue",
+  "for": [
+   "body/the-face",
+   "body/the-voice",
+   "body/teeth",
+   "body/the-five-senses"
+  ]
+ },
+ {
+  "id": "chandelier",
+  "motif": "crystal chandelier",
+  "for": [
+   "celebrations/banquets",
+   "home/lighting",
+   "home/living-room",
+   "home/dining-room"
+  ]
+ },
+ {
+  "id": "knight-helmet",
+  "motif": "plumed knight's helmet with visor",
+  "for": [
+   "history/knights",
+   "history/castles",
+   "myth/knights",
+   "myth/castles"
+  ]
+ },
+ {
+  "id": "drum-kit",
+  "motif": "full drum kit with cymbals and hi-hat",
+  "for": [
+   "music/drums",
+   "music/rock-music",
+   "music/bands",
+   "music/percussion"
+  ]
+ },
+ {
+  "id": "lion",
+  "motif": "lion with a full mane",
+  "for": [
+   "animals/big-cats",
+   "feelings/courage",
+   "places/zoos"
+  ]
+ },
+ {
+  "id": "saw",
+  "motif": "hand saw and a hand plane with wood shavings",
+  "for": [
+   "art/woodworking",
+   "home/carpentry",
+   "home/tools"
+  ]
+ },
+ {
+  "id": "teddy-bear",
+  "motif": "cuddly teddy bear",
+  "for": [
+   "books/picture-books",
+   "books/reading-aloud",
+   "feelings/comforting"
+  ]
+ },
+ {
+  "id": "fireplace",
+  "motif": "hearth with a crackling fire",
+  "for": [
+   "feelings/contentment",
+   "home/fireplace",
+   "home/living-room"
+  ]
+ }
+]

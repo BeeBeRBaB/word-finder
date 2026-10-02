@@ -1,0 +1,114 @@
+{
+ "phosphor": {
+  "light": {
+   "bg": "#f5cdb4", "surface": "#fff5ec", "border": "#e2ad8c",
+   "text": "#3a2010", "strong": "#241208", "muted": "#72452a", "label": "#983a05", "hint": "#6e4832",
+   "accent": "#c2410c", "accentText": "#983206", "accentInk": "#ffffff",
+   "pills": ["rgba(255,153,31,.62)", "rgba(20,184,166,.45)", "rgba(244,63,94,.42)", "rgba(139,92,246,.40)"],
+   "sel": "rgba(194,65,12,.26)", "foundText": "#2a1406", "done": "rgba(58,32,16,.74)"
+  },
+  "dark": {
+   "bg": "#3a2317", "surface": "#4a2f22", "border": "#654332",
+   "text": "#f6e6d8", "strong": "#fff5ec", "muted": "#c9a891", "label": "#ffb070", "hint": "#bea08b",
+   "accent": "#ff8a3d", "accentText": "#ffa366", "accentInk": "#2a1206",
+   "pills": ["rgba(255,176,64,.88)", "rgba(94,214,196,.85)", "rgba(255,128,140,.85)", "rgba(190,150,255,.85)"],
+   "sel": "rgba(255,138,61,.30)", "foundText": "#2a1406", "done": "rgba(246,230,216,.6)"
+  }
+ },
+ "broadsheet": {
+  "light": {
+   "bg": "#ece3cf", "surface": "#faf7ef", "border": "#1c1a16",
+   "text": "#1c1a16", "strong": "#0d0c0a", "muted": "#504a3e", "label": "#a3200d", "hint": "#5c5548",
+   "accent": "#1c1a16", "accentText": "#1c1a16", "accentInk": "#faf7ef",
+   "pills": ["rgba(255,214,0,.72)", "rgba(0,190,240,.50)", "rgba(255,80,160,.50)", "rgba(120,220,60,.60)"],
+   "sel": "rgba(28,26,22,.14)", "foundText": "#0d0c0a", "done": "rgba(28,26,22,.65)"
+  },
+  "dark": {
+   "bg": "#2e2922", "surface": "#3a342c", "border": "#e9e2d3",
+   "text": "#ede6d6", "strong": "#fbf7ef", "muted": "#b5ac9a", "label": "#ff9a7a", "hint": "#aba290",
+   "accent": "#ede6d6", "accentText": "#ede6d6", "accentInk": "#1e1b17",
+   "pills": ["rgba(255,221,40,.85)", "rgba(70,200,245,.80)", "rgba(255,120,180,.80)", "rgba(140,225,90,.80)"],
+   "sel": "rgba(237,230,214,.16)", "foundText": "#14120e", "done": "rgba(237,230,214,.6)"
+  }
+ },
+ "sticker": {
+  "light": {
+   "bg": "#fcf6be", "surface": "#ffffff", "border": "#1d1638",
+   "text": "#1d1638", "strong": "#120c28", "muted": "#544a70", "label": "#6b3fd1", "hint": "#5b5376",
+   "accent": "#6b3fd1", "accentText": "#5a2fc0", "accentInk": "#ffffff",
+   "pills": ["#ffb238", "#5ee0bd", "#ff8fb8", "#9db6ff"],
+   "sel": "rgba(107,63,209,.22)", "foundText": "#120c28", "done": "rgba(29,22,56,.68)"
+  },
+  "dark": {
+   "bg": "#282050", "surface": "#3a2e6b", "border": "#0f0a22",
+   "text": "#f3eeff", "strong": "#ffffff", "muted": "#c4b8ec", "label": "#ffc857", "hint": "#b8acdf",
+   "accent": "#ffc857", "accentText": "#ffd27a", "accentInk": "#201844",
+   "pills": ["#ffb547", "#5fe0bd", "#ff8fb5", "#9ab4ff"],
+   "sel": "rgba(255,200,87,.26)", "foundText": "#150e30", "done": "rgba(243,238,255,.58)"
+  }
+ },
+ "drafting": {
+  "light": {
+   "bg": "#c9def2", "surface": "#f4f9fd", "border": "#8fb0cc",
+   "text": "#0e2233", "strong": "#06131e", "muted": "#3d5a72", "label": "#0a5a8c", "hint": "#46607a",
+   "accent": "#1565c0", "accentText": "#0a5690", "accentInk": "#ffffff",
+   "pills": ["rgba(245,158,11,.55)", "rgba(6,182,212,.45)", "rgba(239,68,68,.40)", "rgba(132,204,22,.50)"],
+   "sel": "rgba(21,101,192,.20)", "foundText": "#06131e", "done": "rgba(14,34,51,.70)"
+  },
+  "dark": {
+   "bg": "#143250", "surface": "#1c3f63", "border": "#3f6a94",
+   "text": "#e2eef9", "strong": "#ffffff", "muted": "#a3c2de", "label": "#8fdcff", "hint": "#9ab9d6",
+   "accent": "#7fd6ff", "accentText": "#8fdcff", "accentInk": "#0a2036",
+   "pills": ["rgba(255,196,77,.88)", "rgba(94,226,255,.85)", "rgba(255,130,120,.85)", "rgba(176,232,96,.85)"],
+   "sel": "rgba(127,214,255,.22)", "foundText": "#081a2c", "done": "rgba(226,238,249,.58)"
+  }
+ },
+ "grove": {
+  "light": {
+   "bg": "#d0e5bd", "surface": "#f7fbef", "border": "#a9c28f",
+   "text": "#1f2d1b", "strong": "#152111", "muted": "#46553b", "label": "#3f5e2e", "hint": "#4f5b45",
+   "accent": "#ad4a26", "accentText": "#9a3f1f", "accentInk": "#fff8ee",
+   "pills": ["rgba(132,190,70,.60)", "rgba(232,120,70,.50)", "rgba(240,190,50,.60)", "rgba(200,90,140,.40)"],
+   "sel": "rgba(173,74,38,.22)", "foundText": "#152111", "done": "rgba(31,45,27,.70)"
+  },
+  "dark": {
+   "bg": "#1f3724", "surface": "#294430", "border": "#3f5c45",
+   "text": "#e6ecd8", "strong": "#f6f4e6", "muted": "#b0bea0", "label": "#b5d68f", "hint": "#a5b294",
+   "accent": "#e8825a", "accentText": "#f09a74", "accentInk": "#221208",
+   "pills": ["rgba(170,220,110,.85)", "rgba(240,140,100,.85)", "rgba(245,200,90,.85)", "rgba(225,140,185,.82)"],
+   "sel": "rgba(232,130,90,.28)", "foundText": "#14200f", "done": "rgba(230,236,216,.58)"
+  }
+ },
+ "plum": {
+  "light": {
+   "bg": "#ecc9df", "surface": "#fdf5f9", "border": "#d9aec6",
+   "text": "#2b1530", "strong": "#1c0b20", "muted": "#6a4561", "label": "#8e2f63", "hint": "#6e4d64",
+   "accent": "#b0356a", "accentText": "#992c5c", "accentInk": "#ffffff",
+   "pills": ["rgba(240,120,100,.50)", "rgba(220,90,160,.45)", "rgba(140,100,220,.42)", "rgba(240,180,80,.55)"],
+   "sel": "rgba(176,53,106,.18)", "foundText": "#1c0b20", "done": "rgba(43,21,48,.70)"
+  },
+  "dark": {
+   "bg": "#3b1f35", "surface": "#4a2a44", "border": "#6a4262",
+   "text": "#f5e6ef", "strong": "#fff4f9", "muted": "#d0b0c4", "label": "#f0a8c4", "hint": "#c4a2b6",
+   "accent": "#ff8f7a", "accentText": "#ffa28f", "accentInk": "#2a1020",
+   "pills": ["rgba(255,150,125,.85)", "rgba(240,125,190,.85)", "rgba(180,150,255,.85)", "rgba(250,200,120,.85)"],
+   "sel": "rgba(255,143,122,.24)", "foundText": "#22091c", "done": "rgba(245,230,239,.58)"
+  }
+ },
+ "graphite": {
+  "light": {
+   "bg": "#e3e5ea", "surface": "#f7f8fa", "border": "#c2c5cc",
+   "text": "#18191c", "strong": "#0a0a0b", "muted": "#50535a", "label": "#45474d", "hint": "#585b62",
+   "accent": "#cc350a", "accentText": "#b02d08", "accentInk": "#ffffff",
+   "pills": ["#d4ec2a", "#ffa64d", "#6aa6ff", "#ff6b6b"],
+   "sel": "rgba(24,24,26,.14)", "foundText": "#0a0a0b", "done": "rgba(24,25,28,.66)"
+  },
+  "dark": {
+   "bg": "#202126", "surface": "#2a2b31", "border": "#44464e",
+   "text": "#ececea", "strong": "#ffffff", "muted": "#aeafb5", "label": "#bfc0c6", "hint": "#a3a4aa",
+   "accent": "#ff6a33", "accentText": "#ff875a", "accentInk": "#0a0a0b",
+   "pills": ["#e6f53c", "#ffb45a", "#6aa8ff", "#ff5a5a"],
+   "sel": "rgba(255,255,255,.16)", "foundText": "#0a0a0b", "done": "rgba(236,236,234,.6)"
+  }
+ }
+}

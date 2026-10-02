@@ -1,0 +1,4214 @@
+[
+ {
+  "id": "sun",
+  "motif": "bright smiling sun",
+  "subjects": [
+   "body/skin",
+   "celebrations/holidays",
+   "celebrations/picnics",
+   "feelings/hope",
+   "feelings/happiness",
+   "feelings/contentment",
+   "health/sunscreen",
+   "health/hiking",
+   "nature/weather",
+   "nature/desert",
+   "nature/seasons",
+   "nature/sky",
+   "space/sun",
+   "space/solar-system",
+   "space/mercury",
+   "space/venus",
+   "space/eclipses",
+   "space/stars",
+   "vehicles/convertibles"
+  ]
+ },
+ {
+  "id": "trophy",
+  "motif": "gold cup trophy",
+  "subjects": [
+   "celebrations/gift-giving",
+   "feelings/gratitude",
+   "feelings/celebrating",
+   "feelings/pride",
+   "feelings/confidence",
+   "movies/film-festivals",
+   "movies/red-carpets",
+   "movies/game-shows",
+   "movies/reality-tv",
+   "places/stadiums",
+   "school/sports-day",
+   "school/assemblies",
+   "sports/soccer",
+   "sports/baseball",
+   "sports/basketball",
+   "sports/tennis",
+   "sports/hockey",
+   "sports/boxing",
+   "sports/golf"
+  ]
+ },
+ {
+  "id": "scissors",
+  "motif": "craft scissors with a glue stick and paper scraps",
+  "subjects": [
+   "art/collage",
+   "art/crafts",
+   "art/origami",
+   "body/hair",
+   "clothing/sewing",
+   "clothing/embroidery",
+   "clothing/fabrics",
+   "clothing/shoemaking",
+   "home/sewing",
+   "jobs/hairdressers",
+   "school/stationery",
+   "school/art-class",
+   "school/classrooms"
+  ]
+ },
+ {
+  "id": "music-notes",
+  "motif": "pair of beamed music notes",
+  "subjects": [
+   "body/the-voice",
+   "body/ears",
+   "movies/soundtracks",
+   "movies/musicals",
+   "music/music-theory",
+   "music/classical-music",
+   "music/choirs",
+   "music/singing",
+   "music/songwriting",
+   "music/orchestras",
+   "music/keyboard-instruments",
+   "school/music-class",
+   "school/assemblies"
+  ]
+ },
+ {
+  "id": "wrench",
+  "motif": "adjustable wrench",
+  "subjects": [
+   "home/tools",
+   "home/plumbing",
+   "home/garage",
+   "jobs/mechanics",
+   "jobs/plumbers",
+   "jobs/builders",
+   "jobs/engineers",
+   "vehicles/garages",
+   "vehicles/engines",
+   "vehicles/tyres",
+   "vehicles/motorbikes",
+   "vehicles/cars"
+  ]
+ },
+ {
+  "id": "magnifying-glass",
+  "motif": "round magnifying glass with a handle",
+  "subjects": [
+   "books/mystery-novels",
+   "books/proofreading",
+   "books/encyclopedias",
+   "books/dictionaries",
+   "feelings/curiosity",
+   "history/archaeology",
+   "history/clockmakers",
+   "science/microscopes",
+   "science/experiments",
+   "science/fossils",
+   "sports/puzzles"
+  ]
+ },
+ {
+  "id": "anchor",
+  "motif": "ship's anchor with rope",
+  "subjects": [
+   "feelings/hope",
+   "history/sailing-ships",
+   "myth/pirates",
+   "places/harbors",
+   "places/waterfronts",
+   "sports/sailing",
+   "travel/cruises",
+   "travel/ferries",
+   "travel/islands",
+   "vehicles/boats",
+   "vehicles/submarines"
+  ]
+ },
+ {
+  "id": "car",
+  "motif": "family car",
+  "subjects": [
+   "home/garage",
+   "jobs/mechanics",
+   "jobs/police-officers",
+   "travel/road-trips",
+   "travel/road-signs",
+   "vehicles/cars",
+   "vehicles/convertibles",
+   "vehicles/garages",
+   "vehicles/tyres",
+   "vehicles/engines",
+   "vehicles/trailers"
+  ]
+ },
+ {
+  "id": "stopwatch",
+  "motif": "stopwatch with a start button and sweeping hand",
+  "subjects": [
+   "health/running",
+   "health/exercise",
+   "health/swimming",
+   "school/exams",
+   "school/sports-day",
+   "school/timetables",
+   "sports/running",
+   "sports/swimming",
+   "sports/chess",
+   "sports/board-games"
+  ]
+ },
+ {
+  "id": "headphones",
+  "motif": "over-ear headphones",
+  "subjects": [
+   "body/ears",
+   "music/recording-studio",
+   "music/electronic-music",
+   "music/pop-music",
+   "music/hip-hop",
+   "school/computer-lab",
+   "school/music-class",
+   "tech/headphones",
+   "tech/streaming"
+  ]
+ },
+ {
+  "id": "open-book",
+  "motif": "open book with pages fanning up",
+  "subjects": [
+   "books/libraries",
+   "books/novels",
+   "books/short-stories",
+   "books/dictionaries",
+   "books/reading-aloud",
+   "books/book-clubs",
+   "books/picture-books",
+   "books/encyclopedias",
+   "books/storytelling"
+  ]
+ },
+ {
+  "id": "snowflake",
+  "motif": "six-armed snowflake",
+  "subjects": [
+   "animals/penguins",
+   "animals/wolves",
+   "nature/weather",
+   "nature/seasons",
+   "nature/mountains",
+   "sports/skiing",
+   "sports/skating",
+   "vehicles/snowmobiles"
+  ]
+ },
+ {
+  "id": "confetti-popper",
+  "motif": "party popper bursting with confetti and streamers",
+  "subjects": [
+   "celebrations/confetti",
+   "celebrations/new-year",
+   "celebrations/birthdays",
+   "celebrations/parades",
+   "celebrations/carnivals",
+   "celebrations/festivals",
+   "celebrations/balloons",
+   "celebrations/street-fairs"
+  ]
+ },
+ {
+  "id": "wheat-sheaf",
+  "motif": "tied sheaf of wheat",
+  "subjects": [
+   "celebrations/harvest-festivals",
+   "food/bread",
+   "food/baking",
+   "food/pasta",
+   "jobs/farmers",
+   "jobs/bakers",
+   "nature/farms",
+   "nature/seasons"
+  ]
+ },
+ {
+  "id": "padlock",
+  "motif": "closed padlock with a key",
+  "subjects": [
+   "feelings/trust",
+   "home/doors",
+   "home/storage",
+   "home/garage",
+   "tech/cybersecurity",
+   "tech/smart-home",
+   "tech/internet",
+   "travel/luggage"
+  ]
+ },
+ {
+  "id": "seashell",
+  "motif": "spiral hermit-crab shell and a starfish",
+  "subjects": [
+   "animals/crabs",
+   "animals/jellyfish",
+   "myth/mermaids",
+   "myth/treasure",
+   "nature/ocean",
+   "travel/beaches",
+   "travel/islands"
+  ]
+ },
+ {
+  "id": "globe",
+  "motif": "desk globe on a stand",
+  "subjects": [
+   "books/encyclopedias",
+   "history/old-maps",
+   "history/explorers",
+   "school/classrooms",
+   "travel/maps",
+   "travel/backpacking",
+   "travel/passports"
+  ]
+ },
+ {
+  "id": "statue",
+  "motif": "marble bust on a plinth",
+  "subjects": [
+   "history/museums",
+   "history/ancient-greece",
+   "places/plazas",
+   "places/town-squares",
+   "places/parks",
+   "places/boulevards",
+   "places/fountains"
+  ]
+ },
+ {
+  "id": "flask",
+  "motif": "bubbling conical lab flask",
+  "subjects": [
+   "jobs/scientists",
+   "school/chemistry-lab",
+   "school/science-class",
+   "science/chemistry",
+   "science/the-lab",
+   "science/experiments",
+   "science/states-of-matter"
+  ]
+ },
+ {
+  "id": "whistle",
+  "motif": "coach's whistle on a lanyard",
+  "subjects": [
+   "school/gym-class",
+   "school/sports-day",
+   "school/teachers",
+   "sports/soccer",
+   "sports/basketball",
+   "sports/swimming",
+   "sports/hockey"
+  ]
+ },
+ {
+  "id": "carrot",
+  "motif": "carrot with leafy top",
+  "subjects": [
+   "animals/rabbits",
+   "food/vegetables",
+   "food/soup",
+   "food/salad",
+   "garden/vegetable-patch",
+   "garden/raised-beds"
+  ]
+ },
+ {
+  "id": "envelope",
+  "motif": "handwritten letter in an envelope with a wax seal",
+  "subjects": [
+   "books/handwriting",
+   "books/memoirs",
+   "feelings/missing-someone",
+   "feelings/gratitude",
+   "feelings/love",
+   "jobs/postal-workers"
+  ]
+ },
+ {
+  "id": "campfire",
+  "motif": "crackling campfire with logs",
+  "subjects": [
+   "books/storytelling",
+   "history/stone-age",
+   "history/covered-wagons",
+   "music/folk-music",
+   "music/country-music",
+   "sports/camping"
+  ]
+ },
+ {
+  "id": "picnic-basket",
+  "motif": "wicker basket on a gingham blanket",
+  "subjects": [
+   "celebrations/picnics",
+   "celebrations/reunions",
+   "celebrations/festivals",
+   "celebrations/street-fairs",
+   "food/picnics",
+   "food/markets"
+  ]
+ },
+ {
+  "id": "coat-hanger",
+  "motif": "wooden coat hanger with a shirt draped on it",
+  "subjects": [
+   "clothing/coats",
+   "clothing/dresses",
+   "clothing/jeans",
+   "clothing/laundry",
+   "clothing/uniforms",
+   "clothing/pockets"
+  ]
+ },
+ {
+  "id": "sheep",
+  "motif": "woolly sheep",
+  "subjects": [
+   "clothing/knitting",
+   "clothing/fabrics",
+   "clothing/socks",
+   "clothing/scarves",
+   "clothing/gloves",
+   "clothing/winter-clothes"
+  ]
+ },
+ {
+  "id": "house",
+  "motif": "little house with a glowing window",
+  "subjects": [
+   "feelings/family",
+   "feelings/contentment",
+   "feelings/missing-someone",
+   "places/neighborhoods",
+   "places/suburbs",
+   "places/villages"
+  ]
+ },
+ {
+  "id": "flame",
+  "motif": "flickering cooking flame",
+  "subjects": [
+   "food/grilling",
+   "food/cooking",
+   "home/fireplace",
+   "jobs/firefighters",
+   "myth/dragons",
+   "myth/phoenixes"
+  ]
+ },
+ {
+  "id": "toolbox",
+  "motif": "open toolbox with tools",
+  "subjects": [
+   "home/tools",
+   "home/garage",
+   "jobs/builders",
+   "jobs/mechanics",
+   "jobs/electricians",
+   "jobs/plumbers"
+  ]
+ },
+ {
+  "id": "hard-hat",
+  "motif": "yellow construction hard hat",
+  "subjects": [
+   "jobs/builders",
+   "jobs/engineers",
+   "jobs/electricians",
+   "vehicles/bulldozers",
+   "vehicles/cranes",
+   "vehicles/forklifts"
+  ]
+ },
+ {
+  "id": "backpack",
+  "motif": "school backpack with pockets",
+  "subjects": [
+   "school/classrooms",
+   "school/school-trips",
+   "sports/hiking",
+   "sports/camping",
+   "travel/backpacking",
+   "travel/luggage"
+  ]
+ },
+ {
+  "id": "horse",
+  "motif": "galloping horse with a flowing mane",
+  "subjects": [
+   "animals/horses",
+   "history/knights",
+   "history/covered-wagons",
+   "myth/knights",
+   "myth/unicorns"
+  ]
+ },
+ {
+  "id": "bat",
+  "motif": "bat with outstretched wings",
+  "subjects": [
+   "animals/bats",
+   "animals/nocturnal-animals",
+   "movies/horror-movies",
+   "myth/witches",
+   "nature/caves"
+  ]
+ },
+ {
+  "id": "lungs",
+  "motif": "pair of pink lungs with branching airways",
+  "subjects": [
+   "body/the-lungs",
+   "body/breathing",
+   "health/breathing-exercises",
+   "health/meditation",
+   "health/swimming"
+  ]
+ },
+ {
+  "id": "alphabet-blocks",
+  "motif": "stacked wooden ABC letter blocks",
+  "subjects": [
+   "books/grammar",
+   "books/dictionaries",
+   "books/handwriting",
+   "books/picture-books",
+   "school/spelling"
+  ]
+ },
+ {
+  "id": "invitation-card",
+  "motif": "envelope with a card peeking out",
+  "subjects": [
+   "celebrations/gift-giving",
+   "celebrations/birthdays",
+   "celebrations/weddings",
+   "celebrations/graduations",
+   "celebrations/baby-showers"
+  ]
+ },
+ {
+  "id": "hug",
+  "motif": "two figures in a warm hug",
+  "subjects": [
+   "feelings/comforting",
+   "feelings/love",
+   "feelings/missing-someone",
+   "feelings/happiness",
+   "feelings/family"
+  ]
+ },
+ {
+  "id": "rainbow",
+  "motif": "arched rainbow between two clouds",
+  "subjects": [
+   "feelings/happiness",
+   "feelings/hope",
+   "myth/unicorns",
+   "nature/weather",
+   "nature/sky"
+  ]
+ },
+ {
+  "id": "lightning-bolt",
+  "motif": "zigzag lightning bolt",
+  "subjects": [
+   "feelings/excitement",
+   "jobs/electricians",
+   "jobs/engineers",
+   "movies/superhero-movies",
+   "myth/superheroes"
+  ]
+ },
+ {
+  "id": "chef-hat",
+  "motif": "tall chef's toque",
+  "subjects": [
+   "food/cooking",
+   "food/kitchen",
+   "food/baking",
+   "jobs/chefs",
+   "jobs/bakers"
+  ]
+ },
+ {
+  "id": "whisk",
+  "motif": "balloon whisk in a mixing bowl",
+  "subjects": [
+   "food/baking",
+   "food/cooking",
+   "food/kitchen",
+   "jobs/chefs",
+   "jobs/bakers"
+  ]
+ },
+ {
+  "id": "tomato",
+  "motif": "ripe tomato on the vine",
+  "subjects": [
+   "food/vegetables",
+   "food/pizza",
+   "food/pasta",
+   "food/salad",
+   "food/soup"
+  ]
+ },
+ {
+  "id": "plant-pot",
+  "motif": "terracotta pot with a seedling and a saucer",
+  "subjects": [
+   "garden/plant-pots",
+   "garden/window-boxes",
+   "garden/herbs",
+   "garden/seed-starting",
+   "garden/greenhouse"
+  ]
+ },
+ {
+  "id": "bed",
+  "motif": "bed with a quilt and headboard",
+  "subjects": [
+   "health/sleep",
+   "health/napping",
+   "home/bedroom",
+   "home/bedding",
+   "home/furniture"
+  ]
+ },
+ {
+  "id": "faucet",
+  "motif": "tap with water running",
+  "subjects": [
+   "health/hand-washing",
+   "health/hydration",
+   "home/plumbing",
+   "home/bathroom",
+   "jobs/plumbers"
+  ]
+ },
+ {
+  "id": "bicycle",
+  "motif": "bicycle side view",
+  "subjects": [
+   "health/cycling",
+   "sports/cycling",
+   "travel/bicycles",
+   "vehicles/rickshaws",
+   "vehicles/scooters"
+  ]
+ },
+ {
+  "id": "coins",
+  "motif": "stack of gold coins",
+  "subjects": [
+   "history/trade-routes",
+   "places/fountains",
+   "travel/currency",
+   "travel/souvenirs",
+   "travel/taxis"
+  ]
+ },
+ {
+  "id": "robot",
+  "motif": "friendly boxy robot",
+  "subjects": [
+   "jobs/engineers",
+   "science/robotics",
+   "science/inventions",
+   "tech/robots",
+   "tech/artificial-intelligence"
+  ]
+ },
+ {
+  "id": "thermometer",
+  "motif": "clinical thermometer",
+  "subjects": [
+   "jobs/doctors",
+   "jobs/nurses",
+   "science/measurement",
+   "science/states-of-matter",
+   "science/energy"
+  ]
+ },
+ {
+  "id": "clapperboard",
+  "motif": "film clapperboard with striped arm snapping shut",
+  "subjects": [
+   "movies/film-sets",
+   "movies/screenplays",
+   "movies/trailers",
+   "movies/cameras",
+   "movies/stunts"
+  ]
+ },
+ {
+  "id": "movie-camera",
+  "motif": "vintage cine camera on a tripod with two reels on top",
+  "subjects": [
+   "movies/cameras",
+   "movies/film-sets",
+   "movies/documentaries",
+   "movies/stunts",
+   "movies/special-effects"
+  ]
+ },
+ {
+  "id": "stage-spotlight",
+  "motif": "stage with red curtains under a spotlight beam",
+  "subjects": [
+   "music/concerts",
+   "music/opera",
+   "music/rock-music",
+   "music/bands",
+   "music/pop-music"
+  ]
+ },
+ {
+  "id": "potion-bottle",
+  "motif": "round-bottomed corked flask with glowing liquid",
+  "subjects": [
+   "myth/potions",
+   "myth/wizards",
+   "myth/witches",
+   "myth/spells",
+   "myth/genies"
+  ]
+ },
+ {
+  "id": "volcano",
+  "motif": "erupting volcano with lava",
+  "subjects": [
+   "nature/mountains",
+   "nature/rocks",
+   "space/venus",
+   "space/mars",
+   "space/earth"
+  ]
+ },
+ {
+  "id": "astronaut",
+  "motif": "astronaut in a suit and visored helmet, floating on a tether",
+  "subjects": [
+   "space/astronauts",
+   "space/moon",
+   "space/space-stations",
+   "space/rockets",
+   "space/mars"
+  ]
+ },
+ {
+  "id": "microchip",
+  "motif": "square chip with pins on every side",
+  "subjects": [
+   "tech/computers",
+   "tech/hardware",
+   "tech/laptops",
+   "tech/robots",
+   "tech/artificial-intelligence"
+  ]
+ },
+ {
+  "id": "cat",
+  "motif": "sitting cat with whiskers and a curled tail",
+  "subjects": [
+   "animals/cats",
+   "feelings/contentment",
+   "myth/witches",
+   "places/alleys"
+  ]
+ },
+ {
+  "id": "cave-mouth",
+  "motif": "cave entrance in a rock face",
+  "subjects": [
+   "animals/bats",
+   "animals/bears",
+   "nature/caves",
+   "nature/rocks"
+  ]
+ },
+ {
+  "id": "acorn",
+  "motif": "acorn with an oak leaf",
+  "subjects": [
+   "animals/rodents",
+   "nature/trees",
+   "nature/seasons",
+   "nature/forests"
+  ]
+ },
+ {
+  "id": "frog",
+  "motif": "frog sitting on a lily pad",
+  "subjects": [
+   "animals/frogs",
+   "garden/garden-ponds",
+   "nature/rainforest",
+   "nature/rivers"
+  ]
+ },
+ {
+  "id": "paint-palette",
+  "motif": "artist's palette with paint blobs and a brush",
+  "subjects": [
+   "art/painting",
+   "art/oil-painting",
+   "art/watercolor",
+   "art/color-theory"
+  ]
+ },
+ {
+  "id": "mouth",
+  "motif": "smiling lips with a tongue",
+  "subjects": [
+   "body/the-face",
+   "body/the-voice",
+   "body/teeth",
+   "body/the-five-senses"
+  ]
+ },
+ {
+  "id": "footprints",
+  "motif": "pair of bare footprints",
+  "subjects": [
+   "body/feet",
+   "body/legs",
+   "health/walking",
+   "health/running"
+  ]
+ },
+ {
+  "id": "printing-press",
+  "motif": "old hand-cranked printing press with a sheet",
+  "subjects": [
+   "books/publishing",
+   "books/newspapers",
+   "books/bookbinding",
+   "history/printing-press"
+  ]
+ },
+ {
+  "id": "comic-burst",
+  "motif": "jagged comic POW explosion burst",
+  "subjects": [
+   "books/comic-books",
+   "books/graphic-novels",
+   "movies/cartoons",
+   "movies/superhero-movies"
+  ]
+ },
+ {
+  "id": "superhero-mask",
+  "motif": "superhero eye mask with a flowing cape",
+  "subjects": [
+   "books/comic-books",
+   "books/graphic-novels",
+   "movies/superhero-movies",
+   "movies/costumes"
+  ]
+ },
+ {
+  "id": "magic-wand",
+  "motif": "star-tipped magic wand with sparkles",
+  "subjects": [
+   "books/fairy-tales",
+   "myth/wizards",
+   "myth/spells",
+   "myth/fairies"
+  ]
+ },
+ {
+  "id": "cupcake",
+  "motif": "frosted cupcake with sprinkles",
+  "subjects": [
+   "celebrations/cakes",
+   "celebrations/birthdays",
+   "food/desserts",
+   "food/baking"
+  ]
+ },
+ {
+  "id": "pumpkin",
+  "motif": "round pumpkin with a curly stem",
+  "subjects": [
+   "celebrations/harvest-festivals",
+   "celebrations/costumes",
+   "nature/seasons",
+   "nature/farms"
+  ]
+ },
+ {
+  "id": "chandelier",
+  "motif": "crystal chandelier",
+  "subjects": [
+   "celebrations/banquets",
+   "home/lighting",
+   "home/living-room",
+   "home/dining-room"
+  ]
+ },
+ {
+  "id": "button",
+  "motif": "large four-hole button",
+  "subjects": [
+   "clothing/buttons",
+   "clothing/sewing",
+   "clothing/coats",
+   "clothing/pockets"
+  ]
+ },
+ {
+  "id": "zipper",
+  "motif": "half-open zip with a pull tab",
+  "subjects": [
+   "clothing/zips",
+   "clothing/jeans",
+   "clothing/pockets",
+   "clothing/handbags"
+  ]
+ },
+ {
+  "id": "coat",
+  "motif": "belted trench coat",
+  "subjects": [
+   "clothing/coats",
+   "clothing/winter-clothes",
+   "clothing/buttons",
+   "clothing/pockets"
+  ]
+ },
+ {
+  "id": "swim-goggles",
+  "motif": "swimming goggles",
+  "subjects": [
+   "clothing/swimwear",
+   "health/swimming",
+   "sports/swimming",
+   "sports/skiing"
+  ]
+ },
+ {
+  "id": "croissant",
+  "motif": "flaky croissant",
+  "subjects": [
+   "food/bread",
+   "food/breakfast",
+   "food/baking",
+   "jobs/bakers"
+  ]
+ },
+ {
+  "id": "wheelbarrow",
+  "motif": "wheelbarrow heaped with soil",
+  "subjects": [
+   "garden/garden-tools",
+   "garden/mulching",
+   "garden/composting",
+   "garden/raised-beds"
+  ]
+ },
+ {
+  "id": "lawnmower",
+  "motif": "push lawnmower on striped grass",
+  "subjects": [
+   "garden/lawn-care",
+   "home/garage",
+   "places/parks",
+   "places/suburbs"
+  ]
+ },
+ {
+  "id": "knight-helmet",
+  "motif": "plumed knight's helmet with visor",
+  "subjects": [
+   "history/knights",
+   "history/castles",
+   "myth/knights",
+   "myth/castles"
+  ]
+ },
+ {
+  "id": "pickaxe",
+  "motif": "miner's pickaxe",
+  "subjects": [
+   "history/gold-rush",
+   "myth/dwarves",
+   "nature/rocks",
+   "nature/caves"
+  ]
+ },
+ {
+  "id": "hammer",
+  "motif": "claw hammer and nails",
+  "subjects": [
+   "home/tools",
+   "home/carpentry",
+   "myth/dwarves",
+   "myth/giants"
+  ]
+ },
+ {
+  "id": "cardboard-box",
+  "motif": "stacked cardboard moving boxes",
+  "subjects": [
+   "home/storage",
+   "vehicles/vans",
+   "vehicles/trucks",
+   "vehicles/forklifts"
+  ]
+ },
+ {
+  "id": "palette",
+  "motif": "artist's palette with paint dabs",
+  "subjects": [
+   "home/painting",
+   "home/decorating",
+   "jobs/artists",
+   "school/art-class"
+  ]
+ },
+ {
+  "id": "stage-curtain",
+  "motif": "red velvet stage curtains drawn open",
+  "subjects": [
+   "movies/cinemas",
+   "movies/musicals",
+   "movies/puppetry",
+   "movies/talk-shows"
+  ]
+ },
+ {
+  "id": "spotlight",
+  "motif": "stage spotlight throwing a cone of light",
+  "subjects": [
+   "movies/red-carpets",
+   "movies/musicals",
+   "movies/talk-shows",
+   "movies/game-shows"
+  ]
+ },
+ {
+  "id": "piano",
+  "motif": "grand piano with the lid up / keyboard keys",
+  "subjects": [
+   "music/keyboard-instruments",
+   "music/classical-music",
+   "music/jazz",
+   "music/bands"
+  ]
+ },
+ {
+  "id": "drum-kit",
+  "motif": "full drum kit with cymbals and hi-hat",
+  "subjects": [
+   "music/drums",
+   "music/rock-music",
+   "music/bands",
+   "music/percussion"
+  ]
+ },
+ {
+  "id": "fishing-rod",
+  "motif": "fishing rod with a bobber and a line",
+  "subjects": [
+   "nature/fish",
+   "nature/rivers",
+   "places/piers",
+   "sports/fishing"
+  ]
+ },
+ {
+  "id": "ruler",
+  "motif": "wooden ruler with a protractor",
+  "subjects": [
+   "school/maths",
+   "school/stationery",
+   "school/classrooms",
+   "science/measurement"
+  ]
+ },
+ {
+  "id": "traffic-light",
+  "motif": "traffic light on red",
+  "subjects": [
+   "school/school-buses",
+   "travel/road-signs",
+   "travel/taxis",
+   "travel/road-trips"
+  ]
+ },
+ {
+  "id": "test-tubes",
+  "motif": "rack of test tubes with coloured liquids",
+  "subjects": [
+   "science/the-lab",
+   "science/experiments",
+   "science/chemistry",
+   "science/microbes"
+  ]
+ },
+ {
+  "id": "molecule",
+  "motif": "ball-and-stick molecule model",
+  "subjects": [
+   "science/chemistry",
+   "science/atoms",
+   "science/states-of-matter",
+   "science/the-periodic-table"
+  ]
+ },
+ {
+  "id": "wifi-signal",
+  "motif": "wifi fan of arcs over a dot",
+  "subjects": [
+   "tech/internet",
+   "tech/networking",
+   "tech/smart-home",
+   "tech/streaming"
+  ]
+ },
+ {
+  "id": "keyboard-and-mouse",
+  "motif": "computer keyboard with a mouse beside it",
+  "subjects": [
+   "tech/keyboards",
+   "tech/computers",
+   "tech/hardware",
+   "tech/laptops"
+  ]
+ },
+ {
+  "id": "lion",
+  "motif": "lion with a full mane",
+  "subjects": [
+   "animals/big-cats",
+   "feelings/courage",
+   "places/zoos"
+  ]
+ },
+ {
+  "id": "acacia-tree",
+  "motif": "flat-topped savanna acacia",
+  "subjects": [
+   "animals/big-cats",
+   "animals/elephants",
+   "animals/kangaroos"
+  ]
+ },
+ {
+  "id": "monkey",
+  "motif": "monkey swinging from a branch",
+  "subjects": [
+   "animals/primates",
+   "nature/rainforest",
+   "nature/mammals"
+  ]
+ },
+ {
+  "id": "fox",
+  "motif": "red fox with a bushy tail",
+  "subjects": [
+   "animals/foxes",
+   "nature/forests",
+   "nature/mammals"
+  ]
+ },
+ {
+  "id": "deer",
+  "motif": "stag with antlers",
+  "subjects": [
+   "animals/deer",
+   "nature/forests",
+   "nature/mammals"
+  ]
+ },
+ {
+  "id": "dinosaur",
+  "motif": "long-necked dinosaur",
+  "subjects": [
+   "animals/dinosaurs",
+   "science/dinosaurs",
+   "science/fossils"
+  ]
+ },
+ {
+  "id": "easel-canvas",
+  "motif": "canvas on a wooden easel with a half-finished landscape",
+  "subjects": [
+   "art/painting",
+   "art/oil-painting",
+   "art/watercolor"
+  ]
+ },
+ {
+  "id": "framed-painting",
+  "motif": "ornate gilt-framed painting on a wall",
+  "subjects": [
+   "art/galleries",
+   "art/painting",
+   "art/oil-painting"
+  ]
+ },
+ {
+  "id": "saw",
+  "motif": "hand saw and a hand plane with wood shavings",
+  "subjects": [
+   "art/woodworking",
+   "home/carpentry",
+   "home/tools"
+  ]
+ },
+ {
+  "id": "sketchbook",
+  "motif": "open sketchbook with a doodle and an eraser",
+  "subjects": [
+   "art/drawing",
+   "art/illustration",
+   "art/animation"
+  ]
+ },
+ {
+  "id": "set-square",
+  "motif": "ruler and triangular set square",
+  "subjects": [
+   "art/architecture",
+   "art/graphic-design",
+   "art/woodworking"
+  ]
+ },
+ {
+  "id": "skeleton",
+  "motif": "friendly cartoon skeleton or x-ray showing a spine and ribs",
+  "subjects": [
+   "body/bones",
+   "body/the-spine",
+   "body/joints"
+  ]
+ },
+ {
+  "id": "dumbbell",
+  "motif": "dumbbell weight",
+  "subjects": [
+   "body/muscles",
+   "body/arms",
+   "health/exercise"
+  ]
+ },
+ {
+  "id": "toothbrush",
+  "motif": "toothbrush with a swirl of paste",
+  "subjects": [
+   "body/teeth",
+   "health/dentists",
+   "jobs/dentists"
+  ]
+ },
+ {
+  "id": "bookshelf",
+  "motif": "wooden bookshelf packed with spines",
+  "subjects": [
+   "books/libraries",
+   "books/bookshops",
+   "jobs/librarians"
+  ]
+ },
+ {
+  "id": "hardcover-book",
+  "motif": "closed hardback with a decorated cover and gilt spine",
+  "subjects": [
+   "books/book-covers",
+   "books/bookbinding",
+   "books/publishing"
+  ]
+ },
+ {
+  "id": "teddy-bear",
+  "motif": "cuddly teddy bear",
+  "subjects": [
+   "books/picture-books",
+   "books/reading-aloud",
+   "feelings/comforting"
+  ]
+ },
+ {
+  "id": "striped-tent",
+  "motif": "striped fair tent with a pennant",
+  "subjects": [
+   "celebrations/carnivals",
+   "celebrations/festivals",
+   "celebrations/street-fairs"
+  ]
+ },
+ {
+  "id": "sparkler",
+  "motif": "hand-held sparkler throwing stars",
+  "subjects": [
+   "celebrations/fireworks",
+   "celebrations/new-year",
+   "celebrations/weddings"
+  ]
+ },
+ {
+  "id": "boot",
+  "motif": "laced leather boot",
+  "subjects": [
+   "clothing/shoes",
+   "clothing/shoemaking",
+   "clothing/winter-clothes"
+  ]
+ },
+ {
+  "id": "belt-buckle",
+  "motif": "coiled leather belt with a brass buckle",
+  "subjects": [
+   "clothing/belts",
+   "clothing/shoes",
+   "clothing/handbags"
+  ]
+ },
+ {
+  "id": "scarf",
+  "motif": "striped knitted scarf with fringe",
+  "subjects": [
+   "clothing/scarves",
+   "clothing/winter-clothes",
+   "clothing/knitting"
+  ]
+ },
+ {
+  "id": "mitten",
+  "motif": "pair of knitted mittens",
+  "subjects": [
+   "clothing/gloves",
+   "clothing/winter-clothes",
+   "clothing/knitting"
+  ]
+ },
+ {
+  "id": "sock",
+  "motif": "striped sock",
+  "subjects": [
+   "clothing/socks",
+   "clothing/knitting",
+   "clothing/laundry"
+  ]
+ },
+ {
+  "id": "fireplace",
+  "motif": "hearth with a crackling fire",
+  "subjects": [
+   "feelings/contentment",
+   "home/fireplace",
+   "home/living-room"
+  ]
+ },
+ {
+  "id": "chocolate-bar",
+  "motif": "chocolate bar with a corner snapped off",
+  "subjects": [
+   "food/chocolate",
+   "food/candy",
+   "food/desserts"
+  ]
+ },
+ {
+  "id": "frying-pan",
+  "motif": "frying pan with a sizzling egg",
+  "subjects": [
+   "food/cooking",
+   "food/kitchen",
+   "food/breakfast"
+  ]
+ },
+ {
+  "id": "kettle",
+  "motif": "whistling stovetop kettle",
+  "subjects": [
+   "food/kitchen",
+   "food/tea",
+   "food/coffee"
+  ]
+ },
+ {
+  "id": "oven",
+  "motif": "oven with a glowing window",
+  "subjects": [
+   "food/baking",
+   "food/pizza",
+   "food/cooking"
+  ]
+ },
+ {
+  "id": "lemon",
+  "motif": "lemon with a cut half",
+  "subjects": [
+   "food/fruit",
+   "food/drinks",
+   "food/salad"
+  ]
+ },
+ {
+  "id": "chili-pepper",
+  "motif": "red chili pepper",
+  "subjects": [
+   "food/spices",
+   "food/soup",
+   "food/grilling"
+  ]
+ },
+ {
+  "id": "herb-bunch",
+  "motif": "tied bunch of rosemary and thyme",
+  "subjects": [
+   "food/herbs",
+   "food/spices",
+   "garden/herbs"
+  ]
+ },
+ {
+  "id": "cheese-wedge",
+  "motif": "holey wedge of cheese",
+  "subjects": [
+   "food/cheese",
+   "food/pizza",
+   "food/pasta"
+  ]
+ },
+ {
+  "id": "soup-bowl",
+  "motif": "steaming bowl of soup with a spoon",
+  "subjects": [
+   "food/soup",
+   "food/breakfast",
+   "food/kitchen"
+  ]
+ },
+ {
+  "id": "shears",
+  "motif": "pair of garden shears mid-snip",
+  "subjects": [
+   "garden/hedges",
+   "garden/pruning",
+   "garden/garden-tools"
+  ]
+ },
+ {
+  "id": "trowel",
+  "motif": "pointed hand trowel",
+  "subjects": [
+   "garden/weeding",
+   "garden/garden-tools",
+   "history/archaeology"
+  ]
+ },
+ {
+  "id": "picket-fence",
+  "motif": "white picket fence with a gate",
+  "subjects": [
+   "garden/garden-fencing",
+   "places/suburbs",
+   "places/neighborhoods"
+  ]
+ },
+ {
+  "id": "vegetables",
+  "motif": "carrot and broccoli bunch with a leafy top",
+  "subjects": [
+   "health/healthy-eating",
+   "health/grocery-shopping",
+   "health/meal-prep"
+  ]
+ },
+ {
+  "id": "yoga-mat",
+  "motif": "half-unrolled yoga mat",
+  "subjects": [
+   "health/yoga",
+   "health/stretching",
+   "health/meditation"
+  ]
+ },
+ {
+  "id": "lotus",
+  "motif": "open lotus flower on a lily pad",
+  "subjects": [
+   "health/yoga",
+   "health/meditation",
+   "health/breathing-exercises"
+  ]
+ },
+ {
+  "id": "stretching-figure",
+  "motif": "simple figure reaching into a side stretch",
+  "subjects": [
+   "health/stretching",
+   "health/yoga",
+   "health/exercise"
+  ]
+ },
+ {
+  "id": "tent",
+  "motif": "pitched tent",
+  "subjects": [
+   "health/hiking",
+   "sports/camping",
+   "sports/hiking"
+  ]
+ },
+ {
+  "id": "camel",
+  "motif": "laden camel walking",
+  "subjects": [
+   "history/trade-routes",
+   "history/silk-road",
+   "nature/desert"
+  ]
+ },
+ {
+  "id": "column",
+  "motif": "fluted Greek column",
+  "subjects": [
+   "history/romans",
+   "history/ancient-greece",
+   "history/museums"
+  ]
+ },
+ {
+  "id": "laurel-wreath",
+  "motif": "laurel or olive wreath",
+  "subjects": [
+   "history/romans",
+   "history/ancient-greece",
+   "movies/film-festivals"
+  ]
+ },
+ {
+  "id": "scroll",
+  "motif": "rolled parchment scroll",
+  "subjects": [
+   "history/old-maps",
+   "history/ancient-greece",
+   "history/printing-press"
+  ]
+ },
+ {
+  "id": "steam-train",
+  "motif": "steam locomotive puffing smoke",
+  "subjects": [
+   "history/railroads",
+   "history/industrial-revolution",
+   "travel/trains"
+  ]
+ },
+ {
+  "id": "picture-frame",
+  "motif": "gilt frame around a painting",
+  "subjects": [
+   "history/museums",
+   "home/decorating",
+   "home/living-room"
+  ]
+ },
+ {
+  "id": "vase",
+  "motif": "vase of flowers",
+  "subjects": [
+   "home/decorating",
+   "home/dining-room",
+   "home/living-room"
+  ]
+ },
+ {
+  "id": "syringe",
+  "motif": "medical syringe with a drop at the needle",
+  "subjects": [
+   "jobs/doctors",
+   "jobs/nurses",
+   "jobs/veterinarians"
+  ]
+ },
+ {
+  "id": "blueprint",
+  "motif": "rolled-out blueprint with a drafting pencil",
+  "subjects": [
+   "jobs/engineers",
+   "jobs/builders",
+   "science/inventions"
+  ]
+ },
+ {
+  "id": "tractor",
+  "motif": "farm tractor with big rear wheels",
+  "subjects": [
+   "jobs/farmers",
+   "nature/farms",
+   "vehicles/tractors"
+  ]
+ },
+ {
+  "id": "cow",
+  "motif": "spotted dairy cow",
+  "subjects": [
+   "jobs/farmers",
+   "nature/farms",
+   "nature/mammals"
+  ]
+ },
+ {
+  "id": "banana-peel",
+  "motif": "slippery banana peel",
+  "subjects": [
+   "movies/comedies",
+   "movies/cartoons",
+   "movies/sitcoms"
+  ]
+ },
+ {
+  "id": "on-air-sign",
+  "motif": "glowing red ON AIR studio light",
+  "subjects": [
+   "movies/talk-shows",
+   "movies/game-shows",
+   "movies/reality-tv"
+  ]
+ },
+ {
+  "id": "synthesizer",
+  "motif": "synth / mixing desk with knobs, faders and patch cables",
+  "subjects": [
+   "music/electronic-music",
+   "music/recording-studio",
+   "music/keyboard-instruments"
+  ]
+ },
+ {
+  "id": "amplifier",
+  "motif": "guitar amp stack with a cable plugged in",
+  "subjects": [
+   "music/rock-music",
+   "music/guitars",
+   "music/concerts"
+  ]
+ },
+ {
+  "id": "conductor-baton",
+  "motif": "conductor's baton over a music stand with a score",
+  "subjects": [
+   "music/orchestras",
+   "music/classical-music",
+   "music/choirs"
+  ]
+ },
+ {
+  "id": "banjo",
+  "motif": "banjo with a round drum body",
+  "subjects": [
+   "music/country-music",
+   "music/folk-music",
+   "music/string-instruments"
+  ]
+ },
+ {
+  "id": "cauldron",
+  "motif": "black open cauldron bubbling over a fire",
+  "subjects": [
+   "myth/witches",
+   "myth/potions",
+   "myth/wizards"
+  ]
+ },
+ {
+  "id": "bow-and-arrow",
+  "motif": "longbow with a nocked arrow",
+  "subjects": [
+   "myth/elves",
+   "myth/castles",
+   "sports/archery"
+  ]
+ },
+ {
+  "id": "gem",
+  "motif": "faceted sparkling gemstone",
+  "subjects": [
+   "myth/treasure",
+   "myth/dwarves",
+   "myth/dragons"
+  ]
+ },
+ {
+  "id": "boulder",
+  "motif": "mossy boulder",
+  "subjects": [
+   "myth/giants",
+   "myth/trolls",
+   "myth/dwarves"
+  ]
+ },
+ {
+  "id": "bridge",
+  "motif": "arched stone bridge over a stream",
+  "subjects": [
+   "myth/trolls",
+   "nature/rivers",
+   "places/bridges"
+  ]
+ },
+ {
+  "id": "feather",
+  "motif": "single long plume feather",
+  "subjects": [
+   "myth/griffins",
+   "myth/phoenixes",
+   "nature/birds"
+  ]
+ },
+ {
+  "id": "parrot",
+  "motif": "pirate parrot on a perch",
+  "subjects": [
+   "myth/pirates",
+   "nature/birds",
+   "nature/rainforest"
+  ]
+ },
+ {
+  "id": "storm-cloud",
+  "motif": "grey cloud with rain drops and a lightning bolt",
+  "subjects": [
+   "nature/weather",
+   "nature/rainforest",
+   "nature/sky"
+  ]
+ },
+ {
+  "id": "bird-nest",
+  "motif": "twig nest holding three speckled eggs",
+  "subjects": [
+   "nature/birds",
+   "nature/trees",
+   "nature/seasons"
+  ]
+ },
+ {
+  "id": "construction-crane",
+  "motif": "tower crane lifting a girder",
+  "subjects": [
+   "places/skyscrapers",
+   "places/harbors",
+   "vehicles/cranes"
+  ]
+ },
+ {
+  "id": "crayons",
+  "motif": "box of crayons",
+  "subjects": [
+   "school/art-class",
+   "school/stationery",
+   "school/classrooms"
+  ]
+ },
+ {
+  "id": "calendar",
+  "motif": "wall calendar with a ringed day",
+  "subjects": [
+   "school/timetables",
+   "school/homework",
+   "school/exams"
+  ]
+ },
+ {
+  "id": "graded-paper",
+  "motif": "test paper marked A+ with a gold star",
+  "subjects": [
+   "school/report-cards",
+   "school/exams",
+   "school/homework"
+  ]
+ },
+ {
+  "id": "school-bell",
+  "motif": "ringing brass school bell",
+  "subjects": [
+   "school/timetables",
+   "school/classrooms",
+   "school/assemblies"
+  ]
+ },
+ {
+  "id": "lectern",
+  "motif": "wooden lectern with a microphone",
+  "subjects": [
+   "school/assemblies",
+   "school/graduation",
+   "school/teachers"
+  ]
+ },
+ {
+  "id": "desktop-computer",
+  "motif": "desktop monitor with keyboard and mouse",
+  "subjects": [
+   "school/computer-lab",
+   "tech/computers",
+   "tech/screens"
+  ]
+ },
+ {
+  "id": "germ",
+  "motif": "friendly round bacterium / virus blob with little flagella",
+  "subjects": [
+   "science/microbes",
+   "science/biology",
+   "science/microscopes"
+  ]
+ },
+ {
+  "id": "petri-dish",
+  "motif": "petri dish with spotted colonies",
+  "subjects": [
+   "science/microbes",
+   "science/microscopes",
+   "science/the-lab"
+  ]
+ },
+ {
+  "id": "balance-scale",
+  "motif": "two-pan balance scale with weights",
+  "subjects": [
+   "science/measurement",
+   "science/the-lab",
+   "science/gravity"
+  ]
+ },
+ {
+  "id": "pendulum",
+  "motif": "Newton's cradle / swinging pendulum",
+  "subjects": [
+   "science/motion",
+   "science/physics",
+   "science/gravity"
+  ]
+ },
+ {
+  "id": "rocky-planet",
+  "motif": "small cratered rocky planet (no rings), tintable grey / yellow / red",
+  "subjects": [
+   "space/mercury",
+   "space/venus",
+   "space/mars"
+  ]
+ },
+ {
+  "id": "earth-globe",
+  "motif": "blue-green Earth with continents and clouds",
+  "subjects": [
+   "space/earth",
+   "space/solar-system",
+   "space/orbits"
+  ]
+ },
+ {
+  "id": "spiral-galaxy",
+  "motif": "swirling spiral galaxy with a bright core",
+  "subjects": [
+   "space/galaxies",
+   "space/stars",
+   "space/black-holes"
+  ]
+ },
+ {
+  "id": "space-station",
+  "motif": "modular space station with solar-panel wings",
+  "subjects": [
+   "space/space-stations",
+   "space/astronauts",
+   "space/orbits"
+  ]
+ },
+ {
+  "id": "eclipse",
+  "motif": "moon covering the sun with a corona ring",
+  "subjects": [
+   "space/eclipses",
+   "space/sun",
+   "space/moon"
+  ]
+ },
+ {
+  "id": "helmet",
+  "motif": "sports helmet with vents",
+  "subjects": [
+   "sports/cycling",
+   "sports/skating",
+   "sports/hockey"
+  ]
+ },
+ {
+  "id": "code-window",
+  "motif": "window with angle brackets and lines of code",
+  "subjects": [
+   "tech/coding",
+   "tech/software",
+   "tech/computers"
+  ]
+ },
+ {
+  "id": "bug",
+  "motif": "cartoon beetle with antennae",
+  "subjects": [
+   "tech/coding",
+   "tech/software",
+   "tech/cybersecurity"
+  ]
+ },
+ {
+  "id": "electric-plug",
+  "motif": "plug with cord and a spark",
+  "subjects": [
+   "tech/batteries",
+   "tech/hardware",
+   "tech/smart-home"
+  ]
+ },
+ {
+  "id": "passport",
+  "motif": "passport booklet with a crest and an entry stamp",
+  "subjects": [
+   "travel/passports",
+   "travel/airports",
+   "travel/backpacking"
+  ]
+ },
+ {
+  "id": "monument",
+  "motif": "columned classical monument / triumphal arch",
+  "subjects": [
+   "travel/landmarks",
+   "travel/sightseeing",
+   "travel/museums"
+  ]
+ },
+ {
+  "id": "fuel-pump",
+  "motif": "petrol pump with a hose",
+  "subjects": [
+   "vehicles/cars",
+   "vehicles/engines",
+   "vehicles/trucks"
+  ]
+ },
+ {
+  "id": "banana",
+  "motif": "bunch of bananas",
+  "subjects": [
+   "animals/primates",
+   "food/fruit"
+  ]
+ },
+ {
+  "id": "elephant",
+  "motif": "elephant with a raised trunk",
+  "subjects": [
+   "animals/elephants",
+   "nature/mammals"
+  ]
+ },
+ {
+  "id": "snake",
+  "motif": "coiled snake with a forked tongue",
+  "subjects": [
+   "animals/snakes",
+   "nature/reptiles"
+  ]
+ },
+ {
+  "id": "statue-bust",
+  "motif": "marble bust on a plinth",
+  "subjects": [
+   "art/sculpture",
+   "art/galleries"
+  ]
+ },
+ {
+  "id": "chisel-mallet",
+  "motif": "chisel and wooden mallet with wood / stone chips",
+  "subjects": [
+   "art/sculpture",
+   "art/woodworking"
+  ]
+ },
+ {
+  "id": "potters-wheel",
+  "motif": "clay pot spinning on a potter's wheel",
+  "subjects": [
+   "art/pottery",
+   "art/ceramics"
+  ]
+ },
+ {
+  "id": "stained-glass-window",
+  "motif": "arched window of coloured leaded glass",
+  "subjects": [
+   "art/stained-glass",
+   "art/architecture"
+  ]
+ },
+ {
+  "id": "mosaic-tiles",
+  "motif": "square of multicoloured tesserae in a pattern",
+  "subjects": [
+   "art/mosaic",
+   "art/stained-glass"
+  ]
+ },
+ {
+  "id": "classical-building",
+  "motif": "columned facade with a pediment and dome",
+  "subjects": [
+   "art/architecture",
+   "art/galleries"
+  ]
+ },
+ {
+  "id": "ear",
+  "motif": "cartoon ear with sound waves",
+  "subjects": [
+   "body/ears",
+   "body/the-five-senses"
+  ]
+ },
+ {
+  "id": "nose",
+  "motif": "cartoon nose sniffing a scent trail",
+  "subjects": [
+   "body/the-nose",
+   "body/the-five-senses"
+  ]
+ },
+ {
+  "id": "hand",
+  "motif": "open waving hand",
+  "subjects": [
+   "body/hands",
+   "body/the-five-senses"
+  ]
+ },
+ {
+  "id": "blood-drop",
+  "motif": "red blood drop",
+  "subjects": [
+   "body/blood",
+   "body/the-heart"
+  ]
+ },
+ {
+  "id": "heartbeat-line",
+  "motif": "ECG heartbeat trace",
+  "subjects": [
+   "body/the-heart",
+   "body/blood"
+  ]
+ },
+ {
+  "id": "wind-swirl",
+  "motif": "curling gusts of breath or wind",
+  "subjects": [
+   "body/breathing",
+   "body/the-lungs"
+  ]
+ },
+ {
+  "id": "comb",
+  "motif": "comb and hairbrush",
+  "subjects": [
+   "body/hair",
+   "jobs/hairdressers"
+  ]
+ },
+ {
+  "id": "megaphone",
+  "motif": "megaphone with sound lines",
+  "subjects": [
+   "body/the-voice",
+   "movies/film-sets"
+  ]
+ },
+ {
+  "id": "newspaper",
+  "motif": "folded newspaper with a headline",
+  "subjects": [
+   "books/newspapers",
+   "books/libraries"
+  ]
+ },
+ {
+  "id": "glossy-magazine",
+  "motif": "glossy magazine with a cover model and cover lines",
+  "subjects": [
+   "books/magazines",
+   "books/libraries"
+  ]
+ },
+ {
+  "id": "lyre",
+  "motif": "classical lyre with strings",
+  "subjects": [
+   "books/poetry",
+   "books/storytelling"
+  ]
+ },
+ {
+  "id": "wedding-rings",
+  "motif": "two interlocked gold rings",
+  "subjects": [
+   "celebrations/weddings",
+   "celebrations/anniversaries"
+  ]
+ },
+ {
+  "id": "party-hat",
+  "motif": "cone party hat with a pompom",
+  "subjects": [
+   "celebrations/birthdays",
+   "celebrations/new-year"
+  ]
+ },
+ {
+  "id": "wine-glass",
+  "motif": "raised wine glass",
+  "subjects": [
+   "celebrations/toasting",
+   "celebrations/banquets"
+  ]
+ },
+ {
+  "id": "superhero-cape",
+  "motif": "flowing cape with an eye mask",
+  "subjects": [
+   "celebrations/costumes",
+   "myth/superheroes"
+  ]
+ },
+ {
+  "id": "lantern",
+  "motif": "glowing lantern",
+  "subjects": [
+   "celebrations/candles",
+   "sports/camping"
+  ]
+ },
+ {
+  "id": "iron",
+  "motif": "steam iron",
+  "subjects": [
+   "clothing/laundry",
+   "clothing/uniforms"
+  ]
+ },
+ {
+  "id": "high-heel",
+  "motif": "stiletto shoe",
+  "subjects": [
+   "clothing/shoes",
+   "clothing/shoemaking"
+  ]
+ },
+ {
+  "id": "jeans",
+  "motif": "pair of denim jeans with rivets",
+  "subjects": [
+   "clothing/jeans",
+   "clothing/pockets"
+  ]
+ },
+ {
+  "id": "fabric-bolt",
+  "motif": "rolled bolts of patterned fabric",
+  "subjects": [
+   "clothing/fabrics",
+   "clothing/sewing"
+  ]
+ },
+ {
+  "id": "wallet",
+  "motif": "leather wallet with coins and keys",
+  "subjects": [
+   "clothing/pockets",
+   "clothing/handbags"
+  ]
+ },
+ {
+  "id": "sewing-machine",
+  "motif": "sewing machine",
+  "subjects": [
+   "clothing/sewing",
+   "home/sewing"
+  ]
+ },
+ {
+  "id": "clothesline",
+  "motif": "line of pegged washing",
+  "subjects": [
+   "clothing/laundry",
+   "home/laundry"
+  ]
+ },
+ {
+  "id": "helping-hands",
+  "motif": "one hand reaching down to lift another",
+  "subjects": [
+   "feelings/kindness",
+   "feelings/helping-others"
+  ]
+ },
+ {
+  "id": "pinky-promise",
+  "motif": "two little fingers hooked in a promise",
+  "subjects": [
+   "feelings/trust",
+   "feelings/friendship"
+  ]
+ },
+ {
+  "id": "cradle",
+  "motif": "baby cradle with a mobile",
+  "subjects": [
+   "feelings/family",
+   "feelings/comforting"
+  ]
+ },
+ {
+  "id": "ice-cream-cone",
+  "motif": "ice cream cone with two scoops",
+  "subjects": [
+   "food/desserts",
+   "food/picnics"
+  ]
+ },
+ {
+  "id": "wrapped-candy",
+  "motif": "sweet in a twisted wrapper",
+  "subjects": [
+   "food/candy",
+   "food/chocolate"
+  ]
+ },
+ {
+  "id": "refrigerator",
+  "motif": "retro fridge",
+  "subjects": [
+   "food/kitchen",
+   "food/cooking"
+  ]
+ },
+ {
+  "id": "rolling-pin",
+  "motif": "rolling pin on floured dough",
+  "subjects": [
+   "food/baking",
+   "food/pizza"
+  ]
+ },
+ {
+  "id": "grapes",
+  "motif": "bunch of grapes",
+  "subjects": [
+   "food/fruit",
+   "food/drinks"
+  ]
+ },
+ {
+  "id": "cherries",
+  "motif": "pair of cherries on a stem",
+  "subjects": [
+   "food/fruit",
+   "food/desserts"
+  ]
+ },
+ {
+  "id": "watermelon-slice",
+  "motif": "watermelon wedge with seeds",
+  "subjects": [
+   "food/fruit",
+   "food/picnics"
+  ]
+ },
+ {
+  "id": "corn-cob",
+  "motif": "corn on the cob with husk",
+  "subjects": [
+   "food/vegetables",
+   "food/salad"
+  ]
+ },
+ {
+  "id": "mortar-pestle",
+  "motif": "mortar and pestle with ground spice",
+  "subjects": [
+   "food/spices",
+   "food/herbs"
+  ]
+ },
+ {
+  "id": "shopping-cart",
+  "motif": "shopping trolley full of groceries",
+  "subjects": [
+   "food/markets",
+   "health/grocery-shopping"
+  ]
+ },
+ {
+  "id": "greenhouse",
+  "motif": "small glass greenhouse with a pitched roof",
+  "subjects": [
+   "garden/greenhouse",
+   "garden/cold-frames"
+  ]
+ },
+ {
+  "id": "rake",
+  "motif": "garden rake",
+  "subjects": [
+   "garden/garden-tools",
+   "garden/lawn-care"
+  ]
+ },
+ {
+  "id": "compost-bin",
+  "motif": "slatted compost bin with a worm peeking out",
+  "subjects": [
+   "garden/composting",
+   "garden/mulching"
+  ]
+ },
+ {
+  "id": "seed-tray",
+  "motif": "seed tray of tiny seedlings",
+  "subjects": [
+   "garden/seed-starting",
+   "garden/cold-frames"
+  ]
+ },
+ {
+  "id": "raised-bed",
+  "motif": "wooden raised planter box",
+  "subjects": [
+   "garden/raised-beds",
+   "garden/vegetable-patch"
+  ]
+ },
+ {
+  "id": "hammock",
+  "motif": "hammock strung between two posts",
+  "subjects": [
+   "health/rest-days",
+   "health/napping"
+  ]
+ },
+ {
+  "id": "soap-bubbles",
+  "motif": "bar of soap with foam and floating bubbles",
+  "subjects": [
+   "health/hand-washing",
+   "health/self-care"
+  ]
+ },
+ {
+  "id": "spine",
+  "motif": "upright spine column",
+  "subjects": [
+   "health/posture",
+   "health/yoga"
+  ]
+ },
+ {
+  "id": "hiking-backpack",
+  "motif": "rucksack with a rolled mat and bottle pocket",
+  "subjects": [
+   "health/hiking",
+   "health/walking"
+  ]
+ },
+ {
+  "id": "bathtub",
+  "motif": "clawfoot bathtub with bubbles",
+  "subjects": [
+   "health/self-care",
+   "home/bathroom"
+  ]
+ },
+ {
+  "id": "sphinx",
+  "motif": "Egyptian sphinx lying in the sand",
+  "subjects": [
+   "history/ancient-egypt",
+   "history/pyramids"
+  ]
+ },
+ {
+  "id": "fossil",
+  "motif": "ammonite fossil in rock",
+  "subjects": [
+   "history/archaeology",
+   "history/museums"
+  ]
+ },
+ {
+  "id": "factory",
+  "motif": "brick factory with smoking chimneys",
+  "subjects": [
+   "history/industrial-revolution",
+   "history/inventions"
+  ]
+ },
+ {
+  "id": "covered-wagon",
+  "motif": "canvas-topped pioneer wagon",
+  "subjects": [
+   "history/covered-wagons",
+   "history/gold-rush"
+  ]
+ },
+ {
+  "id": "window",
+  "motif": "window with open curtains",
+  "subjects": [
+   "home/windows",
+   "home/curtains"
+  ]
+ },
+ {
+  "id": "curtains",
+  "motif": "drapes with tiebacks and a tasselled valance",
+  "subjects": [
+   "home/curtains",
+   "home/windows"
+  ]
+ },
+ {
+  "id": "rug",
+  "motif": "fringed patterned rug",
+  "subjects": [
+   "home/flooring",
+   "home/living-room"
+  ]
+ },
+ {
+  "id": "paint-roller",
+  "motif": "paint roller with a tray",
+  "subjects": [
+   "home/painting",
+   "home/decorating"
+  ]
+ },
+ {
+  "id": "plug",
+  "motif": "plug and wall socket",
+  "subjects": [
+   "home/electrical",
+   "home/home-office"
+  ]
+ },
+ {
+  "id": "parcel",
+  "motif": "brown cardboard parcel tied with string",
+  "subjects": [
+   "jobs/postal-workers",
+   "jobs/shopkeepers"
+  ]
+ },
+ {
+  "id": "barn",
+  "motif": "red barn with a hayloft",
+  "subjects": [
+   "jobs/farmers",
+   "nature/farms"
+  ]
+ },
+ {
+  "id": "mailbox",
+  "motif": "post box with a letter slot",
+  "subjects": [
+   "jobs/postal-workers",
+   "places/neighborhoods"
+  ]
+ },
+ {
+  "id": "explosion",
+  "motif": "fiery explosion cloud with flying debris",
+  "subjects": [
+   "movies/special-effects",
+   "movies/stunts"
+  ]
+ },
+ {
+  "id": "sofa",
+  "motif": "comfy three-seat living-room sofa",
+  "subjects": [
+   "movies/sitcoms",
+   "movies/talk-shows"
+  ]
+ },
+ {
+  "id": "ghost",
+  "motif": "floating sheet ghost",
+  "subjects": [
+   "movies/horror-movies",
+   "myth/ghosts"
+  ]
+ },
+ {
+  "id": "cowboy-hat",
+  "motif": "wide-brimmed cowboy hat",
+  "subjects": [
+   "movies/westerns",
+   "music/country-music"
+  ]
+ },
+ {
+  "id": "cactus",
+  "motif": "saguaro cactus in the desert",
+  "subjects": [
+   "movies/westerns",
+   "nature/desert"
+  ]
+ },
+ {
+  "id": "saxophone",
+  "motif": "curved brass saxophone",
+  "subjects": [
+   "music/woodwind-instruments",
+   "music/jazz"
+  ]
+ },
+ {
+  "id": "turntable",
+  "motif": "record deck spinning a vinyl record",
+  "subjects": [
+   "music/hip-hop",
+   "music/electronic-music"
+  ]
+ },
+ {
+  "id": "metronome",
+  "motif": "wooden pyramid metronome with a swinging arm",
+  "subjects": [
+   "music/drums",
+   "music/music-theory"
+  ]
+ },
+ {
+  "id": "crystal-ball",
+  "motif": "glowing crystal orb on a claw stand",
+  "subjects": [
+   "myth/wizards",
+   "myth/genies"
+  ]
+ },
+ {
+  "id": "club",
+  "motif": "knobbly wooden club",
+  "subjects": [
+   "myth/giants",
+   "myth/trolls"
+  ]
+ },
+ {
+  "id": "footprint",
+  "motif": "giant bare footprint",
+  "subjects": [
+   "myth/giants",
+   "myth/trolls"
+  ]
+ },
+ {
+  "id": "ladybug",
+  "motif": "spotted ladybird",
+  "subjects": [
+   "nature/insects",
+   "nature/gardens"
+  ]
+ },
+ {
+  "id": "dragonfly",
+  "motif": "dragonfly with four veined wings",
+  "subjects": [
+   "nature/insects",
+   "nature/rivers"
+  ]
+ },
+ {
+  "id": "caterpillar",
+  "motif": "green caterpillar on a leaf, chrysalis hanging nearby",
+  "subjects": [
+   "nature/insects",
+   "nature/butterflies"
+  ]
+ },
+ {
+  "id": "tulip",
+  "motif": "tulip bouquet tied with a ribbon",
+  "subjects": [
+   "nature/flowers",
+   "nature/gardens"
+  ]
+ },
+ {
+  "id": "tree-stump",
+  "motif": "cut stump with growth rings and an axe",
+  "subjects": [
+   "nature/trees",
+   "nature/forests"
+  ]
+ },
+ {
+  "id": "waterfall",
+  "motif": "waterfall pouring over rocks into a pool",
+  "subjects": [
+   "nature/rivers",
+   "nature/mountains"
+  ]
+ },
+ {
+  "id": "gemstone",
+  "motif": "faceted crystal gem cluster",
+  "subjects": [
+   "nature/rocks",
+   "nature/caves"
+  ]
+ },
+ {
+  "id": "lizard",
+  "motif": "gecko or lizard on a rock",
+  "subjects": [
+   "nature/reptiles",
+   "nature/desert"
+  ]
+ },
+ {
+  "id": "shark",
+  "motif": "shark fin cutting through water",
+  "subjects": [
+   "nature/sharks",
+   "nature/ocean"
+  ]
+ },
+ {
+  "id": "fire-hydrant",
+  "motif": "red fire hydrant",
+  "subjects": [
+   "places/streets",
+   "vehicles/fire-engines"
+  ]
+ },
+ {
+  "id": "trash-can",
+  "motif": "lidded metal trash can",
+  "subjects": [
+   "places/alleys",
+   "places/streets"
+  ]
+ },
+ {
+  "id": "shopping-basket",
+  "motif": "shopping basket with produce",
+  "subjects": [
+   "places/markets",
+   "places/malls"
+  ]
+ },
+ {
+  "id": "clock-tower",
+  "motif": "clock tower with a bell",
+  "subjects": [
+   "places/town-squares",
+   "places/villages"
+  ]
+ },
+ {
+  "id": "seagull",
+  "motif": "seagull in flight",
+  "subjects": [
+   "places/piers",
+   "places/waterfronts"
+  ]
+ },
+ {
+  "id": "swing-set",
+  "motif": "swing set with a slide",
+  "subjects": [
+   "places/playgrounds",
+   "school/playgrounds"
+  ]
+ },
+ {
+  "id": "school-bus",
+  "motif": "yellow school bus with a stop arm",
+  "subjects": [
+   "school/school-buses",
+   "school/school-trips"
+  ]
+ },
+ {
+  "id": "calculator",
+  "motif": "pocket calculator",
+  "subjects": [
+   "school/maths",
+   "school/exams"
+  ]
+ },
+ {
+  "id": "ammonite",
+  "motif": "spiral ammonite fossil in a stone",
+  "subjects": [
+   "science/fossils",
+   "science/dinosaurs"
+  ]
+ },
+ {
+  "id": "prism",
+  "motif": "glass prism splitting a beam into a rainbow",
+  "subjects": [
+   "science/light",
+   "science/physics"
+  ]
+ },
+ {
+  "id": "lightning-plug",
+  "motif": "electric plug and socket with a lightning bolt",
+  "subjects": [
+   "science/electricity",
+   "science/energy"
+  ]
+ },
+ {
+  "id": "pulley",
+  "motif": "pulley and lever lifting a weight",
+  "subjects": [
+   "science/simple-machines",
+   "science/physics"
+  ]
+ },
+ {
+  "id": "element-tile",
+  "motif": "periodic-table element tile with symbol and number",
+  "subjects": [
+   "science/the-periodic-table",
+   "science/chemistry"
+  ]
+ },
+ {
+  "id": "ice-giant",
+  "motif": "pale blue ice-giant planet with faint rings",
+  "subjects": [
+   "space/uranus",
+   "space/neptune"
+  ]
+ },
+ {
+  "id": "asteroid",
+  "motif": "pitted tumbling asteroid / meteorite rock",
+  "subjects": [
+   "space/asteroids",
+   "space/meteors"
+  ]
+ },
+ {
+  "id": "constellation",
+  "motif": "connected-dot star pattern like the Big Dipper",
+  "subjects": [
+   "space/constellations",
+   "space/stars"
+  ]
+ },
+ {
+  "id": "nebula",
+  "motif": "colourful gas cloud with newborn stars",
+  "subjects": [
+   "space/stars",
+   "space/galaxies"
+  ]
+ },
+ {
+  "id": "ice-skate",
+  "motif": "figure skate with a blade",
+  "subjects": [
+   "sports/skating",
+   "sports/hockey"
+  ]
+ },
+ {
+  "id": "climbing-rope",
+  "motif": "coiled rope with a carabiner",
+  "subjects": [
+   "sports/climbing",
+   "sports/camping"
+  ]
+ },
+ {
+  "id": "golf-flag",
+  "motif": "flag on a putting green with a ball by the hole",
+  "subjects": [
+   "sports/golf",
+   "vehicles/golf-carts"
+  ]
+ },
+ {
+  "id": "jigsaw-piece",
+  "motif": "interlocking jigsaw pieces",
+  "subjects": [
+   "sports/puzzles",
+   "sports/board-games"
+  ]
+ },
+ {
+  "id": "passenger-ship",
+  "motif": "white cruise liner / ferry with funnels and portholes on waves",
+  "subjects": [
+   "travel/cruises",
+   "travel/ferries"
+  ]
+ },
+ {
+  "id": "beach-umbrella",
+  "motif": "striped beach umbrella over a deckchair",
+  "subjects": [
+   "travel/beaches",
+   "travel/resorts"
+  ]
+ },
+ {
+  "id": "postcard",
+  "motif": "postcard with a stamp and a scenic picture",
+  "subjects": [
+   "travel/souvenirs",
+   "travel/sightseeing"
+  ]
+ },
+ {
+  "id": "service-bell",
+  "motif": "hotel reception bell with a room key",
+  "subjects": [
+   "travel/hotels",
+   "travel/resorts"
+  ]
+ },
+ {
+  "id": "control-tower",
+  "motif": "airport control tower beside a runway",
+  "subjects": [
+   "travel/airports",
+   "travel/airplanes"
+  ]
+ },
+ {
+  "id": "checkered-flag",
+  "motif": "waving chequered racing flag",
+  "subjects": [
+   "vehicles/racing",
+   "vehicles/motorbikes"
+  ]
+ },
+ {
+  "id": "delivery-truck",
+  "motif": "box lorry with a cab",
+  "subjects": [
+   "vehicles/trucks",
+   "vehicles/vans"
+  ]
+ },
+ {
+  "id": "dog",
+  "motif": "floppy-eared puppy with a collar",
+  "subjects": [
+   "animals/dogs"
+  ]
+ },
+ {
+  "id": "horseshoe",
+  "motif": "horseshoe with nail holes",
+  "subjects": [
+   "animals/horses"
+  ]
+ },
+ {
+  "id": "bear",
+  "motif": "brown bear standing on its hind legs",
+  "subjects": [
+   "animals/bears"
+  ]
+ },
+ {
+  "id": "squirrel",
+  "motif": "squirrel holding an acorn",
+  "subjects": [
+   "animals/rodents"
+  ]
+ },
+ {
+  "id": "wolf",
+  "motif": "wolf howling with its head raised",
+  "subjects": [
+   "animals/wolves"
+  ]
+ },
+ {
+  "id": "panda",
+  "motif": "panda sitting and chewing bamboo",
+  "subjects": [
+   "animals/pandas"
+  ]
+ },
+ {
+  "id": "bamboo",
+  "motif": "bamboo stalks with leaves",
+  "subjects": [
+   "animals/pandas"
+  ]
+ },
+ {
+  "id": "kangaroo",
+  "motif": "kangaroo with a joey in its pouch",
+  "subjects": [
+   "animals/kangaroos"
+  ]
+ },
+ {
+  "id": "penguin",
+  "motif": "waddling penguin",
+  "subjects": [
+   "animals/penguins"
+  ]
+ },
+ {
+  "id": "iceberg",
+  "motif": "iceberg floating in the sea",
+  "subjects": [
+   "animals/penguins"
+  ]
+ },
+ {
+  "id": "spider-web",
+  "motif": "spider hanging from a dewy web",
+  "subjects": [
+   "animals/spiders"
+  ]
+ },
+ {
+  "id": "jellyfish",
+  "motif": "glowing jellyfish with trailing tentacles",
+  "subjects": [
+   "animals/jellyfish"
+  ]
+ },
+ {
+  "id": "octopus",
+  "motif": "octopus with curling tentacles",
+  "subjects": [
+   "animals/octopus"
+  ]
+ },
+ {
+  "id": "color-wheel",
+  "motif": "segmented colour wheel",
+  "subjects": [
+   "art/color-theory"
+  ]
+ },
+ {
+  "id": "spray-can",
+  "motif": "aerosol spray-paint can with a drip",
+  "subjects": [
+   "art/street-art"
+  ]
+ },
+ {
+  "id": "paper-crane",
+  "motif": "folded origami paper crane",
+  "subjects": [
+   "art/origami"
+  ]
+ },
+ {
+  "id": "loom",
+  "motif": "hand loom weaving striped cloth",
+  "subjects": [
+   "art/textiles"
+  ]
+ },
+ {
+  "id": "ink-roller",
+  "motif": "brayer ink roller over a carved print block",
+  "subjects": [
+   "art/printmaking"
+  ]
+ },
+ {
+  "id": "stomach",
+  "motif": "cartoon stomach",
+  "subjects": [
+   "body/digestion"
+  ]
+ },
+ {
+  "id": "glasses",
+  "motif": "pair of spectacles",
+  "subjects": [
+   "body/eyes"
+  ]
+ },
+ {
+  "id": "tissue-box",
+  "motif": "tissue box with a tissue popping out",
+  "subjects": [
+   "body/the-nose"
+  ]
+ },
+ {
+  "id": "photo-album",
+  "motif": "open photo album with snapshots",
+  "subjects": [
+   "books/memoirs"
+  ]
+ },
+ {
+  "id": "fingerprint",
+  "motif": "fingerprint whorl",
+  "subjects": [
+   "books/mystery-novels"
+  ]
+ },
+ {
+  "id": "disco-ball",
+  "motif": "mirror ball throwing light spots",
+  "subjects": [
+   "celebrations/dancing"
+  ]
+ },
+ {
+  "id": "ballet-shoes",
+  "motif": "pair of ballet pointe shoes with ribbons",
+  "subjects": [
+   "celebrations/dancing"
+  ]
+ },
+ {
+  "id": "carousel",
+  "motif": "merry-go-round with a horse",
+  "subjects": [
+   "celebrations/carnivals"
+  ]
+ },
+ {
+  "id": "baby-rattle",
+  "motif": "baby rattle with a ribbon",
+  "subjects": [
+   "celebrations/baby-showers"
+  ]
+ },
+ {
+  "id": "pram",
+  "motif": "baby pram with a hood",
+  "subjects": [
+   "celebrations/baby-showers"
+  ]
+ },
+ {
+  "id": "family-group",
+  "motif": "family of figures hugging",
+  "subjects": [
+   "celebrations/reunions"
+  ]
+ },
+ {
+  "id": "cloche",
+  "motif": "silver serving dome on a platter",
+  "subjects": [
+   "celebrations/banquets"
+  ]
+ },
+ {
+  "id": "embroidery-hoop",
+  "motif": "wooden hoop with a stitched flower",
+  "subjects": [
+   "clothing/embroidery"
+  ]
+ },
+ {
+  "id": "swimsuit",
+  "motif": "one-piece swimsuit",
+  "subjects": [
+   "clothing/swimwear"
+  ]
+ },
+ {
+  "id": "diamond-ring",
+  "motif": "ring with a sparkling diamond",
+  "subjects": [
+   "clothing/jewellery"
+  ]
+ },
+ {
+  "id": "necklace",
+  "motif": "pendant necklace",
+  "subjects": [
+   "clothing/jewellery"
+  ]
+ },
+ {
+  "id": "handbag",
+  "motif": "structured handbag with a top handle",
+  "subjects": [
+   "clothing/handbags"
+  ]
+ },
+ {
+  "id": "pyjamas",
+  "motif": "folded striped pyjamas with slippers",
+  "subjects": [
+   "clothing/sleepwear"
+  ]
+ },
+ {
+  "id": "military-cap",
+  "motif": "peaked cap with a badge",
+  "subjects": [
+   "clothing/uniforms"
+  ]
+ },
+ {
+  "id": "cobbler-hammer",
+  "motif": "cobbler's hammer and shoe last",
+  "subjects": [
+   "clothing/shoemaking"
+  ]
+ },
+ {
+  "id": "hands-in",
+  "motif": "stacked hands in a team huddle",
+  "subjects": [
+   "feelings/teamwork"
+  ]
+ },
+ {
+  "id": "question-mark",
+  "motif": "big curly question mark",
+  "subjects": [
+   "feelings/curiosity"
+  ]
+ },
+ {
+  "id": "cloud",
+  "motif": "soft drifting cloud",
+  "subjects": [
+   "feelings/calm"
+  ]
+ },
+ {
+  "id": "yoga-pose",
+  "motif": "figure sitting cross-legged in meditation",
+  "subjects": [
+   "feelings/calm"
+  ]
+ },
+ {
+  "id": "hourglass",
+  "motif": "hourglass with trickling sand",
+  "subjects": [
+   "feelings/patience"
+  ]
+ },
+ {
+  "id": "roller-coaster",
+  "motif": "roller coaster loop with a car",
+  "subjects": [
+   "feelings/excitement"
+  ]
+ },
+ {
+  "id": "four-leaf-clover",
+  "motif": "four-leaf clover",
+  "subjects": [
+   "feelings/hope"
+  ]
+ },
+ {
+  "id": "rose",
+  "motif": "single red rose",
+  "subjects": [
+   "feelings/love"
+  ]
+ },
+ {
+  "id": "ring",
+  "motif": "engagement ring with a diamond",
+  "subjects": [
+   "feelings/love"
+  ]
+ },
+ {
+  "id": "worried-face",
+  "motif": "face with a sweat drop and wobbly mouth",
+  "subjects": [
+   "feelings/nervousness"
+  ]
+ },
+ {
+  "id": "relieved-face",
+  "motif": "face with closed eyes breathing out phew",
+  "subjects": [
+   "feelings/relief"
+  ]
+ },
+ {
+  "id": "pizza-slice",
+  "motif": "pizza slice with pepperoni and a cheese pull",
+  "subjects": [
+   "food/pizza"
+  ]
+ },
+ {
+  "id": "fried-egg",
+  "motif": "sunny-side-up fried egg",
+  "subjects": [
+   "food/breakfast"
+  ]
+ },
+ {
+  "id": "pancake-stack",
+  "motif": "stack of pancakes with butter and syrup",
+  "subjects": [
+   "food/breakfast"
+  ]
+ },
+ {
+  "id": "donut",
+  "motif": "frosted donut with sprinkles",
+  "subjects": [
+   "food/desserts"
+  ]
+ },
+ {
+  "id": "lollipop",
+  "motif": "swirled lollipop",
+  "subjects": [
+   "food/candy"
+  ]
+ },
+ {
+  "id": "candy-cane",
+  "motif": "striped peppermint candy cane",
+  "subjects": [
+   "food/candy"
+  ]
+ },
+ {
+  "id": "cocktail-glass",
+  "motif": "cocktail glass with a lime wedge and straw",
+  "subjects": [
+   "food/drinks"
+  ]
+ },
+ {
+  "id": "teapot",
+  "motif": "round teapot with steam",
+  "subjects": [
+   "food/tea"
+  ]
+ },
+ {
+  "id": "broccoli",
+  "motif": "broccoli floret",
+  "subjects": [
+   "food/vegetables"
+  ]
+ },
+ {
+  "id": "spaghetti",
+  "motif": "fork twirling spaghetti over a bowl",
+  "subjects": [
+   "food/pasta"
+  ]
+ },
+ {
+  "id": "salad-bowl",
+  "motif": "bowl of tossed greens and tomatoes",
+  "subjects": [
+   "food/salad"
+  ]
+ },
+ {
+  "id": "lobster",
+  "motif": "red lobster",
+  "subjects": [
+   "food/seafood"
+  ]
+ },
+ {
+  "id": "barbecue-grill",
+  "motif": "kettle grill with smoke and a sausage",
+  "subjects": [
+   "food/grilling"
+  ]
+ },
+ {
+  "id": "burger",
+  "motif": "stacked burger",
+  "subjects": [
+   "food/grilling"
+  ]
+ },
+ {
+  "id": "coffee-beans",
+  "motif": "pile of roasted coffee beans",
+  "subjects": [
+   "food/coffee"
+  ]
+ },
+ {
+  "id": "market-stall",
+  "motif": "awninged stall with crates of produce",
+  "subjects": [
+   "food/markets"
+  ]
+ },
+ {
+  "id": "garden-hose",
+  "motif": "coiled hose with a spray nozzle",
+  "subjects": [
+   "garden/watering"
+  ]
+ },
+ {
+  "id": "beehive",
+  "motif": "skep beehive with honey dripping",
+  "subjects": [
+   "garden/bees"
+  ]
+ },
+ {
+  "id": "honey-jar",
+  "motif": "honey jar with a dipper",
+  "subjects": [
+   "garden/bees"
+  ]
+ },
+ {
+  "id": "bird-feeder",
+  "motif": "hanging bird feeder full of seed",
+  "subjects": [
+   "garden/bird-feeders"
+  ]
+ },
+ {
+  "id": "garden-shed",
+  "motif": "wooden shed with a door and window",
+  "subjects": [
+   "garden/garden-sheds"
+  ]
+ },
+ {
+  "id": "climbing-vine",
+  "motif": "vine climbing a lattice trellis",
+  "subjects": [
+   "garden/trellises"
+  ]
+ },
+ {
+  "id": "stepping-stones",
+  "motif": "stepping-stone path winding through grass",
+  "subjects": [
+   "garden/garden-paths"
+  ]
+ },
+ {
+  "id": "topiary",
+  "motif": "clipped topiary ball and cone",
+  "subjects": [
+   "garden/hedges"
+  ]
+ },
+ {
+  "id": "fertilizer-bag",
+  "motif": "sack of plant feed with pellets",
+  "subjects": [
+   "garden/fertilizing"
+  ]
+ },
+ {
+  "id": "thistle",
+  "motif": "prickly thistle weed with its roots",
+  "subjects": [
+   "garden/weeding"
+  ]
+ },
+ {
+  "id": "window-box",
+  "motif": "window box spilling with flowers",
+  "subjects": [
+   "garden/window-boxes"
+  ]
+ },
+ {
+  "id": "sunscreen-bottle",
+  "motif": "squeeze bottle of sun lotion",
+  "subjects": [
+   "health/sunscreen"
+  ]
+ },
+ {
+  "id": "glass-of-water",
+  "motif": "glass of water with ice",
+  "subjects": [
+   "health/hydration"
+  ]
+ },
+ {
+  "id": "vitamin-bottle",
+  "motif": "pill bottle spilling vitamins and gummies",
+  "subjects": [
+   "health/vitamins"
+  ]
+ },
+ {
+  "id": "office-chair",
+  "motif": "ergonomic desk chair",
+  "subjects": [
+   "health/posture"
+  ]
+ },
+ {
+  "id": "meal-prep-containers",
+  "motif": "stack of lidded food boxes",
+  "subjects": [
+   "health/meal-prep"
+  ]
+ },
+ {
+  "id": "mammoth",
+  "motif": "woolly mammoth with curved tusks",
+  "subjects": [
+   "history/stone-age"
+  ]
+ },
+ {
+  "id": "spear",
+  "motif": "flint-tipped spear and stone axe",
+  "subjects": [
+   "history/stone-age"
+  ]
+ },
+ {
+  "id": "longship",
+  "motif": "Viking longship with a dragon prow and shields",
+  "subjects": [
+   "history/vikings"
+  ]
+ },
+ {
+  "id": "viking-helmet",
+  "motif": "Norse helmet with a nose guard",
+  "subjects": [
+   "history/vikings"
+  ]
+ },
+ {
+  "id": "stone-blocks",
+  "motif": "stacked cut stone blocks on a ramp",
+  "subjects": [
+   "history/pyramids"
+  ]
+ },
+ {
+  "id": "gold-pan",
+  "motif": "prospector's pan with nuggets",
+  "subjects": [
+   "history/gold-rush"
+  ]
+ },
+ {
+  "id": "windmill",
+  "motif": "four-sailed windmill",
+  "subjects": [
+   "history/windmills"
+  ]
+ },
+ {
+  "id": "wheat",
+  "motif": "sheaf of wheat",
+  "subjects": [
+   "history/windmills"
+  ]
+ },
+ {
+  "id": "pocket-watch",
+  "motif": "open pocket watch showing its gears",
+  "subjects": [
+   "history/clockmakers"
+  ]
+ },
+ {
+  "id": "broom",
+  "motif": "broom and dustpan",
+  "subjects": [
+   "home/cleaning"
+  ]
+ },
+ {
+  "id": "mop-bucket",
+  "motif": "mop in a sudsy bucket",
+  "subjects": [
+   "home/cleaning"
+  ]
+ },
+ {
+  "id": "spray-bottle",
+  "motif": "cleaning spray bottle with sparkles",
+  "subjects": [
+   "home/cleaning"
+  ]
+ },
+ {
+  "id": "clothes-iron",
+  "motif": "steam iron",
+  "subjects": [
+   "home/laundry"
+  ]
+ },
+ {
+  "id": "key",
+  "motif": "old-fashioned door key",
+  "subjects": [
+   "home/doors"
+  ]
+ },
+ {
+  "id": "door",
+  "motif": "front door with a knocker and doormat",
+  "subjects": [
+   "home/doors"
+  ]
+ },
+ {
+  "id": "floorboards",
+  "motif": "herringbone floorboards",
+  "subjects": [
+   "home/flooring"
+  ]
+ },
+ {
+  "id": "briefcase",
+  "motif": "leather briefcase with a handle",
+  "subjects": [
+   "jobs/office-workers"
+  ]
+ },
+ {
+  "id": "fire-truck",
+  "motif": "red fire engine with a ladder",
+  "subjects": [
+   "jobs/firefighters"
+  ]
+ },
+ {
+  "id": "fire-helmet",
+  "motif": "firefighter's helmet with a front badge",
+  "subjects": [
+   "jobs/firefighters"
+  ]
+ },
+ {
+  "id": "police-badge",
+  "motif": "shield-shaped police badge",
+  "subjects": [
+   "jobs/police-officers"
+  ]
+ },
+ {
+  "id": "pilot-wings",
+  "motif": "pilot's winged badge and cap",
+  "subjects": [
+   "jobs/pilots"
+  ]
+ },
+ {
+  "id": "puppy",
+  "motif": "floppy-eared puppy",
+  "subjects": [
+   "jobs/veterinarians"
+  ]
+ },
+ {
+  "id": "hair-dryer",
+  "motif": "blow dryer with a warm breeze",
+  "subjects": [
+   "jobs/hairdressers"
+  ]
+ },
+ {
+  "id": "cash-register",
+  "motif": "shop till with an open drawer",
+  "subjects": [
+   "jobs/shopkeepers"
+  ]
+ },
+ {
+  "id": "plug-socket",
+  "motif": "plug with cord going into a wall socket",
+  "subjects": [
+   "jobs/electricians"
+  ]
+ },
+ {
+  "id": "tombstone",
+  "motif": "cracked graveyard tombstone",
+  "subjects": [
+   "movies/horror-movies"
+  ]
+ },
+ {
+  "id": "sheriff-star",
+  "motif": "five-pointed sheriff's badge",
+  "subjects": [
+   "movies/westerns"
+  ]
+ },
+ {
+  "id": "prize-wheel",
+  "motif": "spinning prize wheel with a pointer",
+  "subjects": [
+   "movies/game-shows"
+  ]
+ },
+ {
+  "id": "typewriter",
+  "motif": "manual typewriter with a sheet of paper",
+  "subjects": [
+   "movies/screenplays"
+  ]
+ },
+ {
+  "id": "director-chair",
+  "motif": "folding director's chair",
+  "subjects": [
+   "movies/film-sets"
+  ]
+ },
+ {
+  "id": "marionette",
+  "motif": "wooden marionette hanging from a control bar",
+  "subjects": [
+   "movies/puppetry"
+  ]
+ },
+ {
+  "id": "caption-screen",
+  "motif": "screen with a subtitle bar and CC badge",
+  "subjects": [
+   "movies/subtitles"
+  ]
+ },
+ {
+  "id": "diamond",
+  "motif": "sparkling cut diamond",
+  "subjects": [
+   "movies/red-carpets"
+  ]
+ },
+ {
+  "id": "flute",
+  "motif": "flute and clarinet crossed",
+  "subjects": [
+   "music/woodwind-instruments"
+  ]
+ },
+ {
+  "id": "tuba",
+  "motif": "tuba / French horn with a flared bell",
+  "subjects": [
+   "music/brass-instruments"
+  ]
+ },
+ {
+  "id": "harp",
+  "motif": "concert harp",
+  "subjects": [
+   "music/string-instruments"
+  ]
+ },
+ {
+  "id": "tambourine",
+  "motif": "tambourine with jingles beside maracas / xylophone",
+  "subjects": [
+   "music/percussion"
+  ]
+ },
+ {
+  "id": "boombox",
+  "motif": "retro boombox with big speakers",
+  "subjects": [
+   "music/hip-hop"
+  ]
+ },
+ {
+  "id": "dragon",
+  "motif": "friendly winged dragon breathing a small puff of fire",
+  "subjects": [
+   "myth/dragons"
+  ]
+ },
+ {
+  "id": "broomstick",
+  "motif": "witch's broomstick with twig bristles",
+  "subjects": [
+   "myth/witches"
+  ]
+ },
+ {
+  "id": "unicorn",
+  "motif": "unicorn head with spiral horn and flowing mane",
+  "subjects": [
+   "myth/unicorns"
+  ]
+ },
+ {
+  "id": "troll",
+  "motif": "shaggy grumpy troll with a big nose",
+  "subjects": [
+   "myth/trolls"
+  ]
+ },
+ {
+  "id": "goblin",
+  "motif": "sly pointy-eared goblin grinning",
+  "subjects": [
+   "myth/goblins"
+  ]
+ },
+ {
+  "id": "fairy",
+  "motif": "tiny fairy with gauzy wings",
+  "subjects": [
+   "myth/fairies"
+  ]
+ },
+ {
+  "id": "magic-lamp",
+  "motif": "brass oil lamp with a wisp of smoke",
+  "subjects": [
+   "myth/genies"
+  ]
+ },
+ {
+  "id": "griffin",
+  "motif": "eagle-headed winged lion",
+  "subjects": [
+   "myth/griffins"
+  ]
+ },
+ {
+  "id": "phoenix",
+  "motif": "firebird rising with flaming wings",
+  "subjects": [
+   "myth/phoenixes"
+  ]
+ },
+ {
+  "id": "mermaid-tail",
+  "motif": "scaled mermaid tail flicking out of the water",
+  "subjects": [
+   "myth/mermaids"
+  ]
+ },
+ {
+  "id": "kraken",
+  "motif": "tentacles curling out of the waves",
+  "subjects": [
+   "myth/sea-monsters"
+  ]
+ },
+ {
+  "id": "umbrella",
+  "motif": "open umbrella with rain drops",
+  "subjects": [
+   "nature/weather"
+  ]
+ },
+ {
+  "id": "ant",
+  "motif": "cartoon ant carrying a crumb",
+  "subjects": [
+   "nature/insects"
+  ]
+ },
+ {
+  "id": "rowboat",
+  "motif": "rowing boat with oars on a river",
+  "subjects": [
+   "nature/rivers"
+  ]
+ },
+ {
+  "id": "turtle",
+  "motif": "turtle with a patterned shell",
+  "subjects": [
+   "nature/reptiles"
+  ]
+ },
+ {
+  "id": "crocodile",
+  "motif": "smiling crocodile in water",
+  "subjects": [
+   "nature/reptiles"
+  ]
+ },
+ {
+  "id": "skyscraper",
+  "motif": "glass tower with a spire",
+  "subjects": [
+   "places/skyscrapers"
+  ]
+ },
+ {
+  "id": "metro-train",
+  "motif": "subway train at a platform",
+  "subjects": [
+   "places/subways"
+  ]
+ },
+ {
+  "id": "stadium",
+  "motif": "oval stadium with floodlights",
+  "subjects": [
+   "places/stadiums"
+  ]
+ },
+ {
+  "id": "giraffe",
+  "motif": "giraffe reaching up",
+  "subjects": [
+   "places/zoos"
+  ]
+ },
+ {
+  "id": "ferris-wheel",
+  "motif": "fairground ferris wheel",
+  "subjects": [
+   "places/piers"
+  ]
+ },
+ {
+  "id": "potted-plant",
+  "motif": "terracotta pot with a leafy plant",
+  "subjects": [
+   "places/courtyards"
+  ]
+ },
+ {
+  "id": "pastry",
+  "motif": "croissant and muffin",
+  "subjects": [
+   "places/cafes"
+  ]
+ },
+ {
+  "id": "shopping-bag",
+  "motif": "shopping bag with handles",
+  "subjects": [
+   "places/malls"
+  ]
+ },
+ {
+  "id": "math-symbols",
+  "motif": "plus, minus, times and divide signs",
+  "subjects": [
+   "school/maths"
+  ]
+ },
+ {
+  "id": "goggles",
+  "motif": "lab safety goggles",
+  "subjects": [
+   "school/chemistry-lab"
+  ]
+ },
+ {
+  "id": "slide",
+  "motif": "playground slide with a ladder",
+  "subjects": [
+   "school/playgrounds"
+  ]
+ },
+ {
+  "id": "lunchbox",
+  "motif": "lunchbox with a sandwich and juice box",
+  "subjects": [
+   "school/lunchtime"
+  ]
+ },
+ {
+  "id": "xylophone",
+  "motif": "rainbow xylophone with mallets",
+  "subjects": [
+   "school/music-class"
+  ]
+ },
+ {
+  "id": "school-blazer",
+  "motif": "blazer with a crest and striped tie",
+  "subjects": [
+   "school/school-uniforms"
+  ]
+ },
+ {
+  "id": "confetti",
+  "motif": "burst of confetti and streamers",
+  "subjects": [
+   "school/graduation"
+  ]
+ },
+ {
+  "id": "basketball",
+  "motif": "basketball and hoop",
+  "subjects": [
+   "school/gym-class"
+  ]
+ },
+ {
+  "id": "ice-cube",
+  "motif": "melting ice cube beside a water droplet",
+  "subjects": [
+   "science/states-of-matter"
+  ]
+ },
+ {
+  "id": "sound-waves",
+  "motif": "loudspeaker emitting curved sound waves",
+  "subjects": [
+   "science/sound"
+  ]
+ },
+ {
+  "id": "wind-turbine",
+  "motif": "wind turbine beside a solar panel",
+  "subjects": [
+   "science/energy"
+  ]
+ },
+ {
+  "id": "family-tree",
+  "motif": "pedigree family tree of linked portraits",
+  "subjects": [
+   "science/genetics"
+  ]
+ },
+ {
+  "id": "safety-goggles",
+  "motif": "lab safety goggles and a lab coat",
+  "subjects": [
+   "science/the-lab"
+  ]
+ },
+ {
+  "id": "gas-giant",
+  "motif": "banded gas giant with a great red spot",
+  "subjects": [
+   "space/jupiter"
+  ]
+ },
+ {
+  "id": "black-hole",
+  "motif": "black hole with a glowing accretion disk",
+  "subjects": [
+   "space/black-holes"
+  ]
+ },
+ {
+  "id": "comet",
+  "motif": "icy comet nucleus with a glowing coma and long tail",
+  "subjects": [
+   "space/comets"
+  ]
+ },
+ {
+  "id": "mars-rover",
+  "motif": "six-wheeled rover on red dunes",
+  "subjects": [
+   "space/mars"
+  ]
+ },
+ {
+  "id": "baseball-bat",
+  "motif": "crossed bat and stitched baseball",
+  "subjects": [
+   "sports/baseball"
+  ]
+ },
+ {
+  "id": "baseball-glove",
+  "motif": "leather mitt holding a ball",
+  "subjects": [
+   "sports/baseball"
+  ]
+ },
+ {
+  "id": "basketball-hoop",
+  "motif": "basketball dropping through a hoop and net",
+  "subjects": [
+   "sports/basketball"
+  ]
+ },
+ {
+  "id": "tennis-racket",
+  "motif": "tennis racket and fuzzy ball",
+  "subjects": [
+   "sports/tennis"
+  ]
+ },
+ {
+  "id": "skis",
+  "motif": "crossed skis and poles in snow",
+  "subjects": [
+   "sports/skiing"
+  ]
+ },
+ {
+  "id": "skateboard",
+  "motif": "skateboard with wheels",
+  "subjects": [
+   "sports/skating"
+  ]
+ },
+ {
+  "id": "surfboard",
+  "motif": "surfboard standing in sand",
+  "subjects": [
+   "sports/surfing"
+  ]
+ },
+ {
+  "id": "hockey-stick",
+  "motif": "hockey stick and puck",
+  "subjects": [
+   "sports/hockey"
+  ]
+ },
+ {
+  "id": "boxing-glove",
+  "motif": "pair of laced boxing gloves",
+  "subjects": [
+   "sports/boxing"
+  ]
+ },
+ {
+  "id": "gymnast",
+  "motif": "gymnast mid-leap with a ribbon",
+  "subjects": [
+   "sports/gymnastics"
+  ]
+ },
+ {
+  "id": "archery-target",
+  "motif": "bullseye target with an arrow",
+  "subjects": [
+   "sports/archery"
+  ]
+ },
+ {
+  "id": "hiking-boot",
+  "motif": "laced hiking boot",
+  "subjects": [
+   "sports/hiking"
+  ]
+ },
+ {
+  "id": "playing-cards",
+  "motif": "fanned hand of playing cards",
+  "subjects": [
+   "sports/card-games"
+  ]
+ },
+ {
+  "id": "board-game",
+  "motif": "game board with pawns and a spinner",
+  "subjects": [
+   "sports/board-games"
+  ]
+ },
+ {
+  "id": "smartwatch",
+  "motif": "smartwatch showing a heartbeat line",
+  "subjects": [
+   "tech/wearables"
+  ]
+ },
+ {
+  "id": "printer",
+  "motif": "printer pushing out a page",
+  "subjects": [
+   "tech/printers"
+  ]
+ },
+ {
+  "id": "drone",
+  "motif": "quadcopter with four rotors and a camera",
+  "subjects": [
+   "tech/drones"
+  ]
+ },
+ {
+  "id": "vr-headset",
+  "motif": "virtual reality headset",
+  "subjects": [
+   "tech/virtual-reality"
+  ]
+ },
+ {
+  "id": "smart-house",
+  "motif": "little house with a wifi signal over the roof",
+  "subjects": [
+   "tech/smart-home"
+  ]
+ },
+ {
+  "id": "thumbs-up",
+  "motif": "like thumbs-up in a bubble",
+  "subjects": [
+   "tech/social-media"
+  ]
+ },
+ {
+  "id": "taxi",
+  "motif": "yellow taxi cab with a roof sign",
+  "subjects": [
+   "travel/taxis"
+  ]
+ },
+ {
+  "id": "bus",
+  "motif": "city bus or double-decker at a stop",
+  "subjects": [
+   "travel/buses"
+  ]
+ },
+ {
+  "id": "motorbike",
+  "motif": "motorcycle side view",
+  "subjects": [
+   "vehicles/motorbikes"
+  ]
+ },
+ {
+  "id": "fire-engine",
+  "motif": "red fire engine with a ladder",
+  "subjects": [
+   "vehicles/fire-engines"
+  ]
+ },
+ {
+  "id": "ambulance",
+  "motif": "ambulance with a cross and lights",
+  "subjects": [
+   "vehicles/ambulances"
+  ]
+ },
+ {
+  "id": "submarine",
+  "motif": "submarine with a periscope and portholes",
+  "subjects": [
+   "vehicles/submarines"
+  ]
+ },
+ {
+  "id": "helicopter",
+  "motif": "helicopter with spinning rotor",
+  "subjects": [
+   "vehicles/helicopters"
+  ]
+ },
+ {
+  "id": "hot-air-balloon",
+  "motif": "striped hot-air balloon with a wicker basket",
+  "subjects": [
+   "vehicles/hot-air-balloons"
+  ]
+ },
+ {
+  "id": "van",
+  "motif": "panel van with a sliding door",
+  "subjects": [
+   "vehicles/vans"
+  ]
+ },
+ {
+  "id": "scooter",
+  "motif": "kick scooter",
+  "subjects": [
+   "vehicles/scooters"
+  ]
+ },
+ {
+  "id": "bulldozer",
+  "motif": "bulldozer with a front blade on tracks",
+  "subjects": [
+   "vehicles/bulldozers"
+  ]
+ },
+ {
+  "id": "forklift",
+  "motif": "forklift carrying a pallet",
+  "subjects": [
+   "vehicles/forklifts"
+  ]
+ },
+ {
+  "id": "caravan",
+  "motif": "camper caravan with an awning",
+  "subjects": [
+   "vehicles/trailers"
+  ]
+ },
+ {
+  "id": "rickshaw",
+  "motif": "cycle rickshaw with a canopy",
+  "subjects": [
+   "vehicles/rickshaws"
+  ]
+ },
+ {
+  "id": "race-car",
+  "motif": "open-wheel race car",
+  "subjects": [
+   "vehicles/racing"
+  ]
+ },
+ {
+  "id": "rowing-boat",
+  "motif": "small rowing boat with oars",
+  "subjects": [
+   "vehicles/boats"
+  ]
+ }
+]

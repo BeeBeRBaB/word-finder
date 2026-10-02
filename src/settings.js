@@ -8,7 +8,7 @@ export const SETTINGS_KEY = 'wordfinder-settings-v1';
 const LEGACY_AUTO_KEY = 'wordfinder-autonext';
 
 /**
- * @typedef {{art:'illustrated'|'pixel'|'none', board:'auto'|'compact'|'full',
+ * @typedef {{art:string, area:'list'|'full', board:'auto'|'compact'|'full',
  *   difficulty:'normal'|'easy'|'hard', letters:'normal'|'large', motion:'system'|'reduce',
  *   sound:boolean, vibrate:boolean, reveal:boolean, autoNext:boolean}} Settings
  * @typedef {Pick<Storage,'getItem'|'setItem'>} SettingsStore
@@ -16,13 +16,16 @@ const LEGACY_AUTO_KEY = 'wordfinder-autonext';
 
 /** @type {Readonly<Settings>} */
 export const DEFAULTS = Object.freeze({
-  art: 'illustrated', board: 'auto', difficulty: 'normal', letters: 'normal', motion: 'system',
+  art: 'illustrated', area: 'list', board: 'auto', difficulty: 'normal', letters: 'normal', motion: 'system',
   sound: true, vibrate: true, reveal: true, autoNext: true,
 });
 
 /** The allowed values of each multiple-choice setting, default first. */
 export const CHOICES = Object.freeze({
-  art: ['illustrated', 'pixel', 'none'], board: ['auto', 'compact', 'full'],
+  // The ids of src/backgrounds.js, written out rather than imported so the shell gains no new
+  // static import before the picker ships; backgrounds.test.js holds the two lists equal.
+  art: ['illustrated', 'pixel', 'starfield', 'skyline', 'aquarium', 'confetti', 'shimmer', 'aurora',
+    'bokeh', 'constellation', 'bubbles', 'none'], area: ['list', 'full'], board: ['auto', 'compact', 'full'],
   difficulty: ['normal', 'easy', 'hard'], letters: ['normal', 'large'], motion: ['system', 'reduce'],
 });
 const FLAGS = ['sound', 'vibrate', 'reveal', 'autoNext'];

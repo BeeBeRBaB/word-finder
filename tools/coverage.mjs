@@ -21,7 +21,9 @@ const LCOV = join(tmpdir(), `wordfinder-cov-${process.pid}.info`);
 
 // src/subjects/* is data, not code: 25 files of string constants with no branches, which
 // would dominate any average and can never regress. tools/ and tests/ are dev-only.
-const EXCLUDE = ['tests/**', 'tools/**', 'src/subjects/**'];
+// src/backgrounds/* are canvas animations: they need a browser, and a unit test that only
+// imports one (to exercise the loader) must not grade it.
+const EXCLUDE = ['tests/**', 'tools/**', 'src/subjects/**', 'src/backgrounds/**'];
 
 const run = spawnSync(process.execPath, [
   '--test',

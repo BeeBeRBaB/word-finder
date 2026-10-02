@@ -1143,3 +1143,63 @@ label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12
 :root[data-motion="reduce"] #gridbox.sweep::after{animation:none}
 :root[data-motion="reduce"] #winbar{display:none}
 :root[data-motion="reduce"] .pill{transition:none}
+/* Level score card */
+/* scorecard.js's end-of-level breakdown, mounted in #wincard. Rows wipe in left to right (the
+   duration matches WIPE_MS); the countdown bar is scaled from JS, so it pauses with the page. */
+/* Leaves a phone's card a margin; the card's own padding is 42px a side. */
+.sc{width:min(340px,100vw - 120px);margin:4px auto 0;text-align:left}
+.sc [hidden]{display:none}
+.sc-list{list-style:none;margin:0;padding:0}
+.sc-row{display:flex;align-items:baseline;justify-content:space-between;gap:14px;padding:9px 2px;
+  border-bottom:1px solid var(--border);visibility:hidden}
+.sc-row.sc-in{visibility:visible;animation:sc-wipe .35s cubic-bezier(.3,.7,.4,1)}
+@keyframes sc-wipe{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+.sc-done .sc-row{animation:none}
+.sc:not(.sc-done) .sc-list,.sc:not(.sc-done) .sc-total{cursor:pointer}
+.sc-desc{min-width:0;font-size:15px;line-height:1.3;color:var(--text)}
+.sc-label{font-weight:700}
+.sc-detail{font-size:12.5px;color:var(--muted)}
+.sc-pts{flex:none;font-family:var(--display);font-weight:700;font-size:16px;font-variant-numeric:tabular-nums;
+  color:var(--text-strong);white-space:nowrap}
+.sc-total{align-items:center;margin-top:-1px;padding-top:12px;border-bottom:none;border-top:3px double var(--text-strong)}
+.sc-total .sc-label{font-family:var(--utility);font-size:12px;font-weight:400;letter-spacing:.16em;text-transform:uppercase;color:var(--label)}
+.sc-total .sc-pts{font-size:28px;letter-spacing:-.01em}
+/* Skip and the countdown share one cell, so the card keeps its height when one replaces the other. */
+.sc-foot{display:grid;margin-top:14px}
+.sc-foot > *{grid-area:1/1}
+.sc-foot > .sc-skip[hidden],.sc-foot > .sc-next[hidden]{display:flex;visibility:hidden}
+.sc-next{display:flex;flex-direction:column;gap:8px}
+.sc-line{display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--utility);font-size:13.5px;color:var(--text)}
+.sc-skip,.sc-stay{min-width:44px;min-height:44px;padding:0 14px;border:none;background:transparent;color:var(--accent-text);
+  font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.sc-stay{margin-right:-14px}
+.sc-skip{justify-self:center;align-self:end}
+.sc-bar{height:6px;border-radius:999px;background:var(--bg);border:1px solid var(--border);overflow:hidden}
+.sc-bar i{display:block;height:100%;background:var(--accent);transform:scaleX(0);transform-origin:left center}
+.sc-neg .sc-bar i{background:var(--pill-miss);transform-origin:right center}
+.sc-go{align-self:center;min-height:44px;margin-top:10px;padding:12px 22px;border:none;border-radius:var(--radius-ctl);
+  background:var(--accent);color:var(--accent-ink);font-family:inherit;font-weight:700;font-size:15px;cursor:pointer}
+.sc-still .sc-bar{display:none}
+/* A landscape phone: wider and tighter, with the countdown, Stay and Next on one row, so the card
+   fits the height. */
+@media (max-height:420px){
+  .sc{width:min(400px,100vw - 120px)}
+  .sc-row{padding:4px 2px}
+  .sc-total{padding-top:6px}
+  .sc-total .sc-pts{font-size:22px}
+  .sc-foot{margin-top:8px}
+  .sc-next,.sc-foot > .sc-next[hidden]{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;column-gap:10px;row-gap:6px}
+  .sc-line{display:contents}
+  .sc-count{grid-area:1/1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:var(--utility);font-size:13.5px;color:var(--text)}
+  .sc-stay{grid-area:1/2;margin-right:0}
+  .sc-go{grid-area:1/3;margin-top:0}
+  .sc-bar{grid-area:2/1/3/4}
+  .sc-line[hidden] ~ .sc-go{grid-column:1/4;justify-self:center}
+}
+@media (prefers-reduced-motion: reduce){
+  .sc-row.sc-in{animation:none}
+  .sc-bar{display:none}
+}
+:root[data-motion="reduce"] .sc-row.sc-in{animation:none}
+:root[data-motion="reduce"] .sc-bar{display:none}
+/* End level score card */

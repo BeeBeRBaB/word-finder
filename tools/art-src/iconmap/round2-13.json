@@ -1,0 +1,159 @@
+[
+ {
+  "id": "anchor",
+  "motif": "ship's anchor with rope",
+  "for": [
+   "feelings/hope",
+   "history/sailing-ships",
+   "myth/pirates",
+   "places/harbors",
+   "places/waterfronts",
+   "sports/sailing"
+  ]
+ },
+ {
+  "id": "padlock",
+  "motif": "closed padlock with a key",
+  "for": [
+   "feelings/trust",
+   "home/doors",
+   "home/storage",
+   "home/garage",
+   "tech/cybersecurity",
+   "tech/smart-home"
+  ]
+ },
+ {
+  "id": "campfire",
+  "motif": "crackling campfire with logs",
+  "for": [
+   "books/storytelling",
+   "history/stone-age",
+   "history/covered-wagons",
+   "music/folk-music",
+   "music/country-music",
+   "sports/camping"
+  ]
+ },
+ {
+  "id": "backpack",
+  "motif": "school backpack with pockets",
+  "for": [
+   "school/classrooms",
+   "school/school-trips",
+   "sports/hiking",
+   "sports/camping",
+   "travel/backpacking",
+   "travel/luggage"
+  ]
+ },
+ {
+  "id": "lightning-bolt",
+  "motif": "zigzag lightning bolt",
+  "for": [
+   "feelings/excitement",
+   "jobs/electricians",
+   "jobs/engineers",
+   "movies/superhero-movies",
+   "myth/superheroes"
+  ]
+ },
+ {
+  "id": "coins",
+  "motif": "stack of gold coins",
+  "for": [
+   "history/trade-routes",
+   "places/fountains",
+   "travel/currency",
+   "travel/souvenirs",
+   "travel/taxis"
+  ]
+ },
+ {
+  "id": "astronaut",
+  "motif": "astronaut in a suit and visored helmet, floating on a tether",
+  "for": [
+   "space/astronauts",
+   "space/moon",
+   "space/space-stations",
+   "space/rockets",
+   "space/mars"
+  ]
+ },
+ {
+  "id": "footprints",
+  "motif": "pair of bare footprints",
+  "for": [
+   "body/feet",
+   "body/legs",
+   "health/walking",
+   "health/running"
+  ]
+ },
+ {
+  "id": "button",
+  "motif": "large four-hole button",
+  "for": [
+   "clothing/buttons",
+   "clothing/sewing",
+   "clothing/coats",
+   "clothing/pockets"
+  ]
+ },
+ {
+  "id": "pickaxe",
+  "motif": "miner's pickaxe",
+  "for": [
+   "history/gold-rush",
+   "myth/dwarves",
+   "nature/rocks",
+   "nature/caves"
+  ]
+ },
+ {
+  "id": "fishing-rod",
+  "motif": "fishing rod with a bobber and a line",
+  "for": [
+   "nature/fish",
+   "nature/rivers",
+   "places/piers",
+   "sports/fishing"
+  ]
+ },
+ {
+  "id": "acacia-tree",
+  "motif": "flat-topped savanna acacia",
+  "for": [
+   "animals/big-cats",
+   "animals/elephants",
+   "animals/kangaroos"
+  ]
+ },
+ {
+  "id": "sketchbook",
+  "motif": "open sketchbook with a doodle and an eraser",
+  "for": [
+   "art/drawing",
+   "art/illustration",
+   "art/animation"
+  ]
+ },
+ {
+  "id": "striped-tent",
+  "motif": "striped fair tent with a pennant",
+  "for": [
+   "celebrations/carnivals",
+   "celebrations/festivals",
+   "celebrations/street-fairs"
+  ]
+ },
+ {
+  "id": "chocolate-bar",
+  "motif": "chocolate bar with a corner snapped off",
+  "for": [
+   "food/chocolate",
+   "food/candy",
+   "food/desserts"
+  ]
+ }
+]

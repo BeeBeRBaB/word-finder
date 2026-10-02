@@ -1,0 +1,160 @@
+[
+ {
+  "id": "sun",
+  "motif": "bright smiling sun",
+  "for": [
+   "body/skin",
+   "celebrations/holidays",
+   "celebrations/picnics",
+   "feelings/hope",
+   "feelings/happiness",
+   "feelings/contentment"
+  ]
+ },
+ {
+  "id": "stopwatch",
+  "motif": "stopwatch with a start button and sweeping hand",
+  "for": [
+   "health/running",
+   "health/exercise",
+   "health/swimming",
+   "school/exams",
+   "school/sports-day",
+   "school/timetables"
+  ]
+ },
+ {
+  "id": "globe",
+  "motif": "desk globe on a stand",
+  "for": [
+   "books/encyclopedias",
+   "history/old-maps",
+   "history/explorers",
+   "school/classrooms",
+   "travel/maps",
+   "travel/backpacking"
+  ]
+ },
+ {
+  "id": "coat-hanger",
+  "motif": "wooden coat hanger with a shirt draped on it",
+  "for": [
+   "clothing/coats",
+   "clothing/dresses",
+   "clothing/jeans",
+   "clothing/laundry",
+   "clothing/uniforms",
+   "clothing/pockets"
+  ]
+ },
+ {
+  "id": "bat",
+  "motif": "bat with outstretched wings",
+  "for": [
+   "animals/bats",
+   "animals/nocturnal-animals",
+   "movies/horror-movies",
+   "myth/witches",
+   "nature/caves"
+  ]
+ },
+ {
+  "id": "whisk",
+  "motif": "balloon whisk in a mixing bowl",
+  "for": [
+   "food/baking",
+   "food/cooking",
+   "food/kitchen",
+   "jobs/chefs",
+   "jobs/bakers"
+  ]
+ },
+ {
+  "id": "thermometer",
+  "motif": "clinical thermometer",
+  "for": [
+   "jobs/doctors",
+   "jobs/nurses",
+   "science/measurement",
+   "science/states-of-matter",
+   "science/energy"
+  ]
+ },
+ {
+  "id": "cat",
+  "motif": "sitting cat with whiskers and a curled tail",
+  "for": [
+   "animals/cats",
+   "feelings/contentment",
+   "myth/witches",
+   "places/alleys"
+  ]
+ },
+ {
+  "id": "comic-burst",
+  "motif": "jagged comic POW explosion burst",
+  "for": [
+   "books/comic-books",
+   "books/graphic-novels",
+   "movies/cartoons",
+   "movies/superhero-movies"
+  ]
+ },
+ {
+  "id": "coat",
+  "motif": "belted trench coat",
+  "for": [
+   "clothing/coats",
+   "clothing/winter-clothes",
+   "clothing/buttons",
+   "clothing/pockets"
+  ]
+ },
+ {
+  "id": "cardboard-box",
+  "motif": "stacked cardboard moving boxes",
+  "for": [
+   "home/storage",
+   "vehicles/vans",
+   "vehicles/trucks",
+   "vehicles/forklifts"
+  ]
+ },
+ {
+  "id": "traffic-light",
+  "motif": "traffic light on red",
+  "for": [
+   "school/school-buses",
+   "travel/road-signs",
+   "travel/taxis",
+   "travel/road-trips"
+  ]
+ },
+ {
+  "id": "fox",
+  "motif": "red fox with a bushy tail",
+  "for": [
+   "animals/foxes",
+   "nature/forests",
+   "nature/mammals"
+  ]
+ },
+ {
+  "id": "skeleton",
+  "motif": "friendly cartoon skeleton or x-ray showing a spine and ribs",
+  "for": [
+   "body/bones",
+   "body/the-spine",
+   "body/joints"
+  ]
+ },
+ {
+  "id": "boot",
+  "motif": "laced leather boot",
+  "for": [
+   "clothing/shoes",
+   "clothing/shoemaking",
+   "clothing/winter-clothes"
+  ]
+ }
+]

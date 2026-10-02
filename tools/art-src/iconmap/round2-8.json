@@ -1,0 +1,160 @@
+[
+ {
+  "id": "trophy",
+  "motif": "gold cup trophy",
+  "for": [
+   "celebrations/gift-giving",
+   "feelings/gratitude",
+   "feelings/celebrating",
+   "feelings/pride",
+   "feelings/confidence",
+   "movies/film-festivals"
+  ]
+ },
+ {
+  "id": "headphones",
+  "motif": "over-ear headphones",
+  "for": [
+   "body/ears",
+   "music/recording-studio",
+   "music/electronic-music",
+   "music/pop-music",
+   "music/hip-hop",
+   "school/computer-lab"
+  ]
+ },
+ {
+  "id": "statue",
+  "motif": "marble bust on a plinth",
+  "for": [
+   "history/museums",
+   "history/ancient-greece",
+   "places/plazas",
+   "places/town-squares",
+   "places/parks",
+   "places/boulevards"
+  ]
+ },
+ {
+  "id": "sheep",
+  "motif": "woolly sheep",
+  "for": [
+   "clothing/knitting",
+   "clothing/fabrics",
+   "clothing/socks",
+   "clothing/scarves",
+   "clothing/gloves",
+   "clothing/winter-clothes"
+  ]
+ },
+ {
+  "id": "lungs",
+  "motif": "pair of pink lungs with branching airways",
+  "for": [
+   "body/the-lungs",
+   "body/breathing",
+   "health/breathing-exercises",
+   "health/meditation",
+   "health/swimming"
+  ]
+ },
+ {
+  "id": "tomato",
+  "motif": "ripe tomato on the vine",
+  "for": [
+   "food/vegetables",
+   "food/pizza",
+   "food/pasta",
+   "food/salad",
+   "food/soup"
+  ]
+ },
+ {
+  "id": "clapperboard",
+  "motif": "film clapperboard with striped arm snapping shut",
+  "for": [
+   "movies/film-sets",
+   "movies/screenplays",
+   "movies/trailers",
+   "movies/cameras",
+   "movies/stunts"
+  ]
+ },
+ {
+  "id": "cave-mouth",
+  "motif": "cave entrance in a rock face",
+  "for": [
+   "animals/bats",
+   "animals/bears",
+   "nature/caves",
+   "nature/rocks"
+  ]
+ },
+ {
+  "id": "superhero-mask",
+  "motif": "superhero eye mask with a flowing cape",
+  "for": [
+   "books/comic-books",
+   "books/graphic-novels",
+   "movies/superhero-movies",
+   "movies/costumes"
+  ]
+ },
+ {
+  "id": "swim-goggles",
+  "motif": "swimming goggles",
+  "for": [
+   "clothing/swimwear",
+   "health/swimming",
+   "sports/swimming",
+   "sports/skiing"
+  ]
+ },
+ {
+  "id": "palette",
+  "motif": "artist's palette with paint dabs",
+  "for": [
+   "home/painting",
+   "home/decorating",
+   "jobs/artists",
+   "school/art-class"
+  ]
+ },
+ {
+  "id": "test-tubes",
+  "motif": "rack of test tubes with coloured liquids",
+  "for": [
+   "science/the-lab",
+   "science/experiments",
+   "science/chemistry",
+   "science/microbes"
+  ]
+ },
+ {
+  "id": "deer",
+  "motif": "stag with antlers",
+  "for": [
+   "animals/deer",
+   "nature/forests",
+   "nature/mammals"
+  ]
+ },
+ {
+  "id": "dumbbell",
+  "motif": "dumbbell weight",
+  "for": [
+   "body/muscles",
+   "body/arms",
+   "health/exercise"
+  ]
+ },
+ {
+  "id": "belt-buckle",
+  "motif": "coiled leather belt with a brass buckle",
+  "for": [
+   "clothing/belts",
+   "clothing/shoes",
+   "clothing/handbags"
+  ]
+ }
+]

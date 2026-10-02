@@ -11,6 +11,7 @@ The old single-file `index.html` has been split into focused modules — same ze
 | `styles.css` | All styling. |
 | `sw.js` | Service worker for offline caching. Must stay at the served root for its scope. |
 | `manifest.webmanifest` | PWA manifest. |
+| `firestore.rules` | Firestore security rules for accounts. The app never loads it; it is pasted into the Firebase console. |
 | `icon-192.png`, `icon-512.png` | App icons. |
 
 The engine lives in `src/`, split on the pure-logic / DOM boundary. The pure modules
@@ -23,9 +24,13 @@ have no DOM access at all, which is what makes them cheap to unit-test:
 | `src/layout.js` | Screen arithmetic → grid dimensions. | pure |
 | `src/storage.js` | Reads and writes the saved game; discards a save it cannot trust. | pure |
 | `src/progress.js` | Word coverage per subject: the shuffle bag, and the draw preference. | pure |
+| `src/levels.js` | Level mode: level n's category, subject and puzzle seed from the account seed alone, so every device deals the same level; the progress record, its merge rule, and its local cache. | pure |
+| `src/scoring.js` | Scores one level from its find/reveal events: words, streak, difficulty, speed against par, reveal costs and completion bonuses, as itemised lines that sum to the total. `formatClock` for times. | pure |
+| `src/cloud.js` | Accounts: username sign-up and sign-in, and one cloud copy of progress, over the Firebase Auth and Firestore REST APIs through an injected `fetch`. Hidden while `FIREBASE` is empty — see [Accounts (Firebase)](#accounts-firebase). | pure |
 | `src/view.js` | Renders cells, selection pills and the word list. | DOM |
 | `src/effects.js` | Confetti and the WebAudio chime. | DOM |
 | `src/picker.js` | The category dialog. Reports a category id; owns no game state. | DOM |
+| `src/scorecard.js` | The end-of-level score card inside the win card: plays `scoring.js`'s breakdown a line at a time (Skip jumps to the end), then counts down to the next level, with Stay to cancel. Owns its timers; pauses while the page is hidden. | DOM |
 | `src/settings.js` | Player preferences (background art, letter size, board size, difficulty, sound, vibrate, motion, Reveal, auto-start) as one validated record; theme and mode stay in `appearance.js`, least-seen in `progress.js`. | pure |
 | `src/art.js` | One 16x16 pixel sprite per category, and the per-subject hue, mirror and corner that vary it. `view.js` draws it beside the board (landscape rail) or faintly behind it. | pure |
 | `src/main.js` | Entry point: owns game state, wires events, registers the SW. | DOM |
@@ -152,3 +157,28 @@ See [Reproducible puzzles](#reproducible-puzzles) above for `?seed=` / `?subject
 > Note: the app uses native ES modules, so open it over `http(s)://` (GitHub Pages or any local server), not via `file://`.
 
 Works on iPad, phone, laptop. On iPad/iPhone: Share → **Add to Home Screen** to install. On Chrome/Edge: install icon in the address bar. Runs offline after the first visit.
+
+## Accounts (Firebase)
+
+Accounts are optional and stay hidden until `FIREBASE` in `src/cloud.js` holds both
+values. They talk to Firebase Auth and Firestore over REST with `fetch`; there is no
+Firebase SDK. Players type a username, which `cloud.js` turns into a never-delivered
+address at `users.word-finder.invalid` (whether Firebase accepts that domain is
+unverified until a live project exists).
+
+To turn them on:
+
+1. Create a project in the [Firebase console](https://console.firebase.google.com/).
+2. **Project settings → General → Your apps → Add app → Web**. Note the `apiKey` and
+   `projectId` from the config it shows. Hosting is not needed.
+3. **Authentication → Sign-in method → Email/Password → Enable** (leave email link off).
+4. **Firestore Database → Create database** in **production mode**.
+5. **Firestore → Rules**: paste [`firestore.rules`](firestore.rules) and **Publish**.
+6. In the [Google Cloud console](https://console.cloud.google.com/apis/credentials) for
+   the same project, open the **Browser key** and set **Application restrictions →
+   Websites** to `https://beeberbab.github.io/*` (add `http://localhost:5173/*` to test
+   locally).
+7. Paste the two values into `FIREBASE` in `src/cloud.js` and push.
+
+The web API key is a public identifier, not a secret: it ships to every visitor. What
+protects players' data is `firestore.rules`.

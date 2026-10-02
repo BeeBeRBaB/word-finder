@@ -148,12 +148,12 @@ const CORNERS = [['-10%', '-10%'], ['32%', '-10%'], ['-10%', '32%'], ['32%', '32
 
 /** Draw the subject's category art into both hosts; CSS and placeArt decide which shows.
  * `style` is the Background setting: an illustration (pixel sprite where a category has none),
- * the pixel sprite, or nothing.
- * @param {Els} els @param {string} subjectId @param {'illustrated'|'pixel'|'none'} style
+ * the pixel sprite, or nothing for any other choice (none, or an animated background).
+ * @param {Els} els @param {string} subjectId @param {string} style
  * @returns {void} */
 export function renderArt(els, subjectId, style) {
   const a = artFor(subjectId);
-  if (!a || style === 'none') { els.art.innerHTML = ''; els.railart.innerHTML = ''; return; }
+  if (!a || (style !== 'illustrated' && style !== 'pixel')) { els.art.innerHTML = ''; els.railart.innerHTML = ''; return; }
   const illo = style === 'illustrated' ? ILLUSTRATIONS[a.motif] : undefined;
   const [left, top] = CORNERS[a.corner];
   const body = illo

@@ -1,0 +1,160 @@
+[
+ {
+  "id": "wrench",
+  "motif": "adjustable wrench",
+  "for": [
+   "home/tools",
+   "home/plumbing",
+   "home/garage",
+   "jobs/mechanics",
+   "jobs/plumbers",
+   "jobs/builders"
+  ]
+ },
+ {
+  "id": "confetti-popper",
+  "motif": "party popper bursting with confetti and streamers",
+  "for": [
+   "celebrations/confetti",
+   "celebrations/new-year",
+   "celebrations/birthdays",
+   "celebrations/parades",
+   "celebrations/carnivals",
+   "celebrations/festivals"
+  ]
+ },
+ {
+  "id": "carrot",
+  "motif": "carrot with leafy top",
+  "for": [
+   "animals/rabbits",
+   "food/vegetables",
+   "food/soup",
+   "food/salad",
+   "garden/vegetable-patch",
+   "garden/raised-beds"
+  ]
+ },
+ {
+  "id": "toolbox",
+  "motif": "open toolbox with tools",
+  "for": [
+   "home/tools",
+   "home/garage",
+   "jobs/builders",
+   "jobs/mechanics",
+   "jobs/electricians",
+   "jobs/plumbers"
+  ]
+ },
+ {
+  "id": "hug",
+  "motif": "two figures in a warm hug",
+  "for": [
+   "feelings/comforting",
+   "feelings/love",
+   "feelings/missing-someone",
+   "feelings/happiness",
+   "feelings/family"
+  ]
+ },
+ {
+  "id": "faucet",
+  "motif": "tap with water running",
+  "for": [
+   "health/hand-washing",
+   "health/hydration",
+   "home/plumbing",
+   "home/bathroom",
+   "jobs/plumbers"
+  ]
+ },
+ {
+  "id": "potion-bottle",
+  "motif": "round-bottomed corked flask with glowing liquid",
+  "for": [
+   "myth/potions",
+   "myth/wizards",
+   "myth/witches",
+   "myth/spells",
+   "myth/genies"
+  ]
+ },
+ {
+  "id": "paint-palette",
+  "motif": "artist's palette with paint blobs and a brush",
+  "for": [
+   "art/painting",
+   "art/oil-painting",
+   "art/watercolor",
+   "art/color-theory"
+  ]
+ },
+ {
+  "id": "pumpkin",
+  "motif": "round pumpkin with a curly stem",
+  "for": [
+   "celebrations/harvest-festivals",
+   "celebrations/costumes",
+   "nature/seasons",
+   "nature/farms"
+  ]
+ },
+ {
+  "id": "lawnmower",
+  "motif": "push lawnmower on striped grass",
+  "for": [
+   "garden/lawn-care",
+   "home/garage",
+   "places/parks",
+   "places/suburbs"
+  ]
+ },
+ {
+  "id": "piano",
+  "motif": "grand piano with the lid up / keyboard keys",
+  "for": [
+   "music/keyboard-instruments",
+   "music/classical-music",
+   "music/jazz",
+   "music/bands"
+  ]
+ },
+ {
+  "id": "keyboard-and-mouse",
+  "motif": "computer keyboard with a mouse beside it",
+  "for": [
+   "tech/keyboards",
+   "tech/computers",
+   "tech/hardware",
+   "tech/laptops"
+  ]
+ },
+ {
+  "id": "framed-painting",
+  "motif": "ornate gilt-framed painting on a wall",
+  "for": [
+   "art/galleries",
+   "art/painting",
+   "art/oil-painting"
+  ]
+ },
+ {
+  "id": "hardcover-book",
+  "motif": "closed hardback with a decorated cover and gilt spine",
+  "for": [
+   "books/book-covers",
+   "books/bookbinding",
+   "books/publishing"
+  ]
+ },
+ {
+  "id": "sock",
+  "motif": "striped sock",
+  "for": [
+   "clothing/socks",
+   "clothing/knitting",
+   "clothing/laundry"
+  ]
+ }
+]

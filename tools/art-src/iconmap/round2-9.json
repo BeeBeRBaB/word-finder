@@ -1,0 +1,160 @@
+[
+ {
+  "id": "scissors",
+  "motif": "craft scissors with a glue stick and paper scraps",
+  "for": [
+   "art/collage",
+   "art/crafts",
+   "art/origami",
+   "body/hair",
+   "clothing/sewing",
+   "clothing/embroidery"
+  ]
+ },
+ {
+  "id": "open-book",
+  "motif": "open book with pages fanning up",
+  "for": [
+   "books/libraries",
+   "books/novels",
+   "books/short-stories",
+   "books/dictionaries",
+   "books/reading-aloud",
+   "books/book-clubs"
+  ]
+ },
+ {
+  "id": "flask",
+  "motif": "bubbling conical lab flask",
+  "for": [
+   "jobs/scientists",
+   "school/chemistry-lab",
+   "school/science-class",
+   "science/chemistry",
+   "science/the-lab",
+   "science/experiments"
+  ]
+ },
+ {
+  "id": "house",
+  "motif": "little house with a glowing window",
+  "for": [
+   "feelings/family",
+   "feelings/contentment",
+   "feelings/missing-someone",
+   "places/neighborhoods",
+   "places/suburbs",
+   "places/villages"
+  ]
+ },
+ {
+  "id": "alphabet-blocks",
+  "motif": "stacked wooden ABC letter blocks",
+  "for": [
+   "books/grammar",
+   "books/dictionaries",
+   "books/handwriting",
+   "books/picture-books",
+   "school/spelling"
+  ]
+ },
+ {
+  "id": "plant-pot",
+  "motif": "terracotta pot with a seedling and a saucer",
+  "for": [
+   "garden/plant-pots",
+   "garden/window-boxes",
+   "garden/herbs",
+   "garden/seed-starting",
+   "garden/greenhouse"
+  ]
+ },
+ {
+  "id": "movie-camera",
+  "motif": "vintage cine camera on a tripod with two reels on top",
+  "for": [
+   "movies/cameras",
+   "movies/film-sets",
+   "movies/documentaries",
+   "movies/stunts",
+   "movies/special-effects"
+  ]
+ },
+ {
+  "id": "acorn",
+  "motif": "acorn with an oak leaf",
+  "for": [
+   "animals/rodents",
+   "nature/trees",
+   "nature/seasons",
+   "nature/forests"
+  ]
+ },
+ {
+  "id": "magic-wand",
+  "motif": "star-tipped magic wand with sparkles",
+  "for": [
+   "books/fairy-tales",
+   "myth/wizards",
+   "myth/spells",
+   "myth/fairies"
+  ]
+ },
+ {
+  "id": "croissant",
+  "motif": "flaky croissant",
+  "for": [
+   "food/bread",
+   "food/breakfast",
+   "food/baking",
+   "jobs/bakers"
+  ]
+ },
+ {
+  "id": "stage-curtain",
+  "motif": "red velvet stage curtains drawn open",
+  "for": [
+   "movies/cinemas",
+   "movies/musicals",
+   "movies/puppetry",
+   "movies/talk-shows"
+  ]
+ },
+ {
+  "id": "molecule",
+  "motif": "ball-and-stick molecule model",
+  "for": [
+   "science/chemistry",
+   "science/atoms",
+   "science/states-of-matter",
+   "science/the-periodic-table"
+  ]
+ },
+ {
+  "id": "dinosaur",
+  "motif": "long-necked dinosaur",
+  "for": [
+   "animals/dinosaurs",
+   "science/dinosaurs",
+   "science/fossils"
+  ]
+ },
+ {
+  "id": "toothbrush",
+  "motif": "toothbrush with a swirl of paste",
+  "for": [
+   "body/teeth",
+   "health/dentists",
+   "jobs/dentists"
+  ]
+ },
+ {
+  "id": "scarf",
+  "motif": "striped knitted scarf with fringe",
+  "for": [
+   "clothing/scarves",
+   "clothing/winter-clothes",
+   "clothing/knitting"
+  ]
+ }
+]

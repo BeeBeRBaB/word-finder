@@ -1,0 +1,160 @@
+[
+ {
+  "id": "music-notes",
+  "motif": "pair of beamed music notes",
+  "for": [
+   "body/the-voice",
+   "body/ears",
+   "movies/soundtracks",
+   "movies/musicals",
+   "music/music-theory",
+   "music/classical-music"
+  ]
+ },
+ {
+  "id": "snowflake",
+  "motif": "six-armed snowflake",
+  "for": [
+   "animals/penguins",
+   "animals/wolves",
+   "nature/weather",
+   "nature/seasons",
+   "nature/mountains",
+   "sports/skiing"
+  ]
+ },
+ {
+  "id": "whistle",
+  "motif": "coach's whistle on a lanyard",
+  "for": [
+   "school/gym-class",
+   "school/sports-day",
+   "school/teachers",
+   "sports/soccer",
+   "sports/basketball",
+   "sports/swimming"
+  ]
+ },
+ {
+  "id": "flame",
+  "motif": "flickering cooking flame",
+  "for": [
+   "food/grilling",
+   "food/cooking",
+   "home/fireplace",
+   "jobs/firefighters",
+   "myth/dragons",
+   "myth/phoenixes"
+  ]
+ },
+ {
+  "id": "invitation-card",
+  "motif": "envelope with a card peeking out",
+  "for": [
+   "celebrations/gift-giving",
+   "celebrations/birthdays",
+   "celebrations/weddings",
+   "celebrations/graduations",
+   "celebrations/baby-showers"
+  ]
+ },
+ {
+  "id": "bed",
+  "motif": "bed with a quilt and headboard",
+  "for": [
+   "health/sleep",
+   "health/napping",
+   "home/bedroom",
+   "home/bedding",
+   "home/furniture"
+  ]
+ },
+ {
+  "id": "stage-spotlight",
+  "motif": "stage with red curtains under a spotlight beam",
+  "for": [
+   "music/concerts",
+   "music/opera",
+   "music/rock-music",
+   "music/bands",
+   "music/pop-music"
+  ]
+ },
+ {
+  "id": "frog",
+  "motif": "frog sitting on a lily pad",
+  "for": [
+   "animals/frogs",
+   "garden/garden-ponds",
+   "nature/rainforest",
+   "nature/rivers"
+  ]
+ },
+ {
+  "id": "cupcake",
+  "motif": "frosted cupcake with sprinkles",
+  "for": [
+   "celebrations/cakes",
+   "celebrations/birthdays",
+   "food/desserts",
+   "food/baking"
+  ]
+ },
+ {
+  "id": "wheelbarrow",
+  "motif": "wheelbarrow heaped with soil",
+  "for": [
+   "garden/garden-tools",
+   "garden/mulching",
+   "garden/composting",
+   "garden/raised-beds"
+  ]
+ },
+ {
+  "id": "spotlight",
+  "motif": "stage spotlight throwing a cone of light",
+  "for": [
+   "movies/red-carpets",
+   "movies/musicals",
+   "movies/talk-shows",
+   "movies/game-shows"
+  ]
+ },
+ {
+  "id": "wifi-signal",
+  "motif": "wifi fan of arcs over a dot",
+  "for": [
+   "tech/internet",
+   "tech/networking",
+   "tech/smart-home",
+   "tech/streaming"
+  ]
+ },
+ {
+  "id": "easel-canvas",
+  "motif": "canvas on a wooden easel with a half-finished landscape",
+  "for": [
+   "art/painting",
+   "art/oil-painting",
+   "art/watercolor"
+  ]
+ },
+ {
+  "id": "bookshelf",
+  "motif": "wooden bookshelf packed with spines",
+  "for": [
+   "books/libraries",
+   "books/bookshops",
+   "jobs/librarians"
+  ]
+ },
+ {
+  "id": "mitten",
+  "motif": "pair of knitted mittens",
+  "for": [
+   "clothing/gloves",
+   "clothing/winter-clothes",
+   "clothing/knitting"
+  ]
+ }
+]

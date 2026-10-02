@@ -1,0 +1,115 @@
+airplane: passenger plane climbing past clouds
+alarm-clock: ringing alarm clock
+amphora: ancient two-handled vase with bands
+apple: shiny apple with a leaf
+armchair: cosy channel-tufted armchair
+atom: atom with orbiting electrons
+balloons: bunch of three balloons
+bandage: adhesive bandage
+battery: charging battery with a lightning bolt
+bee: fuzzy bumblebee in flight
+bird: round songbird on a branch
+bone: cartoon bone
+book-stack: stack of books with reading glasses
+brain: brain with folds
+bread: loaf of bread with a slice
+bunting: strings of party flag bunting
+butterfly: butterfly with spotted wings
+cake: two-tier birthday cake with candles
+camera: photo camera
+candle: lit pillar candle with dripping wax
+castle: fairy-tale castle with towers and a flag
+chalkboard: chalkboard on an easel
+champagne-flutes: two champagne glasses clinking
+chess-knight: chess knight piece
+coffee-cup: steaming cup on a saucer
+compass: explorer's compass with a needle
+cooking-pot: lidded pot with steam
+crab: crab waving its claws
+crescent-moon: crescent moon with craters and stars
+crown: jewelled royal crown
+dice: pair of dice
+dinner-plate: plate with a fork and knife
+dna: twisting double helix
+dress: party dress with a flared skirt
+drum: drum with crossed sticks
+eye: eye with lashes
+film-reel: film reel with unspooling film
+firework: bursting firework with sparks
+first-aid-kit: first-aid kit with a cross
+fish: cartoon fish with bubbles
+flexed-arm: flexed arm showing a bicep
+flower: five-petal flower on a stem
+fountain: tiered stone fountain with splashing water
+game-controller: video game controller
+gear: two meshing cogs
+gift: wrapped present with a bow
+graduation-cap: mortarboard with tassel and diploma
+guitar: acoustic guitar
+handshake: two hands shaking with a heart
+heart: glossy heart with sparkles
+lamp: table lamp glowing
+laptop: open laptop showing code
+leaf: single leaf with veins
+lightbulb: glowing light bulb
+lighthouse: striped lighthouse beaming on the rocks
+magnet: horseshoe magnet with a pull
+map: folded map with a dotted route to an X
+medal: prize medal on a ribbon
+microphone: handheld microphone
+microscope: lab microscope
+mountain: snow-capped peaks
+mushroom: spotted toadstool with a little one
+owl: wide-eyed owl on a branch
+paintbrush: paintbrush with a paint swoosh
+palm-island: palm tree on a little sandy island
+park-bench: wooden park bench with iron ends
+paw-print: animal paw print
+pencil: sharpened pencil
+pill: capsule and tablets
+pillow: fluffy pillow with a moon and zzz
+pine-tree: tiered evergreen tree
+planet: ringed planet with a little moon
+popcorn: striped popcorn box
+pyramid: pyramids in the desert under the sun
+quill: quill pen and inkwell
+rabbit: sitting bunny
+rocket: cartoon rocket blasting off
+sailing-ship: tall ship with billowing sails
+satellite: satellite with solar panels and a dish
+shield: knight's shield over crossed swords
+shooting-star: shooting star with a streaming tail
+shovel: garden spade
+signpost: wooden signpost with arrows pointing different ways
+siren: flashing emergency siren light
+smartphone: smartphone with app icons, buzzing
+smiley: grinning smiley face
+sneaker: high-top sneaker with laces
+soccer-ball: patched football
+speech-bubble: chatting speech bubbles
+sprout: seedling sprouting from soil
+steering-wheel: car steering wheel
+stethoscope: stethoscope with a little heart
+storefront: little shop with a striped awning
+street-lamp: old-fashioned glowing street lamp
+suitcase: vintage suitcase with straps, stickers and a tag
+telescope: telescope on a tripod aimed at a star
+television: retro tv with antennae
+theater-masks: comedy and tragedy masks
+thread-spool: spool of thread with needle and button
+ticket: pair of admission tickets with a star
+tooth: smiling tooth with sparkles
+top-hat: top hat with a band
+traffic-cone: striped traffic cone
+treasure-chest: open chest overflowing with gold coins
+tree: round leafy tree
+trumpet: shiny trumpet
+violin: violin with bow
+washing-machine: front-loading washing machine
+water-bottle: sports water bottle with droplets
+watering-can: watering can sprinkling
+wave: curling ocean wave
+whale: smiling whale with a spout
+wheel: rolling tyre and rim
+wizard-hat: pointy wizard hat with stars and a moon
+yarn-ball: ball of yarn with knitting needles

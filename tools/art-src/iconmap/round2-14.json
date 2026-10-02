@@ -1,0 +1,158 @@
+[
+ {
+  "id": "car",
+  "motif": "family car",
+  "for": [
+   "home/garage",
+   "jobs/mechanics",
+   "jobs/police-officers",
+   "travel/road-trips",
+   "travel/road-signs",
+   "vehicles/cars"
+  ]
+ },
+ {
+  "id": "seashell",
+  "motif": "spiral hermit-crab shell and a starfish",
+  "for": [
+   "animals/crabs",
+   "animals/jellyfish",
+   "myth/mermaids",
+   "myth/treasure",
+   "nature/ocean",
+   "travel/beaches"
+  ]
+ },
+ {
+  "id": "picnic-basket",
+  "motif": "wicker basket on a gingham blanket",
+  "for": [
+   "celebrations/picnics",
+   "celebrations/reunions",
+   "celebrations/festivals",
+   "celebrations/street-fairs",
+   "food/picnics",
+   "food/markets"
+  ]
+ },
+ {
+  "id": "horse",
+  "motif": "galloping horse with a flowing mane",
+  "for": [
+   "animals/horses",
+   "history/knights",
+   "history/covered-wagons",
+   "myth/knights",
+   "myth/unicorns"
+  ]
+ },
+ {
+  "id": "chef-hat",
+  "motif": "tall chef's toque",
+  "for": [
+   "food/cooking",
+   "food/kitchen",
+   "food/baking",
+   "jobs/chefs",
+   "jobs/bakers"
+  ]
+ },
+ {
+  "id": "robot",
+  "motif": "friendly boxy robot",
+  "for": [
+   "jobs/engineers",
+   "science/robotics",
+   "science/inventions",
+   "tech/robots",
+   "tech/artificial-intelligence"
+  ]
+ },
+ {
+  "id": "microchip",
+  "motif": "square chip with pins on every side",
+  "for": [
+   "tech/computers",
+   "tech/hardware",
+   "tech/laptops",
+   "tech/robots",
+   "tech/artificial-intelligence"
+  ]
+ },
+ {
+  "id": "printing-press",
+  "motif": "old hand-cranked printing press with a sheet",
+  "for": [
+   "books/publishing",
+   "books/newspapers",
+   "books/bookbinding",
+   "history/printing-press"
+  ]
+ },
+ {
+  "id": "zipper",
+  "motif": "half-open zip with a pull tab",
+  "for": [
+   "clothing/zips",
+   "clothing/jeans",
+   "clothing/pockets",
+   "clothing/handbags"
+  ]
+ },
+ {
+  "id": "hammer",
+  "motif": "claw hammer and nails",
+  "for": [
+   "home/tools",
+   "home/carpentry",
+   "myth/dwarves",
+   "myth/giants"
+  ]
+ },
+ {
+  "id": "ruler",
+  "motif": "wooden ruler with a protractor",
+  "for": [
+   "school/maths",
+   "school/stationery",
+   "school/classrooms",
+   "science/measurement"
+  ]
+ },
+ {
+  "id": "monkey",
+  "motif": "monkey swinging from a branch",
+  "for": [
+   "animals/primates",
+   "nature/rainforest",
+   "nature/mammals"
+  ]
+ },
+ {
+  "id": "set-square",
+  "motif": "ruler and triangular set square",
+  "for": [
+   "art/architecture",
+   "art/graphic-design",
+   "art/woodworking"
+  ]
+ },
+ {
+  "id": "sparkler",
+  "motif": "hand-held sparkler throwing stars",
+  "for": [
+   "celebrations/fireworks",
+   "celebrations/new-year",
+   "celebrations/weddings"
+  ]
+ },
+ {
+  "id": "frying-pan",
+  "motif": "frying pan with a sizzling egg",
+  "for": [
+   "food/cooking",
+   "food/kitchen",
+   "food/breakfast"
+  ]
+ }
+]

@@ -1,0 +1,79 @@
+# Word Finder — handoff (paused 2026-09-27, updated 2026-10-02)
+
+Read this first. It is the state of the work in progress, the decisions waiting on the owner,
+and the order to do things in. CLAUDE.md still governs how to work; README has the file map.
+
+## Before doing anything: ask the owner
+
+These are open decisions. Ask them together at the start of the thread (one message, with the
+current default marked), and don't build on an assumption.
+
+1. **Branches.** Project threads work on their own branch, but CLAUDE.md says push to `main`, with no PRs and no feature branches, because `main` is what GitHub Pages serves. After `npm test` passes, should a thread fast-forward its work into `main` itself, or leave the branch for the owner?
+2. **Ultracode for every thread.** It is a per-session setting. Adding `"ultracode": true` to the repo's `.claude/settings.json` would turn it on for every thread in this repo, including local sessions, which uses more tokens. Should we add it? Default: no.
+3. **Still art on phones.** With Background area = "Word list", should a phone keep today's board-corner art (the owner chose it earlier), or move the art behind the word list? Default: keep the corner.
+4. **Streak after a reveal.** Today a find within 20s of the last find *before* a reveal continues the streak at x1.2. Should a reveal restart the streak from zero instead? (One line in `src/scoring.js`: clear `lastFind` in the reveal branch.)
+5. **Animation frame cap.** The animations draw at about 30fps, but at about 33fps on 100Hz and 165Hz screens. Should they be capped at exactly 30? (One line in `src/backgrounds/pixel-stage.js`, plus the other modules' thresholds.)
+6. **Palettes.** There are four: Classic, Jewel, Duotone and Calm. The owner said they would say which to remove.
+7. **Firebase.** Levels and accounts need the owner's Firebase project. The steps are in the README "Accounts (Firebase)" section. Ask for the web `apiKey` and `projectId` when that work starts.
+
+## What is live (main, verified on GitHub Pages)
+- **Settings:** a compact two-column card (fits 1366x768), and a full-screen page with Back on phones and short screens. The theme swatches are gone.
+- **Palette setting:** Classic, Jewel, Duotone and Calm, each for all 7 themes in both modes (42 `[data-palette]` blocks, colour tokens only).
+- **Service worker:** the code cache is keyed by path, and CACHE is `wordfinder-v15`.
+- **Tests:** `PORT=<port> npx playwright test` moves the whole e2e run.
+
+## On main but not wired up yet (no visible effect)
+These are committed so a thread can pick them up from GitHub. None of them is imported by `main.js` except the background registry (through settings.js), and that changes nothing yet.
+- **Animated backgrounds** in `src/backgrounds/*.js`: 9 modules plus the `pixel-stage.js` helper, all lazy. They are deliberately not in sw.js ASSETS; the default stale-while-revalidate path caches them on first use. Checked pixel-identical to their prototypes.
+  - `src/backgrounds.js` is the registry: 12 ids, each with a glyph for its picker tile. `makeBackdrop()` runs one background at a time.
+  - `settings.js` lists the registry ids literally (a static import would add a module to the shell before the precache has it: a returning visitor's offline cold start broke in review). `backgrounds.test.js` holds the two lists equal. It also has a new `area` setting with values `list` or `full`.
+  - Once the picker ships, a stored animated id leaves the old 3-option select blank, so replace that select in the same change.
+  - `tools/coverage.mjs` excludes `src/backgrounds/**` from the 90% floor.
+- **Levels and accounts:** `src/scoring.js`, `src/levels.js`, `src/cloud.js` and `src/scorecard.js`, with unit tests, `firestore.rules`, and README rows plus the Accounts section.
+  - `styles.css` ends with a `/* Level score card */` section (`.sc-*` classes, unused so far).
+  - scoring and levels were reviewed clean.
+  - cloud had 5 defects, fixed by its reviewer.
+  - **scorecard is built but NOT reviewed.** Its reviewer stalled. Review it before wiring it in.
+- **Art sources:**
+  - `tools/art-src/icons/part*.json` hold 218 icons. Run `node tools/art-src/icons/check.mjs <part.json>` to validate one and render a preview.
+  - `tools/art-src/iconmap/<category>.json` gives all 600 subjects 4–6 icons each, hero first. Check with `node tools/art-src/iconmap/check.mjs <category>`.
+  - `wishlist.json` ranks the icons still missing; `round2-10.json` is a batch that was never drawn.
+- **Palette sources:** `tools/palettes/set1-3.json` and `tocss.mjs` (`node tools/palettes/tocss.mjs`) generate the `[data-palette]` CSS.
+
+## Must fix before accounts ship
+- **sw.js caches cross-origin GETs cache-first.** Firestore document URLs have no file extension, so `isCode` is false and `cloud.load()` would return a device's first copy forever. Pass every cross-origin request except Google Fonts straight to the network, and add a sw.test case.
+- **Torn deploys:** bump CACHE whenever markup and modules change together.
+
+## Next steps, in order
+1. **Background picker UI.**
+   - In Settings, a "Background ›" row opens a sub-page:
+     - Area: Word list / Full screen
+     - radio tiles: glyph, name, and an Animated/Still badge (`name="art"`, `data-setting="art"`)
+   - `syncSettings` and the change handler in main.js need radio support.
+   - Hosts: `#bgside` positioned absolute inside `#side` for list; `#bg` fixed behind `#app` for full.
+   - Call `makeBackdrop().show(id, host, {colors, dark, reducedMotion})` on deal, setting change, appearance change and motion change.
+   - Check word-list contrast over the animations, and lower the host opacity if needed.
+   - Update art.spec, which drives the old `#settings-art` select.
+   - Then run the cascade-and-cache-reviewer and bump CACHE.
+2. **Subject art.**
+   - Draw the missing batch from `round2-10.json`: music-notes, snowflake, whistle, flame, invitation-card, bed, stage-spotlight, frog, cupcake, wheelbarrow, spotlight, wifi-signal, easel-canvas, bookshelf, mitten.
+   - Script-merge the round-2 icons into the mapping: prepend each new icon on the subjects that asked for it (wishlist `subjects`), capped at 6.
+   - Emit lazy `src/backgrounds/icons.js` and `subject-icons.js`.
+   - Add a "Subject scene" (still) background and a "Drifting icons" (animated) one. A subject's own icons override its category's, and the puzzle seed picks one of several variants per subject.
+3. **Levels mode UI.**
+   - Random play with no login stays as today, with the per-device no-repeat.
+   - Signing in gives seeded, unlimited levels that can be continued on any device. Points accumulate, and easy/normal/hard still apply.
+   - End of level: the existing win card and its progress bar. The score breakdown wipes in line by line, left to right; then a 10s bar runs forward for a positive total and backward for a negative one, with Next level and Stay.
+   - Needs Firebase (question 7) and the sw.js fix above.
+4. **Browser-tool comparison.** The owner asked for it; it hasn't started.
+   - Candidates: Chrome DevTools MCP, Playwright MCP, the built-in Claude browser pane, and Playwright scripts run via Bash.
+   - Measure tokens per task and capability: viewport, reduced motion, service worker and Cache Storage, touch drag, WebKit.
+   - Expected so far: Bash scripts cost the fewest tokens and are the only option with WebKit; Playwright MCP opens headed Chrome windows unless started with `--headless`.
+   - A peer session (rover) wants the result. It needs viewport emulation, screenshots of a file:// page, and an addInitScript WebSocket stub.
+
+## How this project has been run (owner's standing preferences)
+- **Shipping:** push to `main`, without asking for now. Commits are authored as BeeBeRBaB <puchkiray@outlook.com> with no Claude trailer.
+- **Verifying:** check on the deployed site with the service worker cleared. Simulate rather than eyeball: million-board runs for the generator, and planted failures to prove a check runs.
+- **Showing:** for visual changes, show examples before implementing. Keep the current fonts, with no italics.
+- **Code:** best-practice formatting, scripts in .js files with no inline script, no new dependencies, short comments.
+- **Agents:** use workflows for independent tracks, and don't waste tokens.

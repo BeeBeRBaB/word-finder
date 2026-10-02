@@ -4,6 +4,9 @@ A client-side word search PWA. **No build step** — the files in this repo are
 byte-for-byte what GitHub Pages serves. There is nothing to compile, bundle, or
 transpile, and adding a step that would change that is out of scope.
 
+**Work in progress: read [docs/handoff.md](docs/handoff.md) first.** It lists decisions to ask
+the owner about before starting, and what is half-built.
+
 [README.md](README.md) has the file-by-file map and the topic format. This file
 covers what the README does not: how the project fails, and how to work on it
 without causing that.
