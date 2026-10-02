@@ -82,18 +82,16 @@ async function run(job, math) {
   let opacity = 1;
 
   for (const look of LOOKS) {
-    const [t, p] = look.split('/');
     if (process.env.DEBUG) console.log('look', bg.id, shape, look, new Date().toISOString().slice(11, 19));
     // Through the app's own controls, so the background restarts in the look's colours.
-    const moved = await page.evaluate(([t, p, layer]) => {
+    const moved = await page.evaluate(([look, layer]) => {
+      const r = /** @type {HTMLInputElement} */ (document.querySelector(`input[name="look"][value="${look}"]`));
+      if (r.checked) return false;
       document.querySelector(layer)?.setAttribute('data-old', '');
-      let moved = false;
-      for (const [id, v] of [['settings-theme', t], ['settings-palette', p]]) {
-        const s = /** @type {HTMLSelectElement} */ (document.getElementById(id));
-        if (s.value !== v) { s.value = v; s.dispatchEvent(new Event('change', { bubbles: true })); moved = true; }
-      }
-      return moved;
-    }, [t, p, layer]);
+      r.checked = true;
+      r.dispatchEvent(new Event('change', { bubbles: true }));
+      return true;
+    }, [look, layer]);
     if (moved && bg.file) await page.waitForSelector(`${layer}:not([data-old])`, { timeout: 5000 }).catch(() => {});
     const info = await page.evaluate(([sel, icons, host]) => {
       const r = document.documentElement;

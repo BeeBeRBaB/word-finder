@@ -21,7 +21,7 @@ for (const t of THEMES) for (const m of ['light', 'dark']) {
   if (!Array.isArray(p.pills) || p.pills.length !== 4) { console.log(`FAIL ${t}/${m} pills must be 4`); fail++; continue; }
   const S = parse(p.surface), B = parse(p.bg);
   const checks = [['text/surface', parse(p.text), S, 4.5], ['text/bg', parse(p.text), B, 4.5], ['strong/bg', parse(p.strong), B, 4.5], ['muted/bg', parse(p.muted), B, 4.5], ['muted/surface', parse(p.muted), S, 4.5],
-    ['label/bg', parse(p.label), B, 4.5], ['hint/bg', parse(p.hint), B, 4.5], ['accentText/bg', parse(p.accentText), B, 4.5], ['accentText/surface', parse(p.accentText), S, 4.5], ['accentInk/accent', parse(p.accentInk), parse(p.accent), 4.5],
+    ['label/bg', parse(p.label), B, 4.5], ['hint/bg', parse(p.hint), B, 4.5], ['hint/surface (the Settings card)', parse(p.hint), S, 4.5], ['accentText/bg', parse(p.accentText), B, 4.5], ['accentText/surface', parse(p.accentText), S, 4.5], ['accentInk/accent', parse(p.accentInk), parse(p.accent), 4.5],
     ['accent/surface (control edge)', parse(p.accent), S, 3], ['done/bg', over(p.done, p.bg), B, 4.5], ['text on sel', parse(p.text), over(p.sel, p.surface), 4.5],
     ...p.pills.map((c, i) => [`foundText on pill${i + 1}`, parse(p.foundText), over(c, p.surface), 4.5])];
   for (const [n, a, b, min] of checks) { const r = cr(a, b); if (r < min) { console.log(`FAIL ${t}/${m} ${n} ${r.toFixed(2)} < ${min}`); fail++; } }

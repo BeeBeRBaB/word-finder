@@ -418,7 +418,7 @@
 }
 :root[data-palette="duotone"][data-theme="phosphor"], :root[data-palette="duotone"][data-theme="phosphor"][data-appearance="dark"]{
   color-scheme:dark; --bg:#3b1d0b; --surface:#482c1b; --border:#71472d; --text:#f4e4dc;
-  --text-strong:#fff9f5; --muted:#bb957f; --label:#ffb257; --hint:#a68a7a; --accent:#3dcfcb;
+  --text-strong:#fff9f5; --muted:#bb957f; --label:#ffb257; --hint:#b19788; --accent:#3dcfcb;
   --accent-text:#3dcfcb; --accent-ink:#270e01; --accent-wash:rgba(61,207,203,0.14);
   --scrim:rgba(0,0,0,.62); --found-text:#220900; --done-text:rgba(244,228,220,0.56);
   --glow:rgba(61,207,203,0.4); --pill-1:#f5ae39; --pill-2:#4cd7c8; --pill-3:#ffa09c;
@@ -436,7 +436,7 @@
 }
 :root[data-palette="duotone"][data-theme="broadsheet"], :root[data-palette="duotone"][data-theme="broadsheet"][data-appearance="dark"]{
   color-scheme:dark; --bg:#1d253d; --surface:#29324a; --border:#e4dec8; --text:#e2e8f6;
-  --text-strong:#f8faff; --muted:#8e9cc1; --label:#ffab9d; --hint:#8690ab; --accent:#f8e94c;
+  --text-strong:#f8faff; --muted:#8e9cc1; --label:#ffab9d; --hint:#929bb5; --accent:#f8e94c;
   --accent-text:#f8e94c; --accent-ink:#0c142d; --accent-wash:rgba(248,233,76,0.14);
   --scrim:rgba(0,0,0,.62); --found-text:#081027; --done-text:rgba(226,232,246,0.54);
   --glow:rgba(248,233,76,0.4); --pill-1:#e8d42d; --pill-2:#8bdeff; --pill-3:#ffbad7;
@@ -454,7 +454,7 @@
 }
 :root[data-palette="duotone"][data-theme="sticker"], :root[data-palette="duotone"][data-theme="sticker"][data-appearance="dark"]{
   color-scheme:dark; --bg:#063837; --surface:#174544; --border:#060313; --text:#d9edeb;
-  --text-strong:#f3fdfc; --muted:#80b5b2; --label:#78dca9; --hint:#7ea5a2; --accent:#c1a5ff;
+  --text-strong:#f3fdfc; --muted:#80b5b2; --label:#78dca9; --hint:#8eb2af; --accent:#c1a5ff;
   --accent-text:#c1a5ff; --accent-ink:#001b1a; --accent-wash:rgba(193,165,255,0.14);
   --scrim:rgba(0,0,0,.62); --found-text:#001615; --done-text:rgba(217,237,235,0.6);
   --glow:rgba(193,165,255,0.4); --pill-1:#f9ad26; --pill-2:#ff98ca; --pill-3:#bcb2ff;
@@ -472,7 +472,7 @@
 }
 :root[data-palette="duotone"][data-theme="drafting"], :root[data-palette="duotone"][data-theme="drafting"][data-appearance="dark"]{
   color-scheme:dark; --bg:#002f56; --surface:#113e66; --border:#326893; --text:#dee9f6;
-  --text-strong:#f6fbff; --muted:#8eaccb; --label:#67d5f5; --hint:#859bb1; --accent:#ff9a5f;
+  --text-strong:#f6fbff; --muted:#8eaccb; --label:#67d5f5; --hint:#96aabe; --accent:#ff9a5f;
   --accent-text:#ff9a5f; --accent-ink:#03172c; --accent-wash:rgba(255,154,95,0.14);
   --scrim:rgba(0,0,0,.62); --found-text:#f6fbff; --done-text:rgba(222,233,246,0.58);
   --glow:rgba(255,154,95,0.4); --pill-1:rgba(219,148,0,0.56); --pill-2:rgba(0,185,207,0.48);
@@ -491,7 +491,7 @@
 }
 :root[data-palette="duotone"][data-theme="grove"], :root[data-palette="duotone"][data-theme="grove"][data-appearance="dark"]{
   color-scheme:dark; --bg:#15301b; --surface:#243e28; --border:#406145; --text:#dfece1;
-  --text-strong:#f5fcf6; --muted:#89ac8f; --label:#a5d48b; --hint:#829c86; --accent:#ff9970;
+  --text-strong:#f5fcf6; --muted:#89ac8f; --label:#a5d48b; --hint:#91a995; --accent:#ff9970;
   --accent-text:#ff9970; --accent-ink:#021c09; --accent-wash:rgba(255,153,112,0.14);
   --scrim:rgba(0,0,0,.62); --found-text:#001705; --done-text:rgba(223,236,225,0.56);
   --glow:rgba(255,153,112,0.4); --pill-1:#9ecf75; --pill-2:#e3b842; --pill-3:#ffa383;
@@ -509,7 +509,7 @@
 }
 :root[data-palette="duotone"][data-theme="plum"], :root[data-palette="duotone"][data-theme="plum"][data-appearance="dark"]{
   color-scheme:dark; --bg:#381c3e; --surface:#47294c; --border:#6d4873; --text:#eee4f1;
-  --text-strong:#fdf8ff; --muted:#b096b6; --label:#f8a7d4; --hint:#9e8ba3; --accent:#ff9686;
+  --text-strong:#fdf8ff; --muted:#b096b6; --label:#f8a7d4; --hint:#aa98af; --accent:#ff9686;
   --accent-text:#ff9686; --accent-ink:#200d24; --accent-wash:rgba(255,150,134,0.14);
   --scrim:rgba(0,0,0,.62); --found-text:#fdf8fe; --done-text:rgba(238,228,241,0.56);
   --glow:rgba(255,150,134,0.4); --pill-1:rgba(248,123,92,0.56); --pill-2:rgba(244,113,170,0.58);
@@ -530,7 +530,7 @@
 }
 :root[data-palette="duotone"][data-theme="graphite"], :root[data-palette="duotone"][data-theme="graphite"][data-appearance="dark"]{
   color-scheme:dark; --bg:#23272c; --surface:#2f3339; --border:#51555c; --text:#e6e8eb;
-  --text-strong:#f9fafc; --muted:#989da4; --label:#bdc5ce; --hint:#8e9197; --accent:#ff9878;
+  --text-strong:#f9fafc; --muted:#989da4; --label:#bdc5ce; --hint:#999ca2; --accent:#ff9878;
   --accent-text:#ff9878; --accent-ink:#13161b; --accent-wash:rgba(255,152,120,0.14);
   --scrim:rgba(0,0,0,.62); --found-text:#0f1216; --done-text:rgba(230,232,235,0.56);
   --glow:rgba(255,152,120,0.4); --pill-1:#afce00; --pill-2:#ffa747; --pill-3:#91c1ff;
@@ -1053,6 +1053,8 @@ body{position:fixed;inset:0;width:100%;height:100%}
 .bgbadge svg{width:13px;height:13px;flex:none}
 .bgbadge[data-kind="animated"] svg{fill:currentColor}
 .bgbadge[data-kind="still"] svg{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round}
+/* --muted on the checked tile's wash is 3.2:1 in some dark looks; --text keeps it AA. */
+.tile:has(input:checked) .bgbadge{color:var(--text)}
 /* The Theme page: a group per theme with its palettes four across, and two columns of groups
    where the card is wide (below). */
 #theme-tiles{display:grid;gap:14px 28px}
