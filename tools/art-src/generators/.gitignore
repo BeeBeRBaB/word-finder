@@ -1,0 +1,4 @@
+# Regenerable output: illo/gen*.mjs write group*.json here, and previews are scratch.
+illo/group*.json
+*.png
+*.svg

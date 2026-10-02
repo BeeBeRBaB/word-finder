@@ -1,0 +1,14 @@
+body { margin: 0; padding: 16px; background: #15131a; color: #eee; font: 14px/1.4 system-ui, sans-serif; }
+body.light { background: #ecebe6; color: #2a2622; }
+a { color: inherit; }
+h1 { margin: 0 0 4px; font-size: 20px; }
+p { margin: 0 0 14px; opacity: .75; }
+#tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 14px; }
+.tile { position: relative; height: 260px; border-radius: 10px; overflow: hidden; background: #0e0d12; }
+body.light .tile { background: #f6f5f1; }
+.tile .host { position: absolute; inset: 0; }
+.tile .card { position: absolute; left: 12%; top: 16%; width: 46%; height: 68%; border-radius: 10px;
+  background: rgba(30, 26, 38, .62); border: 1px solid rgba(255, 255, 255, .12); }
+body.light .tile .card { background: rgba(255, 255, 255, .6); border-color: rgba(0, 0, 0, .1); }
+.tile .label { position: absolute; left: 10px; bottom: 8px; padding: 3px 8px; border-radius: 6px;
+  background: rgba(0, 0, 0, .55); color: #eee; font-size: 13px; }

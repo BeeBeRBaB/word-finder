@@ -12,8 +12,8 @@ current default marked), and don't build on an assumption.
 2. **Ultracode for every thread.** It is a per-session setting. Adding `"ultracode": true` to the repo's `.claude/settings.json` would turn it on for every thread in this repo, including local sessions, which uses more tokens. Should we add it? Default: no.
 3. **Still art on phones.** With Background area = "Word list", should a phone keep today's board-corner art (the owner chose it earlier), or move the art behind the word list? Default: keep the corner.
 4. **Streak after a reveal.** Today a find within 20s of the last find *before* a reveal continues the streak at x1.2. Should a reveal restart the streak from zero instead? (One line in `src/scoring.js`: clear `lastFind` in the reveal branch.)
-5. **Animation frame cap.** The animations draw at about 30fps, but at about 33fps on 100Hz and 165Hz screens. Should they be capped at exactly 30? (One line in `src/backgrounds/pixel-stage.js`, plus the other modules' thresholds.)
-6. **Palettes.** There are four: Classic, Jewel, Duotone and Calm. The owner said they would say which to remove.
+5. **Animation frame cap.** All nine animations draw 30fps at 60Hz and 120Hz. At 100Hz and 165Hz the modules disagree, because each has its own threshold (30ms in `pixel-stage.js`, 29.3ms in confetti and constellation, 30.3–31ms in the other four): starfield, skyline, aquarium, confetti and constellation draw about 33fps, while shimmer-grid, aurora-drift, silk-bokeh and letter-bubbles drop to 25 and 27.5fps. Should they all be capped at exactly 30? (One line in `src/backgrounds/pixel-stage.js` plus each other module's threshold. Measure with `node tools/art-src/prototypes/check.mjs --hz=N`.)
+6. **Palettes.** There are four: Classic, Jewel, Duotone and Calm. The owner said they would say which to remove. Duotone dark fails 4.5:1 today for the Settings note text (`--hint` on the card, 3.8–4.0:1 on all 7 themes; `node tools/sims/settings/contrast.mjs`), which `tools/palettes/check.mjs` misses because it checks hint only against bg.
 7. **Firebase.** Levels and accounts need the owner's Firebase project. The steps are in the README "Accounts (Firebase)" section. Ask for the web `apiKey` and `projectId` when that work starts.
 
 ## What is live (main, verified on GitHub Pages)
@@ -40,9 +40,15 @@ These are committed so a thread can pick them up from GitHub. None of them is im
   - `wishlist.json` ranks the icons still missing; `round2-10.json` is a batch that was never drawn.
 - **Palette sources:** `tools/palettes/set1-3.json` and `tocss.mjs` (`node tools/palettes/tocss.mjs`) generate the `[data-palette]` CSS.
 
+## Dev tools for this work (each folder's README says how to run them)
+- `tools/art-src/generators/`: the editable generators behind every `icons/part*.json` and the 25 illustrations in `src/art.js`, plus `icons/round2-report.json` (round-2 skips: map `paint-palette` to `palette` and `envelope` to `invitation-card`).
+- `tools/art-src/prototypes/`: a gallery of the animated backgrounds and `check.mjs`, which checks painting, hidden-tab pause, resize, `stop()`, reduced motion and fps.
+- `tools/levels-review/`: planted-bug sets and runner, the scoring reference, the levels fuzz, deal and chi-square checks, and the scorecard harness with a contact sheet and open findings. `build-review-notes.md` has integration warnings that are not repeated here; read it before levels mode.
+- `tools/sims/`: the million-board generator check, the adjacency check, the torn-deploy sim, the palette cascade and resolver fuzz, the Settings geometry, behaviour and contrast checks, and a contact sheet of the four palettes.
+
 ## Must fix before accounts ship
-- **sw.js caches cross-origin GETs cache-first.** Firestore document URLs have no file extension, so `isCode` is false and `cloud.load()` would return a device's first copy forever. Pass every cross-origin request except Google Fonts straight to the network, and add a sw.test case.
-- **Torn deploys:** bump CACHE whenever markup and modules change together.
+- **sw.js caches cross-origin GETs cache-first.** Firestore document URLs have no file extension, so `isCode` is false and `cloud.load()` would return a device's first copy forever. Pass every cross-origin request except Google Fonts straight to the network, and add a sw.test case. `node tools/levels-review/sw-cloud-probe.mjs` FAILs today and should PASS after the fix.
+- **Torn deploys:** bump CACHE whenever markup and modules change together. `node tools/sims/sw/tear.mjs <old-ref> <new-ref>` shows whether a deploy tears.
 
 ## Next steps, in order
 1. **Background picker UI.**
@@ -56,7 +62,7 @@ These are committed so a thread can pick them up from GitHub. None of them is im
    - Update art.spec, which drives the old `#settings-art` select.
    - Then run the cascade-and-cache-reviewer and bump CACHE.
 2. **Subject art.**
-   - Draw the missing batch from `round2-10.json`: music-notes, snowflake, whistle, flame, invitation-card, bed, stage-spotlight, frog, cupcake, wheelbarrow, spotlight, wifi-signal, easel-canvas, bookshelf, mitten.
+   - Draw the missing batch from `round2-10.json`: music-notes, snowflake, whistle, flame, invitation-card, bed, stage-spotlight, frog, cupcake, wheelbarrow, spotlight, wifi-signal, easel-canvas, bookshelf, mitten. Its agent stalled, as did two others. Keep icon batches small, and have each agent write partial results as it goes.
    - Script-merge the round-2 icons into the mapping: prepend each new icon on the subjects that asked for it (wishlist `subjects`), capped at 6.
    - Emit lazy `src/backgrounds/icons.js` and `subject-icons.js`.
    - Add a "Subject scene" (still) background and a "Drifting icons" (animated) one. A subject's own icons override its category's, and the puzzle seed picks one of several variants per subject.
@@ -69,7 +75,7 @@ These are committed so a thread can pick them up from GitHub. None of them is im
    - Candidates: Chrome DevTools MCP, Playwright MCP, the built-in Claude browser pane, and Playwright scripts run via Bash.
    - Measure tokens per task and capability: viewport, reduced motion, service worker and Cache Storage, touch drag, WebKit.
    - Expected so far: Bash scripts cost the fewest tokens and are the only option with WebKit; Playwright MCP opens headed Chrome windows unless started with `--headless`.
-   - A peer session (rover) wants the result. It needs viewport emulation, screenshots of a file:// page, and an addInitScript WebSocket stub.
+   - A peer session (rover, the Mecanum wheel car review, 7173a9) wants the result and will use whichever tool is chosen. It needs viewport emulation at 375 and 1280, screenshots of a file:// page that loads a pinned jsdelivr script, and a WebSocket stub injected before page scripts run (addInitScript). Reduced motion would be nice. It needs no service worker, cache inspection or WebKit. Its headed Chrome windows came from Playwright MCP started by its workflow subagents.
 
 ## How this project has been run (owner's standing preferences)
 - **Shipping:** push to `main`, without asking for now. Commits are authored as BeeBeRBaB <puchkiray@outlook.com> with no Claude trailer.
