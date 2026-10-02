@@ -30,6 +30,7 @@ have no DOM access at all, which is what makes them cheap to unit-test:
 | `src/view.js` | Renders cells, selection pills and the word list. | DOM |
 | `src/effects.js` | Confetti and the WebAudio chime. | DOM |
 | `src/picker.js` | The category dialog. Reports a category id; owns no game state. | DOM |
+| `src/levelplay.js` | Levels mode's bookkeeping: deals a signed-in player's next level (an unfinished one resumes by its saved subject), times it in active play only, records finds and reveals, then scores and banks it, keeping this device's copy and the cloud's together. Not wired in yet. | pure |
 | `src/scorecard.js` | The end-of-level score card inside the win card: plays `scoring.js`'s breakdown a line at a time (Skip jumps to the end), then counts down to the next level, with Stay to cancel. Owns its timers; pauses while the page is hidden. | DOM |
 | `src/settings.js` | Player preferences (background art, letter size, board size, difficulty, sound, vibrate, motion, Reveal, auto-start) as one validated record; theme and mode stay in `appearance.js`, least-seen in `progress.js`. | pure |
 | `src/art.js` | One 16x16 pixel sprite per category, and the per-subject hue, mirror and corner that vary it. `view.js` draws it beside the board (landscape rail) or faintly behind it. | pure |
