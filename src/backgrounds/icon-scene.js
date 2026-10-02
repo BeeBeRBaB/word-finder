@@ -1,6 +1,9 @@
 // Shared by the subject backgrounds, and not a background itself: which icons a subject
 // shows, how a variant lays them out, and the icon markup with its tones as attributes.
 
+// Nothing here is precached, so changing an export needs a CACHE bump in sw.js: else an
+// importer cached last week can meet this file's new copy.
+
 import { ICONS } from './icons.js';
 import { CATEGORY_ICONS, SUBJECT_ICONS } from './subject-icons.js';
 

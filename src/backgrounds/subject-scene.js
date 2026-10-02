@@ -27,8 +27,8 @@ export function start(host, opts) {
   const svg = document.createElementNS(NS, 'svg');
   svg.setAttribute('aria-hidden', 'true');
   if (opts.corner) {
-    // The corner and colour come from the variant, so each deal of a subject keeps its own.
-    const rng = makeRng(seed), k = rng.int(4), c = colors[rng.int(colors.length)];
+    // The corner and colour come from the variant; the colours are the category art's four.
+    const rng = makeRng(seed), k = rng.int(4), c = colors.length > 4 ? colors[1 + rng.int(4)] : colors[0];
     svg.setAttribute('viewBox', '0 0 64 64');
     svg.style.cssText = `--ax:${k & 1 ? '32%' : '-10%'};--ay:${k & 2 ? '32%' : '-10%'}`;
     svg.innerHTML = `<g fill="${c}" color="${c}">${markup.get(ids[0])}</g>`;
