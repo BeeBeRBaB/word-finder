@@ -2,9 +2,7 @@
 // countdown to the next level. Every timer and frame is owned here and stops on cancel().
 
 /**
- * @typedef {{key:string, label:string, detail:string, points:number}} Line
- * @typedef {{lines:Line[], total:number, complete:boolean,
- *   stats:{found:number, revealed:number, elapsedMs:number, parMs:number, bestStreak:number}}} Breakdown
+ * @typedef {import('./scoring.js').Breakdown} Breakdown
  * @typedef {{reduceMotion?:boolean, countdownMs?:number, nextLabel?:string,
  *   onNext:() => void, onStay:() => void}} PlayOptions
  *   countdownMs: 0, negative or Infinity means no countdown — the Next button only.

@@ -33,7 +33,7 @@ These are committed so a thread can pick them up from GitHub. None of them is im
   - `styles.css` ends with a `/* Level score card */` section (`.sc-*` classes, unused so far).
   - scoring and levels were reviewed clean.
   - cloud had 5 defects, fixed by its reviewer.
-  - **scorecard is built but NOT reviewed.** Its reviewer stalled. Review it before wiring it in.
+  - scorecard was reviewed on 2026-10-02 with no logic defects. Its open layout and contrast findings are in `tools/levels-review/README.md`.
 - **Art sources:**
   - `tools/art-src/icons/part*.json` hold 218 icons. Run `node tools/art-src/icons/check.mjs <part.json>` to validate one and render a preview.
   - `tools/art-src/iconmap/<category>.json` gives all 600 subjects 4–6 icons each, hero first. Check with `node tools/art-src/iconmap/check.mjs <category>`.
