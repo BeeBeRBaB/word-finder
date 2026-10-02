@@ -88,7 +88,8 @@ test('on a phone the page is full screen with Back, and Full screen still art le
   await expect(page.locator('#art svg')).toBeVisible();
   await openPage(page);
   const card = await page.locator('#settingscard').boundingBox();
-  expect(card?.width).toBe(390);
+  // Read mid-slide, the translate leaves a few millionths of a pixel on the width.
+  expect(card?.width).toBeCloseTo(390, 1);
   await expect(page.locator('#bg-back')).toBeVisible();
   await expect(page.locator('#bg-close')).toBeHidden();
   await page.locator('#settings-bgpage [data-setting="area"] [data-value="full"]').click();
