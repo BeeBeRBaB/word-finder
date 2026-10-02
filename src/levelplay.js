@@ -40,6 +40,22 @@ export function levelPuzzle(deal, subject, shape) {
     count: shape.count, mix: mixFor(shape, deal.difficulty) });
 }
 
+/** Where each recorded word lies on the board, in the order found, to put a resumed level's
+ * finds back. A word the board does not hold is skipped.
+ * @param {{placements:{word:string, x0:number, y0:number, dx:number, dy:number}[]}} puzzle
+ * @param {LevelEvent[]} events @returns {{word:string, sel:{x0:number, y0:number, x1:number, y1:number}}[]} */
+export function replaySelections(puzzle, events) {
+  /** @type {{word:string, sel:{x0:number, y0:number, x1:number, y1:number}}[]} */
+  const out = [];
+  for (const e of events) {
+    const p = puzzle.placements.find(q => q.word === e.word);
+    if (!p || out.some(o => o.word === e.word)) continue;
+    const n = p.word.length - 1;
+    out.push({ word: e.word, sel: { x0: p.x0, y0: p.y0, x1: p.x0 + p.dx * n, y1: p.y0 + p.dy * n } });
+  }
+  return out;
+}
+
 /** @param {unknown} e @returns {CloudCode} */
 const codeOf = (e) => {
   const c = e && typeof e === 'object' && 'code' in e ? e.code : null;
@@ -216,6 +232,18 @@ export function makeLevelPlay(deps) {
       if (g !== gen || prog !== p) return null;
       return { level: p.level, subject: levelSubject(p.seed, p.level, category, cat.subjectIds, categoryIds.length), seed, difficulty };
     },
+
+    /** The saved board is the level in progress when its subject and seed are that level's:
+     * returns its deal, to start() once the board is back. @param {string} subjectId
+     * @param {number} seed @returns {Deal|null} */
+    resumable(subjectId, seed) {
+      const p = cloud.session() ? prog : null;
+      if (!p || !p.current || p.current.subject !== subjectId || levelSeed(p.seed, p.level) !== seed) return null;
+      return { level: p.level, subject: subjectId, seed, difficulty: p.current.difficulty };
+    },
+
+    /** The deal being played and timed, or null. @returns {Deal|null} */
+    playing: () => (live ? live.deal : null),
 
     /** Start timing a dealt level. Returns the finds to put back when it resumes one, in order;
      * a saved level whose words are not all on this board (another device's board size) starts over.

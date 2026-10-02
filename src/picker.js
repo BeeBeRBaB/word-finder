@@ -1,7 +1,14 @@
 // The category dialog. Owns no game state: it reports a chosen category id and lets
 // main.js decide what that means.
 
-/** @typedef {import('./catalog.js').Category} Category */
+/**
+ * @typedef {import('./catalog.js').Category} Category
+ * @typedef {'random'|'levels'} PlayMode
+ * @typedef {{enabled:() => boolean, getMode:() => PlayMode, setMode:(m:PlayMode) => void,
+ *   render:(host:HTMLElement) => {ready:boolean, start:string}, onLevel:() => Promise<void>}} LevelSide
+ *   The Levels side, offered while `enabled()`: `render` fills its pane and says what Start
+ *   reads; `onLevel` deals the level. Its failures are handled like a category's.
+ */
 
 /**
  * `heading` takes focus on open: focusing the select instead opened it at once on an iPhone.
@@ -11,10 +18,10 @@
  *   isUnavailable:(categoryId:string)=>boolean,
  *   isComplete:(categoryId:string)=>boolean,
  *   onStart:(categoryId:string|null)=>Promise<void>,
- *   opener?:HTMLElement,
+ *   opener?:HTMLElement, levels?:LevelSide,
  * }} deps
  */
-export function makePicker({ root, heading, select, warning, error, start, cancel, categories, isUnavailable, isComplete, onStart, opener }) {
+export function makePicker({ root, heading, select, warning, error, start, cancel, categories, isUnavailable, isComplete, onStart, opener, levels }) {
   // A disabled placeholder, then the real categories. Random is the header's one-click New
   // game, so the list holds only things you can choose — no action hiding among the values.
   select.innerHTML = '';
@@ -28,6 +35,52 @@ export function makePicker({ root, heading, select, warning, error, start, cance
     o.value = c.id;
     o.textContent = c.name;
     select.appendChild(o);
+  }
+
+  // Random | Levels, under the heading, and the Levels pane in the category's place. Built
+  // here so the markup holds only what every game shows.
+  const doc = root.ownerDocument;
+  const seg = doc.createElement('div');
+  seg.className = 'seg';
+  seg.id = 'picker-mode';
+  seg.setAttribute('role', 'group');
+  seg.setAttribute('aria-label', 'Game');
+  for (const [mode, text] of [['random', 'Random'], ['levels', 'Levels']]) {
+    const b = doc.createElement('button');
+    b.type = 'button';
+    b.dataset.mode = mode;
+    b.textContent = text;
+    seg.append(b);
+  }
+  heading.after(seg);
+  const pane = doc.createElement('div');
+  pane.id = 'picker-level';
+  error.before(pane);
+  // Shown and hidden by style throughout: .seg and the category label set display, which
+  // would beat the hidden attribute.
+  const field = select.parentElement, label = select.labels?.[0];
+  let levelReady = false;
+  seg.style.display = pane.style.display = 'none';
+
+  /** @returns {boolean} */
+  const onLevels = () => !!levels && levels.enabled() && levels.getMode() === 'levels';
+
+  /** Show the side the player last chose; Random whenever levels are unavailable.
+   * @returns {void} */
+  function showSide() {
+    seg.style.display = levels && levels.enabled() ? '' : 'none';
+    const lv = onLevels();
+    for (const b of seg.querySelectorAll('button')) b.setAttribute('aria-pressed', String((b.dataset.mode === 'levels') === lv));
+    for (const el of [field, label]) if (el) el.style.display = lv ? 'none' : '';
+    pane.style.display = lv ? '' : 'none';
+    if (lv && levels) {
+      const r = levels.render(pane);
+      levelReady = r.ready;
+      start.textContent = r.start;
+    } else {
+      pane.replaceChildren();
+      start.textContent = 'Start';
+    }
   }
 
   // True while a deal is in flight. Without it, Start twice deals two puzzles, and
@@ -56,7 +109,7 @@ export function makePicker({ root, heading, select, warning, error, start, cance
   /** @returns {void} */
   function syncDisabled() {
     for (const o of select.options) if (o.value) o.disabled = isUnavailable(o.value);
-    start.toggleAttribute('disabled', !select.value);
+    start.toggleAttribute('disabled', onLevels() ? !levelReady : !select.value);
   }
 
   /** Rewrite the option labels, marking categories the player has fully covered.
@@ -85,6 +138,7 @@ export function makePicker({ root, heading, select, warning, error, start, cance
     // is why it lives in Settings rather than here.)
     select.value = '';
     labelOptions();
+    showSide();
     syncDisabled();
     warning.style.display = inProgress ? '' : 'none';
     error.hidden = true;
@@ -96,23 +150,33 @@ export function makePicker({ root, heading, select, warning, error, start, cance
   /** @param {string|null} chosen @param {string} label @returns {Promise<void>} */
   async function deal(chosen, label) {
     if (pending) return;
+    const lv = onLevels();
     setBusy(true);
     try {
-      await onStart(chosen);
+      await (lv && levels ? levels.onLevel() : onStart(chosen));
       setBusy(false);
       close();
     } catch {
       // Offline with an uncached category, or a random draw that lost the race with the
       // network. Stay open and say so: closing would leave a half-built board with
       // nothing explaining it.
-      error.textContent = chosen
-        ? `${label} isn't available offline yet. Try another category.`
-        : "No category is available offline yet. Try again once you're back online.";
+      error.textContent = lv ? "This level isn't available offline yet. Try again once you're back online."
+        : chosen ? `${label} isn't available offline yet. Try another category.`
+          : "No category is available offline yet. Try again once you're back online.";
       error.hidden = false;
-      if (chosen) select.value = '';
+      if (chosen && !lv) select.value = '';
       setBusy(false);
     }
   }
+
+  seg.addEventListener('click', (e) => {
+    const b = e.target instanceof Element ? e.target.closest('button[data-mode]') : null;
+    if (!b || !levels || pending) return;
+    levels.setMode(/** @type {PlayMode} */ (/** @type {HTMLElement} */ (b).dataset.mode));
+    error.hidden = true;
+    showSide();
+    syncDisabled();
+  });
 
   select.addEventListener('change', syncDisabled);
   // The label from `categories`, not from the option's text: labelOptions() may have
@@ -125,5 +189,12 @@ export function makePicker({ root, heading, select, warning, error, start, cance
   cancel.addEventListener('click', close);
   root.addEventListener('click', (e) => { if (e.target === root) close(); });
 
-  return { open, close };
+  /** Redraw the Levels pane, as when the account it shows has changed. @returns {void} */
+  function refresh() {
+    if (root.style.display !== 'flex' || pending) return;
+    showSide();
+    syncDisabled();
+  }
+
+  return { open, close, refresh };
 }

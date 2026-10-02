@@ -83,3 +83,26 @@ test('onOpen runs before the page shows, each time it opens', () => {
   row.click(); back.click(); row.click();
   assert.deepEqual(seen, [true, true]);
 });
+
+test('a re-rendered row is looked up each time and never bound; focus can be picked', () => {
+  const card = el('card'), page = el('page'), back = el('back'), field = el('field');
+  let row = el('first');
+  const sp = makeSubpage(/** @type {any} */ ({ card, page, row: () => row, back, name: 'signin', focus: () => field }));
+  assert.equal(row.attrs['aria-expanded'], undefined, 'nothing is set on a row that may be replaced');
+  row.click();
+  assert.equal(sp.isOpen(), false, 'main.js opens it');
+  sp.open();
+  assert.equal(focused, field);
+  assert.equal(row.attrs['aria-expanded'], 'true');
+  row = el('second');   // the section re-rendered while the page was open
+  back.click();
+  assert.equal(focused, row, 'Back lands on the row as it is now');
+  assert.equal(row.attrs['aria-expanded'], 'false');
+  // No row at all, and a focus pick that finds nothing: Back takes focus, closing is harmless.
+  const sp2 = makeSubpage(/** @type {any} */ ({ card, page, row: () => null, back, name: 'signin', focus: () => null }));
+  sp2.open();
+  assert.equal(focused, back);
+  focused = null;
+  sp2.close();
+  assert.equal(focused, null);
+});

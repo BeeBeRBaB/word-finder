@@ -20,7 +20,7 @@
     ["sign out keeps local", "src/levelplay.js", "      cloud.signOut();\n      local.clear();", "      cloud.signOut();"],
     ["sign out keeps owner", "src/levelplay.js", "try { if (store) store.removeItem(OWNER_KEY); } catch { /* nothing to forget */ }", ""],
     ["resume recomputes subject", "src/levelplay.js", "if (p.current) return { level: p.level, subject: p.current.subject, seed, difficulty: p.current.difficulty };", ""],
-    ["resume takes the setting", "src/levelplay.js", "seed, difficulty: p.current.difficulty };", "seed, difficulty };"],
+    ["resume takes the setting", "src/levelplay.js", "subject: p.current.subject, seed, difficulty: p.current.difficulty };", "subject: p.current.subject, seed, difficulty };"],
     ["late deal kept", "src/levelplay.js", "if (g !== gen || prog !== p) return null;", ""],
     ["wrong category count", "src/levelplay.js", "cat.subjectIds, categoryIds.length)", "cat.subjectIds, 1)"],
     ["resume across difficulty", "src/levelplay.js", "&& c.difficulty === deal.difficulty", ""],
@@ -34,6 +34,13 @@
     ["finish twice", "src/levelplay.js", "      live = null;\n      if (next === prog)", "      if (next === prog)"],
     ["stale result banked", "src/levelplay.js", "if (next === prog) return { breakdown, banked: false, progress: prog };", ""],
     ["result not pushed", "src/levelplay.js", "      keep(next);\n      void push();", "      keep(next);"],
-    ["score ignores difficulty", "src/levelplay.js", "elapsedMs: ms, difficulty: deal.difficulty,", "elapsedMs: ms, difficulty: 'normal',"]
+    ["score ignores difficulty", "src/levelplay.js", "elapsedMs: ms, difficulty: deal.difficulty,", "elapsedMs: ms, difficulty: 'normal',"],
+    ["resumable ignores the seed", "src/levelplay.js", " || levelSeed(p.seed, p.level) !== seed) return null;", ") return null;"],
+    ["resumable ignores the subject", "src/levelplay.js", "p.current.subject !== subjectId || ", ""],
+    ["resumable while signed out", "src/levelplay.js", "const p = cloud.session() ? prog : null;\n      if (!p || !p.current", "const p = prog;\n      if (!p || !p.current"],
+    ["resumable at the setting's difficulty", "src/levelplay.js", "subject: subjectId, seed, difficulty: p.current.difficulty };", "subject: subjectId, seed, difficulty: 'normal' };"],
+    ["playing never reports", "src/levelplay.js", "playing: () => (live ? live.deal : null),", "playing: () => null,"],
+    ["replay keeps a repeat", "src/levelplay.js", "if (!p || out.some(o => o.word === e.word)) continue;", "if (!p) continue;"],
+    ["replay runs one past the word", "src/levelplay.js", "const n = p.word.length - 1;\n    out.push", "const n = p.word.length;\n    out.push"]
   ]
 }

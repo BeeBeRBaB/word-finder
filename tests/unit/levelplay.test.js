@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { makeLevelPlay, levelPuzzle, OWNER_KEY } from '../../src/levelplay.js';
+import { makeLevelPlay, levelPuzzle, replaySelections, OWNER_KEY } from '../../src/levelplay.js';
 import { PRESETS, mixFor } from '../../src/layout.js';
 import { buildPuzzle } from '../../src/puzzle.js';
 import { makeRng } from '../../src/rng.js';
@@ -408,6 +408,7 @@ test('once the session has expired, nothing is sent until the player signs in ag
   await settle();
   assert.equal(cloud.saves.length, sent);
   assert.deepEqual(play.status(), { signedIn: false, username: null, level: 0, points: 0, pending: false, error: null });
+  assert.equal(play.resumable(deal.subject, deal.seed), null, 'no level to resume for a player no longer signed in');
 });
 
 test('a level\'s board depends only on its seed, difficulty and board size', () => {
@@ -420,4 +421,38 @@ test('a level\'s board depends only on its seed, difficulty and board size', () 
     assert.equal(a.words.length, shape.count);
     assert.notDeepEqual(a.words, levelPuzzle({ ...deal, difficulty: 'easy' }, subject, shape).words);
   }
+});
+
+test('a board saved mid-level is known by its subject and seed, and by nothing else', async () => {
+  const { play } = setup();
+  assert.equal(play.resumable('nature/birds', 1), null, 'signed out');
+  await play.signUp('ana', 'secret1');
+  const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'hard'));
+  assert.equal(play.resumable(deal.subject, deal.seed), null, 'dealt but not started: no board yet');
+  assert.equal(play.playing(), null);
+  play.start(deal, WORDS);
+  assert.equal(play.playing(), deal);
+  assert.deepEqual(play.resumable(deal.subject, deal.seed), deal);
+  assert.equal(play.resumable('food/bread', deal.seed), null, 'another subject');
+  assert.equal(play.resumable(deal.subject, deal.seed + 1), null, 'another board of that subject');
+  for (const w of WORDS) play.note(w, false);
+  assert.ok(play.finish());
+  assert.equal(play.playing(), null);
+  assert.equal(play.resumable(deal.subject, deal.seed), null, 'finished, so the next level is current');
+  const next = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
+  play.start(next, WORDS);
+  play.signOut();
+  assert.equal(play.resumable(next.subject, next.seed), null);
+  assert.equal(play.playing(), null);
+});
+
+test('a resumed level puts each recorded word back where the board holds it, once, in order', () => {
+  const puzzle = { placements: [{ word: 'ROBIN', x0: 0, y0: 0, dx: 1, dy: 0 }, { word: 'OWL', x0: 2, y0: 3, dx: 0, dy: -1 }, { word: 'WREN', x0: 4, y0: 4, dx: -1, dy: -1 }] };
+  const ev = (/** @type {string} */ word) => ({ word, at: 0, revealed: false });
+  assert.deepEqual(replaySelections(puzzle, [ev('OWL'), ev('HERON'), ev('ROBIN'), ev('OWL'), ev('WREN')]), [
+    { word: 'OWL', sel: { x0: 2, y0: 3, x1: 2, y1: 1 } },
+    { word: 'ROBIN', sel: { x0: 0, y0: 0, x1: 4, y1: 0 } },
+    { word: 'WREN', sel: { x0: 4, y0: 4, x1: 1, y1: 1 } },
+  ]);
+  assert.deepEqual(replaySelections(puzzle, []), []);
 });

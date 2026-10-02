@@ -11,20 +11,22 @@ const LEGACY_AUTO_KEY = 'wordfinder-autonext';
 /**
  * @typedef {{art:string, area:'list'|'full', board:'auto'|'compact'|'full',
  *   difficulty:'normal'|'easy'|'hard', letters:'normal'|'large', motion:'system'|'reduce',
- *   sound:boolean, vibrate:boolean, reveal:boolean, autoNext:boolean}} Settings
+ *   sound:boolean, vibrate:boolean, reveal:boolean, autoNext:boolean, play:'random'|'levels'}} Settings
+ *   play: the side of New game last chosen. It has no Settings control.
  * @typedef {Pick<Storage,'getItem'|'setItem'>} SettingsStore
  */
 
 /** @type {Readonly<Settings>} */
 export const DEFAULTS = Object.freeze({
   art: 'illustrated', area: 'list', board: 'auto', difficulty: 'normal', letters: 'normal', motion: 'system',
-  sound: true, vibrate: true, reveal: true, autoNext: true,
+  sound: true, vibrate: true, reveal: true, autoNext: true, play: 'random',
 });
 
 /** The allowed values of each multiple-choice setting, default first. */
 export const CHOICES = Object.freeze({
   art: BACKGROUNDS.map(b => b.id), area: ['list', 'full'], board: ['auto', 'compact', 'full'],
   difficulty: ['normal', 'easy', 'hard'], letters: ['normal', 'large'], motion: ['system', 'reduce'],
+  play: ['random', 'levels'],
 });
 const FLAGS = ['sound', 'vibrate', 'reveal', 'autoNext'];
 

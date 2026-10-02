@@ -8,6 +8,15 @@ test('a first visit gets the defaults', () => {
   assert.equal(DEFAULTS.art, 'illustrated');
   assert.equal(DEFAULTS.board, 'auto');
   assert.equal(DEFAULTS.difficulty, 'normal');
+  assert.equal(DEFAULTS.play, 'random', 'levels are opt-in');
+});
+
+test('the New game side is remembered, and only random or levels', () => {
+  const store = memStore();
+  makeSettings({ store }).set('play', 'levels');
+  assert.equal(makeSettings({ store }).get().play, 'levels');
+  assert.deepEqual(CHOICES.play, ['random', 'levels']);
+  assert.equal(normalizeSettings({ play: 'daily' }).play, 'random');
 });
 
 test('a change persists and is read back', () => {

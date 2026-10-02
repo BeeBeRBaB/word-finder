@@ -1,6 +1,7 @@
-// The levels screens outside the board: the Account section of Settings, the sign-in form and
-// the Levels side of New game. Each renders into a host main.js gives it, and talks to the
-// account only through levelplay.js; how dialogs and Settings pages open is main.js's.
+// The levels screens outside the board: the Account section of Settings, the sign-in form, the
+// Levels side of New game and a level's score card. Each renders into a host main.js gives it,
+// and talks to the account only through levelplay.js; how dialogs and pages open is main.js's.
+import { playBreakdown } from './scorecard.js';
 
 /**
  * @typedef {import('./levelplay.js').Status} Status
@@ -11,6 +12,9 @@
  * @typedef {{status():Status, signIn(u:string, p:string):Promise<Account>,
  *   signUp(u:string, p:string):Promise<Account>, signOut():void}} AccountPlay
  * @typedef {{status():Status, progress():LevelProgress|null}} ChoicePlay
+ * @typedef {import('./scorecard.js').Playback} Playback
+ * @typedef {Omit<import('./scorecard.js').PlayOptions, 'footnote'|'nextLabel'> & {focus?:boolean}} LevelWinOptions
+ *   focus: move focus into the card, as when no pane is open over it.
  */
 
 /** @param {Document} doc @param {string} tag @param {string} [cls] @param {string} [text]
@@ -193,4 +197,43 @@ export function renderLevelChoice(host, play, on) {
  * @param {Finish} f @returns {string} */
 export function levelFootnote(f) {
   return f.banked ? `${points(f.progress.points)} in all` : 'Already finished on another device, so these points were not added.';
+}
+
+/** @type {WeakMap<HTMLElement, Playback>} */
+const levelWins = new WeakMap();
+
+/** Make the win card a level's score card: "Level N complete" over the breakdown, played a line
+ * at a time, and the account's new total. `card[data-level]` lets the stylesheet hide the plain
+ * card's message and buttons. @param {HTMLElement} card @param {HTMLElement} title its heading
+ * @param {number} level @param {Finish} f @param {LevelWinOptions} opts @returns {Playback} */
+export function showLevelWin(card, title, level, f, opts) {
+  clearLevelWin(card, title);
+  const doc = card.ownerDocument;
+  title.dataset.plain = title.textContent ?? '';
+  title.textContent = `Level ${level} complete`;
+  card.dataset.level = String(level);
+  const host = make(doc, 'div', 'sc-host');
+  title.after(host);
+  const { focus, ...rest } = opts;
+  const pb = playBreakdown(host, f.breakdown, { ...rest, nextLabel: 'Next level', footnote: levelFootnote(f) });
+  levelWins.set(card, pb);
+  if (focus) {
+    const skip = /** @type {HTMLElement|null} */ (host.querySelector('.sc-skip'));
+    const go = /** @type {HTMLElement|null} */ (host.querySelector('.sc-go'));
+    (skip && !skip.hidden ? skip : go)?.focus({ preventScroll: true });
+  }
+  return pb;
+}
+
+/** Put the plain win card back, stopping a score card still playing. @param {HTMLElement} card
+ * @param {HTMLElement} title @returns {void} */
+export function clearLevelWin(card, title) {
+  levelWins.get(card)?.cancel();
+  levelWins.delete(card);
+  card.querySelector('.sc-host')?.remove();
+  if (title.dataset.plain !== undefined) {
+    title.textContent = title.dataset.plain;
+    delete title.dataset.plain;
+  }
+  delete card.dataset.level;
 }

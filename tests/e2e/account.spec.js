@@ -233,3 +233,73 @@ test('the score card footnote is the new total, or why it did not change', async
   });
   expect(lines).toEqual(['5,644 points in all', '1 point in all', 'Already finished on another device, so these points were not added.']);
 });
+
+/** The real win card, showing, with a level's score card in it.
+ * @param {Page} page @param {object} [opts] */
+async function levelWin(page, opts = {}) {
+  await page.goto('/?seed=1&subject=nature/birds');
+  await page.evaluate(async (opts) => {
+    const url = '/src/account.js', scoring = '/src/scoring.js';
+    const m = await import(url);
+    const { scoreLevel } = await import(scoring);
+    const W = ['ROBIN', 'WREN', 'OWL', 'HERON', 'FINCH', 'CRANE', 'EAGLE', 'SWIFT'];
+    const breakdown = scoreLevel({ events: W.map((w, i) => ({ word: w, at: 9000 * (i + 1), revealed: i === 7 })), elapsedMs: 96000, difficulty: 'normal', wordCount: 8 });
+    const w = /** @type {any} */ (window);
+    w.calls = [];
+    w.m = m;
+    w.card = document.getElementById('wincard');
+    w.title = w.card.querySelector('h2');
+    /** @type {HTMLElement} */ (document.getElementById('win')).style.display = 'flex';
+    w.pb = m.showLevelWin(w.card, w.title, 12, { breakdown, banked: true, progress: { points: 5644 } },
+      { onNext: () => w.calls.push('next'), onStay: () => w.calls.push('stay'), ...opts });
+  }, opts);
+}
+
+test('a level\'s win card names the level and plays its score, with the new total under it', async ({ page }) => {
+  await levelWin(page, { reduceMotion: true, focus: true });
+  const card = page.locator('#wincard');
+  await expect(card.locator('h2')).toHaveText('Level 12 complete');
+  await expect(card).toHaveAttribute('data-level', '12');
+  // Right under the title, so it reads before the plain card's parts the stylesheet hides.
+  expect(await page.evaluate(() => document.querySelector('#wincard h2')?.nextElementSibling?.className)).toBe('sc-host');
+  await expect(card.locator('.sc-all')).toHaveText('5,644 points in all');
+  await expect(card.getByRole('button', { name: /Next level/ })).toBeFocused();
+  await card.getByRole('button', { name: /Next level/ }).click();
+  expect(await calls(page)).toEqual(['next']);
+});
+
+test('while the score plays, focus waits on Skip', async ({ page }) => {
+  await levelWin(page, { focus: true });
+  await expect(page.locator('#wincard .sc-skip')).toBeFocused();
+});
+
+test('clearing it stops the countdown and puts the plain card back', async ({ page }) => {
+  await levelWin(page, { countdownMs: 1500, reduceMotion: true });
+  await page.evaluate(() => { const w = /** @type {any} */ (window); w.m.clearLevelWin(w.card, w.title); });
+  const card = page.locator('#wincard');
+  await expect(card.locator('h2')).toHaveText('Puzzle solved!');
+  await expect(card).not.toHaveAttribute('data-level');
+  await expect(card.locator('.sc-host')).toHaveCount(0);
+  await page.waitForTimeout(2000);
+  expect(await calls(page)).toEqual([]);
+  // Twice is harmless, and showing again after a clear starts clean.
+  await page.evaluate(() => { const w = /** @type {any} */ (window); w.m.clearLevelWin(w.card, w.title); });
+  await expect(card.locator('h2')).toHaveText('Puzzle solved!');
+});
+
+test('showing a second level replaces the first score card rather than stacking it', async ({ page }) => {
+  await levelWin(page, { countdownMs: 1500, reduceMotion: true });
+  await page.evaluate(() => {
+    const w = /** @type {any} */ (window);
+    w.m.showLevelWin(w.card, w.title, 13, { breakdown: { lines: [], total: 0 }, banked: false, progress: { points: 1 } },
+      { reduceMotion: true, countdownMs: 0, onNext: () => w.calls.push('next2'), onStay() {} });
+  });
+  const card = page.locator('#wincard');
+  await expect(card.locator('.sc-host')).toHaveCount(1);
+  await expect(card.locator('h2')).toHaveText('Level 13 complete');
+  await expect(card.locator('.sc-all')).toHaveText('Already finished on another device, so these points were not added.');
+  await page.waitForTimeout(2000);
+  expect(await calls(page)).toEqual([]);   // the first card's countdown was stopped
+  await page.evaluate(() => { const w = /** @type {any} */ (window); w.m.clearLevelWin(w.card, w.title); });
+  await expect(card.locator('h2')).toHaveText('Puzzle solved!', { timeout: 1000 });
+});

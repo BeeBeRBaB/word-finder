@@ -2,13 +2,18 @@
 // place until Back returns to that row. Owns no setting; main.js reads and writes those.
 
 /**
- * @typedef {{card:HTMLElement, page:HTMLElement, row:HTMLElement, back:HTMLElement, name:string, onOpen?:() => void}} SubpageEls
+ * @typedef {{card:HTMLElement, page:HTMLElement, row:HTMLElement|(() => HTMLElement|null), back:HTMLElement,
+ *   name:string, onOpen?:() => void, focus?:() => HTMLElement|null}} SubpageEls
  * `card` holds the main page and every subpage; `name` is what card[data-page] says while open;
- * `onOpen` runs before the page shows, to fill it.
+ * `onOpen` runs before the page shows, to fill it. `row` is a function when the row is
+ * re-rendered: it is then looked up each time, and main.js opens the page itself.
+ * `focus` picks where focus lands instead of the current choice.
  */
 
 /** @param {SubpageEls} els */
-export function makeSubpage({ card, page, row, back, name, onOpen }) {
+export function makeSubpage({ card, page, row, back, name, onOpen, focus }) {
+  /** @returns {HTMLElement|null} */
+  const rowEl = () => (typeof row === 'function' ? row() : row);
   /** @returns {boolean} */
   const isOpen = () => card.dataset.page === name;
 
@@ -18,9 +23,9 @@ export function makeSubpage({ card, page, row, back, name, onOpen }) {
     onOpen?.();
     card.dataset.page = name;
     page.hidden = false;
-    row.setAttribute('aria-expanded', 'true');
+    rowEl()?.setAttribute('aria-expanded', 'true');
     card.scrollTop = 0;
-    const on = /** @type {HTMLElement|null} */ (page.querySelector('input:checked'));
+    const on = focus ? focus() : /** @type {HTMLElement|null} */ (page.querySelector('input:checked'));
     (on ?? back).focus({ preventScroll: true });
   }
   /** Back to the main page. `refocus` is false when the whole pane is closing.
@@ -29,11 +34,14 @@ export function makeSubpage({ card, page, row, back, name, onOpen }) {
     if (!isOpen()) return;
     delete card.dataset.page;
     page.hidden = true;
-    row.setAttribute('aria-expanded', 'false');
-    if (refocus) row.focus({ preventScroll: true });
+    const r = rowEl();
+    r?.setAttribute('aria-expanded', 'false');
+    if (refocus) r?.focus({ preventScroll: true });
   }
-  row.setAttribute('aria-expanded', 'false');
-  row.addEventListener('click', open);
+  if (typeof row !== 'function') {
+    row.setAttribute('aria-expanded', 'false');
+    row.addEventListener('click', open);
+  }
   back.addEventListener('click', () => close());
   return { open, close, isOpen };
 }

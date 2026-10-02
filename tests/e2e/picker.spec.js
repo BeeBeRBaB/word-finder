@@ -231,3 +231,90 @@ test('Escape does not cancel a one-click deal that is still loading', async ({ p
   await page.keyboard.press('Escape');
   await expect.poll(() => page.locator('#letters').textContent(), { timeout: 5000 }).not.toBe(board);
 });
+
+/** The real dialog, rebuilt by a second makePicker with a stand-in Levels side, so picker.js
+ * is tested in the page's own markup and CSS.
+ * @param {import('@playwright/test').Page} page
+ * @param {{enabled?:boolean, mode?:string, ready?:boolean, fail?:boolean}} [o] */
+async function levelsPicker(page, o = {}) {
+  await page.goto('/?seed=1&subject=nature/birds');
+  await page.evaluate(async ({ enabled = true, mode = 'levels', ready = true, fail = false }) => {
+    const url = '/src/picker.js';
+    const { makePicker } = await import(url);
+    const old = /** @type {HTMLElement} */ (document.getElementById('picker'));
+    const root = /** @type {HTMLElement} */ (old.cloneNode(true));
+    root.querySelector('#picker-mode')?.remove();
+    root.querySelector('#picker-level')?.remove();
+    old.replaceWith(root);
+    const w = /** @type {any} */ (window);
+    Object.assign(w, { log: [], mode, ready, fail, enabled });
+    const q = (/** @type {string} */ id) => root.querySelector('#' + id);
+    w.p2 = makePicker({ root, heading: q('picker-title'), select: q('picker-select'), warning: q('picker-warning'),
+      error: q('picker-error'), start: q('picker-start'), cancel: q('picker-cancel'),
+      categories: [{ id: 'nature', name: 'Nature' }], isUnavailable: () => false, isComplete: () => false,
+      onStart: async (/** @type {string} */ id) => { w.log.push(['random', id]); },
+      levels: {
+        enabled: () => w.enabled, getMode: () => w.mode,
+        setMode: (/** @type {string} */ m) => { w.log.push(['setMode', m]); w.mode = m; },
+        render: (/** @type {HTMLElement} */ host) => { host.textContent = 'Level 12'; return { ready: w.ready, start: w.ready ? 'Play level 12' : 'Play level' }; },
+        onLevel: async () => { w.log.push(['level']); if (w.fail) throw new Error('offline'); },
+      } });
+    w.p2.open(false);
+  }, o);
+}
+/** @param {import('@playwright/test').Page} page */
+const picks = (page) => page.evaluate(() => /** @type {any} */ (window).log);
+
+test('the Levels side takes the category\'s place, and Start plays the level', async ({ page }) => {
+  await levelsPicker(page);
+  const mode = page.locator('#picker-mode');
+  await expect(mode).toBeVisible();
+  await expect(mode.getByRole('button', { name: 'Levels' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#picker-select')).toBeHidden();
+  await expect(page.locator('label[for="picker-select"]')).toBeHidden();
+  await expect(page.locator('#picker-level')).toHaveText('Level 12');
+  await expect(page.locator('#picker-start')).toHaveText('Play level 12');
+  await page.locator('#picker-start').click();
+  await expect(page.locator('#picker')).toBeHidden();
+  expect(await picks(page)).toEqual([['level']]);
+});
+
+test('Random brings the category back, and the side chosen is remembered', async ({ page }) => {
+  await levelsPicker(page);
+  await page.locator('#picker-mode').getByRole('button', { name: 'Random' }).click();
+  await expect(page.locator('#picker-mode').getByRole('button', { name: 'Random' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#picker-level')).toBeHidden();
+  await expect(page.locator('#picker-start')).toHaveText('Start');
+  await expect(page.locator('#picker-start')).toBeDisabled();
+  await page.locator('#picker-select').selectOption('nature');
+  await page.locator('#picker-start').click();
+  expect(await picks(page)).toEqual([['setMode', 'random'], ['random', 'nature']]);
+});
+
+test('a Levels side that cannot start yet keeps Start off until it is redrawn ready', async ({ page }) => {
+  await levelsPicker(page, { ready: false });
+  await expect(page.locator('#picker-start')).toHaveText('Play level');
+  await expect(page.locator('#picker-start')).toBeDisabled();
+  await page.evaluate(() => { const w = /** @type {any} */ (window); w.ready = true; w.p2.refresh(); });
+  await expect(page.locator('#picker-start')).toBeEnabled();
+  await expect(page.locator('#picker-start')).toHaveText('Play level 12');
+});
+
+test('without accounts there is no Levels side, whatever was chosen before', async ({ page }) => {
+  await levelsPicker(page, { enabled: false, mode: 'levels' });
+  await expect(page.locator('#picker-mode')).toBeHidden();
+  await expect(page.locator('#picker-level')).toBeHidden();
+  await expect(page.locator('#picker-select')).toBeVisible();
+  await expect(page.locator('#picker-start')).toHaveText('Start');
+});
+
+test('a level that cannot load keeps the dialog open and says so', async ({ page }) => {
+  await levelsPicker(page, { fail: true });
+  await page.locator('#picker-start').click();
+  await expect(page.locator('#picker-error')).toHaveText("This level isn't available offline yet. Try again once you're back online.");
+  await expect(page.locator('#picker')).toBeVisible();
+  await expect(page.locator('#picker-start')).toBeEnabled();
+  // Switching side clears the message.
+  await page.locator('#picker-mode').getByRole('button', { name: 'Random' }).click();
+  await expect(page.locator('#picker-error')).toBeHidden();
+});
