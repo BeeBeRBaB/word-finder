@@ -18,7 +18,7 @@ current default marked), and don't build on an assumption.
 
 ## What is live (main, verified on GitHub Pages)
 - **Settings:** a compact two-column card (fits 1366x768), and a full-screen page with Back on phones and short screens. Its Theme and Background rows each open a page inside the card (`subpage.js`). Opening a pane focuses its title, never a dropdown, which an iPhone would open at once.
-- **Theme page** (`lookpicker.js`): 7 themes x 4 palettes (Classic, Jewel, Duotone, Calm) as one choice, each tile previewed in its own colours, read off the stylesheet once per mode. Storage keeps the two keys, `wordfinder-theme` and `wordfinder-palette`.
+- **Theme page** (`lookpicker.js`): 7 themes x 4 palettes (Classic, Jewel, Duotone, Calm) as one choice, each tile previewed in its own colours, read off the stylesheet once per mode. Storage keeps the two keys, `wordfinder-theme` and `wordfinder-palette`. Known gaps: the first open in each mode spends about 80ms reading the 28 looks (300–600ms at 6x CPU throttle), so split it across frames if a slow phone shows it; and a tile shows checked and focus only through `:has()` (absent before Firefox 121).
 - **Background page** (`bgpicker.js`): Area (Word list / Full screen) and a tile per registry background. The nine animations run behind the word list (`#bgside`) or the page (`#bg`), at exactly 30fps. Text over them keeps a 2.5px ring of the ground colour and the header's controls are filled, so every look passes AA over every background (`node tools/sims/backgrounds/contrast.mjs`, about 50 minutes).
 - **Service worker:** the code cache is keyed by path, and CACHE is `wordfinder-v16`.
 - **Tests:** `PORT=<port> npx playwright test` moves the whole e2e run.
