@@ -62,6 +62,22 @@ test('signed in, it names the account and where it stands, and signs out', async
   expect(await calls(page)).toEqual([['signOut'], ['onSignOut']]);
 });
 
+test('a 20-character username is cut short rather than running under Sign out', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await mount(page, { ...IN, username: 'mmmmmmmmmmmmmmmmmmmm', pending: true }, 'account');
+  await page.locator('#acct-host').getByRole('button', { name: 'Sign out' }).click();   // the wider "Sign out anyway"
+  // Text overflowing its box does not move the box, so clipping is what keeps it off the button.
+  const m = await page.evaluate(() => {
+    const name = /** @type {HTMLElement} */ (document.querySelector('.acct-name'));
+    const btn = /** @type {HTMLElement} */ (document.querySelector('.acct-seg button'));
+    return { right: name.getBoundingClientRect().right, left: btn.getBoundingClientRect().left, btnRight: btn.getBoundingClientRect().right,
+      contained: name.scrollWidth <= name.clientWidth || getComputedStyle(name).overflowX === 'hidden' };
+  });
+  expect(m.right).toBeLessThanOrEqual(m.left);
+  expect(m.contained).toBe(true);
+  expect(m.btnRight).toBeLessThanOrEqual(320);
+});
+
 test('signing out with progress not saved online asks once more', async ({ page }) => {
   await mount(page, { ...IN, pending: true, error: 'offline' }, 'account');
   const host = page.locator('#acct-host');
@@ -140,5 +156,9 @@ test('every control is a 44px touch target, and the fields are 16px so iOS does 
     expect(s.h).toBeGreaterThanOrEqual(44);
     expect(s.w).toBeGreaterThanOrEqual(44);
     if (s.tag === 'INPUT') expect(s.font).toBe('16px');
+  }
+  // The board's html,body rule turns both off; a field without them back cannot be typed in on iOS.
+  for (const f of await page.evaluate(() => [...document.querySelectorAll('#acct-host input')].map(el => [getComputedStyle(el).touchAction, getComputedStyle(el).userSelect]))) {
+    expect(f).toEqual(['manipulation', 'text']);
   }
 });

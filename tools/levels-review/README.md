@@ -19,3 +19,5 @@ They are dev-only: nothing imports them and they add no dependency. Run them fro
 Scorecard review (2026-10-02): no logic defects found in `src/scorecard.js`, and the harness's countdown, Stay, reduced-motion, hidden-tab and focus checks all behave. Open, all in `styles.css`:
 - At 320px wide, `#wincard` (min-width 260px plus 42px padding a side) spills off both sides of the screen, with or without the score card, and a positive score card is 594px tall on a 568px screen. A fix is shown to the owner but not applied yet.
 - In Duotone light, the countdown bar's fill is 2.3–2.8:1 against its track on every theme, under the 3:1 non-text minimum. All score card text passes 4.5:1 in all 56 looks.
+- `levels-contrast.mjs` also fails Duotone dark's `--hint` on the Settings card (3.8–4.0:1), which the account form's notes use: the known gap in handoff question 6, not a new one.
+- iOS is untested: the account fields restore `touch-action` and `user-select`, which `html,body` turn off, but only Chromium ran here.
