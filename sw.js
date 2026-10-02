@@ -15,6 +15,9 @@ const ASSETS=['./','./index.html','./styles.css','./src/main.js','./src/rng.js',
  * sw.js growing with it. @param {URL} u @returns {boolean} */
 const isSubject=u=>u.pathname.includes('/src/subjects/');
 
+/** @param {URL} u @returns {boolean} */
+const isFont=u=>u.hostname==='fonts.googleapis.com'||u.hostname==='fonts.gstatic.com';
+
 // Code is stale-while-revalidate; icons and fonts are cache-first. Serving code
 // cache-first pinned visitors to the last build until CACHE was bumped by hand.
 /** @param {URL} u @returns {boolean} */
@@ -37,6 +40,9 @@ sw.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.al
 sw.addEventListener('fetch',e=>{
   if(e.request.method!=='GET')return;
   const url=new URL(e.request.url);
+  // Fonts are the only cross-origin files worth caching. Firestore documents have no
+  // extension, so cache-first would serve every account a device's first copy forever.
+  if(url.origin!==sw.location.origin&&!isFont(url))return;
   // Word pools: cache-first, own cache. They never change in place, so revalidating
   // would spend a request to learn nothing.
   if(url.origin===sw.location.origin&&isSubject(url)){

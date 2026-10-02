@@ -50,7 +50,7 @@ These are committed so a thread can pick them up from GitHub. None of them is im
 - `tools/sims/`: the million-board generator check, the adjacency check, the torn-deploy sim, the palette cascade and resolver fuzz, the Settings geometry, behaviour and contrast checks, and a contact sheet of the four palettes.
 
 ## Must fix before accounts ship
-- **sw.js caches cross-origin GETs cache-first.** Firestore document URLs have no file extension, so `isCode` is false and `cloud.load()` would return a device's first copy forever. Pass every cross-origin request except Google Fonts straight to the network, and add a sw.test case. `node tools/levels-review/sw-cloud-probe.mjs` FAILs today and should PASS after the fix.
+- **Done 2026-10-02: sw.js no longer caches cross-origin GETs.** Everything cross-origin except Google Fonts goes straight to the network, `sw.test.js` checks it, and `node tools/levels-review/sw-cloud-probe.mjs` PASSes. Ship it before (not with) the commit that wires `cloud.js`, so the fixed worker already controls the page.
 - **Torn deploys:** bump CACHE whenever markup and modules change together. `node tools/sims/sw/tear.mjs <old-ref> <new-ref>` shows whether a deploy tears.
 
 ## Next steps, in order

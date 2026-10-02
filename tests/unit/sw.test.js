@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import vm from 'node:vm';
 
 const ROOT = new URL('../../', import.meta.url);
 const sw = readFileSync(new URL('sw.js', ROOT), 'utf8');
@@ -98,4 +99,41 @@ test('same-origin code is read and refreshed under one path-only key', () => {
   assert.match(sw, /const key=url\.origin===sw\.location\.origin\?url\.origin\+url\.pathname:req;/);
   assert.match(sw, /cache\.match\(key\)/);
   assert.match(sw, /cache\.put\(key,res\.clone\(\)\)/);
+});
+
+/** Runs sw.js against stub globals and returns the fetch listener. @returns {(e: object) => void} */
+function swFetchHandler() {
+  /** @type {Record<string, (e: object) => void>} */
+  const on = {};
+  const self = {
+    location: new URL('https://beeberbab.github.io/word-finder/sw.js'),
+    addEventListener: (/** @type {string} */ t, /** @type {(e: object) => void} */ f) => { on[t] = f; },
+  };
+  vm.runInNewContext(sw, { self, caches: { open: () => new Promise(() => {}) }, fetch: () => new Promise(() => {}), URL, Request, Response });
+  return on.fetch;
+}
+
+/** @param {(e: object) => void} handler @param {string} url @returns {boolean} */
+function answers(handler, url) {
+  let took = false;
+  handler({ request: new Request(url), respondWith() { took = true; }, waitUntil() {} });
+  return took;
+}
+
+// Firestore document URLs have no extension, so cache-first would hand cloud.load() a
+// device's first copy forever, to every account. Only Google Fonts is worth caching.
+test('cross-origin GETs other than Google Fonts are left to the network', () => {
+  const h = swFetchHandler();
+  for (const u of [
+    'https://firestore.googleapis.com/v1/projects/p/databases/(default)/documents/users/u1',
+    'https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=k',
+    'https://securetoken.googleapis.com/v1/token?key=k',
+    'https://example.com/anything.js',
+  ]) assert.equal(answers(h, u), false, `${u} must not be answered from the service worker`);
+  for (const u of [
+    'https://fonts.googleapis.com/css2?family=Space+Mono&display=swap',
+    'https://fonts.gstatic.com/s/spacemono/v13/x.woff2',
+    'https://beeberbab.github.io/word-finder/src/main.js',
+    'https://beeberbab.github.io/word-finder/src/subjects/sports.js',
+  ]) assert.equal(answers(h, u), true, `${u} should still be served through the caches`);
 });
