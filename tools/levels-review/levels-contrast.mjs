@@ -1,6 +1,7 @@
-// WCAG contrast of every text role on the score card against the win card, and of the countdown
-// bar against its track (3:1, non-text), for each palette x theme x mode. Exits 1 on any failure.
-//   node tools/levels-review/scorecard-contrast.mjs
+// WCAG contrast of every text role on the score card (against the win card) and on the account
+// section and sign-in form (against the Settings card), and of the countdown bar against its
+// track (3:1, non-text), for each palette x theme x mode. Exits 1 on any failure.
+//   node tools/levels-review/levels-contrast.mjs
 import { chromium } from '@playwright/test';
 import { serve } from '../sims/site.mjs';
 
@@ -25,6 +26,23 @@ await page.evaluate(async () => {
     host.querySelector('.sc')?.classList.add('sc-done');
   }
   document.getElementById('win').style.display = 'flex';
+  const acct = await import('/src/account.js');
+  const settings = document.getElementById('settings');
+  if (settings) settings.style.display = 'flex';
+  const body = document.getElementById('settings-body');
+  const status = { signedIn: true, username: 'ana', level: 3, points: 90, pending: false, error: null };
+  const play = { status: () => status, signIn: async () => ({ uid: '', username: '' }), signUp: async () => ({ uid: '', username: '' }), signOut() {} };
+  for (const id of ['acct-section', 'acct-page']) {
+    const host = document.createElement('section');
+    host.id = id;
+    host.className = 'panegroup';
+    body?.prepend(host);
+  }
+  acct.renderAccount(/** @type {HTMLElement} */ (document.getElementById('acct-section')), play, { onSignIn() {}, onSignOut() {} });
+  acct.renderSignIn(/** @type {HTMLElement} */ (document.getElementById('acct-page')), play, { onDone() {} });
+  const err = /** @type {HTMLElement} */ (document.querySelector('.acct-err'));
+  err.hidden = false;
+  err.textContent = 'Wrong username or password.';
 });
 
 let failed = 0;
@@ -42,6 +60,15 @@ for (const palette of PALETTES) for (const mode of ['dark', 'light']) for (const
       count: cr(cs('#sc-pos .sc-count').color, card), stay: cr(cs('#sc-pos .sc-stay').color, card),
       next: cr(cs('#sc-pos .sc-go').color, cs('#sc-pos .sc-go').backgroundColor),
     };
+    const pane = cs('#settingscard').backgroundColor;
+    Object.assign(text, {
+      acctName: cr(cs('#acct-section .acct-name').color, pane), acctLine: cr(cs('#acct-section .acct-line').color, pane),
+      fieldLabel: cr(cs('#acct-page .panelabel').color, pane), note: cr(cs('#acct-page .panenote').color, pane),
+      input: cr(cs('#acct-page input').color, cs('#acct-page input').backgroundColor),
+      error: cr(cs('#acct-page .acct-err').color, cs('#acct-page .acct-err').backgroundColor),
+      submit: cr(cs('#acct-page .acct-submit').color, cs('#acct-page .acct-submit').backgroundColor),
+      toggle: cr(cs('#acct-page .acct-toggle').color, pane),
+    });
     const track = cs('#sc-pos .sc-bar').backgroundColor;
     const bar = { pos: cr(cs('#sc-pos .sc-bar i').backgroundColor, track), neg: cr(cs('#sc-neg .sc-bar i').backgroundColor, track) };
     const bad = [...Object.entries(text).filter(([, v]) => v < 4.5), ...Object.entries(bar).filter(([, v]) => v < 3)].map(([k]) => k);

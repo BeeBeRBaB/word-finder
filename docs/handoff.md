@@ -29,7 +29,7 @@ These are committed so a thread can pick them up from GitHub. None of them is im
   - `settings.js` lists the registry ids literally (a static import would add a module to the shell before the precache has it: a returning visitor's offline cold start broke in review). `backgrounds.test.js` holds the two lists equal. It also has a new `area` setting with values `list` or `full`.
   - Once the picker ships, a stored animated id leaves the old 3-option select blank, so replace that select in the same change.
   - `tools/coverage.mjs` excludes `src/backgrounds/**` from the 90% floor.
-- **Levels and accounts:** `src/scoring.js`, `src/levels.js`, `src/cloud.js`, `src/scorecard.js` and `src/levelplay.js` (the flow main.js will call), with unit tests, `firestore.rules`, and README rows plus the Accounts section.
+- **Levels and accounts:** `src/scoring.js`, `src/levels.js`, `src/cloud.js`, `src/scorecard.js`, `src/levelplay.js` (the flow main.js will call) and `src/account.js` (the sign-in UI, with `.acct-*` styles and `account.spec.js`), with unit tests, `firestore.rules`, and README rows plus the Accounts section.
   - `styles.css` ends with a `/* Level score card */` section (`.sc-*` classes, unused so far).
   - scoring and levels were reviewed clean.
   - cloud had 5 defects, fixed by its reviewer.
