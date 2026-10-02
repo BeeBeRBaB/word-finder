@@ -146,6 +146,8 @@ every edit to `src/*.js`, `sw.js`, `styles.css`, or `index.html`: it checks the
 `ASSETS` parity above, then runs the unit suite and `tsc`. It takes about 0.7s and
 blocks on failure, so those three things do not need running by hand.
 
-Commits are authored as `BeeBeRBaB <puchkiray@outlook.com>` from repo git config —
-no `-c` overrides needed — and carry no `Co-Authored-By` trailer. Match the
+Commits are authored as `BeeBeRBaB <puchkiray@outlook.com>` and carry no
+`Co-Authored-By` trailer. The owner's checkout sets this in its git config; a fresh clone
+(a cloud or Project thread) has neither, so run `git config user.name BeeBeRBaB` and
+`git config user.email puchkiray@outlook.com` before the first commit. Match the
 existing subject style: imperative, specific, often two clauses joined by "and".
