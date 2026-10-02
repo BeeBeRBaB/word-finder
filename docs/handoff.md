@@ -8,27 +8,25 @@ and the order to do things in. CLAUDE.md still governs how to work; README has t
 These are open decisions. Ask them together at the start of the thread (one message, with the
 current default marked), and don't build on an assumption.
 
-1. **Branches.** Project threads work on their own branch, but CLAUDE.md says push to `main`, with no PRs and no feature branches, because `main` is what GitHub Pages serves. After `npm test` passes, should a thread fast-forward its work into `main` itself, or leave the branch for the owner?
-2. **Ultracode for every thread.** It is a per-session setting. Adding `"ultracode": true` to the repo's `.claude/settings.json` would turn it on for every thread in this repo, including local sessions, which uses more tokens. Should we add it? Default: no.
-3. **Still art on phones.** With Background area = "Word list", should a phone keep today's board-corner art (the owner chose it earlier), or move the art behind the word list? Default: keep the corner.
+1. **Branches.** *Answered 2026-10-02: threads merge verified work into `main` themselves.* Project threads work on their own branch, but CLAUDE.md says push to `main`, with no PRs and no feature branches, because `main` is what GitHub Pages serves. After `npm test` passes, should a thread fast-forward its work into `main` itself, or leave the branch for the owner?
+2. **Ultracode for every thread.** *Answered 2026-10-02: no.* It is a per-session setting. Adding `"ultracode": true` to the repo's `.claude/settings.json` would turn it on for every thread in this repo, including local sessions, which uses more tokens. Should we add it? Default: no.
+3. **Still art on phones.** *Answered 2026-10-02: keep the corner (as shipped).* With Background area = "Word list", should a phone keep today's board-corner art (the owner chose it earlier), or move the art behind the word list? Default: keep the corner.
 4. **Streak after a reveal.** Today a find within 20s of the last find *before* a reveal continues the streak at x1.2. Should a reveal restart the streak from zero instead? (One line in `src/scoring.js`: clear `lastFind` in the reveal branch.)
-5. **Animation frame cap.** All nine animations draw 30fps at 60Hz and 120Hz. At 100Hz and 165Hz the modules disagree, because each has its own threshold (30ms in `pixel-stage.js`, 29.3ms in confetti and constellation, 30.3–31ms in the other four): starfield, skyline, aquarium, confetti and constellation draw about 33fps, while shimmer-grid, aurora-drift, silk-bokeh and letter-bubbles drop to 25 and 27.5fps. Should they all be capped at exactly 30? (One line in `src/backgrounds/pixel-stage.js` plus each other module's threshold. Measure with `node tools/art-src/prototypes/check.mjs --hz=N`.)
-6. **Palettes.** There are four: Classic, Jewel, Duotone and Calm. The owner said they would say which to remove. Duotone dark fails 4.5:1 today for the Settings note text (`--hint` on the card, 3.8–4.0:1 on all 7 themes; `node tools/sims/settings/contrast.mjs`), which `tools/palettes/check.mjs` misses because it checks hint only against bg.
+5. **Animation frame cap.** *Answered 2026-10-02 and done: exactly 30fps at any refresh rate.* All nine animations draw 30fps at 60Hz and 120Hz. At 100Hz and 165Hz the modules disagree, because each has its own threshold (30ms in `pixel-stage.js`, 29.3ms in confetti and constellation, 30.3–31ms in the other four): starfield, skyline, aquarium, confetti and constellation draw about 33fps, while shimmer-grid, aurora-drift, silk-bokeh and letter-bubbles drop to 25 and 27.5fps. Should they all be capped at exactly 30? (One line in `src/backgrounds/pixel-stage.js` plus each other module's threshold. Measure with `node tools/art-src/prototypes/check.mjs --hz=N`.)
+6. **Palettes.** *Answered 2026-10-02 and done: a palette is part of its theme, so the Theme page lists every theme with its four palettes as tiles, and Duotone dark's note text now passes (`--hint` lifted to 4.6:1 on the card; `check.mjs` checks hint on the card too).* There are four: Classic, Jewel, Duotone and Calm. The owner said they would say which to remove. Duotone dark fails 4.5:1 today for the Settings note text (`--hint` on the card, 3.8–4.0:1 on all 7 themes; `node tools/sims/settings/contrast.mjs`), which `tools/palettes/check.mjs` misses because it checks hint only against bg.
 7. **Firebase.** Levels and accounts need the owner's Firebase project. The steps are in the README "Accounts (Firebase)" section. Ask for the web `apiKey` and `projectId` when that work starts.
 
 ## What is live (main, verified on GitHub Pages)
-- **Settings:** a compact two-column card (fits 1366x768), and a full-screen page with Back on phones and short screens. The theme swatches are gone.
-- **Palette setting:** Classic, Jewel, Duotone and Calm, each for all 7 themes in both modes (42 `[data-palette]` blocks, colour tokens only).
-- **Service worker:** the code cache is keyed by path, and CACHE is `wordfinder-v15`.
+- **Settings:** a compact two-column card (fits 1366x768), and a full-screen page with Back on phones and short screens. Its Theme and Background rows each open a page inside the card (`subpage.js`). Opening a pane focuses its title, never a dropdown, which an iPhone would open at once.
+- **Theme page** (`lookpicker.js`): 7 themes x 4 palettes (Classic, Jewel, Duotone, Calm) as one choice, each tile previewed in its own colours, read off the stylesheet once per mode. Storage keeps the two keys, `wordfinder-theme` and `wordfinder-palette`.
+- **Background page** (`bgpicker.js`): Area (Word list / Full screen) and a tile per registry background. The nine animations run behind the word list (`#bgside`) or the page (`#bg`), at exactly 30fps. Text over them keeps a 2.5px ring of the ground colour and the header's controls are filled, so every look passes AA over every background (`node tools/sims/backgrounds/contrast.mjs`, about 50 minutes).
+- **Service worker:** the code cache is keyed by path, and CACHE is `wordfinder-v16`.
 - **Tests:** `PORT=<port> npx playwright test` moves the whole e2e run.
 
 ## On main but not wired up yet (no visible effect)
-These are committed so a thread can pick them up from GitHub. None of them is imported by `main.js` except the background registry (through settings.js), and that changes nothing yet.
-- **Animated backgrounds** in `src/backgrounds/*.js`: 9 modules plus the `pixel-stage.js` helper, all lazy. They are deliberately not in sw.js ASSETS; the default stale-while-revalidate path caches them on first use. Checked pixel-identical to their prototypes.
-  - `src/backgrounds.js` is the registry: 12 ids, each with a glyph for its picker tile. `makeBackdrop()` runs one background at a time.
-  - `settings.js` lists the registry ids literally (a static import would add a module to the shell before the precache has it: a returning visitor's offline cold start broke in review). `backgrounds.test.js` holds the two lists equal. It also has a new `area` setting with values `list` or `full`.
-  - Once the picker ships, a stored animated id leaves the old 3-option select blank, so replace that select in the same change.
-  - `tools/coverage.mjs` excludes `src/backgrounds/**` from the 90% floor.
+These are committed so a thread can pick them up from GitHub.
+- **Animated backgrounds** in `src/backgrounds/*.js` are wired up now (above). They stay out of sw.js ASSETS on purpose; the default stale-while-revalidate path caches them on first use. `tools/coverage.mjs` excludes `src/backgrounds/**` from the 90% floor.
+  - A new background is one registry entry in `src/backgrounds.js`: its tile, its Settings choice and its place in the contrast sim follow from it. `perDeal: true` restarts it on every deal, and `show()` passes it the subject id and seed.
 - **Levels and accounts:** `src/scoring.js`, `src/levels.js`, `src/cloud.js` and `src/scorecard.js`, with unit tests, `firestore.rules`, and README rows plus the Accounts section.
   - `styles.css` ends with a `/* Level score card */` section (`.sc-*` classes, unused so far).
   - scoring and levels were reviewed clean.
@@ -54,7 +52,7 @@ These are committed so a thread can pick them up from GitHub. None of them is im
 - **Torn deploys:** bump CACHE whenever markup and modules change together. `node tools/sims/sw/tear.mjs <old-ref> <new-ref>` shows whether a deploy tears.
 
 ## Next steps, in order
-1. **Background picker UI.**
+1. **Background picker UI.** Done 2026-10-02 (see What is live).
    - In Settings, a "Background ›" row opens a sub-page:
      - Area: Word list / Full screen
      - radio tiles: glyph, name, and an Animated/Still badge (`name="art"`, `data-setting="art"`)
