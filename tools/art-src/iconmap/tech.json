@@ -8,163 +8,30 @@
     "gear"
   ],
   "subjects": {
-    "tech/computers": [
-      "laptop",
-      "gear",
-      "television",
-      "smartphone",
-      "battery"
-    ],
-    "tech/smartphones": [
-      "smartphone",
-      "speech-bubble",
-      "camera",
-      "battery",
-      "microphone",
-      "alarm-clock"
-    ],
-    "tech/laptops": [
-      "laptop",
-      "battery",
-      "smartphone",
-      "gear"
-    ],
-    "tech/internet": [
-      "laptop",
-      "speech-bubble",
-      "smartphone",
-      "satellite"
-    ],
-    "tech/software": [
-      "laptop",
-      "gear",
-      "smartphone",
-      "lightbulb"
-    ],
-    "tech/hardware": [
-      "battery",
-      "gear",
-      "laptop",
-      "smartphone"
-    ],
-    "tech/robots": [
-      "gear",
-      "wheel",
-      "battery",
-      "laptop"
-    ],
-    "tech/cameras": [
-      "camera",
-      "film-reel",
-      "eye",
-      "smartphone"
-    ],
-    "tech/video-games": [
-      "game-controller",
-      "treasure-chest",
-      "shield",
-      "medal",
-      "television",
-      "laptop"
-    ],
-    "tech/social-media": [
-      "speech-bubble",
-      "heart",
-      "smiley",
-      "camera",
-      "smartphone"
-    ],
-    "tech/coding": [
-      "laptop",
-      "lightbulb",
-      "gear",
-      "smartphone"
-    ],
-    "tech/batteries": [
-      "battery",
-      "lightbulb",
-      "smartphone",
-      "laptop"
-    ],
-    "tech/screens": [
-      "television",
-      "laptop",
-      "smartphone",
-      "lightbulb"
-    ],
-    "tech/headphones": [
-      "microphone",
-      "guitar",
-      "drum",
-      "smartphone"
-    ],
-    "tech/printers": [
-      "book-stack",
-      "quill",
-      "paintbrush",
-      "laptop"
-    ],
-    "tech/drones": [
-      "airplane",
-      "camera",
-      "battery",
-      "smartphone"
-    ],
-    "tech/wearables": [
-      "heart",
-      "sneaker",
-      "alarm-clock",
-      "smartphone",
-      "battery"
-    ],
-    "tech/keyboards": [
-      "laptop",
-      "lightbulb",
-      "smartphone",
-      "gear"
-    ],
-    "tech/networking": [
-      "satellite",
-      "laptop",
-      "smartphone",
-      "gear"
-    ],
-    "tech/artificial-intelligence": [
-      "brain",
-      "speech-bubble",
-      "eye",
-      "laptop",
-      "gear"
-    ],
-    "tech/virtual-reality": [
-      "eye",
-      "game-controller",
-      "laptop",
-      "gear"
-    ],
-    "tech/smart-home": [
-      "lightbulb",
-      "smartphone",
-      "lamp",
-      "siren",
-      "camera",
-      "microphone"
-    ],
-    "tech/cybersecurity": [
-      "shield",
-      "eye",
-      "laptop",
-      "smartphone",
-      "gear"
-    ],
-    "tech/streaming": [
-      "television",
-      "film-reel",
-      "popcorn",
-      "laptop",
-      "smartphone",
-      "microphone"
-    ]
+    "tech/computers": ["microchip", "keyboard-and-mouse", "laptop", "gear", "television", "smartphone"],
+    "tech/smartphones": ["smartphone", "speech-bubble", "camera", "battery", "microphone", "alarm-clock"],
+    "tech/laptops": ["microchip", "keyboard-and-mouse", "laptop", "battery", "smartphone", "gear"],
+    "tech/internet": ["padlock", "laptop", "speech-bubble", "smartphone", "satellite"],
+    "tech/software": ["laptop", "gear", "smartphone", "lightbulb"],
+    "tech/hardware": ["microchip", "keyboard-and-mouse", "battery", "gear", "laptop", "smartphone"],
+    "tech/robots": ["robot", "microchip", "gear", "wheel", "battery", "laptop"],
+    "tech/cameras": ["camera", "film-reel", "eye", "smartphone"],
+    "tech/video-games": ["game-controller", "treasure-chest", "shield", "medal", "television", "laptop"],
+    "tech/social-media": ["speech-bubble", "heart", "smiley", "camera", "smartphone"],
+    "tech/coding": ["laptop", "lightbulb", "gear", "smartphone"],
+    "tech/batteries": ["battery", "lightbulb", "smartphone", "laptop"],
+    "tech/screens": ["television", "laptop", "smartphone", "lightbulb"],
+    "tech/headphones": ["headphones", "microphone", "guitar", "drum", "smartphone"],
+    "tech/printers": ["book-stack", "quill", "paintbrush", "laptop"],
+    "tech/drones": ["airplane", "camera", "battery", "smartphone"],
+    "tech/wearables": ["heart", "sneaker", "alarm-clock", "smartphone", "battery"],
+    "tech/keyboards": ["keyboard-and-mouse", "laptop", "lightbulb", "smartphone", "gear"],
+    "tech/networking": ["satellite", "laptop", "smartphone", "gear"],
+    "tech/artificial-intelligence": ["robot", "microchip", "brain", "speech-bubble", "eye", "laptop"],
+    "tech/virtual-reality": ["eye", "game-controller", "laptop", "gear"],
+    "tech/smart-home": ["padlock", "lightbulb", "smartphone", "lamp", "siren", "camera"],
+    "tech/cybersecurity": ["padlock", "shield", "eye", "laptop", "smartphone", "gear"],
+    "tech/streaming": ["headphones", "television", "film-reel", "popcorn", "laptop", "smartphone"]
   },
   "wishlist": [
     {

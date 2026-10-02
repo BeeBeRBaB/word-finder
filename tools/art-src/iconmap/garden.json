@@ -1,21 +1,21 @@
 {
   "category": ["watering-can", "sprout", "flower", "shovel", "leaf", "bee"],
   "subjects": {
-    "garden/vegetable-patch": ["sprout", "shovel", "rabbit", "watering-can", "leaf"],
-    "garden/greenhouse": ["sprout", "flower", "watering-can", "leaf"],
-    "garden/lawn-care": ["sprout", "watering-can", "shovel", "bee"],
+    "garden/vegetable-patch": ["carrot", "sprout", "shovel", "rabbit", "watering-can", "leaf"],
+    "garden/greenhouse": ["plant-pot", "sprout", "flower", "watering-can", "leaf"],
+    "garden/lawn-care": ["lawnmower", "sprout", "watering-can", "shovel", "bee"],
     "garden/hedges": ["tree", "pine-tree", "leaf", "watering-can"],
     "garden/composting": ["leaf", "apple", "mushroom", "shovel", "sprout"],
-    "garden/seed-starting": ["sprout", "watering-can", "leaf", "shovel"],
+    "garden/seed-starting": ["plant-pot", "sprout", "watering-can", "leaf", "shovel"],
     "garden/watering": ["watering-can", "flower", "sprout", "leaf"],
     "garden/garden-tools": ["shovel", "watering-can", "sprout", "flower"],
-    "garden/plant-pots": ["amphora", "flower", "sprout", "watering-can"],
-    "garden/herbs": ["leaf", "sprout", "coffee-cup", "cooking-pot", "watering-can"],
+    "garden/plant-pots": ["plant-pot", "amphora", "flower", "sprout", "watering-can"],
+    "garden/herbs": ["plant-pot", "leaf", "sprout", "coffee-cup", "cooking-pot", "watering-can"],
     "garden/bees": ["bee", "flower", "crown", "leaf"],
     "garden/bird-feeders": ["bird", "tree", "flower", "leaf"],
     "garden/garden-sheds": ["shovel", "watering-can", "tree", "flower"],
     "garden/garden-ponds": ["fish", "flower", "fountain", "leaf"],
-    "garden/raised-beds": ["sprout", "shovel", "flower", "watering-can"],
+    "garden/raised-beds": ["carrot", "sprout", "shovel", "flower", "watering-can"],
     "garden/mulching": ["leaf", "tree", "mushroom", "shovel", "sprout"],
     "garden/pruning": ["tree", "leaf", "flower", "sprout"],
     "garden/weeding": ["shovel", "sprout", "leaf", "flower"],
@@ -24,7 +24,7 @@
     "garden/trellises": ["leaf", "flower", "sprout", "watering-can"],
     "garden/garden-paths": ["flower", "park-bench", "tree", "signpost"],
     "garden/cold-frames": ["sprout", "leaf", "watering-can", "flower"],
-    "garden/window-boxes": ["flower", "leaf", "watering-can", "sprout"]
+    "garden/window-boxes": ["plant-pot", "flower", "leaf", "watering-can", "sprout"]
   },
   "wishlist": [
     { "id": "plant-pot", "motif": "terracotta pot with a seedling and a saucer", "subjects": ["garden/plant-pots", "garden/window-boxes", "garden/herbs", "garden/seed-starting", "garden/greenhouse"] },

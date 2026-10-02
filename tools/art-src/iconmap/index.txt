@@ -1,115 +1,218 @@
+acacia-tree: flat-topped savanna acacia
+acorn: acorn with an oak leaf
 airplane: passenger plane climbing past clouds
 alarm-clock: ringing alarm clock
+alphabet-blocks: stacked wooden ABC letter blocks
 amphora: ancient two-handled vase with bands
+anchor: ship's anchor with rope
 apple: shiny apple with a leaf
 armchair: cosy channel-tufted armchair
+astronaut: astronaut in a suit and visored helmet, floating on a tether
 atom: atom with orbiting electrons
+backpack: school backpack with pockets
 balloons: bunch of three balloons
 bandage: adhesive bandage
+bat: bat with outstretched wings
 battery: charging battery with a lightning bolt
 bee: fuzzy bumblebee in flight
+belt-buckle: coiled leather belt with a brass buckle
+bicycle: bicycle side view
 bird: round songbird on a branch
 bone: cartoon bone
 book-stack: stack of books with reading glasses
+boot: laced leather boot
 brain: brain with folds
 bread: loaf of bread with a slice
 bunting: strings of party flag bunting
 butterfly: butterfly with spotted wings
+button: large four-hole button
 cake: two-tier birthday cake with candles
 camera: photo camera
+campfire: crackling campfire with logs
 candle: lit pillar candle with dripping wax
+car: family car
+cardboard-box: stacked cardboard moving boxes
+carrot: carrot with leafy top
 castle: fairy-tale castle with towers and a flag
+cat: sitting cat with whiskers and a curled tail
+cave-mouth: cave entrance in a rock face
 chalkboard: chalkboard on an easel
 champagne-flutes: two champagne glasses clinking
+chandelier: crystal chandelier
+chef-hat: tall chef's toque
 chess-knight: chess knight piece
+chocolate-bar: chocolate bar with a corner snapped off
+clapperboard: film clapperboard with striped arm snapping shut
+coat: belted trench coat
+coat-hanger: wooden coat hanger with a shirt draped on it
 coffee-cup: steaming cup on a saucer
+coins: stack of gold coins
+comic-burst: jagged comic POW explosion burst
 compass: explorer's compass with a needle
+confetti-popper: party popper bursting with confetti and streamers
 cooking-pot: lidded pot with steam
 crab: crab waving its claws
 crescent-moon: crescent moon with craters and stars
+croissant: flaky croissant
 crown: jewelled royal crown
+deer: stag with antlers
 dice: pair of dice
 dinner-plate: plate with a fork and knife
+dinosaur: long-necked dinosaur
 dna: twisting double helix
 dress: party dress with a flared skirt
 drum: drum with crossed sticks
+drum-kit: full drum kit with cymbals and hi-hat
+dumbbell: dumbbell weight
 eye: eye with lashes
+faucet: tap with water running
 film-reel: film reel with unspooling film
+fireplace: hearth with a crackling fire
 firework: bursting firework with sparks
 first-aid-kit: first-aid kit with a cross
 fish: cartoon fish with bubbles
+fishing-rod: fishing rod with a bobber and a line
+flask: bubbling conical lab flask
 flexed-arm: flexed arm showing a bicep
 flower: five-petal flower on a stem
+footprints: pair of bare footprints
 fountain: tiered stone fountain with splashing water
+fox: red fox with a bushy tail
+framed-painting: ornate gilt-framed painting on a wall
+frying-pan: frying pan with a sizzling egg
 game-controller: video game controller
 gear: two meshing cogs
 gift: wrapped present with a bow
+globe: desk globe on a stand
 graduation-cap: mortarboard with tassel and diploma
 guitar: acoustic guitar
+hammer: claw hammer and nails
 handshake: two hands shaking with a heart
+hard-hat: yellow construction hard hat
+hardcover-book: closed hardback with a decorated cover and gilt spine
+headphones: over-ear headphones
 heart: glossy heart with sparkles
+horse: galloping horse with a flowing mane
+house: little house with a glowing window
+hug: two figures in a warm hug
+keyboard-and-mouse: computer keyboard with a mouse beside it
+knight-helmet: plumed knight's helmet with visor
 lamp: table lamp glowing
 laptop: open laptop showing code
+lawnmower: push lawnmower on striped grass
 leaf: single leaf with veins
 lightbulb: glowing light bulb
 lighthouse: striped lighthouse beaming on the rocks
+lightning-bolt: zigzag lightning bolt
+lion: lion with a full mane
+lungs: pair of pink lungs with branching airways
+magic-wand: star-tipped magic wand with sparkles
 magnet: horseshoe magnet with a pull
+magnifying-glass: round magnifying glass with a handle
 map: folded map with a dotted route to an X
 medal: prize medal on a ribbon
+microchip: square chip with pins on every side
 microphone: handheld microphone
 microscope: lab microscope
+molecule: ball-and-stick molecule model
+monkey: monkey swinging from a branch
 mountain: snow-capped peaks
+mouth: smiling lips with a tongue
+movie-camera: vintage cine camera on a tripod with two reels on top
 mushroom: spotted toadstool with a little one
+open-book: open book with pages fanning up
 owl: wide-eyed owl on a branch
+padlock: closed padlock with a key
 paintbrush: paintbrush with a paint swoosh
+palette: artist's palette with paint dabs
 palm-island: palm tree on a little sandy island
 park-bench: wooden park bench with iron ends
 paw-print: animal paw print
 pencil: sharpened pencil
+piano: grand piano with the lid up
+pickaxe: miner's pickaxe
+picnic-basket: wicker basket on a gingham blanket
 pill: capsule and tablets
 pillow: fluffy pillow with a moon and zzz
 pine-tree: tiered evergreen tree
 planet: ringed planet with a little moon
+plant-pot: terracotta pot with a seedling and a saucer
 popcorn: striped popcorn box
+potion-bottle: round-bottomed corked flask with glowing liquid
+printing-press: old hand-cranked printing press with a sheet
+pumpkin: round pumpkin with a curly stem
 pyramid: pyramids in the desert under the sun
 quill: quill pen and inkwell
 rabbit: sitting bunny
+rainbow: arched rainbow between two clouds
+robot: friendly boxy robot
 rocket: cartoon rocket blasting off
+ruler: wooden ruler with a protractor
 sailing-ship: tall ship with billowing sails
 satellite: satellite with solar panels and a dish
+saw: hand saw and a hand plane with wood shavings
+scarf: striped knitted scarf with fringe
+scissors: craft scissors with a glue stick and paper scraps
+seashell: spiral hermit-crab shell and a starfish
+set-square: ruler and triangular set square
+sheep: woolly sheep
 shield: knight's shield over crossed swords
 shooting-star: shooting star with a streaming tail
 shovel: garden spade
 signpost: wooden signpost with arrows pointing different ways
 siren: flashing emergency siren light
+skeleton: friendly cartoon skeleton or x-ray showing a spine and ribs
+sketchbook: open sketchbook with a doodle and an eraser
 smartphone: smartphone with app icons, buzzing
 smiley: grinning smiley face
 sneaker: high-top sneaker with laces
 soccer-ball: patched football
+sock: striped sock
+sparkler: hand-held sparkler throwing stars
 speech-bubble: chatting speech bubbles
 sprout: seedling sprouting from soil
+stage-curtain: red velvet stage curtains drawn open
+statue: marble bust on a plinth
 steering-wheel: car steering wheel
 stethoscope: stethoscope with a little heart
+stopwatch: stopwatch with a start button and sweeping hand
 storefront: little shop with a striped awning
 street-lamp: old-fashioned glowing street lamp
+striped-tent: striped fair tent with a pennant
 suitcase: vintage suitcase with straps, stickers and a tag
+sun: bright smiling sun
+superhero-mask: superhero eye mask with a flowing cape
+swim-goggles: swimming goggles
+teddy-bear: cuddly teddy bear
 telescope: telescope on a tripod aimed at a star
 television: retro tv with antennae
+test-tubes: rack of test tubes with coloured liquids
 theater-masks: comedy and tragedy masks
+thermometer: clinical thermometer
 thread-spool: spool of thread with needle and button
 ticket: pair of admission tickets with a star
+tomato: ripe tomato on the vine
+toolbox: open toolbox with tools
 tooth: smiling tooth with sparkles
+toothbrush: toothbrush with a swirl of paste
 top-hat: top hat with a band
 traffic-cone: striped traffic cone
+traffic-light: traffic light on red
 treasure-chest: open chest overflowing with gold coins
 tree: round leafy tree
+trophy: gold cup trophy
 trumpet: shiny trumpet
 violin: violin with bow
+volcano: erupting volcano with lava
 washing-machine: front-loading washing machine
 water-bottle: sports water bottle with droplets
 watering-can: watering can sprinkling
 wave: curling ocean wave
 whale: smiling whale with a spout
+wheat-sheaf: tied sheaf of wheat
 wheel: rolling tyre and rim
+whisk: balloon whisk in a mixing bowl
 wizard-hat: pointy wizard hat with stars and a moon
+wrench: adjustable wrench
 yarn-ball: ball of yarn with knitting needles
+zipper: half-open zip with a pull tab

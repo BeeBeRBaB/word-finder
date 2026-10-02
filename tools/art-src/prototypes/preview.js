@@ -1,5 +1,6 @@
 // One background full-page behind a stand-in board.
-// Query: name=<file in src/backgrounds/>, light, rm (reduced motion), src=<module URL override>.
+// Query: name=<file in src/backgrounds/>, light, rm (reduced motion), src=<module URL override>,
+// subject=<cat/slug> and seed=<n> for the subject backgrounds.
 const q = new URLSearchParams(location.search);
 const name = q.get('name') || 'pixel-starfield';
 const dark = !q.has('light') && q.get('dark') !== '0';
@@ -19,5 +20,7 @@ const mod = await import(q.get('src') || `../../../src/backgrounds/${name}.js`);
 document.title = mod.meta?.name ?? name;
 const w = /** @type {any} */ (window);
 w.__meta = mod.meta;
-w.__stop = mod.start(document.getElementById('bg'), { colors, dark, reducedMotion: q.has('rm') });
+w.__stop = mod.start(document.getElementById('bg'), {
+  colors, dark, reducedMotion: q.has('rm'), subject: q.get('subject') ?? undefined, seed: Number(q.get('seed') ?? 0),
+});
 w.__ready = true;
