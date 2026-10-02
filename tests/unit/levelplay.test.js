@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { makeLevelPlay, OWNER_KEY } from '../../src/levelplay.js';
+import { makeLevelPlay, levelPuzzle, OWNER_KEY } from '../../src/levelplay.js';
+import { PRESETS, mixFor } from '../../src/layout.js';
+import { buildPuzzle } from '../../src/puzzle.js';
+import { makeRng } from '../../src/rng.js';
+import { WORDS as NATURE } from '../../src/subjects/nature.js';
 import { newProgress, levelSeed, levelCategory, levelSubject, LEVELS_KEY } from '../../src/levels.js';
 import { scoreLevel } from '../../src/scoring.js';
 import { CloudError } from '../../src/cloud.js';
@@ -404,4 +408,16 @@ test('once the session has expired, nothing is sent until the player signs in ag
   await settle();
   assert.equal(cloud.saves.length, sent);
   assert.deepEqual(play.status(), { signedIn: false, username: null, level: 0, points: 0, pending: false, error: null });
+});
+
+test('a level\'s board depends only on its seed, difficulty and board size', () => {
+  const subject = { name: 'Birds', words: NATURE['nature/birds'].split(',') };
+  const deal = { level: 4, subject: 'nature/birds', seed: 123456, difficulty: /** @type {const} */ ('hard') };
+  for (const shape of [PRESETS.full, PRESETS.compact]) {
+    const a = levelPuzzle(deal, subject, shape);
+    assert.deepEqual(a, levelPuzzle(deal, subject, shape), 'every device of this size deals the same board');
+    assert.deepEqual(a, buildPuzzle({ name: 'Birds', pool: subject.words, rng: makeRng(123456), size: shape.size, count: shape.count, mix: mixFor(shape, 'hard') }));
+    assert.equal(a.words.length, shape.count);
+    assert.notDeepEqual(a.words, levelPuzzle({ ...deal, difficulty: 'easy' }, subject, shape).words);
+  }
 });

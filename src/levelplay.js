@@ -4,6 +4,9 @@ import {
   newProgress, levelSeed, levelCategory, levelSubject, recordLevel, saveCurrent, mergeProgress, makeLevelStore,
 } from './levels.js';
 import { scoreLevel } from './scoring.js';
+import { buildPuzzle } from './puzzle.js';
+import { makeRng } from './rng.js';
+import { mixFor } from './layout.js';
 import { defaultStore } from './storage.js';
 
 // Whose progress the local copy is, so a second account on this device never inherits it.
@@ -27,6 +30,15 @@ export const OWNER_KEY = 'wordfinder-levels-owner-v1';
  * @typedef {{signedIn:boolean, username:string|null, level:number, points:number,
  *   pending:boolean, error:CloudCode|null}} Status
  */
+
+/** A level's board: the same on every device with this board size, at the level's own
+ * difficulty and with no coverage bag, so it never depends on what this device has seen.
+ * @param {Deal} deal @param {{name:string, words:string[]}} subject
+ * @param {import('./layout.js').Preset} shape @returns {import('./puzzle.js').Puzzle} */
+export function levelPuzzle(deal, subject, shape) {
+  return buildPuzzle({ name: subject.name, pool: subject.words, rng: makeRng(deal.seed), size: shape.size,
+    count: shape.count, mix: mixFor(shape, deal.difficulty) });
+}
 
 /** @param {unknown} e @returns {CloudCode} */
 const codeOf = (e) => {
