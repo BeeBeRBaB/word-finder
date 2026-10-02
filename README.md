@@ -30,6 +30,8 @@ have no DOM access at all, which is what makes them cheap to unit-test:
 | `src/view.js` | Renders cells, selection pills and the word list. | DOM |
 | `src/effects.js` | Confetti and the WebAudio chime. | DOM |
 | `src/picker.js` | The category dialog. Reports a category id; owns no game state. | DOM |
+| `src/levelplay.js` | Levels mode's bookkeeping: deals a signed-in player's next level (an unfinished one resumes by its saved subject), times it in active play only, records finds and reveals, then scores and banks it, keeping this device's copy and the cloud's together. Not wired in yet. | pure |
+| `src/account.js` | The Account section of Settings (Sign in, or the account's level and points with Sign out) and the sign-in form, which also creates accounts. Renders into hosts main.js gives it and talks only to `levelplay.js`. Not wired in yet. | DOM |
 | `src/scorecard.js` | The end-of-level score card inside the win card: plays `scoring.js`'s breakdown a line at a time (Skip jumps to the end), then counts down to the next level, with Stay to cancel. Owns its timers; pauses while the page is hidden. | DOM |
 | `src/settings.js` | Player preferences (background art, letter size, board size, difficulty, sound, vibrate, motion, Reveal, auto-start) as one validated record; theme and mode stay in `appearance.js`, least-seen in `progress.js`. | pure |
 | `src/art.js` | One 16x16 pixel sprite per category, and the per-subject hue, mirror and corner that vary it. `view.js` draws it beside the board (landscape rail) or faintly behind it. | pure |
@@ -118,8 +120,8 @@ runtime by directory, not listed. The picker reads its options from the catalog.
 
 | Path | Purpose |
 | --- | --- |
-| `tests/unit/` | `node:test` specs for the pure `src/` modules (`rng`, `puzzle`, `layout`, `storage`, `progress`, `appearance`, `catalog`, `subjects`), the word-list and overlap contract every subject must meet (`content`), a token-parity check on the stylesheet (`tokens`), and a static assertion on the service worker (`sw`). No browser. |
-| `tests/e2e/` | Playwright specs (`smoke`, `gameplay`, `layout`, `picker`, `regressions`, `ux`, `appearance`, `progress`) against a local static server (`tests/server.mjs`), on `desktop` and `mobile` viewport projects. |
+| `tests/unit/` | `node:test` specs for the pure `src/` modules (`rng`, `puzzle`, `layout`, `storage`, `progress`, `appearance`, `catalog`, `subjects`), the word-list and overlap contract every subject must meet (`content`), a token-parity check on the stylesheet (`tokens`), and static and behavioural checks on the service worker (`sw`). No browser. |
+| `tests/e2e/` | Playwright specs (`smoke`, `gameplay`, `layout`, `picker`, `regressions`, `ux`, `appearance`, `progress`, `account`) against a local static server (`tests/server.mjs`), on `desktop` and `mobile` viewport projects. |
 | `tests/live/` | Playwright smoke test against the real deployed GitHub Pages site — see [Development](#development). |
 | `tests/viewport.js` | The screen shapes the app is judged against, and the one geometry measurement that decides whether it fits at them. Shared by `playwright.config.js`, `layout.spec.js` and `npm run shots`. |
 | `tools/` | Dev-only, nothing imports them: `words-db.mjs` (`npm run words`) queries the corpus as SQLite, `shots.mjs` (`npm run shots`) renders every device shape to `.shots/`, `icons.mjs` (`npm run icons`) redraws the app icons from the palette, with `--check` to catch a stale pair, `coverage.mjs` (`npm run test:unit`) runs the suite and enforces a **per-file** 90% floor — Node's own `--test-coverage-*` flags are aggregate, so one weak file hides behind well-covered ones. |

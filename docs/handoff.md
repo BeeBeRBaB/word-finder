@@ -11,7 +11,7 @@ current default marked), and don't build on an assumption.
 1. **Branches.** Project threads work on their own branch, but CLAUDE.md says push to `main`, with no PRs and no feature branches, because `main` is what GitHub Pages serves. After `npm test` passes, should a thread fast-forward its work into `main` itself, or leave the branch for the owner?
 2. **Ultracode for every thread.** It is a per-session setting. Adding `"ultracode": true` to the repo's `.claude/settings.json` would turn it on for every thread in this repo, including local sessions, which uses more tokens. Should we add it? Default: no.
 3. **Still art on phones.** With Background area = "Word list", should a phone keep today's board-corner art (the owner chose it earlier), or move the art behind the word list? Default: keep the corner.
-4. **Streak after a reveal.** Today a find within 20s of the last find *before* a reveal continues the streak at x1.2. Should a reveal restart the streak from zero instead? (One line in `src/scoring.js`: clear `lastFind` in the reveal branch.)
+4. **Streak after a reveal.** Settled 2026-10-02: a reveal restarts the streak from zero (`src/scoring.js` clears `lastFind`).
 5. **Animation frame cap.** All nine animations draw 30fps at 60Hz and 120Hz. At 100Hz and 165Hz the modules disagree, because each has its own threshold (30ms in `pixel-stage.js`, 29.3ms in confetti and constellation, 30.3–31ms in the other four): starfield, skyline, aquarium, confetti and constellation draw about 33fps, while shimmer-grid, aurora-drift, silk-bokeh and letter-bubbles drop to 25 and 27.5fps. Should they all be capped at exactly 30? (One line in `src/backgrounds/pixel-stage.js` plus each other module's threshold. Measure with `node tools/art-src/prototypes/check.mjs --hz=N`.)
 6. **Palettes.** There are four: Classic, Jewel, Duotone and Calm. The owner said they would say which to remove. Duotone dark fails 4.5:1 today for the Settings note text (`--hint` on the card, 3.8–4.0:1 on all 7 themes; `node tools/sims/settings/contrast.mjs`), which `tools/palettes/check.mjs` misses because it checks hint only against bg.
 7. **Firebase.** Levels and accounts need the owner's Firebase project. The steps are in the README "Accounts (Firebase)" section. Ask for the web `apiKey` and `projectId` when that work starts.
@@ -29,11 +29,11 @@ These are committed so a thread can pick them up from GitHub. None of them is im
   - `settings.js` lists the registry ids literally (a static import would add a module to the shell before the precache has it: a returning visitor's offline cold start broke in review). `backgrounds.test.js` holds the two lists equal. It also has a new `area` setting with values `list` or `full`.
   - Once the picker ships, a stored animated id leaves the old 3-option select blank, so replace that select in the same change.
   - `tools/coverage.mjs` excludes `src/backgrounds/**` from the 90% floor.
-- **Levels and accounts:** `src/scoring.js`, `src/levels.js`, `src/cloud.js` and `src/scorecard.js`, with unit tests, `firestore.rules`, and README rows plus the Accounts section.
+- **Levels and accounts:** `src/scoring.js`, `src/levels.js`, `src/cloud.js`, `src/scorecard.js`, `src/levelplay.js` (the flow main.js will call) and `src/account.js` (the sign-in UI, with `.acct-*` styles and `account.spec.js`), with unit tests, `firestore.rules`, and README rows plus the Accounts section.
   - `styles.css` ends with a `/* Level score card */` section (`.sc-*` classes, unused so far).
   - scoring and levels were reviewed clean.
   - cloud had 5 defects, fixed by its reviewer.
-  - **scorecard is built but NOT reviewed.** Its reviewer stalled. Review it before wiring it in.
+  - scorecard was reviewed on 2026-10-02 with no logic defects. Its open layout and contrast findings are in `tools/levels-review/README.md`.
 - **Art sources:**
   - `tools/art-src/icons/part*.json` hold 218 icons. Run `node tools/art-src/icons/check.mjs <part.json>` to validate one and render a preview.
   - `tools/art-src/iconmap/<category>.json` gives all 600 subjects 4–6 icons each, hero first. Check with `node tools/art-src/iconmap/check.mjs <category>`.
@@ -50,7 +50,7 @@ These are committed so a thread can pick them up from GitHub. None of them is im
 - `tools/sims/`: the million-board generator check, the adjacency check, the torn-deploy sim, the palette cascade and resolver fuzz, the Settings geometry, behaviour and contrast checks, and a contact sheet of the four palettes.
 
 ## Must fix before accounts ship
-- **sw.js caches cross-origin GETs cache-first.** Firestore document URLs have no file extension, so `isCode` is false and `cloud.load()` would return a device's first copy forever. Pass every cross-origin request except Google Fonts straight to the network, and add a sw.test case. `node tools/levels-review/sw-cloud-probe.mjs` FAILs today and should PASS after the fix.
+- **Done 2026-10-02: sw.js no longer caches cross-origin GETs.** Everything cross-origin except Google Fonts goes straight to the network, `sw.test.js` checks it, and `node tools/levels-review/sw-cloud-probe.mjs` PASSes. Ship it before (not with) the commit that wires `cloud.js`, so the fixed worker already controls the page.
 - **Torn deploys:** bump CACHE whenever markup and modules change together. `node tools/sims/sw/tear.mjs <old-ref> <new-ref>` shows whether a deploy tears.
 
 ## Next steps, in order
@@ -74,7 +74,7 @@ These are committed so a thread can pick them up from GitHub. None of them is im
    - Signing in gives seeded, unlimited levels that can be continued on any device. Points accumulate, and easy/normal/hard still apply.
    - End of level: the existing win card and its progress bar. The score breakdown wipes in line by line, left to right; then a 10s bar runs forward for a positive total and backward for a negative one, with Next level and Stay.
    - Needs Firebase (question 7) and the sw.js fix above.
-4. **Browser-tool comparison.** The owner asked for it; it hasn't started.
+4. **Browser-tool comparison.** Done: see [browser-tools.md](browser-tools.md). The pick is Playwright scripts via Bash, at about 2.4x fewer tokens than either MCP server.
    - Candidates: Chrome DevTools MCP, Playwright MCP, the built-in Claude browser pane, and Playwright scripts run via Bash.
    - Measure tokens per task and capability: viewport, reduced motion, service worker and Cache Storage, touch drag, WebKit.
    - Expected so far: Bash scripts cost the fewest tokens and are the only option with WebKit; Playwright MCP opens headed Chrome windows unless started with `--headless`.

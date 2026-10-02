@@ -69,10 +69,10 @@ export function scoreLevel({ events, elapsedMs, difficulty, wordCount }) {
   for (const e of list) {
     const b = base(e.word);
     if (e.revealed) {
-      // A reveal breaks the streak but is not itself a find to chain from.
+      // A reveal ends the streak: the next find starts a new one, and does not chain from the reveal.
       revealed++;
       revealCost += Math.round(b * SCORING.reveal[Math.min(revealed, SCORING.reveal.length) - 1] * dm);
-      level = 0;
+      lastFind = null;
       continue;
     }
     const at = ms(e.at);

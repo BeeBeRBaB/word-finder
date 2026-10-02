@@ -21,7 +21,7 @@ const MAX_DATA = 200_000;
  * @typedef {'taken'|'credentials'|'weak'|'throttled'|'offline'|'invalid'|'unconfigured'|'expired'|'server'} CloudCode
  * @typedef {{apiKey:string, projectId:string}} CloudConfig
  * @typedef {{ok:boolean, status:number, json():Promise<unknown>}} FetchResponse
- * @typedef {(url:string, init:{method:string, headers:Record<string,string>, body?:string}) => Promise<FetchResponse>} FetchLike
+ * @typedef {(url:string, init:{method:string, headers:Record<string,string>, body?:string, cache?:RequestCache}) => Promise<FetchResponse>} FetchLike
  * @typedef {Pick<Storage,'getItem'|'setItem'|'removeItem'>} SessionStore
  * @typedef {{uid:string, username:string, idToken:string, refreshToken:string, expiresAt:number}} Session
  * @typedef {{uid:string, username:string}} Account
@@ -144,7 +144,7 @@ export function makeCloud(deps = {}) {
     } catch { session = null; }
   }
 
-  /** @param {string} url @param {{method:string, headers:Record<string,string>, body?:string}} init
+  /** @param {string} url @param {{method:string, headers:Record<string,string>, body?:string, cache?:RequestCache}} init
    * @returns {Promise<FetchResponse>} */
   async function send(url, init) {
     try { return await fetcher(url, init); } catch { throw new CloudError('offline'); }
@@ -209,8 +209,10 @@ export function makeCloud(deps = {}) {
     if (!s) throw new CloudError('expired');
     const url = `${FIRESTORE}${encodeURIComponent(config.projectId)}/databases/(default)/documents/users/${encodeURIComponent(s.uid)}`;
     /** @param {Session} t */
+    // no-store: a document is per account, so neither cache may answer for it.
     const go = (t) => send(url, {
       method,
+      cache: 'no-store',
       headers: body === undefined
         ? { Authorization: `Bearer ${t.idToken}` }
         : { Authorization: `Bearer ${t.idToken}`, 'Content-Type': 'application/json' },

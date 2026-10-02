@@ -209,6 +209,7 @@ test('load GETs the player document with the id token and parses its data field'
   const c = fetch.calls[0];
   assert.equal(c.url, DOC);
   assert.equal(c.method, 'GET');
+  assert.equal(c.cache, 'no-store', "the browser's HTTP cache must never answer for another account");
   assert.deepEqual(c.headers, { Authorization: 'Bearer id-1' });
   assert.equal(c.body, undefined);
   assert.equal('body' in c, false);
@@ -238,6 +239,7 @@ test('save PATCHes the whole document, copying integer level and points out of d
   await cloud.save(data);
   const c = fetch.calls[0];
   assert.equal(c.url, DOC);
+  assert.equal(c.cache, 'no-store');
   assert.equal(c.method, 'PATCH');
   assert.deepEqual(c.headers, { Authorization: 'Bearer id-1', 'Content-Type': 'application/json' });
   assert.deepEqual(JSON.parse(String(c.body)), {

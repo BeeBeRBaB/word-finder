@@ -78,21 +78,21 @@ test('the streak window is inclusive, and a longer gap drops the level to 0', ()
   assert.equal(line(chain, 'streak').points, 10 + 25 + 50);
 });
 
-test('a reveal resets the streak and is not a find to chain from', () => {
-  const w = SCORING.streakWindowMs;
+test('a reveal ends the streak and is not a find to chain from', () => {
   const base = [find('AAAAA', 0), find('BBBBB', 1000), find('CCCCC', 2000)];
   const clean = scoreLevel({ events: [...base, find('DDDDD', 3000)], elapsedMs: 0, difficulty: 'easy', wordCount: 9 });
   assert.equal(line(clean, 'streak').points, 10 + 25 + 50, 'the fourth find reaches x2');
-  // The find after the reveal restarts from level 0, so it rises only to x1.2.
+  // The find after the reveal starts a new streak at x1, and the next find chains from it.
   const broken = scoreLevel({
-    events: [...base, reveal('XXXXX', 2500), find('DDDDD', 3000)], elapsedMs: 0, difficulty: 'easy', wordCount: 9,
+    events: [...base, reveal('XXXXX', 2500), find('DDDDD', 3000), find('EEEEE', 4000)], elapsedMs: 0, difficulty: 'easy', wordCount: 9,
   });
-  assert.equal(line(broken, 'streak').points, 10 + 25 + 10);
-  // The gap is measured from the last find, not from the reveal.
-  const late = scoreLevel({
-    events: [find('AAAAA', 0), reveal('XXXXX', w), find('BBBBB', w + 1)], elapsedMs: 0, difficulty: 'easy', wordCount: 9,
+  assert.equal(line(broken, 'streak').points, 10 + 25 + 0 + 10);
+  assert.equal(broken.stats.bestStreak, 1.5, 'the streak before the reveal still counts as the best');
+  // Nor does a find chain from the reveal itself.
+  const after = scoreLevel({
+    events: [reveal('XXXXX', 0), find('BBBBB', 1)], elapsedMs: 0, difficulty: 'easy', wordCount: 9,
   });
-  assert.equal(line(late, 'streak'), undefined);
+  assert.equal(line(after, 'streak'), undefined);
 });
 
 test('reveals escalate by order, times the difficulty, and never cost more than the word is worth', () => {
