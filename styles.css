@@ -43,7 +43,7 @@
 }
 /* An orange light enough to feel warm on paper cannot carry white button text, so
    --accent is measured against the white --accent-ink it is actually read on (5.08:1),
-   not against --bg. Token table: docs/superpowers/specs/2026-07-24-amber-phosphor-design.md */
+   not against --bg. */
 :root[data-appearance="light"]{
   color-scheme:light;
   --bg:#f2e3d5; --surface:#fffaf5; --border:#dfc9b5;
