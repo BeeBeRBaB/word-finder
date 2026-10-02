@@ -7,7 +7,7 @@ import { defaultStore } from './storage.js';
 export const FIREBASE = Object.freeze({ apiKey: 'AIzaSyB8gwufEWgZkvdXAJH1WKBxxCEQHEFKJnY', projectId: 'word-finder-10f77' });
 export const SESSION_KEY = 'wordfinder-session-v1';
 // Players type a username; Auth needs an email. RFC 2606 reserves .invalid, so this never
-// delivers mail. Auth's email check passes it (2026-10-02); no account was made to prove it.
+// delivers mail. Firebase accepted it for a real sign-up on 2026-10-02 (firebase-live.mjs).
 export const EMAIL_DOMAIN = 'users.word-finder.invalid';
 
 const AUTH = 'https://identitytoolkit.googleapis.com/v1/accounts:';

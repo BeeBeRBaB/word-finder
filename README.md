@@ -169,9 +169,10 @@ Works on iPad, phone, laptop. On iPad/iPhone: Share → **Add to Home Screen** t
 Accounts are optional and stay hidden until `FIREBASE` in `src/cloud.js` holds both
 values. It now holds the `word-finder-10f77` project's. They talk to Firebase Auth and Firestore over REST with `fetch`; there is no
 Firebase SDK. Players type a username, which `cloud.js` turns into a never-delivered
-address at `users.word-finder.invalid`. Auth's email check accepts that domain: a malformed
-address gets `INVALID_EMAIL`, and this one got past it on 2026-10-02. The first real sign-up
-is the final proof.
+address at `users.word-finder.invalid`. Firebase accepts that domain: on 2026-10-02
+`tools/levels-review/firebase-live.mjs` signed up two throwaway accounts with it, saved and
+loaded progress, saw the published rules refuse other accounts and extra fields, and deleted
+everything it made.
 
 To turn them on:
 
