@@ -29,6 +29,14 @@
     ["CSS: wipe duration drifts","styles.css","animation:sc-wipe .35s","animation:sc-wipe .5s"],
     ["CSS: no data-motion bar override","styles.css",":root[data-motion=\"reduce\"] .sc-bar{display:none}",""],
     ["CSS: hex literal","styles.css",".sc-label{font-weight:700}",".sc-label{font-weight:700;color:#fff}"],
-    ["CSS: unprefixed class","styles.css",".sc-label{font-weight:700}",".label{font-weight:700}"]
+    ["CSS: unprefixed class","styles.css",".sc-label{font-weight:700}",".label{font-weight:700}"],
+    ["footnote never shown","src/scorecard.js","    if (note) note.classList.add('sc-in');\n",""],
+    ["footnote shown from the start","src/scorecard.js","make(doc, 'div', 'sc-all', footnote)","(() => { const n = make(doc, 'div', 'sc-all sc-in', footnote); return n; })()"],
+    ["footnote in a p","src/scorecard.js","make(doc, 'div', 'sc-all', footnote)","make(doc, 'p', 'sc-all', footnote)"],
+    ["footnote above the total","src/scorecard.js","root.append(list, sum.el, ...(note ? [note] : []), live, foot);","root.append(list, ...(note ? [note] : []), sum.el, live, foot);"],
+    ["footnote not read out","src/scorecard.js","(after ? ` ${after}` : '')","''"],
+    ["footnote stop doubled","src/scorecard.js","footnote && !/[.!?]$/.test(footnote) ? `${footnote}.` : footnote","footnote ? `${footnote}.` : footnote"],
+    ["footnote not trimmed","src/scorecard.js","opts.footnote.trim()","opts.footnote"],
+    ["non-string footnote kept","src/scorecard.js","typeof opts.footnote === 'string' ? opts.footnote.trim() : ''","opts.footnote ? String(opts.footnote).trim() : ''"]
   ]
 }

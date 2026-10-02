@@ -162,3 +162,74 @@ test('every control is a 44px touch target, and the fields are 16px so iOS does 
     expect(f).toEqual(['manipulation', 'text']);
   }
 });
+
+/** Mount the Levels side of New game under the open dialog's heading.
+ * @param {Page} page @param {object} status @param {object|null} progress */
+async function mountChoice(page, status, progress) {
+  await page.goto('/?seed=1&subject=nature/birds');
+  await page.click('#catbtn');
+  await page.evaluate(async ({ status, progress }) => {
+    const url = '/src/account.js';
+    const m = await import(url);
+    const w = /** @type {any} */ (window);
+    w.calls = [];
+    const host = document.createElement('div');
+    host.id = 'lv-host';
+    document.querySelector('#pickercard h2')?.after(host);
+    const play = { status: () => status, progress: () => progress };
+    w.result = m.renderLevelChoice(host, play, { difficulty: 'easy', onSignIn: () => w.calls.push(['onSignIn']), onRetry: () => w.calls.push(['onRetry']) });
+  }, { status, progress });
+}
+
+/** @param {Page} page */
+const result = (page) => page.evaluate(() => /** @type {any} */ (window).result);
+const PROGRESS = { seed: 7, level: 12, points: 4210, history: [], current: null };
+
+test('New game shows the level to play next, at the difficulty setting', async ({ page }) => {
+  await mountChoice(page, IN, PROGRESS);
+  const host = page.locator('#lv-host');
+  await expect(host.locator('.acct-lvl')).toHaveText('Level 12');
+  await expect(host.locator('.acct-lvl-line')).toHaveText('4,210 points · Easy');
+  expect(await result(page)).toEqual({ ready: true, start: 'Play level 12' });
+  await expect(host.getByRole('button')).toHaveCount(0);
+});
+
+test('a level already started keeps its own difficulty, and one point is singular', async ({ page }) => {
+  const current = { level: 3, subject: 'nature/birds', difficulty: 'hard', events: [], elapsedMs: 0 };
+  await mountChoice(page, IN, { ...PROGRESS, level: 3, points: 1, current });
+  await expect(page.locator('#lv-host .acct-lvl-line')).toHaveText('1 point · Hard');
+  expect(await result(page)).toEqual({ ready: true, start: 'Play level 3' });
+});
+
+test('signed out, the Levels side offers Sign in and cannot start', async ({ page }) => {
+  // Progress left over from a signed-out session must not be offered.
+  await mountChoice(page, OUT, PROGRESS);
+  const host = page.locator('#lv-host');
+  await expect(host).toContainText('Numbered puzzles that keep your points on any device.');
+  await expect(host.locator('.acct-lvl')).toHaveCount(0);
+  expect(await result(page)).toEqual({ ready: false, start: 'Play level' });
+  await host.getByRole('button', { name: 'Sign in' }).click();
+  expect(await calls(page)).toEqual([['onSignIn']]);
+});
+
+test('signed in with no progress to deal from, it says so and offers to try again', async ({ page }) => {
+  await mountChoice(page, IN, null);
+  const host = page.locator('#lv-host');
+  await expect(host).toContainText("Your levels haven't loaded yet. Check your connection, then try again.");
+  expect(await result(page)).toEqual({ ready: false, start: 'Play level' });
+  await host.getByRole('button', { name: 'Try again' }).click();
+  expect(await calls(page)).toEqual([['onRetry']]);
+  const b = await host.getByRole('button', { name: 'Try again' }).boundingBox();
+  expect(b && b.height).toBeGreaterThanOrEqual(44);
+});
+
+test('the score card footnote is the new total, or why it did not change', async ({ page }) => {
+  await page.goto('/?seed=1&subject=nature/birds');
+  const lines = await page.evaluate(async () => {
+    const url = '/src/account.js';
+    const m = await import(url);
+    return [m.levelFootnote({ banked: true, progress: { points: 5644 } }), m.levelFootnote({ banked: true, progress: { points: 1 } }),
+      m.levelFootnote({ banked: false, progress: { points: 5644 } })];
+  });
+  expect(lines).toEqual(['5,644 points in all', '1 point in all', 'Already finished on another device, so these points were not added.']);
+});

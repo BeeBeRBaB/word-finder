@@ -3,9 +3,10 @@
 
 /**
  * @typedef {import('./scoring.js').Breakdown} Breakdown
- * @typedef {{reduceMotion?:boolean, countdownMs?:number, nextLabel?:string,
+ * @typedef {{reduceMotion?:boolean, countdownMs?:number, nextLabel?:string, footnote?:string,
  *   onNext:() => void, onStay:() => void}} PlayOptions
  *   countdownMs: 0, negative or Infinity means no countdown — the Next button only.
+ *   footnote: a quiet line under the total, shown and read out with it.
  * @typedef {{skip():void, cancel():void}} Playback
  * @typedef {{el:HTMLElement, num:HTMLElement, points:number, shown:boolean}} Row
  */
@@ -95,6 +96,7 @@ export function playBreakdown(host, breakdown, opts) {
   const limit = opts.countdownMs === undefined ? DEFAULT_COUNTDOWN_MS : opts.countdownMs;
   const auto = Number.isFinite(limit) && limit > 0;
   const total = whole(breakdown.total);
+  const footnote = typeof opts.footnote === 'string' ? opts.footnote.trim() : '';
   const lines = (Array.isArray(breakdown.lines) ? breakdown.lines : []).filter(l => l && typeof l === 'object');
 
   const root = make(doc, 'div', total < 0 ? 'sc sc-neg' : 'sc');
@@ -109,6 +111,8 @@ export function playBreakdown(host, breakdown, opts) {
   const live = make(doc, 'span', 'sr');
   live.setAttribute('role', 'status');
   live.setAttribute('aria-atomic', 'true');
+  // A div: #wincard p would outrank the card's own class on margins and size.
+  const note = footnote ? make(doc, 'div', 'sc-all', footnote) : null;
 
   const skipBtn = button(doc, 'sc-skip', 'Skip');
   const next = make(doc, 'div', 'sc-next');
@@ -132,7 +136,7 @@ export function playBreakdown(host, breakdown, opts) {
   next.append(line, bar, go);
   const foot = make(doc, 'div', 'sc-foot');
   foot.append(skipBtn, next);
-  root.append(list, sum.el, live, foot);
+  root.append(list, sum.el, ...(note ? [note] : []), live, foot);
   host.replaceChildren(root);
 
   let alive = true, done = false, ticking = false, announced = false;
@@ -167,7 +171,10 @@ export function playBreakdown(host, breakdown, opts) {
   function announce() {
     if (announced) return;
     announced = true;
-    const msg = `Total ${formatPoints(total)} points.` + (auto ? ` ${label} in ${Math.ceil(limit / 1000)} seconds.` : '');
+    if (note) note.classList.add('sc-in');
+    const after = footnote && !/[.!?]$/.test(footnote) ? `${footnote}.` : footnote;
+    const msg = `Total ${formatPoints(total)} points.` + (after ? ` ${after}` : '')
+      + (auto ? ` ${label} in ${Math.ceil(limit / 1000)} seconds.` : '');
     speak = win.setTimeout(() => { live.textContent = msg; }, ANNOUNCE_MS);
   }
 

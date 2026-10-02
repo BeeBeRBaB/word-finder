@@ -1,11 +1,16 @@
-// The Account section of Settings and the sign-in form. Each renders into a host main.js gives
-// it, and talks to the account only through levelplay.js; how Settings pages open is main.js's.
+// The levels screens outside the board: the Account section of Settings, the sign-in form and
+// the Levels side of New game. Each renders into a host main.js gives it, and talks to the
+// account only through levelplay.js; how dialogs and Settings pages open is main.js's.
 
 /**
  * @typedef {import('./levelplay.js').Status} Status
+ * @typedef {import('./levelplay.js').Finish} Finish
+ * @typedef {import('./levels.js').LevelProgress} LevelProgress
+ * @typedef {import('./levels.js').Difficulty} Difficulty
  * @typedef {import('./cloud.js').Account} Account
  * @typedef {{status():Status, signIn(u:string, p:string):Promise<Account>,
  *   signUp(u:string, p:string):Promise<Account>, signOut():void}} AccountPlay
+ * @typedef {{status():Status, progress():LevelProgress|null}} ChoicePlay
  */
 
 /** @param {Document} doc @param {string} tag @param {string} [cls] @param {string} [text]
@@ -20,12 +25,33 @@ function make(doc, tag, cls, text) {
 /** @param {number} n @returns {string} */
 const grouped = (n) => String(Math.max(0, Math.round(n))).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
+/** @param {number} n @returns {string} "1 point", "4,210 points" */
+const points = (n) => `${grouped(n)} ${n === 1 ? 'point' : 'points'}`;
+
 /** One line on where the account stands. @param {Status} s @returns {string} */
 export function accountLine(s) {
   const saved = s.error === 'offline' ? 'offline, saved here'
     : s.error || s.pending ? 'not saved online yet' : 'saved';
-  return `Level ${s.level} · ${grouped(s.points)} ${s.points === 1 ? 'point' : 'points'} · ${saved}`;
+  return `Level ${s.level} · ${points(s.points)} · ${saved}`;
 }
+
+/** A name over a muted line, beside one button: the layout of every account row.
+ * @param {Document} doc @param {HTMLElement} name @param {string} line @param {string} label
+ * @returns {{row:HTMLElement, btn:HTMLButtonElement}} */
+function accountRow(doc, name, line, label) {
+  const row = make(doc, 'div', 'acct-row');
+  const who = make(doc, 'span', 'acct-who');
+  const seg = make(doc, 'div', 'seg acct-seg');
+  const btn = /** @type {HTMLButtonElement} */ (make(doc, 'button', '', label));
+  btn.type = 'button';
+  btn.setAttribute('aria-pressed', 'false');
+  seg.append(btn);
+  who.append(name, make(doc, 'small', 'acct-line', line));
+  row.append(who, seg);
+  return { row, btn };
+}
+
+const PITCH = 'Numbered puzzles that keep your points on any device.';
 
 /** Render the Account section into `host`: Sign in when signed out, the account and Sign out
  * when signed in. Signing out with progress not yet saved online asks once more.
@@ -34,19 +60,9 @@ export function accountLine(s) {
 export function renderAccount(host, play, on) {
   const doc = host.ownerDocument;
   const s = play.status();
-  const row = make(doc, 'div', 'acct-row');
-  const who = make(doc, 'span', 'acct-who');
-  const seg = make(doc, 'div', 'seg acct-seg');
-  const btn = /** @type {HTMLButtonElement} */ (make(doc, 'button', '', s.signedIn ? 'Sign out' : 'Sign in'));
-  btn.type = 'button';
-  btn.setAttribute('aria-pressed', 'false');
-  seg.append(btn);
-  if (s.signedIn) {
-    who.append(make(doc, 'b', 'acct-name', s.username ?? ''), make(doc, 'small', 'acct-line', accountLine(s)));
-  } else {
-    who.append(make(doc, 'span', 'acct-name', 'Levels'), make(doc, 'small', 'acct-line', 'Numbered puzzles that keep your points on any device.'));
-  }
-  row.append(who, seg);
+  const { row, btn } = s.signedIn
+    ? accountRow(doc, make(doc, 'b', 'acct-name', s.username ?? ''), accountLine(s), 'Sign out')
+    : accountRow(doc, make(doc, 'span', 'acct-name', 'Levels'), PITCH, 'Sign in');
   const warn = make(doc, 'p', 'panenote acct-warn', "Your latest progress isn't saved online yet. Signing out here loses it.");
   warn.hidden = true;
   host.replaceChildren(make(doc, 'h3', 'panesection', 'Account'), row, warn);
@@ -146,4 +162,35 @@ export function renderSignIn(host, play, on) {
   });
 
   return { focus: () => user.focus() };
+}
+
+/** Render the Levels side of the New game dialog into `host`: the level to play and where the
+ * account stands, or a way in. Returns what the dialog's Start button says, and whether it can.
+ * @param {HTMLElement} host @param {ChoicePlay} play
+ * @param {{difficulty:Difficulty, onSignIn:() => void, onRetry:() => void}} on
+ *   difficulty: the setting, for a level not yet started; a started level keeps its own.
+ * @returns {{ready:boolean, start:string}} */
+export function renderLevelChoice(host, play, on) {
+  const doc = host.ownerDocument;
+  const s = play.status();
+  const p = s.signedIn ? play.progress() : null;
+  if (p) {
+    const d = p.current ? p.current.difficulty : on.difficulty;
+    host.replaceChildren(make(doc, 'p', 'acct-lvl', `Level ${p.level}`),
+      make(doc, 'p', 'acct-lvl-line', `${points(p.points)} · ${d.charAt(0).toUpperCase()}${d.slice(1)}`));
+    return { ready: true, start: `Play level ${p.level}` };
+  }
+  // Signed in with nothing to deal from: this device has no copy and the cloud has not answered.
+  const { row, btn } = s.signedIn
+    ? accountRow(doc, make(doc, 'span', 'acct-name', 'Levels'), "Your levels haven't loaded yet. Check your connection, then try again.", 'Try again')
+    : accountRow(doc, make(doc, 'span', 'acct-name', 'Levels'), PITCH, 'Sign in');
+  btn.addEventListener('click', s.signedIn ? on.onRetry : on.onSignIn);
+  host.replaceChildren(row);
+  return { ready: false, start: 'Play level' };
+}
+
+/** The line under a level's total: the account's new total, or why it did not change.
+ * @param {Finish} f @returns {string} */
+export function levelFootnote(f) {
+  return f.banked ? `${points(f.progress.points)} in all` : 'Already finished on another device, so these points were not added.';
 }

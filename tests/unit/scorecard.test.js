@@ -593,6 +593,37 @@ test('no countdown when countdownMs is 0 or Infinity, and nextLabel names the bu
   assert.equal(blank.host.one('sc-count').textContent, 'Next level in 10');
 });
 
+test('a footnote sits under the total, appears with it and is read out with it', () => {
+  const env = makeEnv();
+  play(env, BREAKDOWN, { footnote: '5,644 points in all' });
+  const sc = env.host.one('sc');
+  const note = env.host.one('sc-all');
+  assert.equal(note.textContent, '5,644 points in all');
+  assert.equal(note.tagName, 'DIV', '#wincard p would restyle a p');
+  assert.equal(sc.childNodes.indexOf(note), sc.childNodes.indexOf(env.host.one('sc-total')) + 1);
+  const live = /** @type {FakeEl} */ (env.host.all('sr').find(s => s.getAttribute('role') === 'status'));
+  env.advance(1700);
+  assert.ok(!note.classes.has('sc-in'), 'not before the total row');
+  env.advance(20);
+  assert.ok(note.classes.has('sc-in'));
+  env.advance(300);
+  assert.equal(live.textContent, 'Total +600 points. 5,644 points in all. Next level in 10 seconds.');
+  // Its own full stop is kept, not doubled; skipping straight to the end shows it too.
+  const env2 = makeEnv();
+  const { pb } = play(env2, BREAKDOWN, { footnote: ' Not added again. ', countdownMs: 0 });
+  pb.skip();
+  assert.ok(env2.host.one('sc-all').classes.has('sc-in'));
+  assert.equal(env2.host.one('sc-all').textContent, 'Not added again.');
+  env2.advance(300);
+  assert.equal(/** @type {FakeEl} */ (env2.host.all('sr').find(s => s.getAttribute('role') === 'status')).textContent,
+    'Total +600 points. Not added again.');
+  for (const footnote of [undefined, '', '   ', 7]) {
+    const e = makeEnv();
+    play(e, BREAKDOWN, { footnote, reduceMotion: true });
+    assert.equal(e.host.all('sc-all').length, 0, String(footnote));
+  }
+});
+
 test('a malformed breakdown still renders a total', () => {
   const env = makeEnv();
   play(env, /** @type {any} */ ({ lines: 'nope', total: 'x' }), { reduceMotion: true });

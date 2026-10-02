@@ -27,8 +27,9 @@ current default marked), and don't build on an assumption.
 These are committed so a thread can pick them up from GitHub.
 - **Animated backgrounds** in `src/backgrounds/*.js` are wired up now (above). They stay out of sw.js ASSETS on purpose; the default stale-while-revalidate path caches them on first use. `tools/coverage.mjs` excludes `src/backgrounds/**` from the 90% floor.
   - A new background is one registry entry in `src/backgrounds.js`: its tile, its Settings choice and its place in the contrast sim follow from it. `perDeal: true` restarts it on every deal, and `show()` passes it the subject id and seed.
-- **Levels and accounts:** `src/scoring.js`, `src/levels.js`, `src/cloud.js`, `src/scorecard.js`, `src/levelplay.js` (the flow main.js will call) and `src/account.js` (the sign-in UI, with `.acct-*` styles and `account.spec.js`), with unit tests, `firestore.rules`, and README rows plus the Accounts section.
+- **Levels and accounts:** `src/scoring.js`, `src/levels.js`, `src/cloud.js`, `src/scorecard.js`, `src/levelplay.js` (the flow main.js will call) and `src/account.js` (the sign-in UI and the Levels side of New game, with `.acct-*` styles and `account.spec.js`), with unit tests, `firestore.rules`, and README rows plus the Accounts section.
   - `styles.css` ends with a `/* Level score card */` section (`.sc-*` classes, unused so far).
+  - Still unstyled, for the main.js wiring to add: `.acct-lvl` and `.acct-lvl-line` (the level and its line in New game) and `.sc-all` (the score card footnote, `visibility:hidden` until `.sc-in`). The owner approved the six levels screens as mocked up on 2026-10-02 (`levels-ui-mockup-dark.png` and `-light.png` in the project's shared files).
   - scoring and levels were reviewed clean.
   - cloud had 5 defects, fixed by its reviewer.
   - scorecard was reviewed on 2026-10-02 with no logic defects. Its open layout and contrast findings are in `tools/levels-review/README.md`.
