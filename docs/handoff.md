@@ -40,6 +40,9 @@ These are committed so a thread can pick them up from GitHub. None of them is im
   - `wishlist.json` ranks the icons still missing; `round2-10.json` is a batch that was never drawn.
 - **Palette sources:** `tools/palettes/set1-3.json` and `tocss.mjs` (`node tools/palettes/tocss.mjs`) generate the `[data-palette]` CSS.
 
+## Old scratch archive
+`archive/wip-2026-09-27.tar.gz` (32 MB, 642 files) is the whole local `.wip/` folder: about 400 preview images, early drafts and the original HANDOFF. Everything future work needs is already under `tools/` and in this file, so open it only to look at an old preview: `tar -xzf archive/wip-2026-09-27.tar.gz`.
+
 ## Dev tools for this work (each folder's README says how to run them)
 - `tools/art-src/generators/`: the editable generators behind every `icons/part*.json` and the 25 illustrations in `src/art.js`, plus `icons/round2-report.json` (round-2 skips: map `paint-palette` to `palette` and `envelope` to `invitation-card`).
 - `tools/art-src/prototypes/`: a gallery of the animated backgrounds and `check.mjs`, which checks painting, hidden-tab pause, resize, `stop()`, reduced motion and fps.
