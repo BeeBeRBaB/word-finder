@@ -7,7 +7,8 @@
  *   onNext:() => void, onStay:() => void}} PlayOptions
  *   countdownMs: 0, negative or Infinity means no countdown — the Next button only.
  *   footnote: a quiet line under the total, shown and read out with it.
- * @typedef {{skip():void, cancel():void}} Playback
+ * @typedef {{skip():void, cancel():void, hold():void}} Playback
+ *   hold: no countdown from now on, as when the player has opened something over the card.
  * @typedef {{el:HTMLElement, num:HTMLElement, points:number, shown:boolean}} Row
  */
 
@@ -138,11 +139,13 @@ export function playBreakdown(host, breakdown, opts) {
   foot.append(skipBtn, next);
   root.append(list, sum.el, ...(note ? [note] : []), live, foot);
   host.replaceChildren(root);
+  // The countdown's part of the announcement, emptied if it is held: a removal is not read out.
+  const tail = make(doc, 'span', '');
 
-  let alive = true, done = false, ticking = false, announced = false;
+  let alive = true, done = false, ticking = false, announced = false, held = false;
   let raf = 0, timer = 0, speak = 0;
   /** @type {Playback} */
-  const api = { skip, cancel: stop };
+  const api = { skip, cancel: stop, hold };
   running.set(host, api);
 
   /** @param {Row} r @param {number} v */
@@ -173,9 +176,11 @@ export function playBreakdown(host, breakdown, opts) {
     announced = true;
     if (note) note.classList.add('sc-in');
     const after = footnote && !/[.!?]$/.test(footnote) ? `${footnote}.` : footnote;
-    const msg = `Total ${formatPoints(total)} points.` + (after ? ` ${after}` : '')
-      + (auto ? ` ${label} in ${Math.ceil(limit / 1000)} seconds.` : '');
-    speak = win.setTimeout(() => { live.textContent = msg; }, ANNOUNCE_MS);
+    const msg = `Total ${formatPoints(total)} points.` + (after ? ` ${after}` : '');
+    speak = win.setTimeout(() => {
+      live.textContent = msg;
+      if (auto && !held) { tail.textContent = ` ${label} in ${Math.ceil(limit / 1000)} seconds.`; live.append(tail); }
+    }, ANNOUNCE_MS);
   }
 
   function finish() {
@@ -187,7 +192,7 @@ export function playBreakdown(host, breakdown, opts) {
     announce();
     skipBtn.hidden = true;
     next.hidden = false;
-    if (auto) {
+    if (auto && !held) {
       ticking = true;
       secs.textContent = String(Math.ceil(limit / 1000));
       clock.reset(!doc.hidden);
@@ -224,6 +229,14 @@ export function playBreakdown(host, breakdown, opts) {
   }
 
   function skip() { if (alive) finish(); }
+
+  function hold() {
+    if (!alive || held) return;
+    held = true;
+    line.hidden = bar.hidden = true;
+    tail.textContent = '';
+    if (ticking) { ticking = false; quiet(); }
+  }
 
   function advance() {
     if (!alive) return;

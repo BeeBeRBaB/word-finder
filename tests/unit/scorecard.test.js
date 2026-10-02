@@ -407,6 +407,45 @@ test('Stay cancels the countdown, hands focus to Next, and Next still works', ()
   assert.equal(calls.next, 1);
 });
 
+test('hold() stops the countdown, or keeps it from starting, without Stay or a move of focus', () => {
+  // Mid-countdown: the line and bar go, its sentence leaves the live region, Next stays.
+  const env = makeEnv();
+  const { pb, calls } = play(env);
+  env.advance(REVEAL + 16);
+  const live = /** @type {FakeEl} */ (env.host.all('sr').find(s => s.getAttribute('role') === 'status'));
+  assert.equal(live.textContent, 'Total +600 points. Next level in 10 seconds.');
+  env.host.one('sc-stay').focus();
+  pb.hold();
+  pb.hold();
+  assert.ok(!env.host.one('sc-line').rendered && !env.host.one('sc-bar').rendered);
+  assert.equal(live.textContent, 'Total +600 points.');
+  assert.equal(calls.stay, 0, 'not the Stay button');
+  assert.equal(env.timers.size + env.frames.size, 0, 'nothing left running');
+  env.doc.setHidden(true);
+  env.doc.setHidden(false);
+  env.advance(20000);
+  assert.equal(calls.next, 0);
+  press(env.host.one('sc-go'));
+  assert.equal(calls.next, 1);
+  // Mid-reveal: the reveal carries on to the end, then no countdown and none announced.
+  const early = makeEnv();
+  const e = play(early);
+  early.advance(STEP);
+  e.pb.hold();
+  early.advance(REVEAL);
+  assert.ok(early.host.one('sc').classes.has('sc-done'), 'the reveal still finishes');
+  assert.ok(early.host.one('sc-go').rendered && !early.host.one('sc-line').rendered);
+  assert.equal(/** @type {FakeEl} */ (early.host.all('sr').find(s => s.getAttribute('role') === 'status')).textContent, 'Total +600 points.');
+  early.advance(20000);
+  assert.equal(e.calls.next, 0);
+  // After cancel() it does nothing.
+  const gone = makeEnv();
+  const g = play(gone);
+  g.pb.cancel();
+  g.pb.hold();
+  assert.equal(gone.timers.size + gone.frames.size, 0);
+});
+
 test('the bar and the colour follow the sign of the total', () => {
   const env = makeEnv();
   play(env, NEGATIVE);
