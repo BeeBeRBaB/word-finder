@@ -129,9 +129,9 @@ export function start(host, opts) {
   /** @param {number} now @returns {void} */
   function frame(now) {
     raf = requestAnimationFrame(frame);
-    // Exactly 30fps at any refresh rate: frames fall due on a 1/30s grid, with 1ms of slack.
-    if (due && now < due - 1) return;
-    due = now - due < FRAME ? due + FRAME : now + FRAME;
+    // Exactly 30fps at any refresh rate: frames fall due on a 1/30s grid, as in the other nine.
+    if (now < due - 2) return;
+    due = (now - due > FRAME ? now : due) + FRAME;
     const dt = last ? Math.min(0.1, (now - last) / 1000) : 0;
     last = now;
     step(dt); draw();
