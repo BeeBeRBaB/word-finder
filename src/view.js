@@ -162,7 +162,8 @@ export function renderArt(els, subjectId, style) {
   const kind = illo ? 'illustrated' : 'pixel';
   const svg = (/** @type {string} */ fit, /** @type {string} */ css) =>
     `<svg viewBox="0 0 ${illo ? 64 : 16} ${illo ? 64 : 16}" preserveAspectRatio="${fit}" class="hue-${a.hue}" data-motif="${a.motif}" data-kind="${kind}"${illo ? '' : ' shape-rendering="crispEdges"'}${css}>${body}</svg>`;
-  els.art.innerHTML = svg('xMidYMid meet', ` style="left:${left};top:${top}"`);
+  // The corner as variables, not left/top, so the Full screen area can place the art itself.
+  els.art.innerHTML = svg('xMidYMid meet', ` style="--ax:${left};--ay:${top}"`);
   els.railart.innerHTML = svg(a.flip ? 'xMinYMax meet' : 'xMaxYMax meet', '');
 }
 

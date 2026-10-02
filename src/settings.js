@@ -2,6 +2,7 @@
 // one record, validated field by field, stored under one key. Pure: the store is injected,
 // and a missing, throwing or garbled one degrades to the defaults, never into the game.
 import { defaultStore } from './storage.js';
+import { BACKGROUNDS } from './backgrounds.js';
 
 export const SETTINGS_KEY = 'wordfinder-settings-v1';
 // The standalone key auto-start was stored under before this record existed.
@@ -22,10 +23,7 @@ export const DEFAULTS = Object.freeze({
 
 /** The allowed values of each multiple-choice setting, default first. */
 export const CHOICES = Object.freeze({
-  // The ids of src/backgrounds.js, written out rather than imported so the shell gains no new
-  // static import before the picker ships; backgrounds.test.js holds the two lists equal.
-  art: ['illustrated', 'pixel', 'starfield', 'skyline', 'aquarium', 'confetti', 'shimmer', 'aurora',
-    'bokeh', 'constellation', 'bubbles', 'none'], area: ['list', 'full'], board: ['auto', 'compact', 'full'],
+  art: BACKGROUNDS.map(b => b.id), area: ['list', 'full'], board: ['auto', 'compact', 'full'],
   difficulty: ['normal', 'easy', 'hard'], letters: ['normal', 'large'], motion: ['system', 'reduce'],
 });
 const FLAGS = ['sound', 'vibrate', 'reveal', 'autoNext'];

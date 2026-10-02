@@ -833,13 +833,30 @@ body{position:fixed;inset:0;width:100%;height:100%}
    #app[data-art]; the other keeps its box (visibility, not display) so it can be measured. */
 #art,#railart{pointer-events:none}
 #art{display:block;position:absolute;inset:0;overflow:hidden;border-radius:inherit}
-#art svg{position:absolute;width:78%;height:78%;opacity:var(--art-board)}
+#art svg{position:absolute;left:var(--ax,0);top:var(--ay,0);width:78%;height:78%;opacity:var(--art-board)}
 #railart{display:none}
 #app[data-landscape] #side{display:flex;flex-direction:column}
 #app[data-landscape] #railart{display:block;flex:1 1 0;min-height:0;margin-top:20px}
 #railart svg{display:block;width:100%;height:100%;opacity:var(--art-rail)}
 #app[data-art="rail"] #art{display:none}
 #app[data-art="board"] #railart{visibility:hidden}
+/* Backgrounds (backgrounds.js): #bg fills the page behind #app and #bgside the word list's
+   area. z-index:-1 puts both under the page's content and over the body's ground; a module
+   fills its host, so each needs a box even while empty. */
+#bg,#bgside{pointer-events:none;overflow:hidden;z-index:-1}
+#bg{position:fixed;inset:0;opacity:.6}
+#side{position:relative}
+#bgside{position:absolute;inset:0;opacity:.5;
+  -webkit-mask-image:linear-gradient(to bottom,transparent,var(--bg) 36px);mask-image:linear-gradient(to bottom,transparent,var(--bg) 36px)}
+/* Portrait: from the top of the list to the screen's bottom edge, across the screen's width. */
+#app:not([data-landscape]) #bgside{left:50%;right:auto;width:100vw;transform:translateX(-50%);bottom:auto;height:100vh;height:100dvh}
+/* Landscape: the rail, out to the screen's right and bottom edges. */
+#app[data-landscape] #bgside{left:-10px;right:calc(-10px - env(safe-area-inset-right));bottom:calc(-10px - env(safe-area-inset-bottom))}
+/* Full screen with still art: the category art leaves the board corner and the rail, and
+   sits large in the page's bottom corner behind everything. */
+#app[data-bgarea="full"][data-art] #art{display:block;position:fixed;z-index:-1;border-radius:0}
+#app[data-bgarea="full"] #art svg{left:auto;top:auto;right:-4vmin;bottom:-4vmin;width:min(72vmin,640px);height:min(72vmin,640px)}
+#app[data-bgarea="full"] #railart{display:none}
 .hue-1{fill:var(--confetti-2);color:var(--confetti-2)}
 .hue-2{fill:var(--confetti-3);color:var(--confetti-3)}
 .hue-3{fill:var(--confetti-4);color:var(--confetti-4)}
@@ -969,7 +986,7 @@ body{position:fixed;inset:0;width:100%;height:100%}
 .paneback{display:none;align-items:center;gap:2px;min-height:44px;margin:0 0 0 -10px;padding:0 10px 0 4px;border:none;background:transparent;
   color:var(--accent-text);font-family:inherit;font-weight:700;font-size:16px;cursor:pointer}
 .paneback svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-label[for="settings-theme"],label[for="settings-palette"],label[for="settings-art"],.panelabel{display:block;font-family:var(--utility);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--label)}
+label[for="settings-theme"],label[for="settings-palette"],.panelabel{display:block;font-family:var(--utility);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--label)}
 #settings-body{display:grid;gap:14px 28px;align-items:start}
 /* A container, so a row stacks its label over the control when its column is too narrow
    for a three-way switch, whatever made it narrow. */
@@ -993,6 +1010,44 @@ label[for="settings-theme"],label[for="settings-palette"],label[for="settings-ar
 .seg svg,#settings-mode svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .check,#settings-auto,#picker-least{display:flex;align-items:center;gap:10px;min-height:44px;font-size:14.5px;color:var(--text);cursor:pointer}
 .check input,#settings-auto input,#picker-least input{width:20px;height:20px;flex:none;accent-color:var(--accent);cursor:pointer;margin:0}
+/* A row that opens a subpage: the height and edge of the selects, its value and a chevron. */
+.navrow{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;box-sizing:border-box;padding:5px 14px 5px 8px;
+  background:var(--bg);color:var(--text);border:1.5px solid var(--muted);border-radius:12px;font-family:inherit;font-size:15px;text-align:left;cursor:pointer}
+.navrow:hover{border-color:var(--accent)}
+.navnow{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.navnow .bgglyph{width:42px;height:28px;flex:none;border-radius:6px;background:var(--surface)}
+.navchev{width:18px;height:18px;flex:none;fill:none;stroke:var(--muted);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.bgname{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* A subpage (subpage.js) takes the card's place: card[data-page] hides everything else. */
+#settingscard[data-page] > :not(.subpage){display:none}
+.subpage{display:flex;flex-direction:column;gap:12px}
+.subpage[hidden]{display:none}
+.subpage .paneback{display:flex}
+/* Background tiles. The radio stays in the tab order and the tile draws its focus and check. */
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px}
+.bgtile{position:relative;display:flex;flex-direction:column;gap:4px;min-width:0;padding:7px 8px 8px;
+  border:1.5px solid var(--border);border-radius:14px;cursor:pointer}
+.bgtile:hover{border-color:var(--muted)}
+.bgtile input{position:absolute;width:1px;height:1px;margin:0;opacity:0;pointer-events:none}
+.bgtile .bgglyph{display:block;width:100%;height:auto;aspect-ratio:3/2;box-sizing:border-box;margin-bottom:2px;padding:6px;border-radius:9px;background:var(--bg)}
+.bgtile .bgname{font-weight:700;font-size:14.5px;line-height:1.2;color:var(--text-strong);white-space:normal}
+.bgbadge{display:flex;align-items:center;gap:5px;font-family:var(--utility);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.bgbadge svg{width:13px;height:13px;flex:none}
+.bgbadge[data-kind="animated"] svg{fill:currentColor}
+.bgbadge[data-kind="still"] svg{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round}
+.bgtile:has(input:checked){border-color:var(--accent);background:var(--accent-wash)}
+/* The check: a disc in the accent with a tick in its ink, drawn rather than an image so it
+   takes the palette. */
+.bgtile:has(input:checked)::after{content:'';position:absolute;top:12px;right:13px;width:20px;height:20px;border-radius:50%;background:var(--accent)}
+.bgtile:has(input:checked)::before{content:'';position:absolute;z-index:1;top:16px;right:20px;width:5px;height:9px;
+  border:solid var(--accent-ink);border-width:0 2.2px 2.2px 0;transform:rotate(45deg)}
+.bgtile:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+/* Tile pictures take the palette's confetti colours. */
+.bgglyph .g1{fill:var(--confetti-1)}
+.bgglyph .g2{fill:var(--confetti-2)}
+.bgglyph .g3{fill:var(--confetti-3)}
+.bgglyph .g4{fill:var(--confetti-4)}
+.bgglyph .ln{fill:none;stroke:var(--text);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 /* Capped, and genuinely scrollable. The card gained a checkbox row, and a short landscape
    phone leaves ~300px of usable height. box-sizing matters: without it the cap applies to
    the CONTENT box, so 60px of padding and 2px of border sat outside it and the card ended
@@ -1028,7 +1083,7 @@ label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12
 .selectfield{position:relative}
 #picker-field::after,.selectfield::after{content:'';position:absolute;right:18px;top:50%;width:9px;height:9px;margin-top:-7px;
   border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);pointer-events:none}
-#picker-select,#settings-theme,#settings-art,#settings-palette{appearance:none;-webkit-appearance:none;width:100%;box-sizing:border-box;display:block;
+#picker-select,#settings-theme,#settings-palette{appearance:none;-webkit-appearance:none;width:100%;box-sizing:border-box;display:block;
   background:var(--bg);color:var(--text);border:1.5px solid var(--muted);border-radius:12px;
   padding:11px 40px 11px 14px;font-family:inherit;font-size:15px;min-height:44px;cursor:pointer}
 #picker-error{font-size:13px;color:var(--pill-miss);margin:-12px 0 16px;max-width:260px}
@@ -1049,10 +1104,10 @@ label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12
    everything else. */
 @media (pointer:fine){
   @supports (appearance:base-select){
-    #picker-select,#settings-theme,#settings-art,#picker-select::picker(select),#settings-theme::picker(select),#settings-art::picker(select),#settings-palette,#settings-palette::picker(select){appearance:base-select}
+    #picker-select,#settings-theme,#picker-select::picker(select),#settings-theme::picker(select),#settings-palette,#settings-palette::picker(select){appearance:base-select}
     /* The wrapper already draws a chevron. */
-    #picker-select::picker-icon,#settings-theme::picker-icon,#settings-art::picker-icon,#settings-palette::picker-icon{display:none}
-    #picker-select::picker(select),#settings-theme::picker(select),#settings-art::picker(select),#settings-palette::picker(select){margin-top:6px;padding:6px;
+    #picker-select::picker-icon,#settings-theme::picker-icon,#settings-palette::picker-icon{display:none}
+    #picker-select::picker(select),#settings-theme::picker(select),#settings-palette::picker(select){margin-top:6px;padding:6px;
       background:var(--bg);color:var(--text);border:1.5px solid var(--accent);border-radius:12px;
       box-shadow:var(--card-shadow);overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--muted) transparent}
     /* No author max-height: the UA's own stretch sizing keeps the list below its control
@@ -1072,15 +1127,14 @@ label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12
     /* #picker in front: the shared option rule below has equal specificity and comes later. */
     #picker #picker-select option{min-height:28px;block-size:28px;padding:0 10px;line-height:28px}
     #picker-select option::checkmark{display:none}
-    #picker-select option,#settings-theme option,#settings-art option,#settings-palette option{box-sizing:border-box;min-height:40px;padding:8px 12px;border-radius:8px;
+    #picker-select option,#settings-theme option,#settings-palette option{box-sizing:border-box;min-height:40px;padding:8px 12px;border-radius:8px;
       font-size:15px;color:var(--text);background:transparent;cursor:pointer}
-    #picker-select option:hover,#settings-theme option:hover,#settings-art option:hover,
-    #picker-select option:focus-visible,#settings-theme option:focus-visible,#settings-art option:focus-visible,#settings-palette option:hover,#settings-palette option:focus-visible{background:var(--accent-wash);outline:none}
-    #picker-select option:checked,#settings-theme option:checked,#settings-art option:checked,#settings-palette option:checked{color:var(--accent-text);font-weight:700}
-    #picker-select option::checkmark,#settings-theme option::checkmark,#settings-art option::checkmark,#settings-palette option::checkmark{color:var(--accent-text)}
+    #picker-select option:hover,#settings-theme option:hover,#picker-select option:focus-visible,#settings-theme option:focus-visible,#settings-palette option:hover,#settings-palette option:focus-visible{background:var(--accent-wash);outline:none}
+    #picker-select option:checked,#settings-theme option:checked,#settings-palette option:checked{color:var(--accent-text);font-weight:700}
+    #picker-select option::checkmark,#settings-theme option::checkmark,#settings-palette option::checkmark{color:var(--accent-text)}
     /* Accent text on the wash is 4.33:1 in Phosphor light; the strongest text colour is not. */
-    #picker-select option:checked:is(:hover,:focus-visible),#settings-theme option:checked:is(:hover,:focus-visible),#settings-art option:checked:is(:hover,:focus-visible),#settings-palette option:checked:is(:hover,:focus-visible){color:var(--text-strong)}
-    #picker-select option:disabled,#settings-theme option:disabled,#settings-art option:disabled,#settings-palette option:disabled{color:var(--muted);cursor:default;background:transparent}
+    #picker-select option:checked:is(:hover,:focus-visible),#settings-theme option:checked:is(:hover,:focus-visible),#settings-palette option:checked:is(:hover,:focus-visible){color:var(--text-strong)}
+    #picker-select option:disabled,#settings-theme option:disabled,#settings-palette option:disabled{color:var(--muted);cursor:default;background:transparent}
   }
 }
 /* After both cards' own rules on purpose: their `padding` and `border` shorthands would
@@ -1127,7 +1181,7 @@ label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12
     padding:calc(6px + env(safe-area-inset-top)) calc(18px + env(safe-area-inset-right)) 6px calc(18px + env(safe-area-inset-left))}
   #settingscard .panehead h2{text-align:center;font-size:18px}
   .paneback{display:flex}
-  #settings-close{display:none}
+  #settings-close,.subpage .paneclose{display:none}
   /* Balances Back so the title sits in the middle. */
   #settingscard .panehead::after{content:"";width:74px}
 }

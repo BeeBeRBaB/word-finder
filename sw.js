@@ -5,11 +5,11 @@ const sw = /** @type {ServiceWorkerGlobalScope} */ (/** @type {unknown} */ (self
 // Bump when a change couples markup, styles and modules. Code is stale-while-revalidate
 // and each entry refreshes independently, so a torn pair can ship; install's atomic
 // addAll into a fresh cache is the only thing that swaps them as one set.
-const CACHE='wordfinder-v15';
+const CACHE='wordfinder-v16';
 // Unversioned on purpose: versioning it would make the activate sweep throw away every
 // downloaded category on every deploy.
 const SUBJECT_CACHE='wordfinder-subjects';
-const ASSETS=['./','./index.html','./styles.css','./src/main.js','./src/rng.js','./src/puzzle.js','./src/layout.js','./src/view.js','./src/effects.js','./src/catalog.js','./src/subjects.js','./src/storage.js','./src/progress.js','./src/appearance.js','./src/picker.js','./src/art.js','./src/settings.js','./src/backgrounds.js','./src/scoring.js','./src/levels.js','./src/cloud.js','./src/scorecard.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
+const ASSETS=['./','./index.html','./styles.css','./src/main.js','./src/rng.js','./src/puzzle.js','./src/layout.js','./src/view.js','./src/effects.js','./src/catalog.js','./src/subjects.js','./src/storage.js','./src/progress.js','./src/appearance.js','./src/picker.js','./src/art.js','./src/settings.js','./src/subpage.js','./src/bgpicker.js','./src/backgrounds.js','./src/scoring.js','./src/levels.js','./src/cloud.js','./src/scorecard.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 
 /** A lazily-imported word pool. Matched by directory so the catalog can grow without
  * sw.js growing with it. @param {URL} u @returns {boolean} */
