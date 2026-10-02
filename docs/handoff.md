@@ -74,7 +74,7 @@ These are committed so a thread can pick them up from GitHub. None of them is im
    - Signing in gives seeded, unlimited levels that can be continued on any device. Points accumulate, and easy/normal/hard still apply.
    - End of level: the existing win card and its progress bar. The score breakdown wipes in line by line, left to right; then a 10s bar runs forward for a positive total and backward for a negative one, with Next level and Stay.
    - Needs Firebase (question 7) and the sw.js fix above.
-4. **Browser-tool comparison.** The owner asked for it; it hasn't started.
+4. **Browser-tool comparison.** Done: see [browser-tools.md](browser-tools.md). The pick is Playwright scripts via Bash, at about 2.4x fewer tokens than either MCP server.
    - Candidates: Chrome DevTools MCP, Playwright MCP, the built-in Claude browser pane, and Playwright scripts run via Bash.
    - Measure tokens per task and capability: viewport, reduced motion, service worker and Cache Storage, touch drag, WebKit.
    - Expected so far: Bash scripts cost the fewest tokens and are the only option with WebKit; Playwright MCP opens headed Chrome windows unless started with `--headless`.
