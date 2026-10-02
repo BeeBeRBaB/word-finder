@@ -971,6 +971,11 @@ body{position:fixed;inset:0;width:100%;height:100%}
 #winbtn{border:none;background:var(--accent);color:var(--accent-ink);border-radius:var(--radius-ctl);padding:12px 22px;font-family:inherit;font-weight:700;font-size:15px;cursor:pointer}
 #winclose{position:absolute;top:0;right:0;width:44px;height:44px;border:none;background:transparent;color:var(--muted);font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
 #winclose:hover{color:var(--text-strong)}
+/* At 320px the 260px minimum plus 84px of padding pushed the card 26px off the right edge.
+   Before the short-screen block, so a short and narrow window keeps that block's padding. */
+@media (max-width:359px){
+  #wincard{min-width:0;padding:26px 18px}
+}
 /* A landscape phone is ~300px tall and the countdown row made the card 444px. The solved
    mark is decorative (aria-hidden), so it goes first. */
 @media (max-height:420px){
@@ -1304,6 +1309,11 @@ label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12
 }
 :root[data-motion="reduce"] .sc-row.sc-in{animation:none}
 :root[data-motion="reduce"] .sc-bar{display:none}
+/* After the short block's .sc too: its 28px card padding still leaves 7px a side at 320x400,
+   so widening that padding by more overflows a short 320px screen. */
+@media (max-width:359px){
+  .sc{width:calc(100vw - 72px)}
+}
 /* End level score card */
 /* Account */
 /* account.js's Account section in Settings and its sign-in form. Unused until levels mode is wired in. */
