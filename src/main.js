@@ -10,12 +10,13 @@ import { applyLayout, renderGrid, renderList, renderPills, renderFoundCells, ren
 import { burst, pop } from './effects.js';
 import { makeStorage, defaultStore } from './storage.js';
 import { makeProgress, chooseSubject } from './progress.js';
-import { makeAppearance, THEMES, themeName, PALETTES, paletteName } from './appearance.js';
+import { makeAppearance } from './appearance.js';
 import { makeSettings } from './settings.js';
 import { makePicker } from './picker.js';
 import { makeBackdrop } from './backgrounds.js';
 import { tilesMarkup, summaryMarkup } from './bgpicker.js';
 import { makeSubpage } from './subpage.js';
+import { tilesMarkup as lookTilesMarkup, summaryMarkup as lookSummaryMarkup, readLooks, varsOf, lookId } from './lookpicker.js';
 
 /**
  * @typedef {import('./puzzle.js').Puzzle} Puzzle
@@ -666,8 +667,6 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) cance
 // than duplicated here, so a palette edit has exactly one home.
 const themeColorMeta = document.querySelector('meta[name="theme-color"]');
 const settings = must('settings');
-const themeSelect = /** @type {HTMLSelectElement} */ (must('settings-theme'));
-const paletteSelect = /** @type {HTMLSelectElement} */ (must('settings-palette'));
 const modeLight = must('mode-light'), modeDark = must('mode-dark');
 const leastBox = /** @type {HTMLInputElement} */ (must('settings-least-box'));
 // Vibration is a no-op where unsupported (iOS Safari, most desktops); do not offer it there.
@@ -678,13 +677,6 @@ if (PRESET === PRESETS.compact) {
   large.disabled = true;
   large.title = 'Needs a larger screen';
 }
-for (const t of THEMES) {
-  const o = document.createElement('option');
-  o.value = t;
-  o.textContent = themeName(t);
-  themeSelect.appendChild(o);
-}
-for (const p of PALETTES) paletteSelect.appendChild(new Option(paletteName(p), p));
 /** The browser chrome takes the ground colour. Skipped while no stylesheet applies (WebKit
  * holds it back at boot), when --bg reads empty; boot() calls it again once it is live.
  * @returns {void} */
@@ -709,13 +701,32 @@ function showBackdrop() {
   });
 }
 globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').addEventListener?.('change', showBackdrop);
+// The Theme page: every theme and palette as one choice. Previews are read once per mode.
+const lookTiles = must('theme-tiles'), lookNow = must('settings-theme-now');
+lookTiles.innerHTML = lookTilesMarkup();
+/** @type {Map<string, Map<string, string>>} */
+const lookVars = new Map();
+/** @returns {void} */
+function fillPreviews() {
+  const root = document.documentElement, mode = root.dataset.appearance ?? 'dark';
+  const vars = lookVars.get(mode) ?? readLooks(root, getComputedStyle);
+  lookVars.set(mode, vars);
+  for (const tile of lookTiles.querySelectorAll('[data-look]')) {
+    tile.querySelector('.lookprev')?.setAttribute('style', vars.get(/** @type {HTMLElement} */ (tile).dataset.look ?? '') ?? '');
+  }
+}
+/** The Theme row's summary and the checked tile. @param {string} theme @param {string} palette @returns {void} */
+function syncLook(theme, palette) {
+  lookNow.innerHTML = lookSummaryMarkup(theme, palette, varsOf(getComputedStyle(document.documentElement)));
+  const on = /** @type {HTMLInputElement|null} */ (lookTiles.querySelector(`input[value="${lookId(theme, palette)}"]`));
+  if (on) on.checked = true;
+}
 const appearance = makeAppearance({
   onApply(mode, theme, palette) {
     els.appearance.dataset.pref = mode;
     modeLight.setAttribute('aria-pressed', String(mode === 'light'));
     modeDark.setAttribute('aria-pressed', String(mode === 'dark'));
-    themeSelect.value = theme;
-    paletteSelect.value = palette;
+    syncLook(theme, palette);
     syncThemeColor();
     showBackdrop();
   },
@@ -726,12 +737,17 @@ bgTiles.innerHTML = tilesMarkup();
 const bgPage = makeSubpage({
   card: must('settingscard'), page: must('settings-bgpage'), row: must('settings-bg'), back: must('bg-back'), name: 'background',
 });
+const lookPage = makeSubpage({
+  card: must('settingscard'), page: must('settings-themepage'), row: must('settings-theme'), back: must('theme-back'), name: 'theme',
+  onOpen: fillPreviews,
+});
 /** @returns {void} */
 function openSettings() {
   cancelAutoNext();
   dealGen++;
   picker.close();
   bgPage.close(false);
+  lookPage.close(false);
   syncSettings();
   anchorPane(settings);
   settings.style.display = 'flex';
@@ -743,6 +759,7 @@ function openSettings() {
 function closeSettings() {
   if (settings.style.display !== 'flex') return;
   bgPage.close(false);
+  lookPage.close(false);
   settings.style.display = 'none';
   els.appearance.setAttribute('aria-expanded', 'false');
   els.appearance.focus();
@@ -751,8 +768,6 @@ els.appearance.setAttribute('aria-expanded', 'false');
 els.appearance.addEventListener('click', () => {
   if (settings.style.display === 'flex') closeSettings(); else openSettings();
 });
-themeSelect.addEventListener('change', () => appearance.setTheme(themeSelect.value));
-paletteSelect.addEventListener('change', () => appearance.setPalette(paletteSelect.value));
 modeLight.addEventListener('click', () => appearance.set('light'));
 modeDark.addEventListener('click', () => appearance.set('dark'));
 /** Show the stored settings in the pane's controls. Every control under [data-setting] is a
@@ -772,6 +787,7 @@ function syncSettings() {
   }
   leastBox.checked = progress.get().favourLeastSeen;
   bgNow.innerHTML = summaryMarkup(now.art);
+  syncLook(appearance.getTheme(), appearance.getPalette());
 }
 /** Make a changed setting take effect now, where it has something to change now.
  * @param {string} key @returns {void} */
@@ -799,6 +815,7 @@ settings.addEventListener('click', (e) => {
 settings.addEventListener('change', (e) => {
   const el = e.target;
   if (el === leastBox) { progress.setFavourLeastSeen(leastBox.checked); return; }
+  if (el instanceof HTMLInputElement && el.name === 'look') { const [t, p] = el.value.split('/'); appearance.setLook(t, p); return; }
   if (!(el instanceof HTMLInputElement || el instanceof HTMLSelectElement) || !el.dataset.setting) return;
   const value = el instanceof HTMLSelectElement || el.type === 'radio' ? el.value
     : el.dataset.on ? (el.checked ? el.dataset.on : el.dataset.off) : el.checked;
@@ -809,6 +826,7 @@ applySetting('reveal');
 applySetting('motion');
 must('settings-close').addEventListener('click', closeSettings);
 must('bg-close').addEventListener('click', closeSettings);
+must('theme-close').addEventListener('click', closeSettings);
 must('settings-back').addEventListener('click', closeSettings);
 settings.addEventListener('click', (e) => { if (e.target === settings) closeSettings(); });
 document.addEventListener('keydown', (e) => {

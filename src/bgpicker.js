@@ -25,7 +25,7 @@ export function badgeMarkup(bg) {
 /** One radio per background, in registry order; data-setting makes each a settings.js field.
  * @param {readonly Background[]} [list] @returns {string} */
 export function tilesMarkup(list = BACKGROUNDS) {
-  return list.map(bg => `<label class="bgtile" data-bg="${bg.id}">`
+  return list.map(bg => `<label class="tile bgtile" data-bg="${bg.id}">`
     + `<input type="radio" name="art" value="${bg.id}" data-setting="art">`
     + `${glyphMarkup(bg)}<span class="bgname">${bg.name}</span>${badgeMarkup(bg)}</label>`).join('');
 }

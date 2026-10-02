@@ -2,18 +2,20 @@
 // place until Back returns to that row. Owns no setting; main.js reads and writes those.
 
 /**
- * @typedef {{card:HTMLElement, page:HTMLElement, row:HTMLElement, back:HTMLElement, name:string}} SubpageEls
- * `card` holds the main page and every subpage; `name` is what card[data-page] says while open.
+ * @typedef {{card:HTMLElement, page:HTMLElement, row:HTMLElement, back:HTMLElement, name:string, onOpen?:() => void}} SubpageEls
+ * `card` holds the main page and every subpage; `name` is what card[data-page] says while open;
+ * `onOpen` runs before the page shows, to fill it.
  */
 
 /** @param {SubpageEls} els */
-export function makeSubpage({ card, page, row, back, name }) {
+export function makeSubpage({ card, page, row, back, name, onOpen }) {
   /** @returns {boolean} */
   const isOpen = () => card.dataset.page === name;
 
   /** Focus lands on the current choice, so arrow keys move through the choices at once.
    * @returns {void} */
   function open() {
+    onOpen?.();
     card.dataset.page = name;
     page.hidden = false;
     row.setAttribute('aria-expanded', 'true');

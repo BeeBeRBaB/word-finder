@@ -996,13 +996,13 @@ body{position:fixed;inset:0;width:100%;height:100%}
 .paneback{display:none;align-items:center;gap:2px;min-height:44px;margin:0 0 0 -10px;padding:0 10px 0 4px;border:none;background:transparent;
   color:var(--accent-text);font-family:inherit;font-weight:700;font-size:16px;cursor:pointer}
 .paneback svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-label[for="settings-theme"],label[for="settings-palette"],.panelabel{display:block;font-family:var(--utility);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--label)}
+.panelabel{display:block;font-family:var(--utility);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--label)}
 #settings-body{display:grid;gap:14px 28px;align-items:start}
 /* A container, so a row stacks its label over the control when its column is too narrow
    for a three-way switch, whatever made it narrow. */
 .panegroup{display:flex;flex-direction:column;gap:6px;min-width:0;container-type:inline-size}
 .panegroup + .panegroup{padding-top:12px;border-top:1px solid var(--border)}
-.panesection{margin:0 0 2px;font-family:var(--display);font-size:15px;font-weight:700;color:var(--text-strong)}
+.panesection,.lookhead{margin:0 0 2px;font-family:var(--display);font-size:15px;font-weight:700;color:var(--text-strong)}
 .row{display:grid;grid-template-columns:92px minmax(0,1fr);align-items:center;column-gap:10px}
 @container (max-width:335px){.row{grid-template-columns:minmax(0,1fr);row-gap:4px}}
 .panenote{margin:0;font-size:13px;line-height:1.35;color:var(--hint)}
@@ -1027,31 +1027,62 @@ label[for="settings-theme"],label[for="settings-palette"],.panelabel{display:blo
 .navnow{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
 .navnow .bgglyph{width:42px;height:28px;flex:none;border-radius:6px;background:var(--surface)}
 .navchev{width:18px;height:18px;flex:none;fill:none;stroke:var(--muted);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-.bgname{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bgname,.navnow .lookname{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* A subpage (subpage.js) takes the card's place: card[data-page] hides everything else. */
 #settingscard[data-page] > :not(.subpage){display:none}
 .subpage{display:flex;flex-direction:column;gap:12px}
 .subpage[hidden]{display:none}
 .subpage .paneback{display:flex}
-/* Background tiles. The radio stays in the tab order and the tile draws its focus and check. */
-.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px}
-.bgtile{position:relative;display:flex;flex-direction:column;gap:4px;min-width:0;padding:7px 8px 8px;
+/* Tiles on the Theme and Background pages. The radio stays in the tab order and the tile
+   draws its focus and check. */
+.tile{position:relative;display:flex;flex-direction:column;gap:4px;min-width:0;padding:7px 8px 8px;
   border:1.5px solid var(--border);border-radius:14px;cursor:pointer}
-.bgtile:hover{border-color:var(--muted)}
-.bgtile input{position:absolute;width:1px;height:1px;margin:0;opacity:0;pointer-events:none}
+.tile:hover{border-color:var(--muted)}
+.tile input{position:absolute;width:1px;height:1px;margin:0;opacity:0;pointer-events:none}
+.tile:has(input:checked){border-color:var(--accent);background:var(--accent-wash)}
+/* The check: a disc in the accent with a tick in its ink, drawn rather than an image so it
+   takes the palette. */
+.tile:has(input:checked)::after{content:'';position:absolute;top:12px;right:13px;width:20px;height:20px;border-radius:50%;background:var(--accent)}
+.tile:has(input:checked)::before{content:'';position:absolute;z-index:1;top:16px;right:20px;width:5px;height:9px;
+  border:solid var(--accent-ink);border-width:0 2.2px 2.2px 0;transform:rotate(45deg)}
+.tile:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px}
 .bgtile .bgglyph{display:block;width:100%;height:auto;aspect-ratio:3/2;box-sizing:border-box;margin-bottom:2px;padding:6px;border-radius:9px;background:var(--bg)}
 .bgtile .bgname{font-weight:700;font-size:14.5px;line-height:1.2;color:var(--text-strong);white-space:normal}
 .bgbadge{display:flex;align-items:center;gap:5px;font-family:var(--utility);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .bgbadge svg{width:13px;height:13px;flex:none}
 .bgbadge[data-kind="animated"] svg{fill:currentColor}
 .bgbadge[data-kind="still"] svg{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round}
-.bgtile:has(input:checked){border-color:var(--accent);background:var(--accent-wash)}
-/* The check: a disc in the accent with a tick in its ink, drawn rather than an image so it
-   takes the palette. */
-.bgtile:has(input:checked)::after{content:'';position:absolute;top:12px;right:13px;width:20px;height:20px;border-radius:50%;background:var(--accent)}
-.bgtile:has(input:checked)::before{content:'';position:absolute;z-index:1;top:16px;right:20px;width:5px;height:9px;
-  border:solid var(--accent-ink);border-width:0 2.2px 2.2px 0;transform:rotate(45deg)}
-.bgtile:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+/* The Theme page: a group per theme with its palettes four across, and two columns of groups
+   where the card is wide (below). */
+#theme-tiles{display:grid;gap:14px 28px}
+.lookgroup{display:flex;flex-direction:column;gap:6px;min-width:0}
+.looktiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.looktile{gap:5px;padding:5px;border-radius:12px}
+.looktile:has(input:checked)::after{top:9px;right:9px;width:18px;height:18px;box-shadow:0 0 0 2px var(--surface)}
+.looktile:has(input:checked)::before{top:12.5px;right:15.5px;width:4.5px;height:8px;border-width:0 2px 2px 0}
+.looktile .lookname{font-weight:700;font-size:13.5px;line-height:1.2;color:var(--text-strong);text-align:center}
+/* A board and a word list in miniature, in a look's own colours: lookpicker.js sets the
+   --look-* properties, and the current look's tokens stand in until it has. */
+.lookprev{display:flex;gap:4px;padding:5px;border-radius:8px;aspect-ratio:16/10;box-sizing:border-box;overflow:hidden;background:var(--look-bg,var(--bg))}
+.lookboard{position:relative;flex:2;display:flex;flex-direction:column;justify-content:space-around;min-width:0;padding:2px 4px;
+  border-radius:5px;background:var(--look-surface,var(--surface));border:1px solid var(--look-border,var(--border))}
+.lookl{position:relative;font-weight:700;font-size:7.5px;line-height:1;letter-spacing:.1em;white-space:nowrap;overflow:hidden;color:var(--look-text,var(--text))}
+.lookpill{position:absolute;height:8px;border-radius:999px}
+.lookpill.p1{left:3px;right:30%;top:calc(50% - 4px);background:var(--look-pill-1,var(--pill-1))}
+.lookpill.p2{left:35%;width:18%;top:4px;bottom:4px;height:auto;background:var(--look-pill-2,var(--pill-2))}
+.lookrail{flex:1;display:flex;flex-direction:column;gap:3px;padding-top:2px}
+.lookrail i{display:block;height:4px;border-radius:3px;background:var(--look-text,var(--text));opacity:.85}
+.lookrail i:first-child{width:60%;background:var(--look-accent,var(--accent));opacity:1}
+.lookrail i:nth-child(3){width:75%}
+/* The Theme row's small copy. */
+.navnow .lookprev{width:46px;height:30px;flex:none;padding:3px;gap:2px;aspect-ratio:auto}
+.navnow .lookboard{padding:1px 2px;border-radius:3px}
+.navnow .lookl{font-size:5px}
+.navnow .lookpill{height:5px}
+.navnow .lookpill.p1{top:calc(50% - 2.5px)}
+.navnow .lookrail{gap:2px}
+.navnow .lookrail i{height:3px}
 /* Tile pictures take the palette's confetti colours. */
 .bgglyph .g1{fill:var(--confetti-1)}
 .bgglyph .g2{fill:var(--confetti-2)}
@@ -1090,10 +1121,9 @@ label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12
    native chevron, so the wrapper draws one back — without it the control reads as a
    text input and nothing says it opens. */
 #picker-field{position:relative;margin-bottom:20px}
-.selectfield{position:relative}
-#picker-field::after,.selectfield::after{content:'';position:absolute;right:18px;top:50%;width:9px;height:9px;margin-top:-7px;
+#picker-field::after{content:'';position:absolute;right:18px;top:50%;width:9px;height:9px;margin-top:-7px;
   border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);pointer-events:none}
-#picker-select,#settings-theme,#settings-palette{appearance:none;-webkit-appearance:none;width:100%;box-sizing:border-box;display:block;
+#picker-select{appearance:none;-webkit-appearance:none;width:100%;box-sizing:border-box;display:block;
   background:var(--bg);color:var(--text);border:1.5px solid var(--muted);border-radius:12px;
   padding:11px 40px 11px 14px;font-family:inherit;font-size:15px;min-height:44px;cursor:pointer}
 #picker-error{font-size:13px;color:var(--pill-miss);margin:-12px 0 16px;max-width:260px}
@@ -1108,16 +1138,16 @@ label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12
 /* Edges: --border is a divider tone and is under 3:1 against the card in most themes, so
    the closed control takes --muted and the open list --accent (both 4:1+ in all 14).
    The list sits on --bg, not the card's --surface, so it reads as a layer above it. */
-/* The open list of both dropdowns, in the theme's colours, where the browser can draw it
+/* The New game dropdown's open list, in the theme's colours, where the browser can draw it
    (Chromium and Safari support base-select). Mouse and trackpad only: its 28px rows are
    too small for a finger, so a touch screen keeps the system's own picker, as does
    everything else. */
 @media (pointer:fine){
   @supports (appearance:base-select){
-    #picker-select,#settings-theme,#picker-select::picker(select),#settings-theme::picker(select),#settings-palette,#settings-palette::picker(select){appearance:base-select}
+    #picker-select,#picker-select::picker(select){appearance:base-select}
     /* The wrapper already draws a chevron. */
-    #picker-select::picker-icon,#settings-theme::picker-icon,#settings-palette::picker-icon{display:none}
-    #picker-select::picker(select),#settings-theme::picker(select),#settings-palette::picker(select){margin-top:6px;padding:6px;
+    #picker-select::picker-icon{display:none}
+    #picker-select::picker(select){margin-top:6px;padding:6px;
       background:var(--bg);color:var(--text);border:1.5px solid var(--accent);border-radius:12px;
       box-shadow:var(--card-shadow);overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--muted) transparent}
     /* No author max-height: the UA's own stretch sizing keeps the list below its control
@@ -1137,14 +1167,14 @@ label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12
     /* #picker in front: the shared option rule below has equal specificity and comes later. */
     #picker #picker-select option{min-height:28px;block-size:28px;padding:0 10px;line-height:28px}
     #picker-select option::checkmark{display:none}
-    #picker-select option,#settings-theme option,#settings-palette option{box-sizing:border-box;min-height:40px;padding:8px 12px;border-radius:8px;
+    #picker-select option{box-sizing:border-box;min-height:40px;padding:8px 12px;border-radius:8px;
       font-size:15px;color:var(--text);background:transparent;cursor:pointer}
-    #picker-select option:hover,#settings-theme option:hover,#picker-select option:focus-visible,#settings-theme option:focus-visible,#settings-palette option:hover,#settings-palette option:focus-visible{background:var(--accent-wash);outline:none}
-    #picker-select option:checked,#settings-theme option:checked,#settings-palette option:checked{color:var(--accent-text);font-weight:700}
-    #picker-select option::checkmark,#settings-theme option::checkmark,#settings-palette option::checkmark{color:var(--accent-text)}
+    #picker-select option:hover,#picker-select option:focus-visible{background:var(--accent-wash);outline:none}
+    #picker-select option:checked{color:var(--accent-text);font-weight:700}
+    #picker-select option::checkmark{color:var(--accent-text)}
     /* Accent text on the wash is 4.33:1 in Phosphor light; the strongest text colour is not. */
-    #picker-select option:checked:is(:hover,:focus-visible),#settings-theme option:checked:is(:hover,:focus-visible),#settings-palette option:checked:is(:hover,:focus-visible){color:var(--text-strong)}
-    #picker-select option:disabled,#settings-theme option:disabled,#settings-palette option:disabled{color:var(--muted);cursor:default;background:transparent}
+    #picker-select option:checked:is(:hover,:focus-visible){color:var(--text-strong)}
+    #picker-select option:disabled{color:var(--muted);cursor:default;background:transparent}
   }
 }
 /* After both cards' own rules on purpose: their `padding` and `border` shorthands would
@@ -1175,6 +1205,7 @@ label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12
 }
 @media (min-width:820px), (min-width:600px) and (max-height:420px){
   #settings-body{grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-areas:"look game" "feedback game"}
+  #theme-tiles{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
   #settings-look{grid-area:look}
   #settings-game{grid-area:game;padding-top:0;border-top:none}
   #settings-feedback{grid-area:feedback}

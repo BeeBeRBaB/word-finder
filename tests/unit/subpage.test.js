@@ -75,3 +75,11 @@ test('another page being open does not count as this one', () => {
   sp.close();
   assert.equal(card.dataset.page, 'theme');
 });
+
+test('onOpen runs before the page shows, each time it opens', () => {
+  const card = el('card'), page = el('page'), row = el('row'), back = el('back');
+  /** @type {boolean[]} */ const seen = [];
+  makeSubpage(/** @type {any} */ ({ card, page, row, back, name: 'theme', onOpen: () => seen.push(page.hidden) }));
+  row.click(); back.click(); row.click();
+  assert.deepEqual(seen, [true, true]);
+});

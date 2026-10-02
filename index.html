@@ -96,10 +96,8 @@
     <button id="settings-close" class="paneclose" type="button" aria-label="Close">&times;</button></div>
   <div id="settings-body">
   <section id="settings-look" class="panegroup" aria-labelledby="sec-look"><h3 class="panesection" id="sec-look">Look</h3>
-    <div class="row"><label for="settings-theme">Theme</label>
-      <div id="settings-field" class="selectfield"><select id="settings-theme"></select></div></div>
-    <div class="row"><label for="settings-palette">Palette</label>
-      <div class="selectfield"><select id="settings-palette"></select></div></div>
+    <div class="row"><span class="panelabel" id="lbl-theme">Theme</span>
+      <button id="settings-theme" class="navrow" type="button" aria-labelledby="lbl-theme settings-theme-now" aria-controls="settings-themepage"><span id="settings-theme-now" class="navnow"></span><svg class="navchev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button></div>
     <div class="row"><span class="panelabel" id="settings-mode-label">Mode</span>
       <div id="settings-mode" class="seg" role="group" aria-labelledby="settings-mode-label">
         <button id="mode-light" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.6"/><path d="M12 2v2.6M12 19.4V22M2 12h2.6M19.4 12H22M4.9 4.9l1.9 1.9M17.2 17.2l1.9 1.9M19.1 4.9l-1.9 1.9M6.8 17.2l-1.9 1.9"/></svg>Light</button>
@@ -128,7 +126,14 @@
     </div>
   </section>
   </div>
-  <!-- The Background page takes the card's place while open; backgrounds.js supplies its tiles. -->
+  <!-- The Theme and Background pages take the card's place while open; lookpicker.js and
+       bgpicker.js supply their tiles. -->
+  <div id="settings-themepage" class="subpage" hidden>
+    <div class="panehead"><button id="theme-back" class="paneback" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Back</button>
+      <h2 id="theme-title">Theme</h2>
+      <button id="theme-close" class="paneclose" type="button" aria-label="Close">&times;</button></div>
+    <div id="theme-tiles" role="radiogroup" aria-labelledby="theme-title"></div>
+  </div>
   <div id="settings-bgpage" class="subpage" hidden>
     <div class="panehead"><button id="bg-back" class="paneback" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>Back</button>
       <h2 id="bg-title">Background</h2>

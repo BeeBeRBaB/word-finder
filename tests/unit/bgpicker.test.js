@@ -7,7 +7,7 @@ test('one radio tile per registry entry, in order, each a setting of art', () =>
   const html = tilesMarkup();
   const values = [...html.matchAll(/<input type="radio" name="art" value="([\w-]+)" data-setting="art">/g)].map(m => m[1]);
   assert.deepEqual(values, BACKGROUNDS.map(b => b.id));
-  assert.equal((html.match(/<label class="bgtile"/g) ?? []).length, BACKGROUNDS.length);
+  assert.equal((html.match(/<label class="tile bgtile"/g) ?? []).length, BACKGROUNDS.length);
   for (const b of BACKGROUNDS) assert.ok(html.includes(`<span class="bgname">${b.name}</span>`), `${b.id}: no name`);
 });
 

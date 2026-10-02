@@ -112,13 +112,13 @@ test('themes: default first, unknown values normalize to it, and a choice persis
   const a = makeAppearance({ store, root, onApply: (m, t) => seen.push([m, t]) });
   a.start();
   assert.equal(/** @type {any} */ (root).dataset.theme, 'phosphor');
-  a.setTheme('sticker');
+  a.setLook('sticker', 'classic');
   assert.equal(store.getItem(THEME_KEY), 'sticker');
   assert.equal(/** @type {any} */ (root).dataset.theme, 'sticker');
   assert.deepEqual(seen.at(-1), ['dark', 'sticker']);
   const b = makeAppearance({ store, root: fakeRoot() });
   assert.equal(b.getTheme(), 'sticker', 'read back on construction');
-  a.setTheme('retired-theme');
+  a.setLook('retired-theme', 'classic');
   assert.equal(a.getTheme(), 'phosphor');
 });
 
@@ -126,7 +126,7 @@ test('a throwing store still yields the default theme', () => {
   const bad = { getItem() { throw new Error('blocked'); }, setItem() { throw new Error('blocked'); } };
   const a = makeAppearance({ store: bad, root: fakeRoot() });
   assert.equal(a.getTheme(), 'phosphor');
-  a.setTheme('plum');
+  a.setLook('plum', 'classic');
   assert.equal(a.getTheme(), 'plum', 'applied for the session even though it cannot be stored');
 });
 
@@ -144,14 +144,15 @@ test('palettes: default first, unknown values normalize to it, and a choice pers
   const a = makeAppearance({ store, root, onApply: (_m, _t, p) => seen.push(p) });
   a.start();
   assert.equal(/** @type {any} */ (root).dataset.palette, 'classic');
-  a.setPalette('calm');
+  a.setLook('grove', 'calm');
   assert.equal(store.getItem(PALETTE_KEY), 'calm');
   assert.equal(/** @type {any} */ (root).dataset.palette, 'calm');
-  assert.deepEqual(seen, ['classic', 'calm']);
+  assert.equal(/** @type {any} */ (root).dataset.theme, 'grove');
+  assert.deepEqual(seen, ['classic', 'calm'], 'a theme and palette together apply once');
   assert.equal(makeAppearance({ store, root: fakeRoot() }).getPalette(), 'calm', 'read back on construction');
   const bad = { getItem() { throw new Error('blocked'); }, setItem() { throw new Error('blocked'); } };
   const b = makeAppearance({ store: bad, root: fakeRoot() });
   assert.equal(b.getPalette(), 'classic');
-  b.setPalette('jewel');
+  b.setLook('phosphor', 'jewel');
   assert.equal(b.getPalette(), 'jewel', 'applied for the session even though it cannot be stored');
 });

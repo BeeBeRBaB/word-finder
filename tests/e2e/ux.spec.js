@@ -118,7 +118,7 @@ test('the visible copy talks about games and subjects, never topics or themes', 
   await expect(page.locator('#winbtn')).toHaveText(/Play a new game/);
   await expect(page.locator('#picker-start')).toHaveText('Start');
   await expect(page.locator('#picker-cancel')).toHaveText('Cancel');
-  await expect(page.locator('#settings label[for="settings-theme"]')).toHaveText('Theme');
+  await expect(page.locator('#lbl-theme')).toHaveText('Theme');
   const outsideSettings = await page.evaluate(() => {
     const body = /** @type {HTMLElement} */ (document.body.cloneNode(true));
     body.querySelector('#settings')?.remove();
