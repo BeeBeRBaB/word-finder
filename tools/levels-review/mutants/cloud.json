@@ -43,6 +43,7 @@
     ["refresh shared across accounts","src/cloud.js","if (refreshing?.uid !== s.uid) {","if (!refreshing) {"],
     ["finally clears a newer refresh","src/cloud.js","if (refreshing?.p === p) refreshing = null;","refreshing = null;"],
     ["unreadable 200 is null","src/cloud.js","if (body === null) throw new CloudError('server');","if (body === null) return null;"],
-    ["default config not FIREBASE","src/cloud.js","const config = deps.config ?? FIREBASE;","const config = deps.config ?? { apiKey: 'x', projectId: 'y' };"]
+    ["default config not FIREBASE","src/cloud.js","const config = deps.config ?? FIREBASE;","const config = deps.config ?? { apiKey: 'x', projectId: 'y' };"],
+    ["unset Auth is a server error","src/cloud.js","  CONFIGURATION_NOT_FOUND: 'unconfigured', // Authentication never set up for the project\n",""]
   ]
 }

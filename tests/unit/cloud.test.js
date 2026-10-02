@@ -85,6 +85,11 @@ test('an empty config hides accounts and every call is unconfigured', async () =
   assert.ok(Object.isFrozen(FIREBASE));
   assert.equal(makeCloud({ fetch: fakeFetch(), store: null }).enabled, Boolean(FIREBASE.apiKey && FIREBASE.projectId),
     'the default config is FIREBASE');
+  if (FIREBASE.apiKey && FIREBASE.projectId) {
+    const f = fakeFetch(fail(400, 'EMAIL_NOT_FOUND'));
+    await rejectsWith(makeCloud({ fetch: f, store: null }).signIn('alice', PASSWORD), 'credentials');
+    assert.ok(f.calls[0].url.endsWith(`?key=${encodeURIComponent(FIREBASE.apiKey)}`), 'the default key is FIREBASE\'s');
+  }
   const store = memStore();
   store.setItem(SESSION_KEY, JSON.stringify({ uid: 'u', username: 'alice', idToken: 'i', refreshToken: 'r', expiresAt: T0 }));
   const fetch = fakeFetch();
@@ -166,6 +171,7 @@ test('each Auth error maps to a code with a player-facing message', async () => 
     ['WEAK_PASSWORD : Password should be at least 6 characters', 'weak'],
     ['TOO_MANY_ATTEMPTS_TRY_LATER : Access to this account has been temporarily disabled', 'throttled'],
     ['OPERATION_NOT_ALLOWED', 'unconfigured'],
+    ['CONFIGURATION_NOT_FOUND', 'unconfigured'],
     ['SOMETHING_NEW', 'server'],
     ['constructor', 'server'],
   ];

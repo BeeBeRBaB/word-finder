@@ -2,11 +2,12 @@
 // Pure: the network is an injected fetch and the session an injected store. No Firebase SDK.
 import { defaultStore } from './storage.js';
 
-/** Filled in once the Firebase project exists; while either is empty, accounts are hidden. */
-export const FIREBASE = Object.freeze({ apiKey: '', projectId: '' });
+/** The web config of the word-finder-10f77 project. Public by design: firestore.rules guards the
+ * data. While either is empty, accounts are hidden. */
+export const FIREBASE = Object.freeze({ apiKey: 'AIzaSyB8gwufEWgZkvdXAJH1WKBxxCEQHEFKJnY', projectId: 'word-finder-10f77' });
 export const SESSION_KEY = 'wordfinder-session-v1';
 // Players type a username; Auth needs an email. RFC 2606 reserves .invalid, so this never
-// delivers mail. Whether Firebase accepts the domain is unverified until a live project exists.
+// delivers mail. Auth's email check passes it (2026-10-02); no account was made to prove it.
 export const EMAIL_DOMAIN = 'users.word-finder.invalid';
 
 const AUTH = 'https://identitytoolkit.googleapis.com/v1/accounts:';
@@ -59,6 +60,7 @@ const SIGN_IN_ERRORS = {
   WEAK_PASSWORD: 'weak',
   TOO_MANY_ATTEMPTS_TRY_LATER: 'throttled',
   OPERATION_NOT_ALLOWED: 'unconfigured',   // Email/Password sign-in not enabled in the console
+  CONFIGURATION_NOT_FOUND: 'unconfigured', // Authentication never set up for the project
 };
 /** @type {Record<string, CloudCode>} */
 const REFRESH_ERRORS = {
@@ -208,8 +210,8 @@ export function makeCloud(deps = {}) {
     let s = session;
     if (!s) throw new CloudError('expired');
     const url = `${FIRESTORE}${encodeURIComponent(config.projectId)}/databases/(default)/documents/users/${encodeURIComponent(s.uid)}`;
-    /** @param {Session} t */
     // no-store: a document is per account, so neither cache may answer for it.
+    /** @param {Session} t */
     const go = (t) => send(url, {
       method,
       cache: 'no-store',
