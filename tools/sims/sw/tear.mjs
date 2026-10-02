@@ -18,8 +18,10 @@ console.log(`old ${oldRef} CACHE=${oldCache}   new ${newRef} CACHE=${newCache}`)
 
 let root = oldDir, forceCache = /** @type {string | null} */ (null);
 // GitHub Pages sends max-age=600; sw.js re-issues code requests with no-cache to beat it.
+// In one tab Chromium then reuses modules from memory, so a deploy that changes only modules
+// reads "never reached the new build" without a bump; CC=no-cache shows a visit 10 minutes on.
 const site = await serve(() => root, {
-  cacheControl: 'max-age=600',
+  cacheControl: process.env.CC || 'max-age=600',
   rewrite: (p, body) => p === '/sw.js' && forceCache && root === newDir
     ? body.toString().replace(/(const CACHE\s*=\s*')[^']+'/, `$1${forceCache}'`) : body,
 });
