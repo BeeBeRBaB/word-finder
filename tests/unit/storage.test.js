@@ -62,6 +62,13 @@ test('a save with a non-numeric size is discarded', () => {
   assert.equal(makeStorage(store).load(), null);
 });
 
+test('a found entry that is not a word is dropped, keeping the rest of the save', () => {
+  const store = memStore();
+  const word = { word: 'BEACH', x0: 0, y0: 0, x1: 4, y1: 0 };
+  store.setItem('wordfinder-save-v1', JSON.stringify({ seed: 7, subjectId: 'nature/birds', size: 10, count: 8, found: [null, 3, word, {}] }));
+  assert.deepEqual(makeStorage(store).load()?.found, [word]);
+});
+
 test('a save missing its subject id is discarded', () => {
   const store = memStore();
   store.setItem('wordfinder-save-v1', JSON.stringify({ seed: 7, size: 13, count: 12, found: [] }));

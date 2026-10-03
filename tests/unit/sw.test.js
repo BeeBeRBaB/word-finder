@@ -13,7 +13,7 @@ function assets() {
   return JSON.parse(m[1].replace(/'/g, '"'));
 }
 
-// GitHub Pages serves code with `cache-control: max-age=600` (see sw.js:21-26, where
+// GitHub Pages serves code with `cache-control: max-age=600` (see sw.js, where
 // `revalidate()` already documents and works around this for the fetch handler). A
 // plain fetch -- which is exactly what `caches.open(CACHE).then(c=>c.addAll(ASSETS))`
 // issues -- can be answered straight from the browser's own HTTP cache, so a bare

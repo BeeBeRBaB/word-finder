@@ -82,8 +82,8 @@ function lay(drawn, spares, size, rng, mode, name) {
       }
       if (mode === 'strict') return null;
       const alt = spare.findIndex(s => s.length === w.length);
-      if (mode === 'swap' && (alt === -1 || ++swaps > MAX_SWAPS)) return null;
       if (alt === -1 || ++swaps > MAX_SWAPS) {
+        if (mode === 'swap') return null;
         throw new Error(`could not place ${w} in a ${size}x${size} grid for "${name}"`);
       }
       words[i] = spare.splice(alt, 1)[0];
@@ -198,7 +198,7 @@ export function pickWords(pool, rng, { count, mix, undrawn }) {
   return out;
 }
 
-// Each swap costs a full 400-attempt placement pass, and a board that cannot be filled
+// Each swap re-tries the word against every position, and a board that cannot be filled
 // in eight swaps is a broken subject, not an unlucky seed.
 const MAX_SWAPS = 8;
 

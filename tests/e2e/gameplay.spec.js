@@ -1,10 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { findDiagonalWord, findAndDrag, findRunsInGrid, dragCells, cellCentre } from './helpers.js';
 
-// Every unseeded goto() below is pinned to ?subject=nature/birds rather than left as
-// '/': none of these tests care which subject loads, only that one does, and the
-// catalog currently lists more categories than have a subjects/ module on disk
-// (parallel content authoring) -- an unpinned load would sometimes boot to "Offline".
+// Every unseeded goto() below is pinned to ?subject=nature/birds: none of these tests care
+// which subject loads, and one subject keeps a failure easy to reproduce.
 
 test('dragging across a word finds it', async ({ page }) => {
   await page.goto('/?subject=nature/birds');

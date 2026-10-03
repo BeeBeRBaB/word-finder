@@ -113,6 +113,15 @@ test('signing in takes the cloud copy when it is further on, without saving it b
   assert.equal(cloud.saves.length, 0);
 });
 
+test('a cloud copy from a newer build is kept, not written over', async () => {
+  const { play, cloud } = setup();
+  cloud.docs.set('uid-ana', { v: 2, level: 40, points: 9000 });
+  await play.signIn('ana', 'secret1');
+  assert.equal(cloud.saves.length, 0);
+  assert.equal(/** @type {any} */ (cloud.docs.get('uid-ana')).v, 2);
+  assert.equal(play.status().error, 'server');
+});
+
 test('a device further on than the cloud saves its copy up', async () => {
   const { play, cloud, store } = setup();
   store.setItem(OWNER_KEY, 'uid-ana');

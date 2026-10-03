@@ -41,7 +41,7 @@ async function mount(page, status, what) {
       m.renderAccount(host, play, { onSignIn: () => w.calls.push(['onSignIn']), onSignOut: () => w.calls.push(['onSignOut']) });
     };
     if (what === 'account') w.redraw();
-    else w.form = m.renderSignIn(host, play, { onDone: (/** @type {any} */ a) => w.calls.push(['onDone', a.username]) });
+    else m.renderSignIn(host, play, { onDone: (/** @type {any} */ a) => w.calls.push(['onDone', a.username]) });
   }, { status, what });
 }
 

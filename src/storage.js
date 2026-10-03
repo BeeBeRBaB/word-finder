@@ -62,6 +62,7 @@ export function makeStorage(store) {
         if (typeof d.subjectId !== 'string') return null;
         if (typeof d.size !== 'number' || typeof d.count !== 'number') return null;
         if (!Array.isArray(d.found)) return null;
+        d.found = d.found.filter((f) => typeof f?.word === 'string');
         // Unlike the fields above, a bad board costs only itself: restore falls back to
         // the seed, as it did before boards were saved.
         if (!boardHolds(d)) { delete d.cells; delete d.placements; }

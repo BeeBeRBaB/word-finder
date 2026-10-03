@@ -4,14 +4,15 @@
 
 /**
  * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed:number, corner?:boolean}} BackgroundOptions
- * `colors` are the palette's six confetti colours; `subject` and `seed` are the dealt puzzle's.
+ * `colors` are the theme's six confetti colours, which the subject backgrounds draw in (the
+ * others keep their own); `subject` and `seed` are the dealt puzzle's.
  * `corner` asks a scene for its main icon alone, placed by the host's CSS like the category art.
  */
 /** @typedef {{start:(host:HTMLElement, opts:BackgroundOptions)=>()=>void}} BackgroundModule */
 /**
  * @typedef {{id:string, name:string, animated:boolean, file?:string, glyph:string, perDeal?:boolean}} Background
  * `file` is the module under src/backgrounds/; `glyph` is the picker tile's picture, the inner
- * markup of a 48x32 SVG whose g1..g4 classes take the palette's confetti colours. `perDeal`
+ * markup of a 48x32 SVG whose g1..g4 classes take the theme's confetti colours. `perDeal`
  * restarts it for every new subject or seed; the others keep running across deals.
  */
 

@@ -10,10 +10,7 @@ import { WORDS } from '../../src/subjects/home.js';
 // a fresh grid, where it swallowed every pointer event and made the game unplayable.
 // #newbtn now opens the picker rather than dealing directly, so "starting a new game"
 // goes through it: pick a category explicitly (nature, the same one already on
-// screen) rather than Surprise me, so this does not depend on which of the 25
-// categories happen to have a subjects/ module on disk yet (see ux.spec.js's reload
-// test for the same caveat) -- and pinned to nature/birds rather than an unseeded
-// load for the same reason.
+// screen).
 test('starting a new game during the win delay leaves the board playable', async ({ page }) => {
   await page.goto('/?seed=1&subject=nature/birds');
   const words = await page.locator('.w').allTextContents();
@@ -34,13 +31,19 @@ test('starting a new game during the win delay leaves the board playable', async
   await expect(page.locator('#count')).toContainText(`1 of ${total} found`);
 });
 
+// A save naming a subject the catalog no longer has booted to "Unavailable" on every launch.
+test('a save naming a retired subject gives way to a new deal', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('wordfinder-save-v1',
+    JSON.stringify({ seed: 1, subjectId: 'nature/retired-subject', size: 10, count: 8, found: [] })));
+  await page.goto('/');
+  await expect(page.locator('.cell').first()).toBeVisible();
+  await expect(page.locator('#subject')).not.toHaveText(/^(Offline|Unavailable|Loading…)$/);
+});
+
 // Regression for 5e2bbf6. Selection length came from Euclidean distance, but a
 // k-cell diagonal spans k*sqrt(2), so diagonal drags selected too many cells.
 test('a diagonal drag selects exactly the cells under the pointer', async ({ page }) => {
-  // Pinned rather than a random deal: this only exercises grid geometry, and the
-  // catalog currently lists more categories than have a subjects/ module on disk
-  // (parallel content authoring), so an unpinned load would sometimes boot to
-  // "Offline" instead of a puzzle.
+  // Pinned: this only exercises grid geometry.
   await page.goto('/?subject=nature/birds');
   const len = await page.evaluate(() => {
     const gb = document.getElementById('gridbox');
@@ -179,10 +182,7 @@ test('every asset in the service worker precache list actually resolves', async 
 test('every same-origin asset the app loads is covered by the precache list', async ({ page, baseURL }) => {
   // networkidle + the full cell count together prove main.js and its entire ES
   // module import graph (rng/puzzle/layout/view/effects/catalog/subjects) actually
-  // ran, not just that the top-level script tag resolved. Pinned to a subject rather
-  // than a random deal: the catalog currently lists more categories than have a
-  // subjects/ module on disk (parallel content authoring), so an unpinned load would
-  // sometimes boot to "Offline" and never reach the module graph this test checks.
+  // ran, not just that the top-level script tag resolved.
   await page.goto('/?subject=nature/birds', { waitUntil: 'networkidle' });
   // 169 on a desktop board, 100 on a phone — see smoke.spec.js for why a perfect
   // square is asserted rather than a fixed number.

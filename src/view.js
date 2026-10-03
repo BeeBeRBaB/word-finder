@@ -65,8 +65,8 @@ export function renderGrid(els, puzzle, dims, size, pad, scale = 0.46) {
   }
 }
 
-// Which palette slot each found word gets, cycling. The colours themselves live in
-// styles.css so they can follow the appearance setting; this module now holds none.
+// Which colour slot each found word gets, cycling. The colours themselves live in
+// styles.css so they follow the theme; this module holds none.
 const PILL_CLASS = ['p1', 'p2', 'p3', 'p4'];
 
 /** One rounded bar over a selection. `thick` is its height as a fraction of the cell —

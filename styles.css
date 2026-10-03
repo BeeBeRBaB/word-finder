@@ -1,5 +1,5 @@
-/* Type roles — the only non-colour tokens here, so they sit outside both palettes: a
-   typeface does not change with the appearance setting. This block must stay FIRST;
+/* Type roles — the only non-colour tokens here, so they sit outside the colour blocks: a
+   typeface does not change with the look. This block must stay FIRST;
    tokens.test.js locates it as the file's first root-level block. Hyperlegible does all
    the reading (grid and word list); Space Grotesk is the display voice and Space Mono
    the tracked labels, where monospace keeps the digits from shifting. */
@@ -30,7 +30,7 @@
   --pill-edge:rgba(255,255,255,.25);
   --confetti-1:#ff8c3a; --confetti-2:#ffc14d; --confetti-3:#78cdc8;
   --confetti-4:#ff828c; --confetti-5:#c89bff; --confetti-6:#fdf4ea;
-  /* Shape. Per theme rather than per appearance, but declared in every palette so the
+  /* Shape. Per theme rather than per flavour, but declared in every colour block so the
      parity test covers them too. */
   --radius-board:16px; --radius-ctl:999px; --radius-pill:999px;
   --ctl-edge:var(--accent); --ctl-width:1.5px; --ctl-shadow:none;
@@ -280,7 +280,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);font-family:
 button,select,label{touch-action:manipulation;-webkit-user-select:auto;user-select:auto}
 body{position:fixed;inset:0;width:100%;height:100%}
 /* One ring for every control rather than per-element rules, so a keyboard reaches
-   nothing that shows only the UA default against this palette. */
+   nothing that shows only the UA default against these colours. */
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 /* Set by the inline script in <head>, cleared once boot() has laid the board out.
    Without it the shell paints in the wrong orientation with a 0-size grid. */
@@ -458,7 +458,7 @@ body{position:fixed;inset:0;width:100%;height:100%}
 #art .ln,#railart .ln{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
 /* A default only: a path's own stroke-width attribute must win, and any author rule would beat it. */
 #art .ln:not([stroke-width]),#railart .ln:not([stroke-width]){stroke-width:2}
-/* Pill colours are class-driven so they live in the palette; as rgba literals in JS
+/* Pill colours are class-driven so they live in the theme's colours; as rgba literals in JS
    they were tuned for a dark surface and all but invisible on paper. */
 .pill{position:absolute;border-radius:var(--radius-pill);box-shadow:inset 0 0 0 1px var(--pill-edge)}
 .pill.p1{background:var(--pill-1);box-shadow:var(--pill-ring-1)}
@@ -627,7 +627,7 @@ body{position:fixed;inset:0;width:100%;height:100%}
 .tile input{position:absolute;width:1px;height:1px;margin:0;opacity:0;pointer-events:none}
 .tile:has(input:checked){border-color:var(--accent);background:var(--accent-wash)}
 /* The check: a disc in the accent with a tick in its ink, drawn rather than an image so it
-   takes the palette. */
+   takes the theme's colours. */
 .tile:has(input:checked)::after{content:'';position:absolute;top:12px;right:13px;width:20px;height:20px;border-radius:50%;background:var(--accent)}
 .tile:has(input:checked)::before{content:'';position:absolute;z-index:1;top:16px;right:20px;width:5px;height:9px;
   border:solid var(--accent-ink);border-width:0 2.2px 2.2px 0;transform:rotate(45deg)}
@@ -671,7 +671,7 @@ body{position:fixed;inset:0;width:100%;height:100%}
 .navnow .lookpill.p1{top:calc(50% - 2.5px)}
 .navnow .lookrail{gap:2px}
 .navnow .lookrail i{height:3px}
-/* Tile pictures take the palette's confetti colours. */
+/* Tile pictures take the theme's confetti colours. */
 .bgglyph .g1{fill:var(--confetti-1)}
 .bgglyph .g2{fill:var(--confetti-2)}
 .bgglyph .g3{fill:var(--confetti-3)}
@@ -701,7 +701,7 @@ body{position:fixed;inset:0;width:100%;height:100%}
    and silently beat #picker-least's (1,0,0), rendering the checkbox row as a second
    uppercase field label. Specificity, not source order — reordering would not have fixed it. */
 label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--label);margin-bottom:6px;text-align:left}
-/* appearance:none so the control takes the card's palette rather than the platform's
+/* appearance:none so the control takes the card's colours rather than the platform's
    white; 44px is the touch target the rest of the dialogs keep. It also strips the
    native chevron, so the wrapper draws one back — without it the control reads as a
    text input and nothing says it opens. */

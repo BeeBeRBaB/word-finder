@@ -4,7 +4,7 @@
 /**
  * @typedef {import('./scoring.js').Breakdown} Breakdown
  * @typedef {{reduceMotion?:boolean, countdownMs?:number, nextLabel?:string, footnote?:string,
- *   onNext:() => void, onStay:() => void}} PlayOptions
+ *   onNext:() => void, onStay?:() => void}} PlayOptions
  *   countdownMs: 0, negative or Infinity means no countdown — the Next button only.
  *   footnote: a quiet line under the total, shown and read out with it.
  * @typedef {{skip():void, cancel():void, hold():void, rearm():void}} Playback
@@ -94,18 +94,17 @@ export function playBreakdown(host, breakdown, opts) {
   const win = /** @type {Window} */ (doc.defaultView);
   const clock = makeClock(() => win.performance.now());
   const still = !!opts.reduceMotion;
-  const label = typeof opts.nextLabel === 'string' && opts.nextLabel ? opts.nextLabel : 'Next level';
+  const label = opts.nextLabel || 'Next level';
   const limit = opts.countdownMs === undefined ? DEFAULT_COUNTDOWN_MS : opts.countdownMs;
   const auto = Number.isFinite(limit) && limit > 0;
-  const total = whole(breakdown.total);
-  const footnote = typeof opts.footnote === 'string' ? opts.footnote.trim() : '';
-  const lines = (Array.isArray(breakdown.lines) ? breakdown.lines : []).filter(l => l && typeof l === 'object');
+  const { lines, total } = breakdown;
+  const footnote = opts.footnote?.trim() ?? '';
 
   const root = make(doc, 'div', total < 0 ? 'sc sc-neg' : 'sc');
   if (still) root.classList.add('sc-still');
   const list = make(doc, 'ul', 'sc-list');
   list.setAttribute('role', 'list');   // Safari drops list semantics under list-style:none
-  const rows = lines.map(l => row(doc, 'li', String(l.label ?? ''), String(l.detail ?? ''), whole(l.points)));
+  const rows = lines.map(l => row(doc, 'li', l.label, l.detail, l.points));
   list.append(...rows.map(r => r.el));
   const sum = row(doc, 'div', 'Total', '', total);
   sum.el.classList.add('sc-total');
@@ -254,7 +253,7 @@ export function playBreakdown(host, breakdown, opts) {
     quiet();
     line.hidden = bar.hidden = true;
     go.focus({ preventScroll: true });   // Stay is gone; keep focus in the card
-    opts.onStay();
+    opts.onStay?.();
   }
 
   // Only a finished card that Next itself stopped: cancel() is final.

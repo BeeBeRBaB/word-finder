@@ -1,6 +1,6 @@
-// Word Finder — wiring. The only module that owns mutable game state, reads the URL, or
-// listens for events; everything it calls is either pure (rng, puzzle, layout, catalog)
-// or a stateless renderer (view, effects).
+// Word Finder — wiring. Owns the board's state, reads the URL and the page's events, and
+// joins the pure modules (rng, puzzle, layout, scoring, levels…) to the ones that draw a
+// part of the page (view, effects, picker, account, scorecard…).
 import { CATEGORIES, categoryOf } from './catalog.js';
 import { loadCategory, loadSubject, SubjectLoadError } from './subjects.js';
 import { makeRng, resolveSeed, resolveTarget, stringHash } from './rng.js';
@@ -293,7 +293,11 @@ let resizeFrame = 0;
  * @returns {void} */
 function onResize() {
   cancelAnimationFrame(resizeFrame);
-  resizeFrame = requestAnimationFrame(layout);
+  resizeFrame = requestAnimationFrame(() => {
+    layout();
+    // After it, not in the resize event: an open pane's offsets follow the header's buttons.
+    for (const p of [els.picker, settings]) if (shown(p)) anchorPane(p);
+  });
 }
 
 const pills = () => renderPills(els, state, state.dims, PAD);
@@ -305,20 +309,24 @@ function list() {
   placeArt(els, state.dims);   // the list's height decides whether the rail has room
 }
 
+let missTimer = 0;
 /** Briefly show the attempted selection as a red miss pill, then clear it.
  * @param {Selection} s @returns {void} */
 function flashMiss(s) {
+  // A second miss restarts the clock, or the first one's timer would cut the second short.
+  clearTimeout(missTimer);
   state.miss = s;
   pills();
-  setTimeout(() => { state.miss = null; pills(); }, 400);
+  missTimer = setTimeout(() => { state.miss = null; pills(); }, 400);
 }
 
 /** @param {PointerEvent} e @returns {{fx:number, fy:number}} */
 function cellXY(e) {
-  const r = els.gridbox.getBoundingClientRect();
+  // The cells sit inside the board's border; the rect's edge is the border's.
+  const gb = els.gridbox, r = gb.getBoundingClientRect();
   return {
-    fx: (e.clientX - r.left - PAD) / state.dims.cell - 0.5,
-    fy: (e.clientY - r.top - PAD) / state.dims.cell - 0.5,
+    fx: (e.clientX - r.left - gb.clientLeft - PAD) / state.dims.cell - 0.5,
+    fy: (e.clientY - r.top - gb.clientTop - PAD) / state.dims.cell - 0.5,
   };
 }
 /** @param {number} v @returns {number} */
@@ -683,7 +691,6 @@ function showLevelCard(f, level, covered) {
     countdownMs: cfg.get().autoNext && !covered && !document.hidden ? undefined : 0,
     focus: !covered,
     onNext: () => advance(true),
-    onStay: () => {},
   });
 }
 winbtn.addEventListener('click', () => advance());
@@ -726,9 +733,7 @@ function reinstate(snap) {
   renderArt(els, snap.subjectId, cfg.get().art);
   showBackdrop();
   hideWin();
-  layout();   // a different puzzle object, so this rebuilds the cells
-  renderFoundCells(els, state, state.size);
-  pills();
+  layout();   // a different puzzle object, so this rebuilds the cells, found ones and pills
   list();
   persist();
   if (levelBoard) startLevel(levelBoard);
@@ -846,8 +851,8 @@ function syncThemeColor() {
 // One background runs at a time, behind the whole page or behind the word list.
 const backdrop = makeBackdrop();
 const bgFull = must('bg'), bgList = must('bgside');
-/** The look's six confetti colours, which the animated backgrounds draw in too: read from
- * the stylesheet, so they follow the theme. @returns {string[]} */
+/** The look's six confetti colours, read from the stylesheet so they follow the theme; the
+ * subject backgrounds draw in them too. @returns {string[]} */
 function confettiColors() {
   const root = getComputedStyle(document.documentElement);
   return [1, 2, 3, 4, 5, 6].map(i => root.getPropertyValue(`--confetti-${i}`).trim());
@@ -933,8 +938,7 @@ function openSignIn(fromPicker) {
 }
 /** @returns {void} */
 function signedIn() {
-  renderAccountSection();
-  reconcileLevel();
+  afterSync();   // New game may have opened over the sign-in while it was in flight
   if (signInFromPicker) { signInFromPicker = false; closeSettings(); openPicker(); return; }
   signInPage.close();
 }
@@ -1102,11 +1106,7 @@ document.addEventListener('keydown', (e) => {
 // Styles or fonts that land after boot change the chrome around the board; re-measure once.
 // The backdrop again too: WebKit can boot before the stylesheet, with no confetti colours yet.
 window.addEventListener('load', () => { onResize(); syncThemeColor(); showBackdrop(); });
-window.addEventListener('resize', () => {
-  onResize();
-  // An open pane's inline offsets were measured for the old shape.
-  for (const p of [els.picker, settings]) if (shown(p)) anchorPane(p);
-});
+window.addEventListener('resize', onResize);
 
 /** Explicit `?seed=` / `?subject=` / `?category=` always wins, even over a saved game —
  * that is the point of pinning a puzzle by URL. Otherwise prefer the save, and only deal
@@ -1146,7 +1146,13 @@ async function boot() {
       return;
     }
     const saved = store.load();
-    if (saved) { await restore(saved); return; }
+    try {
+      if (saved) { await restore(saved); return; }
+    } catch (err) {
+      // A save naming a subject the catalog no longer has fails the same way on every launch,
+      // so it gives way to a new deal. Offline is not that: the save waits for the network.
+      if (!(err instanceof SubjectLoadError && err.reason === 'unknown')) throw err;
+    }
     await newGame();
   } catch (err) {
     // A blank grid with no explanation is the worst outcome available, so say what

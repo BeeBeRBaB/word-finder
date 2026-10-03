@@ -13,8 +13,9 @@ async function gridGeometry(page) {
     if (!gb) throw new Error('missing #gridbox');
     const n = Math.round(Math.sqrt(document.querySelectorAll('.cell').length));
     if (!n) throw new Error('grid has not rendered yet');
+    // Inside the board's border, where the cells are placed from.
     const r = gb.getBoundingClientRect();
-    return { left: r.left, top: r.top, cell: (gb.offsetWidth - 20) / n, pad: 10, n };
+    return { left: r.left + gb.clientLeft, top: r.top + gb.clientTop, cell: (gb.clientWidth - 20) / n, pad: 10, n };
   });
 }
 

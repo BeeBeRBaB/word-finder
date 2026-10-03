@@ -703,25 +703,14 @@ test('a footnote sits under the total, appears with it and is read out with it',
   env2.advance(300);
   assert.equal(/** @type {FakeEl} */ (env2.host.all('sr').find(s => s.getAttribute('role') === 'status')).textContent,
     'Total +600 points. Not added again.');
-  for (const footnote of [undefined, '', '   ', 7]) {
+  for (const footnote of [undefined, '', '   ']) {
     const e = makeEnv();
     play(e, BREAKDOWN, { footnote, reduceMotion: true });
     assert.equal(e.host.all('sc-all').length, 0, String(footnote));
   }
 });
 
-test('a malformed breakdown still renders a total', () => {
-  const env = makeEnv();
-  play(env, /** @type {any} */ ({ lines: 'nope', total: 'x' }), { reduceMotion: true });
-  assert.equal(env.host.all('sc-row').length, 1);
-  assert.deepEqual(numbers(env.host), ['0']);
-  const env2 = makeEnv();
-  play(env2, /** @type {any} */ ({ lines: [null, { points: NaN }, 7], total: 12.4 }), { reduceMotion: true });
-  const rows = env2.host.one('sc-list').all('sc-row');
-  assert.equal(rows.length, 1);
-  assert.equal(rows[0].one('sc-label').textContent, '');
-  assert.deepEqual(numbers(env2.host), ['0', '+12']);
-  // No lines at all: the total is the first and only row to wipe in.
+test('with no lines, the total is the first and only row to wipe in', () => {
   const env3 = makeEnv();
   play(env3, { ...BREAKDOWN, lines: [] });
   env3.advance(16);

@@ -93,7 +93,7 @@ export function renderAccount(host, play, on) {
 /** Render the sign-in form into `host`. One form serves both Sign in and Create an account;
  * a refused attempt shows the account's own message and keeps what was typed.
  * @param {HTMLElement} host @param {AccountPlay} play @param {{onDone:(a:Account) => void}} on
- * @returns {{focus():void}} */
+ * @returns {void} */
 export function renderSignIn(host, play, on) {
   const doc = host.ownerDocument;
   let creating = false, busy = false;
@@ -175,8 +175,6 @@ export function renderSignIn(host, play, on) {
       (code === 'invalid' || code === 'taken' ? user : pass).focus();
     }
   });
-
-  return { focus: () => user.focus() };
 }
 
 /** Render the Levels side of the New game dialog into `host`: the level to play and where the

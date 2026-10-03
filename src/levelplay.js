@@ -173,6 +173,8 @@ export function makeLevelPlay(deps) {
           return;
         }
         if (g !== gen) return;
+        // A copy written by a newer build is not this one's to replace: leave it for that build.
+        if (Number(/** @type {{v?:unknown}|null} */ (remote)?.v) > 1) { error = 'server'; return; }
         error = null;
         if (!take(remote)) { if (!again) dirty = false; continue; }
         /** @type {LevelProgress|null} */
@@ -316,8 +318,8 @@ export function makeLevelPlay(deps) {
 
     note,
 
-    /** Record the finds a board already had when its level started, all at one instant, which
-     * scoreLevel never counts as a streak: when they were found is not known.
+    /** Record the finds a board already had when its level started, all at one instant: when
+     * they were found is not known, and scoreLevel never chains finds at one instant.
      * @param {{word:string, revealed:boolean}[]} finds @returns {void} */
     carry(finds) {
       const at = Math.round(elapsed());

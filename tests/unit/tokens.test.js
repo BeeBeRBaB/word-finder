@@ -70,7 +70,7 @@ test('every var() the stylesheet references is declared in the palettes or the t
   assert.deepEqual([...used].filter(t => !declared.has(t)), [], 'referenced but never declared');
 });
 
-// effects.js builds these names by template (`--confetti-${i}`), so no var() appears
+// main.js reads these names by template (`--confetti-${i}`), so no var() appears
 // in the stylesheet for the parity test above to catch a missing one.
 test('all six confetti slots exist in both palettes', () => {
   for (const block of [DEFAULT_DARK, LIGHT_ONLY]) {
