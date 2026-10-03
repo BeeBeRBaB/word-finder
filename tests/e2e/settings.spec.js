@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { findAndDrag } from './helpers.js';
+import { findAndDrag, skipAhead } from './helpers.js';
 
 /** @typedef {import('@playwright/test').Page} Page */
 
@@ -109,18 +109,20 @@ for (const [how, act] of /** @type {[string, (p: Page) => Promise<void>][]} */ (
   ['Escape', (p) => p.keyboard.press('Escape')],
 ])) {
   test(`${how} cancels the countdown and keeps the solved board`, async ({ page }) => {
+    await page.clock.install();
     await page.goto('/?seed=1&subject=nature/birds');
     await solve(page);
     const letters = await page.locator('#letters').textContent();
     await act(page);
     await expect(page.locator('#winnext')).toBeHidden();
-    await page.waitForTimeout(6000);
+    await skipAhead(page, 6000);
     expect(await page.locator('#letters').textContent()).toBe(letters);
     await expect(page.locator('.w.done')).toHaveCount(await page.locator('.w').count());
   });
 }
 
 test('with auto-start turned off, a win waits for the player', async ({ page }) => {
+  await page.clock.install();
   await page.goto('/?seed=1&subject=nature/birds');
   await page.locator('#appearance').click();
   await page.locator('#settings-auto-box').uncheck();
@@ -129,11 +131,12 @@ test('with auto-start turned off, a win waits for the player', async ({ page }) 
   await solve(page);
   await expect(page.locator('#winnext')).toBeHidden();
   await expect(page.locator('#winstats')).not.toContainText('Next puzzle');
-  await page.waitForTimeout(6000);
+  await skipAhead(page, 6000);
   await expect(page.locator('#win')).toBeVisible();
 });
 
 test('turning auto-start off mid-countdown stops it', async ({ page }) => {
+  await page.clock.install();
   await page.goto('/?seed=1&subject=nature/birds');
   await solve(page);
   const letters = await page.locator('#letters').textContent();
@@ -141,16 +144,22 @@ test('turning auto-start off mid-countdown stops it', async ({ page }) => {
   await page.evaluate(() => /** @type {HTMLElement} */ (document.getElementById('appearance')).click());
   await expect(page.locator('#winnext')).toBeHidden();   // opening Settings already cancels it
   await page.locator('#settings-auto-box').uncheck();
-  await page.waitForTimeout(6000);
+  await skipAhead(page, 6000);
   expect(await page.locator('#letters').textContent()).toBe(letters);
 });
 
 test('a slow win-card deal the player walked away from never replaces their next board', async ({ page }) => {
-  // Every pool except the one the player picks loads 4s late, so the win card's random
-  // draw is still in flight when they close it and start a board of their own.
-  await page.route('**/src/subjects/*.js', async (route) => {
-    if (!route.request().url().endsWith('/nature.js')) await new Promise(r => setTimeout(r, 4000));
-    await route.continue();
+  // Every pool except the one the player picks is held until they have started a board of
+  // their own, so the win card's random draw is still in flight when they walk away from it.
+  let release = () => {};
+  const held = new Promise((r) => { release = () => r(undefined); });
+  /** @type {Promise<void>[]} */
+  const late = [];
+  await page.route('**/src/subjects/*.js', (route) => {
+    if (route.request().url().endsWith('/nature.js')) return route.continue();
+    const done = held.then(() => route.continue());
+    late.push(done);
+    return done;
   });
   await page.goto('/?seed=1&subject=nature/birds');
   await solve(page);
@@ -161,7 +170,9 @@ test('a slow win-card deal the player walked away from never replaces their next
   await page.locator('#picker-start').click();
   await expect(page.locator('#picker')).toBeHidden();
   const subject = await page.locator('#subject').textContent();
-  await page.waitForTimeout(5000);                // the abandoned deal resolves in here
+  release();                                      // the abandoned deal resolves now
+  await Promise.all(late);
+  await page.waitForTimeout(500);
   await expect(page.locator('#subject')).toHaveText(/** @type {string} */ (subject));
   await expect(page.locator('#category')).toHaveText('Nature');
 });

@@ -142,8 +142,8 @@ export function start(host, opts) {
   resize();
   if (!reduced) t = rnd(0, 20);
   draw();
-  const stop = frameLoop(host, resize, (ms, first) => {
-    step(first ? 0 : Math.min(0.1, ms / 1000));
+  const stop = frameLoop(host, resize, (dt) => {
+    step(dt);
     draw();
   }, reduced);
   return () => { stop(); cv.remove(); parts.length = 0; };

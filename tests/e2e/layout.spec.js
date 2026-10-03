@@ -3,6 +3,7 @@ import { test, expect } from '@playwright/test';
 /** @typedef {import('@playwright/test').Page} Page */
 
 import { DEVICES, measure } from '../viewport.js';
+import { openBoard } from './helpers.js';
 
 for (const d of DEVICES) {
   test.describe(`${d.name} (${d.w}x${d.h})`, () => {
@@ -11,12 +12,10 @@ for (const d of DEVICES) {
     // against a desktop board.
     test.use({ viewport: { width: d.w, height: d.h } });
 
-    test('layout fits', async ({ page }, testInfo) => {
-      test.skip(!['desktop', 'safari'].includes(testInfo.project.name), 'viewport is set explicitly');
+    test('layout fits', async ({ page }) => {
       // Pinned so the shape under test is the only variable: a random deal would vary
       // the longest word and the subject-name length, both of which move the layout.
-      await page.goto('/?subject=nature/birds');
-      await page.waitForTimeout(250);
+      await openBoard(page, '/?subject=nature/birds');
       const m = await measure(page);
 
       expect(m.offscreenWords, `words off screen: ${m.offscreenWords.join(', ')}`).toHaveLength(0);
@@ -32,8 +31,7 @@ for (const d of DEVICES) {
 
     // min(viewport) under 480 is the compact board. Asserted per device because
     // "the layout fits" passes just as well when the wrong board is on screen.
-    test('deals the board this device should get', async ({ page }, testInfo) => {
-      test.skip(!['desktop', 'safari'].includes(testInfo.project.name), 'viewport is set explicitly');
+    test('deals the board this device should get', async ({ page }) => {
       await page.goto('/?subject=nature/birds');   // pinned; see the note on the test above
       await expect(page.locator('.cell')).toHaveCount(Math.min(d.w, d.h) < 480 ? 100 : 169);
     });

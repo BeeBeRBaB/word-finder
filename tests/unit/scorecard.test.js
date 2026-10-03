@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { playBreakdown, formatPoints, WIPE_MS } from '../../src/scorecard.js';
+import { playBreakdown, formatPoints } from '../../src/scorecard.js';
 
 // A DOM just big enough for scorecard.js, and a window whose clock, frames and timers the
 // test drives. Frames run every 16ms; timers fire in order, `late` ms after they are due,
@@ -723,7 +723,12 @@ test('the stylesheet agrees with the module and stays inside its own classes', (
   const css = readFileSync(new URL('../../styles.css', import.meta.url), 'utf8');
   const m = /\.sc-row\.sc-in\{[^}]*animation:sc-wipe ([\d.]+)s/.exec(css);
   assert.ok(m, 'no sc-wipe animation on .sc-row.sc-in');
-  assert.equal(Number(m[1]) * 1000, WIPE_MS);
+  const src = readFileSync(new URL('../../src/scorecard.js', import.meta.url), 'utf8');
+  const t = /const COUNT_DELAY_MS = (\d+), COUNT_MS = (\d+)/.exec(src);
+  assert.ok(t, 'no COUNT_DELAY_MS / COUNT_MS in scorecard.js');
+  const wipe = Number(m[1]) * 1000, delay = Number(t[1]), count = Number(t[2]);
+  assert.ok(wipe > delay && wipe <= delay + count,
+    `the count must start inside the ${wipe}ms wipe and end after it (it runs ${delay}–${delay + count}ms)`);
   const at = css.indexOf('/* Level score card */');
   assert.notEqual(at, -1, 'no Level score card section');
   const end = css.indexOf('/* End level score card */', at);

@@ -148,8 +148,7 @@ export function start(host, opts = {}) {
   }
 
   resize();
-  const stop = frameLoop(host, resize, (ms) => {
-    const dt = Math.min(ms, 100) / 1000;
+  const stop = frameLoop(host, resize, (dt) => {
     t += dt;
     step(dt);
     draw();

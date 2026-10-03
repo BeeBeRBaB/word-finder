@@ -13,10 +13,9 @@
  * @typedef {{el:HTMLElement, num:HTMLElement, points:number, shown:boolean}} Row
  */
 
-/** Must match the sc-wipe duration in styles.css. */
-export const WIPE_MS = 350;
-// Points count up from part-way into the wipe, so the number is mostly uncovered while it
-// runs; the next line starts GAP_MS after the count ends.
+// Points count up from part-way into a line's wipe (sc-wipe in styles.css), so the number is
+// mostly uncovered while it runs and whole before it settles; the next line starts GAP_MS
+// after the count ends.
 const COUNT_DELAY_MS = 150, COUNT_MS = 300, GAP_MS = 120;
 const STEP_MS = COUNT_DELAY_MS + COUNT_MS + GAP_MS;
 // Late enough that the live region is in the accessibility tree before it changes.

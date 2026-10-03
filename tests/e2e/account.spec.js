@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { skipAhead, openBoard } from './helpers.js';
 
 /** @typedef {import('@playwright/test').Page} Page */
 
@@ -245,7 +246,7 @@ test('signed in with no progress to deal from, it says so and offers to try agai
 });
 
 test('the score card footnote is the new total, or why it did not change', async ({ page }) => {
-  await page.goto('/?seed=1&subject=nature/birds');
+  await openBoard(page, '/?seed=1&subject=nature/birds');
   const lines = await page.evaluate(async () => {
     const url = '/src/account.js';
     const m = await import(url);
@@ -258,7 +259,9 @@ test('the score card footnote is the new total, or why it did not change', async
 /** The real win card, showing, with a level's score card in it.
  * @param {Page} page @param {object} [opts] */
 async function levelWin(page, opts = {}) {
-  await page.goto('/?seed=1&subject=nature/birds');
+  await page.clock.install();   // so a countdown can be run out at once
+  // The board first: its deal clears the win card, so one landing late would take this one.
+  await openBoard(page, '/?seed=1&subject=nature/birds');
   await page.evaluate(async (opts) => {
     const url = '/src/account.js', scoring = '/src/scoring.js';
     const m = await import(url);
@@ -319,7 +322,7 @@ test('clearing it stops the countdown and puts the plain card back', async ({ pa
   await expect(card.locator('h2')).toHaveText('Puzzle solved!');
   await expect(card).not.toHaveAttribute('data-level');
   await expect(card.locator('.sc-host')).toHaveCount(0);
-  await page.waitForTimeout(2000);
+  await skipAhead(page, 2000);
   expect(await calls(page)).toEqual([]);
   // Twice is harmless, and showing again after a clear starts clean.
   await page.evaluate(() => { const w = /** @type {any} */ (window); w.m.clearLevelWin(w.card, w.title); });
@@ -337,7 +340,7 @@ test('showing a second level replaces the first score card rather than stacking 
   await expect(card.locator('.sc-host')).toHaveCount(1);
   await expect(card.locator('h2')).toHaveText('Level 13 complete');
   await expect(card.locator('.sc-all')).toHaveText('Already finished on another device, so these points were not added.');
-  await page.waitForTimeout(2000);
+  await skipAhead(page, 2000);
   expect(await calls(page)).toEqual([]);   // the first card's countdown was stopped
   await page.evaluate(() => { const w = /** @type {any} */ (window); w.m.clearLevelWin(w.card, w.title); });
   await expect(card.locator('h2')).toHaveText('Puzzle solved!', { timeout: 1000 });

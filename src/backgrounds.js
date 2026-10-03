@@ -53,6 +53,10 @@ export function findBackground(id, list = BACKGROUNDS) {
   return list.find(b => b.id === id) ?? list[0];
 }
 
+/** A background's module, by its registry `file`. Relative to this file, not the page.
+ * @param {string} file @returns {Promise<BackgroundModule>} */
+export const importBackground = (file) => import(`./backgrounds/${file}.js`);
+
 /**
  * Runs at most one animated background at a time. show() resolves once the new one is
  * drawing, or immediately for a still choice; a show() overtaken by a later call never
@@ -60,7 +64,7 @@ export function findBackground(id, list = BACKGROUNDS) {
  * @param {{importFn?:(file:string)=>Promise<BackgroundModule>, list?:readonly Background[]}} [deps]
  */
 export function makeBackdrop(deps = {}) {
-  const importFn = deps.importFn ?? (file => import(`./backgrounds/${file}.js`));
+  const importFn = deps.importFn ?? importBackground;
   /** @type {Map<string, Promise<BackgroundModule>>} */
   const loaded = new Map();
   /** @type {(() => void)|null} */

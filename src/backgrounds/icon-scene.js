@@ -5,6 +5,7 @@
 // importer cached last week can meet this file's new copy.
 
 import { fnv1a } from '../rng.js';
+import { TONE } from '../art.js';
 import { ICONS } from './icons.js';
 import { CATEGORY_ICONS, SUBJECT_ICONS } from './subject-icons.js';
 
@@ -42,7 +43,7 @@ export function iconMarkup(id) {
   /** @param {string} _ @param {string} tag @param {string} a @param {string} cls @param {string} b @param {string} end */
   const tone = (_, tag, a, cls, b, end) => {
     const rest = a + b;
-    const attrs = cls === 't-a' ? ' fill-opacity=".72"' : cls === 't-c' ? ' fill-opacity=".4"' : cls === 't-b' ? '' :
+    const attrs = cls === 't-a' ? ` fill-opacity="${TONE.a}"` : cls === 't-c' ? ` fill-opacity="${TONE.c}"` : cls === 't-b' ? '' :
       ` fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"${/stroke-width=/.test(rest) ? '' : ' stroke-width="2"'}`;
     return `<${tag}${rest}${attrs}${end}>`;
   };

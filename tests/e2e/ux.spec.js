@@ -72,6 +72,7 @@ test('progress and puzzle survive a reload', async ({ page }) => {
   await dragCells(page, await findWordInGrid(page, first));
   await expect(page.locator('.w.done')).toHaveCount(1);
   await page.reload();
+  await page.locator('.cell').first().waitFor();
   const grid2 = await page.locator('.cell').allTextContents();
   expect(grid2.join('')).toBe(grid1.join(''));   // same grid (seed restored)
   await expect(page.locator('.w.done')).toHaveCount(1);   // still crossed out

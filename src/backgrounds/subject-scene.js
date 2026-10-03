@@ -3,6 +3,7 @@
 // draws the main icon alone, which the host's CSS sizes and fades like the category art.
 
 import { makeRng } from '../rng.js';
+import { CORNERS } from '../art.js';
 import { iconMarkup, iconsFor, layoutScene, variantOf, withHero } from './icon-scene.js';
 
 /** @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject?:string, seed?:number, corner?:boolean}} BackgroundOptions */
@@ -27,7 +28,7 @@ export function start(host, opts) {
     // The corner and colour come from the variant; the colours are the category art's four.
     const rng = makeRng(seed), k = rng.int(4), c = colors.length > 4 ? colors[1 + rng.int(4)] : colors[0];
     svg.setAttribute('viewBox', '0 0 64 64');
-    svg.style.cssText = `--ax:${k & 1 ? '32%' : '-10%'};--ay:${k & 2 ? '32%' : '-10%'}`;
+    svg.style.cssText = `--ax:${CORNERS[k][0]};--ay:${CORNERS[k][1]}`;
     svg.innerHTML = `<g fill="${c}" color="${c}" data-icon="${ids[0]}">${markup.get(ids[0])}</g>`;
     host.appendChild(svg);
     return () => svg.remove();
@@ -52,12 +53,12 @@ export function start(host, opts) {
     }).join('');
   }
 
-  const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(draw) : null;
-  if (ro) ro.observe(host); else window.addEventListener('resize', draw);
+  const ro = new ResizeObserver(draw);
+  ro.observe(host);
   draw();
 
   return function stop() {
-    if (ro) ro.disconnect(); else window.removeEventListener('resize', draw);
+    ro.disconnect();
     svg.remove();
   };
 }

@@ -112,6 +112,13 @@ test('the numbers shared between a module and the stylesheet agree', () => {
     'the next-puzzle bar empties at a different moment than the deal');
 });
 
+test('the illustration tones in the stylesheet are art.js\'s', async () => {
+  const { TONE } = await import('../../src/art.js');
+  for (const [k, v] of Object.entries(TONE)) {
+    assert.equal(num(css, new RegExp(`#art \\.t-${k},#railart \\.t-${k}\\{fill-opacity:([\\d.]+)\\}`), `#art .t-${k}`), v, `tone ${k}`);
+  }
+});
+
 test('main.js places panes at the same breakpoints the stylesheet lays them out at', () => {
   const main = read('../../src/main.js');
   const page = /** @type {RegExpMatchArray} */ (main.match(/const SETTINGS_PAGE = '([^']+)'/));

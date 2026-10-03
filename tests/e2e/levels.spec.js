@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { findAndDrag } from './helpers.js';
+import { findAndDrag, skipAhead } from './helpers.js';
 
 /** @typedef {import('@playwright/test').Page} Page */
 
@@ -210,6 +210,7 @@ test('leaving the page holds a level score card\'s countdown, as it cancels the 
   fb.put(uid, PROGRESS);
   await fb.install(page);
   await signedInAs(page, uid, 'ana_reads');
+  await page.clock.install();
   await page.goto('/?subject=nature/birds');
   await levelsSide(page);
   await page.click('#picker-start');
@@ -226,7 +227,7 @@ test('leaving the page holds a level score card\'s countdown, as it cancels the 
   await setHidden(true);
   await setHidden(false);
   await expect(card.locator('.sc-line')).toBeHidden();
-  await page.waitForTimeout(11000);   // past the countdown it no longer has
+  await skipAhead(page, 11000);   // past the countdown it no longer has
   await expect(page.locator('#category')).toHaveText('Level 3');
   await card.getByRole('button', { name: 'Next level' }).click();
   await expect(page.locator('#category')).toHaveText('Level 4');

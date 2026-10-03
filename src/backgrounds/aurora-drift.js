@@ -1,5 +1,6 @@
 // Aurora Drift: large soft colour blobs on slow Lissajous paths, stretched and turning.
 // Drawn at 1/6 resolution so the browser's upscale does the blurring.
+import { makeRng } from '../rng.js';
 import { frameLoop } from './frame-loop.js';
 
 /** @typedef {{colors:string[], dark:boolean, reducedMotion:boolean}} BackgroundOptions */
@@ -9,17 +10,6 @@ const LIGHT = ['#5eead4', '#c4b5fd', '#f9a8d4', '#7dd3fc', '#fcd34d', '#a5b4fc']
 const SCALE = 6; // CSS px per canvas px
 const SPEED = 0.0001; // radians per ms at frequency 1 (~60s loop)
 const TAU = Math.PI * 2;
-
-/** Seeded [0, 1) generator, so the blob layout is the same every visit.
- * @param {number} seed @returns {() => number} */
-function rng(seed) {
-  return () => {
-    seed = (seed + 0x6d2b79f5) | 0;
-    let x = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
-    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 /** @param {string} hex '#rrggbb' @returns {string} 'r,g,b' */
 function rgb(hex) {
@@ -49,7 +39,8 @@ function sprite(hex) {
 export function start(host, opts = {}) {
   const dark = opts.dark !== false;
   const reduced = !!opts.reducedMotion;
-  const rand = rng(20240926);
+  // Seeded, so the layout is the same every visit.
+  const rand = makeRng(20240926).random;
   /** @param {number} a @param {number} b @returns {number} */
   const span = (a, b) => a + (b - a) * rand();
 
@@ -117,6 +108,6 @@ export function start(host, opts = {}) {
 
   size();
   draw();
-  const stop = frameLoop(host, size, (ms) => { t += Math.min(ms, 100); draw(); }, reduced);
+  const stop = frameLoop(host, size, (dt) => { t += dt * 1000; draw(); }, reduced);
   return () => { stop(); cv.remove(); };
 }

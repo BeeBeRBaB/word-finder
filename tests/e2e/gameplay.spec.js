@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { findDiagonalWord, findAndDrag, findRunsInGrid, dragCells, cellCentre } from './helpers.js';
+import { findDiagonalWord, findAndDrag, findRunsInGrid, dragCells, cellCentre, openBoard } from './helpers.js';
 
 // Every unseeded goto() below is pinned to ?subject=nature/birds: none of these tests care
 // which subject loads, and one subject keeps a failure easy to reproduce.
@@ -82,7 +82,7 @@ test('clicking a word list item does nothing', async ({ page }) => {
 });
 
 test('finding every word raises the win overlay', async ({ page }) => {
-  await page.goto('/?subject=nature/birds');
+  await openBoard(page, '/?subject=nature/birds');
   const words = await page.locator('.w').allTextContents();
   for (const w of words) {
     await findAndDrag(page, w.toUpperCase());
@@ -103,15 +103,15 @@ test('a diagonal word is selectable without overshoot', async ({ page }) => {
 });
 
 test('the same seed reproduces the same puzzle', async ({ page }) => {
-  await page.goto('/?seed=12345&subject=nature/birds');
+  await openBoard(page, '/?seed=12345&subject=nature/birds');
   const a = await page.locator('.cell').allTextContents();
   const subjectA = await page.locator('#subject').textContent();
-  await page.goto('/?seed=12345&subject=nature/birds');
+  await openBoard(page, '/?seed=12345&subject=nature/birds');
   const b = await page.locator('.cell').allTextContents();
   expect(b.join('')).toBe(a.join(''));
   expect(await page.locator('#subject').textContent()).toBe(subjectA);
 
-  await page.goto('/?seed=999&subject=nature/birds');
+  await openBoard(page, '/?seed=999&subject=nature/birds');
   const c = await page.locator('.cell').allTextContents();
   expect(c.join('')).not.toBe(a.join(''));   // different seed, different grid
 });

@@ -1,9 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { findWordInGrid, dragCells, blockServiceWorker } from './helpers.js';
+import { findWordInGrid, dragCells, blockServiceWorker, openBoard } from './helpers.js';
 import { CATEGORIES } from '../../src/catalog.js';
 
 test('New game opens the picker, and Cancel leaves the board alone', async ({ page }) => {
-  await page.goto('/?seed=1&subject=nature/birds');
+  await openBoard(page, '/?seed=1&subject=nature/birds');
   const before = await page.locator('.cell').allTextContents();
   await page.locator('#catbtn').click();
   await expect(page.locator('#picker')).toBeVisible();
@@ -25,7 +25,7 @@ test('Cancel during a slow deal leaves the board alone, and Start cannot deal tw
   const held = new Promise((r) => { release = () => r(); });
   await page.route('**/src/subjects/food.js', async (route) => { await held; await route.continue(); });
 
-  await page.goto('/?seed=1&subject=nature/birds');
+  await openBoard(page, '/?seed=1&subject=nature/birds');
   const before = (await page.locator('.cell').allTextContents()).join('');
 
   await page.locator('#catbtn').click();
@@ -237,7 +237,7 @@ test('Escape does not cancel a one-click deal that is still loading', async ({ p
  * @param {import('@playwright/test').Page} page
  * @param {{enabled?:boolean, mode?:string, ready?:boolean, fail?:boolean}} [o] */
 async function levelsPicker(page, o = {}) {
-  await page.goto('/?seed=1&subject=nature/birds');
+  await openBoard(page, '/?seed=1&subject=nature/birds');
   await page.evaluate(async ({ enabled = true, mode = 'levels', ready = true, fail = false }) => {
     const url = '/src/picker.js';
     const { makePicker } = await import(url);

@@ -162,12 +162,14 @@ export function makePicker({ root, heading, select, warning, error, start, cance
       // Offline with an uncached category, or a random draw that lost the race with the
       // network. Stay open and say so: closing would leave a half-built board with
       // nothing explaining it.
+      error.hidden = false;
       error.textContent = lv ? "This level isn't available offline yet. Try again once you're back online."
         : chosen ? `${label} isn't available offline yet. Try another category.`
           : "No category is available offline yet. Try again once you're back online.";
-      error.hidden = false;
       if (chosen && !lv) select.value = '';
       setBusy(false);
+      // A short screen scrolls the card: keep the message and the buttons under it in view.
+      start.scrollIntoView({ block: 'nearest' });
     }
   }
 
@@ -191,8 +193,9 @@ export function makePicker({ root, heading, select, warning, error, start, cance
   cancel.addEventListener('click', close);
   root.addEventListener('click', (e) => { if (e.target === root) close(); });
 
-  /** Redraw the Levels pane, as when the account it shows has changed. Focus inside it moves to
-   * its new button, else to Start, else to the heading, never to the page. @returns {void} */
+  /** Redraw the Levels pane and the offered categories, as when the account or the network
+   * has changed. Focus inside the pane moves to its new button, else to Start, else to the
+   * heading, never to the page. @returns {void} */
   function refresh() {
     if (root.style.display !== 'flex' || pending) return;
     const had = pane.contains(doc.activeElement);

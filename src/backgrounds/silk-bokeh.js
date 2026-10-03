@@ -1,5 +1,6 @@
 // Silk Bokeh: three ribbons of fine flowing strands that pinch and fan as they wave,
 // with a few soft out-of-focus circles rising slowly past them.
+import { makeRng } from '../rng.js';
 import { frameLoop } from './frame-loop.js';
 
 /**
@@ -32,16 +33,6 @@ const RIBBONS = [
   { y: 0.54, tilt: -0.18, amp: 0.08, len: 0.95, sp: -0.00016, ph: 2.2, twist: 1.3, spread: 0.09 },
   { y: 0.86, tilt: 0.1, amp: 0.05, len: 1.5, sp: 0.00018, ph: 4.1, twist: 0.65, spread: 0.06 },
 ];
-
-/** Seeded, so the dot field is the same every time. @param {number} seed @returns {() => number} */
-function rng(seed) {
-  return () => {
-    seed = (seed + 0x6d2b79f5) | 0;
-    let x = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
-    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 /** @param {string} hex '#rrggbb' @returns {string} 'r,g,b' */
 function rgb(hex) {
@@ -76,7 +67,8 @@ export function start(host, opts) {
   const dark = opts.dark !== false;
   const reduced = !!opts.reducedMotion;
   const P = dark ? PAL.dark : PAL.light;
-  const rand = rng(7331);
+  // Seeded, so the dot field is the same every time.
+  const rand = makeRng(7331).random;
 
   const cv = document.createElement('canvas');
   cv.setAttribute('aria-hidden', 'true');
@@ -186,6 +178,6 @@ export function start(host, opts) {
   }
 
   size();
-  const stop = frameLoop(host, size, (ms) => { t += Math.min(ms, 100); draw(); }, reduced);
+  const stop = frameLoop(host, size, (dt) => { t += dt * 1000; draw(); }, reduced);
   return () => { stop(); cv.remove(); };
 }

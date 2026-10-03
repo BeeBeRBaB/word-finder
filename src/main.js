@@ -194,11 +194,11 @@ function showBoard(b) {
   els.subject.dataset.accent = String(accentSlot(b.puzzle.name));
   showCategory();
   renderArt(els, b.subjectId, cfg.get().art);
-  showBackdrop();
   // Or a stale timer drops the win overlay over the fresh grid, swallowing every tap.
   if (state.winTimer) { clearTimeout(state.winTimer); state.winTimer = null; }
   hideWin();
   layout();   // a new puzzle object, so this rebuilds the cells, found ones and pills
+  showBackdrop();   // after layout: the scene's place depends on the orientation it settles
   list();
   persist();
 }
@@ -217,6 +217,8 @@ function persist() {
     count: state.puzzle.words.length,
     cells: state.puzzle.cells.join(''),
     placements: state.puzzle.placements,
+    // The coordinates are not read back here (restore replays placements), but builds up to
+    // v17 read them, and a tab still running one can load this save.
     found: state.foundOrder.map(w => ({ word: w, ...state.found[w].sel, ...(state.found[w].revealed ? { revealed: true } : {}) })),
   });
 }
@@ -844,6 +846,7 @@ function confettiColors() {
 function showBackdrop() {
   const s = cfg.get();
   els.app.dataset.bgarea = s.area;
+  els.app.dataset.bg = s.art;
   if (!subjectId) return;   // nothing dealt yet; the deal calls again
   // With the list under the board, the still scene keeps the board corner as the category art does.
   const corner = s.art === 'scene' && s.area !== 'full' && !state.dims.landscape;
@@ -1082,9 +1085,10 @@ document.addEventListener('keydown', (e) => {
     // it closes the list only, not the pane around it. The try: engines without :open throw.
     const sel = e.target instanceof Element ? e.target.closest('select') : null;
     try { if (sel && sel.matches(':open')) return; } catch { /* no :open, so no in-page list */ }
-    // Only when it is showing: hideWin() also cancels a win-card deal in flight.
-    if (shown(els.win)) hideWin();
-    picker.close(); closeSettings();
+    // One layer a press: a pane first, then a win card the pane opened over. Only when it
+    // is showing: hideWin() also cancels a win-card deal in flight.
+    if (paneOpen()) { picker.close(); closeSettings(); }
+    else if (shown(els.win)) hideWin();
   }
 });
 // Styles or fonts that land after boot change the chrome around the board; re-measure once.
@@ -1182,7 +1186,12 @@ async function restore(saved) {
 renderAccountSection();
 // The account's progress, once the cloud has answered; and again whenever the device is back online.
 void booted.then(afterSync);
-window.addEventListener('online', catchUp);
+window.addEventListener('online', () => {
+  // What failed to load may load now, so New game and the random draw offer it again.
+  unavailableCategories.clear();
+  picker.refresh();
+  catchUp();
+});
 // boot() never rejects — it reports any failure into the DOM itself.
 void boot();
 // './sw.js' resolves against the DOCUMENT, not this module. Writing '../sw.js' because

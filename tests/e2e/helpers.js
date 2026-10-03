@@ -124,6 +124,25 @@ export async function dragCells(page, sel) {
   await page.mouse.up();
 }
 
+/** Open a page and wait for its board. The deal lands after `load`, from a lazily imported
+ * word pool, so a read straight after goto() can find no cells at all — and two empty
+ * boards compare equal.
+ * @param {Page} page @param {string} url @returns {Promise<void>} */
+export async function openBoard(page, url) {
+  await page.goto(url);
+  await page.locator('.cell').first().waitFor();
+}
+
+/** Move the page's clock `ms` ahead at once, firing every timer due in that time, then give
+ * whatever they started (a deal's module load, a repaint) real time to land. For checks that
+ * nothing happens before a deadline. Needs page.clock.install() before the page loads;
+ * until this is called, time runs as normal.
+ * @param {Page} page @param {number} ms @returns {Promise<void>} */
+export async function skipAhead(page, ms) {
+  await page.clock.fastForward(ms);
+  await page.waitForTimeout(500);
+}
+
 /** Remove service-worker registration before any page script runs.
  *
  * Needed by any test that intercepts a lazily imported word pool with `page.route`.

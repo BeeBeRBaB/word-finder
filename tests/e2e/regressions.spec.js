@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { findAndDrag, dragCells } from './helpers.js';
+import { findAndDrag, dragCells, openBoard, skipAhead } from './helpers.js';
 import { buildPuzzle, runKey } from '../../src/puzzle.js';
 import { makeRng } from '../../src/rng.js';
 import { PRESETS } from '../../src/layout.js';
@@ -11,14 +11,15 @@ import { WORDS } from '../../src/subjects/home.js';
 // The new game goes through the category picker, picking the category already on
 // screen (nature).
 test('starting a new game during the win delay leaves the board playable', async ({ page }) => {
-  await page.goto('/?seed=1&subject=nature/birds');
+  await page.clock.install();
+  await openBoard(page, '/?seed=1&subject=nature/birds');
   const words = await page.locator('.w').allTextContents();
   for (const w of words) await findAndDrag(page, w.toUpperCase());
 
   await page.locator('#catbtn').click();   // inside the 700ms window
   await page.locator('#picker-select').selectOption('nature');
   await page.locator('#picker-start').click();
-  await page.waitForTimeout(1200);         // let any stale timer fire
+  await skipAhead(page, 1200);             // let any stale timer fire
 
   const total = await page.locator('.w').count();
   await expect(page.locator('#win')).toBeHidden();
@@ -43,7 +44,7 @@ test('a save naming a retired subject gives way to a new deal', async ({ page })
 // k-cell diagonal spans k*sqrt(2), so diagonal drags selected too many cells.
 test('a diagonal drag selects exactly the cells under the pointer', async ({ page }) => {
   // Pinned: this only exercises grid geometry.
-  await page.goto('/?subject=nature/birds');
+  await openBoard(page, '/?subject=nature/birds');
   const len = await page.evaluate(() => {
     const gb = document.getElementById('gridbox');
     if (!gb) throw new Error('missing #gridbox');
@@ -315,7 +316,7 @@ function findGhostRun(puzzle, size, placed) {
 // 320x400 also meets the short-screen block, which sets the card's padding there.
 for (const height of [568, 400]) test(`the win card and the score card in it fit a 320x${height} screen`, async ({ page }) => {
   await page.setViewportSize({ width: 320, height });
-  await page.goto('/?seed=7&subject=nature/birds');
+  await openBoard(page, '/?seed=7&subject=nature/birds');
   const words = await page.locator('.w').allTextContents();
   for (const w of words) await findAndDrag(page, w.toUpperCase());
   await expect(page.locator('#win')).toBeVisible();

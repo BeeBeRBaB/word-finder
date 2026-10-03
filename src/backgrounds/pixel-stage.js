@@ -41,7 +41,7 @@ export function pixelStage(host) {
 
     host.appendChild(wrap);
     size();
-    const stop = frameLoop(host, size, (ms) => { scene.step(Math.min(0.1, ms / 1000)); scene.draw(); }, still);
+    const stop = frameLoop(host, size, (dt) => { scene.step(dt); scene.draw(); }, still);
     return () => { stop(); wrap.remove(); };
   }
 
