@@ -195,12 +195,6 @@ export function renderLevelChoice(host, play, on) {
   return { ready: false, start: 'Play level' };
 }
 
-/** The line under a level's total: the account's new total, or that it did not change.
- * @param {Finish} f @returns {string} */
-export function levelFootnote(f) {
-  return f.banked ? `${points(f.progress.points)} in all` : "These points couldn't be added to your total.";
-}
-
 /** Make the win card a level's score card: "Level N complete" over the breakdown, played a line
  * at a time, and the account's new total. `card[data-level]` lets the stylesheet hide the plain
  * card's message and buttons. Cancel the playback it returns before the card is cleared or shown
@@ -216,7 +210,7 @@ export function showLevelWin(card, title, level, f, opts) {
   const host = make(doc, 'div', 'sc-host');
   title.after(host);
   const { focus, ...rest } = opts;
-  const pb = playBreakdown(host, f.breakdown, { ...rest, footnote: levelFootnote(f), scope: card });
+  const pb = playBreakdown(host, f.breakdown, { ...rest, footnote: `${points(f.progress.points)} in all`, scope: card });
   if (focus) {
     const skip = /** @type {HTMLElement|null} */ (host.querySelector('.sc-skip'));
     const go = /** @type {HTMLElement|null} */ (host.querySelector('.sc-go'));

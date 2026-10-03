@@ -1203,7 +1203,7 @@ window.addEventListener('online', () => {
   // background that could not load draws, and a launch that could not put its board back
   // (offline) tries again rather than wait for a tap.
   unavailableCategories.clear();
-  picker.refresh();
+  picker.refresh(true);
   showBackdrop();   // a running one is left as it is
   // One launch at a time.
   if (!state.puzzle) launched = launched.then(() => { if (!state.puzzle) return boot(); });

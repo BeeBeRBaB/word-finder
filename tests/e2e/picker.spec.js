@@ -410,3 +410,20 @@ test('a level that cannot load keeps the dialog open and says so', async ({ page
   await page.locator('#picker-mode').getByRole('button', { name: 'Random' }).click();
   await expect(page.locator('#picker-error')).toBeHidden();
 });
+
+// A refresh comes after every sync, as when the tab is shown again, so it keeps a message about
+// nothing that changed: offline, the level still cannot load.
+test('a failed level\'s message stays through a refresh that changes nothing, and goes once online or the level changes', async ({ page }) => {
+  await levelsPicker(page, { fail: true });
+  const error = page.locator('#picker-error');
+  await page.locator('#picker-start').click();
+  await expect(error).toBeVisible();
+  await page.evaluate(() => /** @type {any} */ (window).p2.refresh());
+  await expect(error).toBeVisible();
+  await page.evaluate(() => /** @type {any} */ (window).p2.refresh(true));
+  await expect(error).toBeHidden();
+  await page.locator('#picker-start').click();
+  await expect(error).toBeVisible();
+  await page.evaluate(() => { const w = /** @type {any} */ (window); w.ready = false; w.p2.refresh(); });
+  await expect(error).toBeHidden();
+});

@@ -397,7 +397,7 @@ for (const height of [568, 400]) test(`the win card and the score card in it fit
     const W = ['SPARROW', 'ROBIN', 'EAGLE', 'HERON', 'FINCH', 'OWL', 'PELICAN', 'WREN', 'CRANE', 'SWALLOW', 'MAGPIE', 'KESTREL'];
     const bd = scoreLevel({ events: W.map((w, i) => ({ word: w, at: 9000 * (i + 1), revealed: i === 7 })), elapsedMs: 118000, difficulty: 'normal', wordCount: 12 });
     const card = /** @type {HTMLElement} */ (document.getElementById('wincard'));
-    showLevelWin(card, card.querySelector('h2'), 12, { breakdown: bd, banked: true, progress: { points: 5644 } },
+    showLevelWin(card, card.querySelector('h2'), 12, { breakdown: bd, progress: { points: 5644 } },
       { reduceMotion: true, countdownMs: 0, onNext() {} }).skip();
   });
   await expect(page.locator('#wincard')).toHaveAttribute('data-level', '12');

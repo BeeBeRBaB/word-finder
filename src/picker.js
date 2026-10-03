@@ -190,14 +190,16 @@ export function makePicker({ root, heading, select, warning, error, start, cance
   root.addEventListener('click', (e) => { if (e.target === root) close(); });
 
   /** Redraw the Levels pane and the offered categories, as when the account or the network
-   * has changed. Focus inside the pane moves to its new button, else to Start, else to the
-   * heading, never to the page. @returns {void} */
-  function refresh() {
+   * has changed. A failed deal's message goes with what it was about: any, back `online`;
+   * a level's, once the pane reads differently. Focus inside the pane moves to its new
+   * button, else to Start, else to the heading, never to the page.
+   * @param {boolean} [online] @returns {void} */
+  function refresh(online = false) {
     if (!modal.isOpen() || pending) return;
-    error.hidden = true;   // about the state that just changed
-    const had = pane.contains(doc.activeElement);
+    const had = pane.contains(doc.activeElement), was = pane.textContent;
     showSide();
     syncDisabled();
+    if (online || pane.textContent !== was) error.hidden = true;
     if (!had) return;
     const next = pane.querySelector('button') ?? (start.hasAttribute('disabled') ? heading : start);
     /** @type {HTMLElement} */ (next).focus();

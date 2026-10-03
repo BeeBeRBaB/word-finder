@@ -239,7 +239,7 @@ test('a level is timed in active play only, and its score is the scorer\'s', asy
   const events = [{ word: 'ROBIN', at: 4000, revealed: false }, { word: 'WREN', at: 7000, revealed: true }, { word: 'OWL', at: 9000, revealed: false }];
   const { saved, ...done } = /** @type {import('../../src/levelplay.js').Finish} */ (play.finish());
   const breakdown = scoreLevel({ events, elapsedMs: 9000, difficulty: 'hard', wordCount: 3 });
-  assert.deepEqual(done, { breakdown, banked: true, progress: play.progress() });
+  assert.deepEqual(done, { breakdown, progress: play.progress() });
   const p = /** @type {import('../../src/levels.js').LevelProgress} */ (play.progress());
   assert.equal(p.level, 2);
   assert.equal(p.points, Math.max(0, breakdown.total));
@@ -261,7 +261,7 @@ test('a banked level is saved to the cloud by finish(), with no save under way t
   await play.sync();
   assert.equal(play.status().pending, false, 'the finds are online and nothing is in flight');
   const done = play.finish();
-  assert.equal(done?.banked, true);
+  assert.equal(done?.progress.level, 2);
   assert.equal(play.status().pending, true);
   await done?.saved;
   assert.equal(play.status().pending, false, 'saved has waited for the save');
@@ -382,17 +382,6 @@ test('finds carried onto a level are noted at one instant, skipping words alread
   const done = play.finish();
   assert.equal(done?.breakdown.stats.found, 3, 'ROBIN once, EAGLE not on the board');
   assert.equal(done?.breakdown.stats.bestStreak, 1.2, 'OWL chains from ROBIN; WREN, at the same instant, does not');
-});
-
-test('a level the store refuses to bank is reported, not counted', async () => {
-  const { play } = setup({ now: () => NaN });
-  await play.signUp('ana', 'secret1');
-  const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
-  play.start(deal, WORDS);
-  for (const w of WORDS) play.note(w, false);
-  const done = play.finish();
-  assert.equal(done?.banked, false);
-  assert.equal(play.progress()?.level, 1);
 });
 
 test('a failed save stays pending and is retried by the next one; saves never overlap', async () => {

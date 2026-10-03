@@ -25,8 +25,7 @@ export const OWNER_KEY = 'wordfinder-levels-owner-v1';
  * @typedef {{level:number, subject:string, seed:number, difficulty:Difficulty}} Deal
  *   seed: the puzzle seed. Build the board from it with the difficulty's mix and no coverage bag.
  * @typedef {{subjectIds:string[]}} CategoryLike
- * @typedef {{breakdown:import('./scoring.js').Breakdown, banked:boolean, progress:LevelProgress, saved:Promise<void>}} Finish
- *   banked: false when the progress record refused the result, which a valid finish never meets.
+ * @typedef {{breakdown:import('./scoring.js').Breakdown, progress:LevelProgress, saved:Promise<void>}} Finish
  *   saved: settles when the save it starts has landed or failed, which status() then tells.
  * @typedef {{signedIn:boolean, username:string|null, level:number, points:number,
  *   pending:boolean, error:CloudCode|null}} Status
@@ -353,12 +352,11 @@ export function makeLevelPlay(deps) {
       const { deal, events, words } = live;
       const ms = Math.round(elapsed());
       const breakdown = scoreLevel({ events, elapsedMs: ms, difficulty: deal.difficulty, wordCount: words.size });
-      const next = recordLevel(prog, { level: deal.level, subject: deal.subject, difficulty: deal.difficulty,
-        score: breakdown.total, ms, reveals: breakdown.stats.revealed, at: now() });
+      // The account's level on its run, or take() would have let it go: the record takes it.
+      keep(recordLevel(prog, { level: deal.level, subject: deal.subject, difficulty: deal.difficulty,
+        score: breakdown.total, ms, reveals: breakdown.stats.revealed, at: now() }));
       live = null;
-      if (next === prog) return { breakdown, banked: false, progress: prog, saved: Promise.resolve() };
-      keep(next);
-      return { breakdown, banked: true, progress: next, saved: push() };
+      return { breakdown, progress: prog, saved: push() };
     },
   };
 }
