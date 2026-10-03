@@ -44,13 +44,16 @@ current default marked), and don't build on an assumption.
 - **Theme colours:** each theme's light and dark blocks in `styles.css` are the source; `node tools/palettes/check.mjs` checks them for AA and that every look is distinct.
 
 ## Cloud environment for Project threads
-`docs/environment.sh` installs what `npm test` needs on a fresh thread: Node 22.5 or newer, plus Playwright's Chromium and WebKit with their system libraries, pinned to package-lock's Playwright (bump them together). Owner steps, on claude.ai/code:
+`docs/environment.sh` installs what `npm test` needs on a fresh thread: Node 22.5 or newer, Playwright's Chromium and WebKit with their system libraries, pinned to package-lock's Playwright (bump them together), and `certutil`. Owner steps, on claude.ai/code:
 1. Click the cloud icon, then Cloud, then Add cloud environment. Name it `word-finder` and paste the script.
-2. Set the environment variable `PLAYWRIGHT_BROWSERS_PATH=/opt/ms-playwright`. Without it, threads still work but download the browsers again.
-3. Network: Full, or Custom allowing npm, GitHub, the Ubuntu apt mirrors, deb.nodesource.com, cdn.playwright.dev and playwright.download.prss.microsoft.com.
-4. In Project settings, under Environment, pick `word-finder`.
+2. Network: Full, or Custom with the default package-manager list ticked plus `cdn.playwright.dev` (browsers) and `beeberbab.github.io` (`npm run test:live`). The `playwright.download.prss.microsoft.com` mirror can stay blocked, and `deb.nodesource.com` is only needed if the image's Node drops below 22.5.
+3. In Project settings, under Environment, pick `word-finder`.
 
-The result is cached only if the script finishes in about 5 minutes.
+The result is cached only if the script finishes in about 5 minutes. A thread whose setup failed resumes without re-running it, so its browsers can be missing: `npx playwright install --with-deps chromium webkit` fetches them in about 30 seconds.
+
+Each cloud thread needs two things before testing, and the `SessionStart` hook [.claude/hooks/cloud-session.sh](../.claude/hooks/cloud-session.sh) does both, printing a line only if one failed:
+- `npm ci`: the edit hook runs `tsc`.
+- Trust the session's proxy CA in Chromium, which reads its own NSS store rather than the system one: `certutil -A -d sql:$HOME/.local/share/pki/nssdb -n agent-proxy-ca -t C,, -i $HOME/.ccr/agent-proxy-ca.crt` (`apt-get install -y libnss3-tools` first if `certutil` is missing). Without it `npm run test:live` fails with `ERR_CERT_AUTHORITY_INVALID`, and e2e pages fall back from Google Fonts to system fonts, so layout tests measure the wrong text.
 
 ## Old scratch archive
 `archive/wip-2026-09-27.tar.gz` (32 MB, 642 files) is the whole local `.wip/` folder: about 400 preview images, early drafts and the original HANDOFF. Everything future work needs is already under `tools/` and in this file, so open it only to look at an old preview: `tar -xzf archive/wip-2026-09-27.tar.gz`.

@@ -146,6 +146,11 @@ every edit to `src/*.js`, `sw.js`, `styles.css`, or `index.html`: it checks the
 `ASSETS` parity above, then runs the unit suite and `tsc`. It takes about 0.7s and
 blocks on failure, so those three things do not need running by hand.
 
+A `SessionStart` hook ([.claude/hooks/cloud-session.sh](.claude/hooks/cloud-session.sh)) runs only
+in cloud threads: it runs `npm ci` when `node_modules` is missing and makes Chromium trust the
+session's network proxy, without which `npm run test:live` fails on a certificate error and e2e
+pages render without Google Fonts. It prints only when a step failed.
+
 Commits are authored as `BeeBeRBaB <puchkiray@outlook.com>` and carry no
 `Co-Authored-By` trailer. The owner's checkout sets this in its git config; a fresh clone
 (a cloud or Project thread) has neither, so run `git config user.name BeeBeRBaB` and
