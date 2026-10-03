@@ -69,11 +69,10 @@ const onBoard = (c, size) => (c?.size ?? size) === size;
  * @param {LevelCurrent} c @param {Deal} deal @param {number} size @returns {boolean} */
 const sameGame = (c, deal, size) => c.subject === deal.subject && c.difficulty === deal.difficulty && onBoard(c, size);
 
-/** Whether a saved level is another game of `deal`'s level that has won it from the game on a board
- * `size` wide: any other, but one on a larger board, which mergeProgress ranks below this board's
- * and a phone cannot deal. @param {LevelCurrent|null} c @param {Deal} deal @param {number} size
- * @returns {boolean} */
-const beaten = (c, deal, size) => !!c && !sameGame(c, deal, size) && (c.size ?? size) <= size;
+/** Whether a saved level was played on a board smaller than `size`: mergeProgress ranks that game
+ * of the level first, since every device can deal it, so it has won the level from this board's.
+ * @param {LevelCurrent|null} c @param {number} size @returns {boolean} */
+const beaten = (c, size) => (c?.size ?? size) < size;
 
 /** What went wrong, from a thrown cloud error; 'server' for anything else.
  * @param {unknown} e @returns {CloudCode} */
@@ -162,8 +161,8 @@ export function makeLevelPlay(deps) {
     const r = normalizeProgress(remote);
     const merged = mergeProgress(prog, r) ?? newProgress((random() * 0x100000000) >>> 0);
     // The level being played is the cloud's no longer: it moved on, another device's run with its
-    // own seed won, or another device's game of it did.
-    if (live && (merged.level !== live.deal.level || !ofRun(merged, live.deal) || beaten(merged.current, live.deal, live.size))) live = null;
+    // own seed won, or another device's game of it on a smaller board did.
+    if (live && (merged.level !== live.deal.level || !ofRun(merged, live.deal) || beaten(merged.current, live.size))) live = null;
     keep(merged);
     const c = live && r && r.seed === merged.seed && r.level === live.deal.level ? r.current : null;
     if (live && c && sameGame(c, live.deal, live.size)) {
@@ -312,8 +311,8 @@ export function makeLevelPlay(deps) {
     playing: () => (live ? live.deal : null),
 
     /** Why a sync let go of `deal`: the account is past its level on the run it was dealt from
-     * ('finished'), or still on it there, as another device's game of it ('moved'), or on another
-     * device's run ('replaced'). @param {Deal} deal
+     * ('finished'), or still on it there, as another device's game of it on a smaller board
+     * ('moved'), or on another device's run ('replaced'). @param {Deal} deal
      * @returns {'finished'|'moved'|'replaced'} */
     lost(deal) {
       const p = progress();
@@ -325,14 +324,14 @@ export function makeLevelPlay(deps) {
     events: () => (live ? live.events.map(e => ({ ...e })) : []),
 
     /** Start timing a dealt level, unless the session has lapsed, the account has moved on from it
-     * since it was dealt, or another device's game of it has won it. Returns the finds to put back
-     * when it resumes one, in order; a saved level played on a larger board (a phone cannot deal
-     * it), or whose words are not all on this board, starts over.
+     * since it was dealt, or another device's game of it on a smaller board has won it. Returns the
+     * finds to put back when it resumes one, in order; a saved level of another subject, difficulty
+     * or board (a phone cannot deal the large one), or whose words are not all on this board, starts over.
      * @param {Deal} deal @param {string[]} words the board's words @param {number} size its width
      * @param {boolean} [paused] the page is hidden: the clock waits for resume() @returns {LevelEvent[]} */
     start(deal, words, size, paused = false) {
       const p = progress();
-      if (!p || deal.level !== p.level || !ofRun(p, deal) || beaten(p.current, deal, size)) { live = null; return []; }
+      if (!p || deal.level !== p.level || !ofRun(p, deal) || beaten(p.current, size)) { live = null; return []; }
       const set = new Set(words);
       const c = p.current;
       const resume = !!c && sameGame(c, deal, size)
