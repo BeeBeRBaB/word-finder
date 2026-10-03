@@ -577,7 +577,7 @@ test('when the finds of two devices together complete a level, the one being loo
 /** The puzzles this device has solved. @param {Page} page */
 const solves = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('wordfinder-progress-v1') ?? '{}').puzzles ?? 0);
 
-test('a level the account\'s finds complete when the page reloads is banked quietly, as one solve', async ({ page }) => {
+test('a level the account\'s finds complete when the page reloads shows its score card, as one solve', async ({ page }) => {
   const fb = makeFirebase();
   const uid = fb.add('ana_reads', 'hunter22');
   fb.put(uid, PROGRESS);
@@ -595,9 +595,37 @@ test('a level the account\'s finds complete when the page reloads is banked quie
   const p = fb.progress(uid);
   fb.put(uid, { ...p, current: { ...p.current, events: [...p.current.events, { word: words[words.length - 1], at: p.current.elapsedMs + 1, revealed: false }] } });
   await page.goto('/');
+  await expect(page.locator('#wincard h2')).toHaveText('Level 3 complete');
   await expect(page.locator('#list .w.done')).toHaveCount(words.length);
   await expect.poll(() => fb.progress(uid)?.level).toBe(4);
-  await expect(page.locator('#win')).toBeHidden();
+  expect(await solves(page)).toBe(1);
+});
+
+test('a level the account\'s finds completed while another game was on shows its score card when played', async ({ page }) => {
+  const fb = makeFirebase();
+  const uid = fb.add('ana_reads', 'hunter22');
+  fb.put(uid, PROGRESS);
+  await fb.install(page);
+  await signedInAs(page, uid, 'ana_reads');
+  await page.goto('/?subject=nature/birds');
+  await levelsSide(page);
+  await page.click('#picker-start');
+  await expect(page.locator('#category')).toHaveText('Level 3');
+  const words = (await page.locator('#list .w').allTextContents()).map(w => w.trim().toUpperCase());
+  await findAndDrag(page, words[0]);
+  await page.click('#newbtn');
+  await expect(page.locator('#category')).not.toHaveText('Level 3');
+  await expect.poll(() => fb.progress(uid)?.current?.events?.length).toBe(1);
+  // Another device finds the rest, and this one hears of it when the player comes back.
+  const p = fb.progress(uid);
+  fb.put(uid, { ...p, current: { ...p.current, events: words.map((word, i) => ({ word, at: i + 1, revealed: false })) } });
+  await setHidden(page, true);
+  await setHidden(page, false);
+  await levelsSide(page);
+  await expect(page.locator('#picker-start')).toHaveText('Play level 3');
+  await page.click('#picker-start');
+  await expect(page.locator('#wincard h2')).toHaveText('Level 3 complete');
+  await expect.poll(() => fb.progress(uid)?.level).toBe(4);
   expect(await solves(page)).toBe(1);
 });
 
@@ -628,6 +656,8 @@ test('a level finished while signed out is banked on signing in again, and not c
   await page.getByLabel('Username').fill('ana_reads');
   await page.getByLabel('Password').fill('hunter22');
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  // Banked as the account signs in, and the Account section says so.
+  await expect(page.locator('#settings-account .acct-line')).toContainText('Level 4');
   await expect.poll(() => fb.progress(uid)?.level).toBe(4);
   expect(await solves(page)).toBe(1);
 });

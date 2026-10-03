@@ -43,16 +43,17 @@ export function start(host, opts) {
   const parts = [];
   /** @type {boolean[]} which of parts the host's size has room for */
   let shown = [];
-  let W = 0, H = 0, dpr = 1, t = 0, dead = false, next = 0;
+  let W = 0, H = 0, dpr = 1, t = 0, dead = false, next = 0, batch = 0;
 
   /** Sprites are drawn at the device pixel ratio of the last resize that changed it.
    * @returns {void} */
   function makeSprites() {
-    const px = Math.round(SPRITE * dpr);
+    const px = Math.round(SPRITE * dpr), my = ++batch;
     ids.forEach((id, i) => {
       const img = new Image();
       img.onload = () => {
-        if (dead) return;
+        // One still loading from before a density change would land over the new one.
+        if (dead || my !== batch) return;
         const s = document.createElement('canvas');
         s.width = s.height = px;
         s.getContext('2d')?.drawImage(img, 0, 0, px, px);

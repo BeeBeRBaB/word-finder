@@ -167,6 +167,8 @@ function answers(handler, url) {
 
 const BASE = 'https://beeberbab.github.io/word-finder/';
 const CACHE = /const CACHE='([^']+)'/.exec(sw)?.[1] ?? '';
+const PAGE = readFileSync(new URL('index.html', ROOT), 'utf8');
+const SHEET = /href="(https:\/\/fonts\.googleapis\.com\/css[^"]+)"/.exec(PAGE)?.[1] ?? '';
 
 /** Runs sw.js's install against an in-memory CacheStorage.
  * @param {Record<string, Record<string, string>>} caches name -> url -> body, before install
@@ -184,8 +186,12 @@ function install(caches, fetch) {
       store.set(name, m);
       return {
         keys: async () => [...m.keys()].map(url => ({ url })),
+        match: async (/** @type {unknown} */ k) => m.get(keyOf(k))?.clone(),
         put: async (/** @type {unknown} */ k, /** @type {Response} */ r) => { m.set(keyOf(k), r); },
-        addAll: async (/** @type {{url:string}[]} */ reqs) => { for (const r of reqs) m.set(r.url, new Response('precached')); },
+        // The page as it is, since the fonts carried are the ones its stylesheet names.
+        addAll: async (/** @type {{url:string}[]} */ reqs) => {
+          for (const r of reqs) m.set(r.url, new Response(r.url === `${BASE}index.html` ? PAGE : 'precached'));
+        },
       };
     },
   };
@@ -214,7 +220,7 @@ function install(caches, fetch) {
 // A bump used to throw away, with the old cache, everything pages had loaded on demand: the first
 // launch after an update, if offline, came back without its background or its fonts.
 test('install carries on-demand entries into a bumped cache, each fetched again for this build', async () => {
-  const font = 'https://fonts.gstatic.com/s/x.woff2';
+  const font = 'https://fonts.gstatic.com/s/x.woff2', oldFont = 'https://fonts.gstatic.com/s/old.woff2';
   /** @type {string[]} */
   const fetched = [];
   const { store, installed } = install({
@@ -224,7 +230,10 @@ test('install carries on-demand entries into a bumped cache, each fetched again 
       [`${BASE}src/backgrounds/gone.js`]: 'old gone',
       [`${BASE}index.html?subject=nature/birds`]: 'old page',
       [`${BASE}src/subjects/nature.js`]: 'old pool',
-      [font]: 'old font',
+      // An older build's stylesheet, and a file only it named.
+      'https://fonts.googleapis.com/css2?family=Space+Mono&display=swap': 'old sheet',
+      [oldFont]: 'old font',
+      [font]: 'font',
       'https://firestore.googleapis.com/v1/doc': 'a document',
     },
     'wordfinder-subjects': { [`${BASE}src/subjects/food.js`]: 'pool' },
@@ -235,6 +244,7 @@ test('install carries on-demand entries into a bumped cache, each fetched again 
     if (url.endsWith('gone.js')) return new Response('', { status: 404 });
     // This build's drift imports a module the old one never loaded, and one the shell precaches.
     if (url.endsWith('drifting-icons.js')) return new Response("import { frameLoop } from './frame-loop.js';\nimport { makeRng } from '../rng.js';");
+    if (url === SHEET) return new Response(`@font-face{src:url(${font}) format('woff2')}`);
     return new Response(`new ${url}`);
   });
   await installed;
@@ -242,13 +252,16 @@ test('install carries on-demand entries into a bumped cache, each fetched again 
   assert.match(await now.get(`${BASE}src/backgrounds/drifting-icons.js`)?.text() ?? '', /frame-loop/);
   assert.equal(await now.get(`${BASE}src/backgrounds/frame-loop.js`)?.text(), `new ${BASE}src/backgrounds/frame-loop.js`,
     'a module this build newly imports comes too, or the carried background cannot load offline');
+  assert.match(await now.get(SHEET)?.text() ?? '', /@font-face/, "this build's stylesheet comes along");
   assert.equal(await now.get(font)?.text(), `new ${font}`, 'a font is fetched again, so a bad copy does not outlive the bump');
+  assert.ok(!now.has(oldFont), 'a font this build no longer uses is left behind');
   assert.equal(await now.get(`${BASE}src/main.js`)?.text(), 'precached', 'what the build precaches is not fetched twice');
   assert.ok(!now.has(`${BASE}src/backgrounds/gone.js`), 'a file this build no longer has is dropped');
   assert.ok(!now.has(`${BASE}index.html?subject=nature/birds`), 'kept by path, the key the fetch handler reads');
   assert.ok(![...now.keys()].some(k => k.includes('/subjects/')), 'word pools live in their own cache');
   assert.deepEqual(fetched.sort(), [`${BASE}src/backgrounds/drifting-icons.js no-cache`, `${BASE}src/backgrounds/frame-loop.js no-cache`,
-    `${BASE}src/backgrounds/gone.js no-cache`, `${font} no-cache`], "only this app's own caches, and of other origins only fonts");
+    `${BASE}src/backgrounds/gone.js no-cache`, `${SHEET} no-cache`, `${font} no-cache`].sort(),
+  "only this app's own caches, and of other origins only this build's fonts");
 });
 
 // An install cut short (the browser killed mid-way) leaves what it carried in the new cache. Taking
@@ -264,13 +277,42 @@ test('a retried install still follows the imports of what an earlier attempt car
 
 test('a request that never settles cannot hold the update back', async () => {
   const { installed, budget } = install({ 'wordfinder-v1': { [`${BASE}src/backgrounds/drifting-icons.js`]: 'old drift' } },
-    (_url, opts) => new Promise((_, fail) => opts.signal?.addEventListener('abort', () => fail(new Error('aborted')))));
+    (_url, opts) => new Promise((_, fail) => {
+      // As fetch does: one already aborted fails at once.
+      if (opts.signal?.aborted) fail(new Error('aborted'));
+      opts.signal?.addEventListener('abort', () => fail(new Error('aborted')));
+    }));
   let done = false;
   void installed.then(() => { done = true; });
   await new Promise((r) => setImmediate(r));
   assert.equal(done, false, 'still waiting on the stalled request');
   budget();
   await installed;
+});
+
+// A sheet that never answered used to hold the code back until the budget ran out, and then
+// nothing was fetched at all: the first launch offline came back without its background.
+test('a font stylesheet that stalls holds back only the fonts', async () => {
+  const font = 'https://fonts.gstatic.com/s/x.woff2';
+  const { store, installed, budget } = install({
+    'wordfinder-v1': { [`${BASE}src/backgrounds/drifting-icons.js`]: 'old drift', [font]: 'font' },
+  }, (url, opts) => url === SHEET
+    ? new Promise((_, fail) => opts.signal?.addEventListener('abort', () => fail(new Error('aborted'))))
+    : Promise.resolve(new Response(`new ${url}`)));
+  for (let i = 0; i < 20; i++) await new Promise((r) => setImmediate(r));
+  assert.ok(store.get(CACHE)?.has(`${BASE}src/backgrounds/drifting-icons.js`), 'carried while the sheet is still waited on');
+  budget();
+  await installed;
+  assert.ok(!store.get(CACHE)?.has(font), 'a font goes by the sheet, which never came');
+});
+
+test('an install with no fonts to carry asks Google Fonts nothing', async () => {
+  /** @type {string[]} */
+  const fetched = [];
+  const { installed } = install({ 'wordfinder-v1': { [`${BASE}src/backgrounds/drifting-icons.js`]: 'old drift' } },
+    async (url) => { fetched.push(url); return new Response(''); });
+  await installed;
+  assert.deepEqual(fetched, [`${BASE}src/backgrounds/drifting-icons.js`]);
 });
 
 // Firestore document URLs have no extension, so cache-first would hand cloud.load() a

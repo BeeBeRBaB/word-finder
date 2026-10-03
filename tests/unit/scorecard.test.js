@@ -82,7 +82,6 @@ class FakeEl {
     for (let n = other; n; n = n.parentNode) if (n === this) return true;
     return false;
   }
-  /** Only `#id`, which is all scorecard.js asks for. @param {string} sel @returns {FakeEl|null} */
   /** In the document and not under anything hidden: what a player could see. */
   get rendered() {
     /** @type {FakeEl|null} */
@@ -500,27 +499,6 @@ test('the bar and the colour follow the sign of the total', () => {
   assert.notEqual(neg[1], pos[1]);
 });
 
-test('the countdown pauses while the page is hidden and resumes where it was', () => {
-  const env = makeEnv();
-  const { calls } = play(env);
-  env.advance(REVEAL + 16);
-  env.advance(3000);
-  assert.equal(env.host.one('sc-secs').textContent, '7');
-  env.doc.setHidden(true);
-  env.doc.setHidden(true);   // a repeat is harmless
-  assert.equal(env.timers.size + env.frames.size, 0);
-  env.advance(60000);
-  assert.equal(calls.next, 0);
-  env.doc.setHidden(false);
-  env.doc.setHidden(false);   // and does not start a second loop
-  assert.ok(env.frames.size <= 1 && env.timers.size <= 1);
-  env.advance(6900);
-  assert.equal(calls.next, 0, 'the hidden minute did not count');
-  assert.equal(env.host.one('sc-secs').textContent, '1');
-  env.advance(200);
-  assert.equal(calls.next, 1);
-});
-
 test('the reveal pauses while hidden, too', () => {
   const env = makeEnv();
   play(env);
@@ -533,21 +511,25 @@ test('the reveal pauses while hidden, too', () => {
   assert.deepEqual(shownRows(env.host), [true, true, false, false]);
 });
 
-test('a card mounted while the page is hidden waits for it', () => {
+test('a card mounted while the page is hidden starts its reveal when it shows', () => {
   const env = makeEnv();
   env.doc.hidden = true;
-  const { calls } = play(env, BREAKDOWN, { reduceMotion: true, countdownMs: 2000 });
+  play(env);
   env.advance(5000);
-  assert.equal(calls.next, 0);
+  assert.deepEqual(shownRows(env.host), [false, false, false, false]);
   env.doc.setHidden(false);
-  env.advance(2016);
-  assert.equal(calls.next, 1);
+  env.advance(16);
+  assert.deepEqual(shownRows(env.host), [true, false, false, false]);
+});
 
-  const env2 = makeEnv();
-  env2.doc.hidden = true;
-  play(env2);
-  env2.advance(5000);
-  assert.deepEqual(shownRows(env2.host), [false, false, false, false]);
+// Hiding the page drops the countdown, and that is main.js's call (hold()), as for the plain card.
+test('once the reveal is over, hiding the page leaves the card alone', () => {
+  const env = makeEnv();
+  const { calls } = play(env);
+  env.advance(REVEAL + 16);
+  assert.equal(env.doc.listeners.get('visibilitychange')?.size ?? 0, 0);
+  env.advance(10016);
+  assert.equal(calls.next, 1);
 });
 
 test('reduced motion renders the finished card at once, without the bar', () => {

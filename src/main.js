@@ -240,15 +240,20 @@ function startLevel(deal) {
   // A page loaded or dealt in the background starts the clock when it is shown, not before.
   const events = play.start(deal, puzzle.words, document.hidden);
   if (!play.playing()) { levelBoard = null; showCategory(); return; }
-  const before = state.foundOrder.length;
+  const won = state.foundOrder.length === puzzle.words.length;
   addFinds(events);
   play.carry(state.foundOrder.map(w => ({ word: w, revealed: !!state.found[w].revealed })));
-  if (state.foundOrder.length < puzzle.words.length) return;
-  // Complete without a win, as when the last find reached this device but not the account:
-  // bank it quietly, the way a restored board never pops the win card. A board the account's
-  // finds completed is a solve here too; one already complete was counted at its last find.
-  play.finish();
-  if (before < puzzle.words.length) progress.addSolve();
+  if (state.foundOrder.length === puzzle.words.length) completeLevel(deal, won);
+}
+/** Every word of the level on the board is found, the last not by a find here while it was the
+ * level: the account's finds completed it, or (`won`) it was won here while it was an ordinary
+ * board, as when signed out, and its win card has been. Banked either way; only the first is a
+ * solve to count and a score card to show. @param {Deal} deal @param {boolean} won @returns {void} */
+function completeLevel(deal, won) {
+  const finished = play.finish();
+  if (won) return;
+  progress.addSolve();
+  if (finished) showLevelCard(finished, deal.level, paneOpen());
 }
 
 /** Put recorded finds (a level's, or a save's) on the board where the board places them,
@@ -972,13 +977,7 @@ function reconcileLevel() {
     return;
   }
   // Finds another device made on this level, which the sync folded into it.
-  if (!addFinds(play.events())) return;
-  if (state.foundOrder.length < puzzle.words.length) return;
-  // The two devices' finds together complete it, and this one is being looked at: its score card.
-  const level = levelBoard;
-  const finished = play.finish();
-  progress.addSolve();
-  if (finished) showLevelCard(finished, level.level, paneOpen());
+  if (addFinds(play.events()) && state.foundOrder.length === puzzle.words.length) completeLevel(levelBoard, false);
 }
 const SIGNED_OUT = "You've been signed out, so this game no longer counts as a level.";
 /** The board is an ordinary one now. `why` tells the player why the header changed, unless it
@@ -990,9 +989,9 @@ function letLevelGo(why) {
 }
 /** @returns {void} */
 function afterSync() {
+  reconcileLevel();   // first: it can bank a level, which the two below then show
   renderAccountSection();
   picker.refresh();
-  reconcileLevel();
 }
 /** @returns {void} */
 function openSettings() {

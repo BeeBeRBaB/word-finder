@@ -41,8 +41,11 @@ const isStale=k=>k.startsWith('wordfinder-')&&k!==CACHE&&k!==SUBJECT_CACHE;
 // loaded on demand: a background and what it imports, and the fonts. The first launch after an
 // update, if offline, then came back without them. So the new cache takes them over at install,
 // while the old one still serves: each fetched again (code for this build, along with any module
-// it now imports that the old build did not; a font so a bad copy is not kept past a bump). One
-// that fails is left for the next online visit.
+// it now imports that the old build did not; a font so a bad copy is not kept past a bump). Fonts
+// go by this build's stylesheet: it comes along, with the files of it the old cache held, and
+// fonts an older stylesheet named stay behind. Only where the old cache held fonts: a first
+// install, or a device Google Fonts never answers, asks it nothing. One that fails is left for
+// the next online visit.
 /** @returns {Promise<void>} */
 async function carryOver(){
   const cache=await caches.open(CACHE);
@@ -64,11 +67,20 @@ async function carryOver(){
     if(url.endsWith('.js'))return Promise.all([...(await res.text()).matchAll(/(?:from|import)\s*['"](\.\.?\/[^'"]+)['"]/g)].map(m=>take(new URL(m[1],url).href)));
   };
   try{
-    const old=await Promise.all((await caches.keys()).filter(isStale).map(async k=>(await caches.open(k)).keys()));
-    await Promise.all(old.flat().map(({url})=>{
-      const u=new URL(url);
+    const old=(await Promise.all((await caches.keys()).filter(isStale).map(async k=>(await caches.open(k)).keys())))
+      .flat().map(({url})=>new URL(url));
+    const isFontFile=(/** @type {URL} */ u)=>u.hostname==='fonts.gstatic.com';
+    // This build's stylesheets' text, waited on by font files alone: a sheet that stalls must not
+    // hold the code back until the budget runs out and nothing more can be fetched.
+    const css=old.some(isFontFile)&&(async()=>{
+      const page=await (await cache.match(new URL('./index.html',sw.location.href).href))?.text()??'';
+      const sheets=[...page.matchAll(/href="(https:\/\/fonts\.googleapis\.com\/css[^"]+)"/g)].map(m=>m[1].replaceAll('&amp;','&'));
+      await Promise.all(sheets.map(take));
+      return (await Promise.all(sheets.map(async u=>(await cache.match(u))?.text()))).join('');
+    })();
+    await Promise.all(old.map(async u=>{
       if(u.origin===sw.location.origin)return isSubject(u)?null:take(u.origin+u.pathname);
-      return isFont(u)?take(url):null;
+      if(css&&isFontFile(u)&&(await css).includes(u.href))return take(u.href);
     }));
   }finally{clearTimeout(timer)}
 }

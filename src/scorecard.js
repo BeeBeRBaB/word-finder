@@ -196,11 +196,13 @@ export function playBreakdown(host, breakdown, opts) {
     announce();
     skipBtn.hidden = true;
     next.hidden = false;
+    // The reveal is over, and a hidden page holds the countdown (main.js), never pauses it.
+    doc.removeEventListener('visibilitychange', onVisibility);
     if (auto && !held) {
       ticking = true;
       secs.textContent = String(Math.ceil(limit / 1000));
-      clock.reset(!doc.hidden);
-      if (!doc.hidden) run();
+      clock.reset(true);
+      run();
     }
     // Only from inside the card or from nowhere: never out of a field the player is using.
     const a = doc.activeElement;
@@ -212,7 +214,8 @@ export function playBreakdown(host, breakdown, opts) {
     if (!still) grow();
   }
 
-  // Wakes on each whole second left, from active time, so a throttled timer cannot drift.
+  // Wakes on each whole second left, read off the clock rather than counted, so a throttled
+  // timer cannot drift.
   function tick() {
     const left = limit - clock.elapsed();
     if (left <= 0) { advance(); return; }
@@ -279,13 +282,12 @@ export function playBreakdown(host, breakdown, opts) {
     if (running.get(host) === api) running.delete(host);
   }
 
-  // Pauses the reveal and the countdown alike, and picks both up where they stopped.
+  // Pauses the reveal, and picks it up where it stopped.
   function onVisibility() {
     quiet();
     if (doc.hidden) { clock.pause(); return; }
     clock.resume();
-    if (!done) raf = win.requestAnimationFrame(frame);
-    else if (ticking) run();
+    raf = win.requestAnimationFrame(frame);
   }
 
   doc.addEventListener('visibilitychange', onVisibility);

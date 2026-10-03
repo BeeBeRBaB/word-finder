@@ -1,7 +1,8 @@
 // A dynamic import that can be tried again. A page remembers a failed dynamic import for its whole
 // life, so a retry of the same URL fails at once, back online or not: each retry names a URL the
 // page has not failed on (`?retry=N`, a counter, since each one is poisoned in turn). sw.js keys
-// code by path, so every retry still reads and refreshes the one cached copy.
+// code by path, so every retry still reads and refreshes the one cached copy. Only the module
+// itself gets a fresh URL: one it imports that failed stays failed until the next launch.
 
 /**
  * @template T
