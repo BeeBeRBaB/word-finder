@@ -261,6 +261,26 @@ test('leaving the page holds a level score card\'s countdown, as it cancels the 
   await expect(page.locator('#category')).toHaveText('Level 4');
 });
 
+test('closing a level\'s score card stops its countdown', async ({ page }) => {
+  const fb = makeFirebase();
+  const uid = fb.add('ana_reads', 'hunter22');
+  fb.put(uid, PROGRESS);
+  await fb.install(page);
+  await signedInAs(page, uid, 'ana_reads');
+  await page.clock.install();
+  await page.goto('/?subject=nature/birds');
+  await levelsSide(page);
+  await page.click('#picker-start');
+  await expect(page.locator('#category')).toHaveText('Level 3');
+  await findTheRest(page);
+  const card = page.locator('#wincard');
+  await card.getByRole('button', { name: 'Skip' }).click();
+  await expect(card.locator('.sc-line')).toBeVisible();
+  await page.click('#winclose');
+  await skipAhead(page, 11000);   // past the countdown
+  await expect(page.locator('#category')).toHaveText('Level 3');
+});
+
 test('the Account section shows the account, and signing out leaves an ordinary board', async ({ page }) => {
   const fb = makeFirebase();
   const uid = fb.add('ana_reads', 'hunter22');
@@ -516,6 +536,26 @@ test('a session that lapses while New game deals a level asks to sign in, not ab
   await expect(page.locator('#picker-error')).toBeHidden();
   await expect(page.locator('#picker-title')).toBeFocused();
   await expect(page.locator('#category')).not.toHaveText(/^Level/);
+});
+
+test('Undo brings a level back as an ordinary board once the session has lapsed, and says why', async ({ page }) => {
+  const fb = makeFirebase();
+  const uid = fb.add('ana_reads', 'hunter22');
+  fb.put(uid, PROGRESS);
+  await fb.install(page);
+  await signedInAs(page, uid, 'ana_reads');
+  await page.goto('/?subject=nature/birds');
+  await levelsSide(page);
+  await page.click('#picker-start');
+  await expect(page.locator('#category')).toHaveText('Level 3');
+  await findAndDrag(page, ((await page.locator('#list .w').first().textContent()) ?? '').trim().toUpperCase());
+  await refuseSession(page);
+  await page.click('#newbtn');   // the save on the way out is refused, which signs this device out
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('wordfinder-session-v1'))).toBeNull();
+  await page.click('#toast-undo');
+  await expect(page.locator('#list .w.done')).toHaveCount(1);
+  await expect(page.locator('#category')).not.toHaveText('Level 3');
+  await expect(page.locator('#toast-msg')).toHaveText("You've been signed out, so this game no longer counts as a level.");
 });
 
 // The score card comes up a moment after the last find. A sync landing in that moment used to let

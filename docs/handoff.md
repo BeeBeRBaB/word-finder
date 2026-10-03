@@ -28,11 +28,11 @@ current default marked), and don't build on an assumption.
   - Known gaps: a tab left open across an update runs the old modules, so a background it had not loaded yet, whose imports now need a new export (v18's Subject scene and Drifting icons do), draws nothing until the next launch. An update whose install is cut short can leave the old worker's cache torn for one launch (`tools/sims/sw/tear.mjs`). And a background that failed to load is tried again when the device is back online, but only the module itself: if one of its imports was what failed, the page keeps that failure until the next launch.
 - **Tests:** `PORT=<port> npx playwright test` moves the whole e2e run.
 
-## On main but not wired up yet (no visible effect)
-These are committed so a thread can pick them up from GitHub.
-- **Animated backgrounds** in `src/backgrounds/*.js` are wired up now (above). They stay out of sw.js ASSETS on purpose; the default stale-while-revalidate path caches them on first use. `tools/coverage.mjs` excludes `src/backgrounds/**` from the 90% floor.
+## Module and source notes
+- **Animated backgrounds** in `src/backgrounds/*.js` stay out of sw.js ASSETS on purpose; the default stale-while-revalidate path caches them on first use. `tools/coverage.mjs` excludes `src/backgrounds/**` from the 90% floor.
   - A new background is one registry entry in `src/backgrounds.js`: its tile, its Settings choice and its place in the contrast sim follow from it. `perDeal: true` restarts it on every deal, and `show()` passes it the subject id and seed.
-- **Levels and accounts** are wired up now (above). Module notes:
+- **Levels and accounts:**
+  - A level is dealt by its seed on every device and every build, so a change to `src/puzzle.js`, a difficulty's mix or the deal order re-deals levels in progress and drops their finds. `tests/unit/puzzle.test.js` and `tests/unit/levels.test.js` pin all three.
   - scoring and levels were reviewed clean.
   - cloud had 5 defects, fixed by its reviewer.
   - scorecard was reviewed on 2026-10-02 with no logic defects. Its open layout and contrast findings are in `tools/levels-review/README.md`.

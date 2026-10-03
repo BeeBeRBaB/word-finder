@@ -201,13 +201,12 @@ export function levelFootnote(f) {
   return f.banked ? `${points(f.progress.points)} in all` : "These points couldn't be added to your total.";
 }
 
-/** @type {WeakMap<HTMLElement, Playback>} */
-const levelWins = new WeakMap();
-
 /** Make the win card a level's score card: "Level N complete" over the breakdown, played a line
  * at a time, and the account's new total. `card[data-level]` lets the stylesheet hide the plain
- * card's message and buttons. @param {HTMLElement} card @param {HTMLElement} title its heading
- * @param {number} level @param {Finish} f @param {LevelWinOptions} opts @returns {Playback} */
+ * card's message and buttons. Cancel the playback it returns before the card is cleared or shown
+ * again: taking the card down does not stop it. @param {HTMLElement} card
+ * @param {HTMLElement} title its heading @param {number} level @param {Finish} f
+ * @param {LevelWinOptions} opts @returns {Playback} */
 export function showLevelWin(card, title, level, f, opts) {
   clearLevelWin(card, title);
   const doc = card.ownerDocument;
@@ -218,7 +217,6 @@ export function showLevelWin(card, title, level, f, opts) {
   title.after(host);
   const { focus, ...rest } = opts;
   const pb = playBreakdown(host, f.breakdown, { ...rest, footnote: levelFootnote(f), scope: card });
-  levelWins.set(card, pb);
   if (focus) {
     const skip = /** @type {HTMLElement|null} */ (host.querySelector('.sc-skip'));
     const go = /** @type {HTMLElement|null} */ (host.querySelector('.sc-go'));
@@ -227,11 +225,8 @@ export function showLevelWin(card, title, level, f, opts) {
   return pb;
 }
 
-/** Put the plain win card back, stopping a score card still playing. @param {HTMLElement} card
- * @param {HTMLElement} title @returns {void} */
+/** Put the plain win card back. @param {HTMLElement} card @param {HTMLElement} title @returns {void} */
 export function clearLevelWin(card, title) {
-  levelWins.get(card)?.cancel();
-  levelWins.delete(card);
   card.querySelector('.sc-host')?.remove();
   if (title.dataset.plain !== undefined) {
     title.textContent = title.dataset.plain;

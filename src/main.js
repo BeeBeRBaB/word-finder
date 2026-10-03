@@ -239,7 +239,8 @@ function startLevel(deal) {
   if (!puzzle) return;
   // A page loaded or dealt in the background starts the clock when it is shown, not before.
   const events = play.start(deal, puzzle.words, document.hidden);
-  if (!play.playing()) { levelBoard = null; showCategory(); return; }
+  // A sign-out since it was dealt (before an Undo, say) is news; a level the account moved past is not.
+  if (!play.playing()) { letLevelGo(play.account() ? '' : SIGNED_OUT); return; }
   const won = state.foundOrder.length === puzzle.words.length;
   addFinds(events);
   play.carry(state.foundOrder.map(w => ({ word: w, revealed: !!state.found[w].revealed })));
@@ -618,7 +619,7 @@ const winnext = must('winnext'), wincount = must('wincount'), winbtn = must('win
 const wincard = must('wincard'), wintitle = must('wintitle');
 /** @type {ReturnType<typeof setInterval>|null} */
 let autoTimer = null;
-// The score card while the win card is a level's. It runs its own countdown.
+// The score card while the win card is a level's. It runs its own countdown, until cancel().
 /** @type {import('./scorecard.js').Playback|null} */
 let levelCard = null;
 // Bumped whenever the player moves on from the win card (closes it, opens a pane, or starts
@@ -699,8 +700,9 @@ function hideWin() {
   // Hiding the focused Play button would drop focus to <body>; give it to New game.
   if (els.win.contains(document.activeElement)) newbtn.focus({ preventScroll: true });
   els.win.style.display = 'none';
-  clearLevelWin(wincard, wintitle);
+  levelCard?.cancel();
   levelCard = null;
+  clearLevelWin(wincard, wintitle);
 }
 /** The win card as a level's score card. The setting and an open pane decide its countdown, as
  * they do the plain card's. @param {Finish} f @param {number} level @param {boolean} covered

@@ -42,14 +42,15 @@ function choosePlacement(g, w, size, used, rng, halo) {
  * rule too, but first trades that word for a spare of the same length. 'relaxed' is only
  * reached by a pool outside the content contract: a word may touch a parallel one, and one
  * with no spot at all is swapped, never dropped — dropping made boards one word short.
- * Swaps happen on copies, so every layout starts from the words that were drawn.
- * @param {readonly string[]} drawn @param {readonly string[]} spares @param {number} size @param {Rng} rng
- * @param {'strict'|'swap'|'relaxed'} mode @param {string} name
+ * A swap stays made for the layouts that follow, and 'swap' gives up after half the swaps
+ * 'relaxed' may make. Both are how the first build with levels dealt, and a level has to deal
+ * the same board on every build: either changed re-deals some seeds (tests/unit/puzzle.test.js).
+ * @param {string[]} words swapped in place @param {string[]} spare likewise
+ * @param {number} size @param {Rng} rng @param {'strict'|'swap'|'relaxed'} mode @param {string} name
  * @returns {Laid|null}
  */
-function lay(drawn, spares, size, rng, mode, name) {
+function lay(words, spare, size, rng, mode, name) {
   const strict = mode !== 'relaxed';
-  const words = drawn.slice(), spare = spares.slice();
   /** @type {(string|null)[][]} */
   const g = Array.from({ length: size }, () => new Array(size).fill(null));
   /** @type {Placement[]} */
@@ -82,7 +83,7 @@ function lay(drawn, spares, size, rng, mode, name) {
       }
       if (mode === 'strict') return null;
       const alt = spare.findIndex(s => s.length === w.length);
-      if (alt === -1 || ++swaps > MAX_SWAPS) {
+      if (alt === -1 || ++swaps > (mode === 'swap' ? MAX_SWAPS / 2 : MAX_SWAPS)) {
         if (mode === 'swap') return null;
         throw new Error(`could not place ${w} in a ${size}x${size} grid for "${name}"`);
       }

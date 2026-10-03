@@ -109,6 +109,10 @@ export function makeLevelPlay(deps) {
     local.save(p);
   }
 
+  /** The signed-in player's progress. Null once the session lapses, though this device keeps
+   * its copy for the same account signing in again. @returns {LevelProgress|null} */
+  const progress = () => (cloud.session() ? prog : null);
+
   /** @returns {number} */
   const elapsed = () => (live ? live.base + (live.since === null ? 0 : clock() - live.since) : 0);
 
@@ -211,8 +215,7 @@ export function makeLevelPlay(deps) {
     /** @returns {Account|null} */
     account: () => cloud.session(),
 
-    /** The signed-in player's progress, or null when nobody is signed in. @returns {LevelProgress|null} */
-    progress: () => (cloud.session() ? prog : null),
+    progress,
 
     /** @returns {Status} */
     status() {
@@ -284,7 +287,7 @@ export function makeLevelPlay(deps) {
      * returns its deal, to start() once the board is back. @param {string} subjectId
      * @param {number} seed @returns {Deal|null} */
     resumable(subjectId, seed) {
-      const p = cloud.session() ? prog : null;
+      const p = progress();
       if (!p || !p.current || p.current.subject !== subjectId || levelSeed(p.seed, p.level) !== seed) return null;
       return { level: p.level, subject: subjectId, seed, difficulty: p.current.difficulty };
     },
@@ -295,22 +298,23 @@ export function makeLevelPlay(deps) {
     /** The account is past `deal`'s level on the run it was dealt from, not on another device's.
      * @param {Deal} deal @returns {boolean} */
     passed(deal) {
-      const p = cloud.session() ? prog : null;
+      const p = progress();
       return !!p && p.level > deal.level && ofRun(p, deal);
     },
 
     /** The level's finds so far, in order, including any another device added. @returns {LevelEvent[]} */
     events: () => (live ? live.events.map(e => ({ ...e })) : []),
 
-    /** Start timing a dealt level, unless the account has moved on from it since it was dealt.
-     * Returns the finds to put back when it resumes one, in order; a saved level whose words are not
-     * all on this board (another device's board size) starts over.
+    /** Start timing a dealt level, unless the session has lapsed or the account has moved on from
+     * it since it was dealt. Returns the finds to put back when it resumes one, in order; a saved
+     * level whose words are not all on this board (another device's board size) starts over.
      * @param {Deal} deal @param {string[]} words the board's words
      * @param {boolean} [paused] the page is hidden: the clock waits for resume() @returns {LevelEvent[]} */
     start(deal, words, paused = false) {
-      if (!prog || deal.level !== prog.level || !ofRun(prog, deal)) { live = null; return []; }
+      const p = progress();
+      if (!p || deal.level !== p.level || !ofRun(p, deal)) { live = null; return []; }
       const set = new Set(words);
-      const c = prog.current;
+      const c = p.current;
       const resume = !!c && c.subject === deal.subject && c.difficulty === deal.difficulty
         && c.events.every(e => set.has(e.word)) && new Set(c.events.map(e => e.word)).size === c.events.length;
       live = { deal, words: set, events: resume && c ? c.events.map(e => ({ ...e })) : [], base: resume && c ? c.elapsedMs : 0, since: paused ? null : clock() };

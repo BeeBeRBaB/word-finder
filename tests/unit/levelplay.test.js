@@ -492,6 +492,8 @@ test('once the session has expired, nothing is sent until the player signs in ag
   assert.equal(cloud.saves.length, sent);
   assert.deepEqual(play.status(), { signedIn: false, username: null, level: 0, points: 0, pending: false, error: null });
   assert.equal(play.resumable(deal.subject, deal.seed), null, 'no level to resume for a player no longer signed in');
+  assert.deepEqual(play.start(deal, WORDS), [], 'nor to start again, as Undo would');
+  assert.equal(play.playing(), null);
 });
 
 test('a level\'s board depends only on its seed, difficulty and board size', () => {

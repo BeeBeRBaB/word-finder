@@ -1,7 +1,7 @@
 # Levels review tools
 
 These are the checks used to build and review `src/scoring.js`, `src/levels.js`, `src/cloud.js`,
-`src/scorecard.js` and `src/levelplay.js`, which are parked on main and not wired in yet (see `docs/handoff.md`).
+`src/scorecard.js` and `src/levelplay.js`, which are live: accounts hold progress made with them (see `docs/handoff.md`).
 They are dev-only: nothing imports them and they add no dependency. Run them from the repo root.
 
 - `mutate.mjs` with `mutants/<set>.json` plants one bug at a time in a temp copy of the repo and runs that module's unit tests. It exits 1 on any MISSED, SKIP (an anchor no longer matches) or HUNG result. Run `node tools/levels-review/mutate.mjs <scorecard|scoring|levels|cloud|levelplay> [name filter]`. On 2026-10-03 it caught all 43 scorecard, 49 scoring, 44 cloud and 48 levelplay mutants, and 89 of the 92 levels mutants. The other 3 are marked equivalent in the JSON.
