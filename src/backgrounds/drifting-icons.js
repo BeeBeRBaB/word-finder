@@ -3,6 +3,7 @@
 // Each icon is rasterised once into a sprite canvas in its own colour.
 
 import { makeRng } from '../rng.js';
+import { frameLoop } from './frame-loop.js';
 import { iconSvg, iconsFor, variantOf, withHero } from './icon-scene.js';
 
 /**
@@ -12,11 +13,7 @@ import { iconSvg, iconsFor, variantOf, withHero } from './icon-scene.js';
  * along is the distance travelled from the entry edge, across the position on the other axis.
  */
 
-/** @type {{name:string, style:'pixel'|'modern', animated:boolean}} */
-export const meta = { name: 'Drifting icons', style: 'modern', animated: true };
-
 const SPRITE = 80;   // largest drawn edge in CSS px
-const FRAME = 1000 / 30;
 const MAX = 30;      // icons made; a small host draws an even spread of them over depth
 
 /**
@@ -48,7 +45,7 @@ export function start(host, opts) {
   const parts = [];
   /** @type {boolean[]} which of parts the host's size has room for */
   let shown = [];
-  let W = 0, H = 0, dpr = 1, raf = 0, last = 0, due = 0, t = 0, dead = false, next = 0;
+  let W = 0, H = 0, dpr = 1, t = 0, dead = false, next = 0;
 
   /** Sprites are drawn at the device pixel ratio of the last resize that changed it.
    * @returns {void} */
@@ -133,38 +130,11 @@ export function start(host, opts) {
     ctx.globalAlpha = 1;
   }
 
-  /** @param {number} now @returns {void} */
-  function frame(now) {
-    raf = requestAnimationFrame(frame);
-    // Exactly 30fps at any refresh rate: frames fall due on a 1/30s grid, as in the other nine.
-    if (now < due - 2) return;
-    due = (now - due > FRAME ? now : due) + FRAME;
-    const dt = last ? Math.min(0.1, (now - last) / 1000) : 0;
-    last = now;
-    step(dt); draw();
-  }
-
-  /** @returns {void} */
-  function play() {
-    if (dead || reduced || raf || document.hidden) return;
-    last = 0; due = 0; raf = requestAnimationFrame(frame);
-  }
-  /** @returns {void} */
-  function pause() { cancelAnimationFrame(raf); raf = 0; }
-  const onVis = () => (document.hidden ? pause() : play());
-
-  const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(resize) : null;
-  if (ro) ro.observe(host); else window.addEventListener('resize', resize);
-  document.addEventListener('visibilitychange', onVis);
   resize();
   if (!reduced) t = rng.random() * 20;
-  play();
-
-  return function stop() {
-    dead = true; pause();
-    if (ro) ro.disconnect(); else window.removeEventListener('resize', resize);
-    document.removeEventListener('visibilitychange', onVis);
-    cv.remove();
-    parts.length = 0;
-  };
+  const stop = frameLoop(host, resize, (ms, first) => {
+    step(first ? 0 : Math.min(0.1, ms / 1000));
+    draw();
+  }, reduced);
+  return () => { dead = true; stop(); cv.remove(); parts.length = 0; };
 }

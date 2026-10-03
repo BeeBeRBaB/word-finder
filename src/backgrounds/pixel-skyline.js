@@ -6,9 +6,6 @@ import { pixelStage } from './pixel-stage.js';
  * @typedef {{near:boolean, s:HTMLCanvasElement, x:number, y:number, v:number}} Cloud
  */
 
-/** @type {{name:string, style:'pixel'|'modern', animated:boolean}} */
-export const meta = { name: 'Pixel Skyline', style: 'pixel', animated: true };
-
 const { ceil, floor, max, min, round } = Math;
 const THEMES = {
   dark: {

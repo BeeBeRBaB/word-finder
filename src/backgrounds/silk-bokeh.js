@@ -1,5 +1,6 @@
 // Silk Bokeh: three ribbons of fine flowing strands that pinch and fan as they wave,
 // with a few soft out-of-focus circles rising slowly past them.
+import { frameLoop } from './frame-loop.js';
 
 /**
  * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean}} BackgroundOptions
@@ -7,10 +8,6 @@
  * @typedef {{img:HTMLCanvasElement, x:number, y:number, r:number, vy:number, sway:number, ph:number, tw:number}} Dot
  */
 
-/** @type {{name:string, style:'pixel'|'modern', animated:boolean}} */
-export const meta = { name: 'Silk Bokeh', style: 'modern', animated: true };
-
-const FRAME = 1000 / 30;
 const TAU = Math.PI * 2;
 const STRANDS = 9;
 const STEP = 14; // CSS px between path points
@@ -102,7 +99,7 @@ export function start(host, opts) {
     });
   }
 
-  let W = 1, H = 1, dpr = 1, n = 0, count = 10, raf = 0, last = 0, due = 0, t = 0;
+  let W = 1, H = 1, dpr = 1, n = 0, count = 10, t = 0;
   /** @type {CanvasGradient[]} */
   let grads = [];
   let ys = new Float32Array(0), top = new Float32Array(0);
@@ -188,43 +185,7 @@ export function start(host, opts) {
     draw();
   }
 
-  /** @param {number} now @returns {void} */
-  function frame(now) {
-    raf = requestAnimationFrame(frame);
-    if (now < due - 2) return;
-    // Exactly 30fps at any refresh rate: each draw books the next 1/30s slot; a pause resyncs.
-    due = (now - due > FRAME ? now : due) + FRAME;
-    const dt = now - last;
-    last = now;
-    t += Math.min(dt, 100);
-    draw();
-  }
-
-  /** @returns {void} */
-  function play() {
-    if (reduced || raf || document.hidden) return;
-    last = performance.now();
-    raf = requestAnimationFrame(frame);
-  }
-  /** @returns {void} */
-  function pause() {
-    cancelAnimationFrame(raf);
-    raf = 0;
-  }
-  const onVis = () => (document.hidden ? pause() : play());
-
-  const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(size) : null;
-  if (ro) ro.observe(host);
-  window.addEventListener('resize', size);
-  document.addEventListener('visibilitychange', onVis);
   size();
-  play();
-
-  return function stop() {
-    pause();
-    if (ro) ro.disconnect();
-    window.removeEventListener('resize', size);
-    document.removeEventListener('visibilitychange', onVis);
-    cv.remove();
-  };
+  const stop = frameLoop(host, size, (ms) => { t += Math.min(ms, 100); draw(); }, reduced);
+  return () => { stop(); cv.remove(); };
 }

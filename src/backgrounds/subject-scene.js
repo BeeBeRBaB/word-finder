@@ -7,9 +7,6 @@ import { iconMarkup, iconsFor, layoutScene, variantOf, withHero } from './icon-s
 
 /** @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject?:string, seed?:number, corner?:boolean}} BackgroundOptions */
 
-/** @type {{name:string, style:'pixel'|'modern', animated:boolean}} */
-export const meta = { name: 'Subject scene', style: 'modern', animated: false };
-
 const NS = 'http://www.w3.org/2000/svg';
 
 /**

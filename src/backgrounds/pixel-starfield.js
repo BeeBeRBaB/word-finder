@@ -6,9 +6,6 @@ import { pixelStage } from './pixel-stage.js';
  * @typedef {{x:number, y:number, l:number, c:string, ph:number, sp:number}} Star
  */
 
-/** @type {{name:string, style:'pixel'|'modern', animated:boolean}} */
-export const meta = { name: 'Pixel Starfield', style: 'pixel', animated: true };
-
 const { floor, max, min, random, round, sin } = Math;
 const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map(v => (v + 0.5) / 16);
 const CROSS = [[-1, 0], [1, 0], [0, -1], [0, 1]];

@@ -1,15 +1,12 @@
 // Aurora Drift: large soft colour blobs on slow Lissajous paths, stretched and turning.
 // Drawn at 1/6 resolution so the browser's upscale does the blurring.
+import { frameLoop } from './frame-loop.js';
 
 /** @typedef {{colors:string[], dark:boolean, reducedMotion:boolean}} BackgroundOptions */
-
-/** @type {{name:string, style:'pixel'|'modern', animated:boolean}} */
-export const meta = { name: 'Aurora Drift', style: 'modern', animated: true };
 
 const DARK = ['#14b8a6', '#8b5cf6', '#ec4899', '#0ea5e9', '#f59e0b', '#6366f1'];
 const LIGHT = ['#5eead4', '#c4b5fd', '#f9a8d4', '#7dd3fc', '#fcd34d', '#a5b4fc'];
 const SCALE = 6; // CSS px per canvas px
-const FRAME = 1000 / 30;
 const SPEED = 0.0001; // radians per ms at frequency 1 (~60s loop)
 const TAU = Math.PI * 2;
 
@@ -84,7 +81,7 @@ export function start(host, opts = {}) {
     alpha: dark ? span(0.38, 0.52) : span(0.45, 0.6),
   }));
 
-  let w = 1, h = 1, raf = 0, last = 0, due = 0, t = span(0, 60000);
+  let w = 1, h = 1, t = span(0, 60000);
 
   /** @returns {void} */
   function draw() {
@@ -118,44 +115,8 @@ export function start(host, opts = {}) {
     }
   }
 
-  /** @param {number} now @returns {void} */
-  function frame(now) {
-    raf = requestAnimationFrame(frame);
-    if (now < due - 2) return;
-    // Exactly 30fps at any refresh rate: each draw books the next 1/30s slot; a pause resyncs.
-    due = (now - due > FRAME ? now : due) + FRAME;
-    const dt = now - last;
-    last = now;
-    t += Math.min(dt, 100);
-    draw();
-  }
-
-  /** @returns {void} */
-  function play() {
-    if (reduced || raf || document.hidden) return;
-    last = performance.now();
-    raf = requestAnimationFrame(frame);
-  }
-  /** @returns {void} */
-  function pause() {
-    cancelAnimationFrame(raf);
-    raf = 0;
-  }
-  const onVis = () => (document.hidden ? pause() : play());
-
-  const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(size) : null;
-  if (ro) ro.observe(host);
-  window.addEventListener('resize', size);
-  document.addEventListener('visibilitychange', onVis);
   size();
   draw();
-  play();
-
-  return function stop() {
-    pause();
-    if (ro) ro.disconnect();
-    window.removeEventListener('resize', size);
-    document.removeEventListener('visibilitychange', onVis);
-    cv.remove();
-  };
+  const stop = frameLoop(host, size, (ms) => { t += Math.min(ms, 100); draw(); }, reduced);
+  return () => { stop(); cv.remove(); };
 }

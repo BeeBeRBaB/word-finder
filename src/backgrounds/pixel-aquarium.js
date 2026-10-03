@@ -6,9 +6,6 @@ import { pixelStage } from './pixel-stage.js';
  * @typedef {{x:number, y:number, v:number, s:boolean, p:number}} Bubble
  */
 
-/** @type {{name:string, style:'pixel'|'modern', animated:boolean}} */
-export const meta = { name: 'Pixel Aquarium', style: 'pixel', animated: true };
-
 const { ceil, floor, max, min, round, sin } = Math;
 // a body, b stripe, t fins, e eye; facing right
 const FISH = [
