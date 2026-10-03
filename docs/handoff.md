@@ -51,7 +51,7 @@ current default marked), and don't build on an assumption.
 
 The result is cached only if the script finishes in about 5 minutes. A thread whose setup failed resumes without re-running it, so its browsers can be missing: `npx playwright install --with-deps chromium webkit` fetches them in about 30 seconds.
 
-Each thread, before testing:
+Each cloud thread needs two things before testing, and the `SessionStart` hook [.claude/hooks/cloud-session.sh](../.claude/hooks/cloud-session.sh) does both, printing a line only if one failed:
 - `npm ci`: the edit hook runs `tsc`.
 - Trust the session's proxy CA in Chromium, which reads its own NSS store rather than the system one: `certutil -A -d sql:$HOME/.local/share/pki/nssdb -n agent-proxy-ca -t C,, -i $HOME/.ccr/agent-proxy-ca.crt` (`apt-get install -y libnss3-tools` first if `certutil` is missing). Without it `npm run test:live` fails with `ERR_CERT_AUTHORITY_INVALID`, and e2e pages fall back from Google Fonts to system fonts, so layout tests measure the wrong text.
 
