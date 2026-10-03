@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { findWordInGrid, findAndDrag, dragCells, blockServiceWorker } from './helpers.js';
+import { findWordInGrid, findAndDrag, dragCells, blockServiceWorker, openBoard } from './helpers.js';
 import { CATEGORIES } from '../../src/catalog.js';
 import { buildPuzzle } from '../../src/puzzle.js';
 import { makeRng } from '../../src/rng.js';
@@ -7,7 +7,7 @@ import { PRESETS } from '../../src/layout.js';
 import { WORDS as NATURE } from '../../src/subjects/nature.js';
 
 test('the win overlay can be dismissed, leaving the solved board', async ({ page }) => {
-  await page.goto('/?seed=1&subject=nature/birds');
+  await openBoard(page, '/?seed=1&subject=nature/birds');
   for (const el of await page.locator('.w').all()) {
     const w = /** @type {string} */ (await el.textContent()).toUpperCase();
     await dragCells(page, await findWordInGrid(page, w));
@@ -28,6 +28,7 @@ test('the win overlay can be dismissed, leaving the solved board', async ({ page
 // fetched before the route is even relevant, and boot()'s own subject resolution
 // never touches Math.random() (it draws from the seeded rng instead).
 
+// The solved board stays, so its header does too: the toast says what happened, as New game's does.
 test('a failed deal from the win card tells the player, rather than leaving a stale overlay', async ({ page }) => {
   const target = CATEGORIES[CATEGORIES.length - 1].id;
   await blockServiceWorker(page);
@@ -38,7 +39,7 @@ test('a failed deal from the win card tells the player, rather than leaving a st
   }, CATEGORIES.length);
   await page.route(`**/src/subjects/${target}.js`, route => route.abort());
 
-  await page.goto('/?seed=1&subject=nature/birds');
+  await openBoard(page, '/?seed=1&subject=nature/birds');
   for (const el of await page.locator('.w').all()) {
     const w = /** @type {string} */ (await el.textContent()).toUpperCase();
     await dragCells(page, await findWordInGrid(page, w));
@@ -48,8 +49,9 @@ test('a failed deal from the win card tells the player, rather than leaving a st
   await page.locator('#winbtn').click();
 
   await expect(page.locator('#win')).toBeHidden();
-  await expect(page.locator('#subject')).toHaveText('Offline');
-  await expect(page.locator('#category')).toHaveText('');
+  await expect(page.locator('#toast-msg')).toHaveText("Couldn't load a new game. Check your connection.");
+  await expect(page.locator('#subject')).toHaveText('Birds');
+  await expect(page.locator('#category')).toHaveText('Nature');
 });
 
 test('progress and puzzle survive a reload', async ({ page }) => {
@@ -72,6 +74,7 @@ test('progress and puzzle survive a reload', async ({ page }) => {
   await dragCells(page, await findWordInGrid(page, first));
   await expect(page.locator('.w.done')).toHaveCount(1);
   await page.reload();
+  await page.locator('.cell').first().waitFor();
   const grid2 = await page.locator('.cell').allTextContents();
   expect(grid2.join('')).toBe(grid1.join(''));   // same grid (seed restored)
   await expect(page.locator('.w.done')).toHaveCount(1);   // still crossed out

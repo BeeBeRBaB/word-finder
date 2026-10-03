@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { makeStorage } from '../../src/storage.js';
+import { makeStorage, safeStore } from '../../src/storage.js';
 import { memStore } from './helpers.js';
 import { buildPuzzle } from '../../src/puzzle.js';
 import { makeRng } from '../../src/rng.js';
@@ -46,6 +46,22 @@ test('default store resolution survives a throwing localStorage getter (Safari p
   }
 });
 
+test('safeStore reads a missing or throwing store as empty, and never throws into the caller', () => {
+  const boom = () => { throw new Error('denied'); };
+  for (const store of [null, { getItem: boom, setItem: boom, removeItem: boom }, { getItem: () => null, setItem: boom }]) {
+    const kv = safeStore(store);
+    assert.equal(kv.get('k'), null);
+    kv.set('k', 'v');
+    kv.remove('k');
+  }
+  const mem = memStore();
+  const kv = safeStore(mem);
+  kv.set('k', 'v');
+  assert.equal(kv.get('k'), 'v');
+  kv.remove('k');
+  assert.equal(mem.getItem('k'), null);
+});
+
 // A save written before deep pools shipped is unreproducible, not merely stale: its
 // board was dealt by taking twelve words from a twelve-word list, and that list no
 // longer exists. Absence of `size` is the whole detection rule, so there is no
@@ -60,6 +76,13 @@ test('a save with a non-numeric size is discarded', () => {
   const store = memStore();
   store.setItem('wordfinder-save-v1', JSON.stringify({ seed: 7, subjectId: 'nature/birds', size: '13', count: 12, found: [] }));
   assert.equal(makeStorage(store).load(), null);
+});
+
+test('a found entry that is not a word is dropped, keeping the rest of the save', () => {
+  const store = memStore();
+  const word = { word: 'BEACH', x0: 0, y0: 0, x1: 4, y1: 0 };
+  store.setItem('wordfinder-save-v1', JSON.stringify({ seed: 7, subjectId: 'nature/birds', size: 10, count: 8, found: [null, 3, word, {}] }));
+  assert.deepEqual(makeStorage(store).load()?.found, [word]);
 });
 
 test('a save missing its subject id is discarded', () => {

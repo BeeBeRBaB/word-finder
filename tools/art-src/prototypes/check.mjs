@@ -2,8 +2,8 @@
 // Behaviour and cost checks for the animated backgrounds in src/backgrounds/, each run
 // full-page in preview.html on its own server. Exits 1 when any module breaks an expectation:
 // it paints, it pauses while the tab is hidden and resumes after, it re-sizes its canvas and
-// still covers the page after a resize, stop() empties the host and ends drawing, and reduced
-// motion draws no frames.
+// still covers the page after a resize, stop() empties the host, ends drawing and lets go of
+// every resize and visibility listener and ResizeObserver, and reduced motion draws no frames.
 //
 // Usage (from the repo root):
 //   node tools/art-src/prototypes/check.mjs                  every animated registry entry
@@ -46,7 +46,8 @@ const server = createServer(async (req, res) => {
 await new Promise((r) => server.listen(0, '127.0.0.1', () => r(undefined)));
 const base = `http://127.0.0.1:${/** @type {any} */ (server.address()).port}/tools/art-src/prototypes/`;
 
-/** Runs in the page before any script: counts rAF frames that drew, times them, fakes visibility. */
+/** Runs in the page before any script: counts rAF frames that drew, times them, fakes visibility,
+ * and lists the resize and visibility listeners and ResizeObservers still held. */
 function instrument(hz) {
   const w = /** @type {any} */ (window);
   if (hz > 0) {
@@ -85,6 +86,23 @@ function instrument(hz) {
   Object.defineProperty(document, 'hidden', { configurable: true, get: () => hidden });
   Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => (hidden ? 'hidden' : 'visible') });
   w.__setHidden = (h) => { hidden = h; document.dispatchEvent(new Event('visibilitychange')); };
+  const held = w.__held = [];
+  const T = EventTarget.prototype, add = T.addEventListener, rm = T.removeEventListener;
+  T.addEventListener = function (type, fn, o) {
+    if (type === 'resize' || type === 'visibilitychange') held.push([this, type, fn]);
+    return add.call(this, type, fn, o);
+  };
+  T.removeEventListener = function (type, fn, o) {
+    const i = held.findIndex((x) => x[0] === this && x[1] === type && x[2] === fn);
+    if (i >= 0) held.splice(i, 1);
+    return rm.call(this, type, fn, o);
+  };
+  const RO = ResizeObserver.prototype, observe = RO.observe, disconnect = RO.disconnect;
+  RO.observe = function (...a) { held.push([this, 'ResizeObserver']); return observe.apply(this, a); };
+  RO.disconnect = function () {
+    for (let i = held.length - 1; i >= 0; i--) if (held[i][0] === this) held.splice(i, 1);
+    return disconnect.call(this);
+  };
 }
 
 /** In the page: the biggest canvas under #bg, its CSS box and cell size, and how many pixels are
@@ -164,9 +182,13 @@ async function run() {
     // A stretched canvas covers without help, so also require a new backing size.
     if (small && first && small.w === first.w && small.h === first.h) bad.push(`backing store still ${small.w}x${small.h} after resize`);
 
-    const kids = await page.evaluate(() => { /** @type {any} */ (window).__stop(); return document.getElementById('bg')?.childElementCount; });
+    const { kids, held } = await page.evaluate(() => {
+      const w = /** @type {any} */ (window);
+      w.__stop();
+      return { kids: document.getElementById('bg')?.childElementCount, held: w.__held.map((x) => x[1]) };
+    });
     const s0 = await drawn(page); await pause(500); const afterStop = (await drawn(page)) - s0;
-    if (kids || afterStop) bad.push(`after stop(): ${kids} children, ${afterStop} draws`);
+    if (kids || afterStop || held.length) bad.push(`after stop(): ${kids} children, ${afterStop} draws, still held: ${held.join(', ') || 'none'}`);
     await page.close();
 
     // Reduced motion: one still picture, no frames.

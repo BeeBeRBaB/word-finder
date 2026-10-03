@@ -3,44 +3,46 @@
 
 /**
  * @typedef {import('./scoring.js').Breakdown} Breakdown
- * @typedef {{reduceMotion?:boolean, countdownMs?:number, nextLabel?:string, footnote?:string,
- *   onNext:() => void, onStay:() => void}} PlayOptions
+ * @typedef {{reduceMotion?:boolean, countdownMs?:number, footnote?:string, onNext:() => void,
+ *   scope?:HTMLElement}} PlayOptions
  *   countdownMs: 0, negative or Infinity means no countdown — the Next button only.
  *   footnote: a quiet line under the total, shown and read out with it.
+ *   scope: the dialog the card sits in, the host by default. Next takes focus once the card is
+ *   done only from inside it, or from nowhere.
  * @typedef {{skip():void, cancel():void, hold():void, rearm():void}} Playback
  *   hold: no countdown from now on, as when the player has opened something over the card.
  *   rearm: Next works once more, with no countdown, after the deal it asked for was dropped.
  * @typedef {{el:HTMLElement, num:HTMLElement, points:number, shown:boolean}} Row
  */
 
-/** Must match the sc-wipe duration in styles.css. */
-export const WIPE_MS = 350;
-// Points count up from part-way into the wipe, so the number is mostly uncovered while it
-// runs; the next line starts GAP_MS after the count ends.
+// Points count up from part-way into a line's wipe (sc-wipe in styles.css), so the number is
+// mostly uncovered while it runs and whole before it settles; the next line starts GAP_MS
+// after the count ends.
 const COUNT_DELAY_MS = 150, COUNT_MS = 300, GAP_MS = 120;
 const STEP_MS = COUNT_DELAY_MS + COUNT_MS + GAP_MS;
 // Late enough that the live region is in the accessibility tree before it changes.
 const ANNOUNCE_MS = 250;
 const DEFAULT_COUNTDOWN_MS = 10000;
+const NEXT = 'Next level';
 const MINUS = '\u2212';
-
-/** @type {WeakMap<Element, Playback>} */
-const running = new WeakMap();
 
 /** @param {unknown} n @returns {number} rounded; anything non-finite is 0 */
 const whole = (n) => (typeof n === 'number' && Number.isFinite(n) ? Math.round(n) : 0);
+
+/** Digits in threes: "4,210". @param {number} n whole and not negative @returns {string} */
+export const grouped = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
 /** Signed and grouped, with a real minus sign: "+1,240", "−60", "0".
  * @param {number} n @returns {string} */
 export function formatPoints(n) {
   const v = whole(n);
-  const digits = String(Math.abs(v)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const digits = grouped(Math.abs(v));
   return v > 0 ? `+${digits}` : v < 0 ? MINUS + digits : digits;
 }
 
-/** @param {Document} doc @param {string} tag @param {string} cls @param {string} [text]
+/** @param {Document} doc @param {string} tag @param {string} [cls] @param {string} [text]
  * @returns {HTMLElement} */
-function make(doc, tag, cls, text) {
+export function make(doc, tag, cls, text) {
   const el = doc.createElement(tag);
   if (cls) el.className = cls;
   if (text) el.textContent = text;
@@ -85,27 +87,25 @@ function makeClock(now) {
   };
 }
 
-/** Render `breakdown` into `host` and play it. A second call on the same host cancels the first.
+/** Render `breakdown` into `host` and play it. Cancel it before replacing it: a host it was
+ * taken out of does not stop it.
  * @param {HTMLElement} host @param {Breakdown} breakdown @param {PlayOptions} opts
  * @returns {Playback} */
 export function playBreakdown(host, breakdown, opts) {
-  running.get(host)?.cancel();
   const doc = host.ownerDocument;
   const win = /** @type {Window} */ (doc.defaultView);
   const clock = makeClock(() => win.performance.now());
   const still = !!opts.reduceMotion;
-  const label = typeof opts.nextLabel === 'string' && opts.nextLabel ? opts.nextLabel : 'Next level';
   const limit = opts.countdownMs === undefined ? DEFAULT_COUNTDOWN_MS : opts.countdownMs;
   const auto = Number.isFinite(limit) && limit > 0;
-  const total = whole(breakdown.total);
-  const footnote = typeof opts.footnote === 'string' ? opts.footnote.trim() : '';
-  const lines = (Array.isArray(breakdown.lines) ? breakdown.lines : []).filter(l => l && typeof l === 'object');
+  const { lines, total } = breakdown;
+  const footnote = opts.footnote?.trim() ?? '';
 
   const root = make(doc, 'div', total < 0 ? 'sc sc-neg' : 'sc');
   if (still) root.classList.add('sc-still');
   const list = make(doc, 'ul', 'sc-list');
   list.setAttribute('role', 'list');   // Safari drops list semantics under list-style:none
-  const rows = lines.map(l => row(doc, 'li', String(l.label ?? ''), String(l.detail ?? ''), whole(l.points)));
+  const rows = lines.map(l => row(doc, 'li', l.label, l.detail, l.points));
   list.append(...rows.map(r => r.el));
   const sum = row(doc, 'div', 'Total', '', total);
   sum.el.classList.add('sc-total');
@@ -120,7 +120,7 @@ export function playBreakdown(host, breakdown, opts) {
   const next = make(doc, 'div', 'sc-next');
   next.hidden = true;
   const line = make(doc, 'div', 'sc-line');
-  const count = make(doc, 'span', 'sc-count', `${label} in `);
+  const count = make(doc, 'span', 'sc-count', `${NEXT} in `);
   const secs = make(doc, 'b', 'sc-secs');
   count.append(secs);
   count.setAttribute('aria-hidden', 'true');   // the live region says it once
@@ -131,7 +131,7 @@ export function playBreakdown(host, breakdown, opts) {
   const fill = make(doc, 'i', '');
   bar.append(fill);
   line.hidden = bar.hidden = !auto;
-  const go = button(doc, 'sc-go', `${label} `);
+  const go = button(doc, 'sc-go', `${NEXT} `);
   const arrow = make(doc, 'span', '', '\u2192');
   arrow.setAttribute('aria-hidden', 'true');
   go.append(arrow);
@@ -145,9 +145,6 @@ export function playBreakdown(host, breakdown, opts) {
 
   let alive = true, done = false, ticking = false, announced = false, held = false, nexted = false;
   let raf = 0, timer = 0, speak = 0;
-  /** @type {Playback} */
-  const api = { skip, cancel: stop, hold, rearm };
-  running.set(host, api);
 
   /** @param {Row} r @param {number} v */
   function show(r, v) {
@@ -180,7 +177,7 @@ export function playBreakdown(host, breakdown, opts) {
     const msg = `Total ${formatPoints(total)} points.` + (after ? ` ${after}` : '');
     speak = win.setTimeout(() => {
       live.textContent = msg;
-      if (auto && !held) { tail.textContent = ` ${label} in ${Math.ceil(limit / 1000)} seconds.`; live.append(tail); }
+      if (auto && !held) { tail.textContent = ` ${NEXT} in ${Math.ceil(limit / 1000)} seconds.`; live.append(tail); }
     }, ANNOUNCE_MS);
   }
 
@@ -193,15 +190,17 @@ export function playBreakdown(host, breakdown, opts) {
     announce();
     skipBtn.hidden = true;
     next.hidden = false;
+    // The reveal is over, and a hidden page holds the countdown (main.js), never pauses it.
+    doc.removeEventListener('visibilitychange', onVisibility);
     if (auto && !held) {
       ticking = true;
       secs.textContent = String(Math.ceil(limit / 1000));
-      clock.reset(!doc.hidden);
-      if (!doc.hidden) run();
+      clock.reset(true);
+      run();
     }
     // Only from inside the card or from nowhere: never out of a field the player is using.
     const a = doc.activeElement;
-    if (!a || a === doc.body || (host.closest('#wincard') ?? host).contains(a)) go.focus({ preventScroll: true });
+    if (!a || a === doc.body || (opts.scope ?? host).contains(a)) go.focus({ preventScroll: true });
   }
 
   function run() {
@@ -209,7 +208,8 @@ export function playBreakdown(host, breakdown, opts) {
     if (!still) grow();
   }
 
-  // Wakes on each whole second left, from active time, so a throttled timer cannot drift.
+  // Wakes on each whole second left, read off the clock rather than counted, so a throttled
+  // timer cannot drift.
   function tick() {
     const left = limit - clock.elapsed();
     if (left <= 0) { advance(); return; }
@@ -254,7 +254,6 @@ export function playBreakdown(host, breakdown, opts) {
     quiet();
     line.hidden = bar.hidden = true;
     go.focus({ preventScroll: true });   // Stay is gone; keep focus in the card
-    opts.onStay();
   }
 
   // Only a finished card that Next itself stopped: cancel() is final.
@@ -265,7 +264,6 @@ export function playBreakdown(host, breakdown, opts) {
     line.hidden = bar.hidden = true;
     tail.textContent = '';
     nexted = false;
-    running.set(host, api);
   }
 
   function stop() {
@@ -273,16 +271,14 @@ export function playBreakdown(host, breakdown, opts) {
     quiet();
     win.clearTimeout(speak);
     doc.removeEventListener('visibilitychange', onVisibility);
-    if (running.get(host) === api) running.delete(host);
   }
 
-  // Pauses the reveal and the countdown alike, and picks both up where they stopped.
+  // Pauses the reveal, and picks it up where it stopped.
   function onVisibility() {
     quiet();
     if (doc.hidden) { clock.pause(); return; }
     clock.resume();
-    if (!done) raf = win.requestAnimationFrame(frame);
-    else if (ticking) run();
+    raf = win.requestAnimationFrame(frame);
   }
 
   doc.addEventListener('visibilitychange', onVisibility);
@@ -297,5 +293,5 @@ export function playBreakdown(host, breakdown, opts) {
     clock.reset(!doc.hidden);
     if (!doc.hidden) raf = win.requestAnimationFrame(frame);
   }
-  return api;
+  return { skip, cancel: stop, hold, rearm };
 }

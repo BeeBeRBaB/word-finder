@@ -28,11 +28,11 @@ const axisOf = (d) => d >> 1;
  * word running along the same line: `halo[axis]` marks every cell within one step of those.
  * Only when nothing fits anywhere under that rule is it dropped, so a word is never lost.
  * @param {(string|null)[][]} g @param {string} w @param {number} size @param {number[]} used
- * @param {Rng} rng @param {Uint8Array[]} halo @param {number[]} allowed
+ * @param {Rng} rng @param {Uint8Array[]} halo
  * @returns {{x0:number, y0:number, d:number}|null}
  */
-function choosePlacement(g, w, size, used, rng, halo, allowed) {
-  return placeIn(g, w, size, used, rng, halo, allowed, true) ?? placeIn(g, w, size, used, rng, halo, allowed, false);
+function choosePlacement(g, w, size, used, rng, halo) {
+  return placeIn(g, w, size, used, rng, halo, true) ?? placeIn(g, w, size, used, rng, halo, false);
 }
 
 /**
@@ -42,11 +42,14 @@ function choosePlacement(g, w, size, used, rng, halo, allowed) {
  * rule too, but first trades that word for a spare of the same length. 'relaxed' is only
  * reached by a pool outside the content contract: a word may touch a parallel one, and one
  * with no spot at all is swapped, never dropped — dropping made boards one word short.
- * @param {string[]} words @param {string[]} spare @param {number} size @param {Rng} rng
- * @param {'strict'|'swap'|'relaxed'} mode @param {string} name @param {number[]} allowed
+ * A swap stays made for the layouts that follow, and 'swap' gives up after half the swaps
+ * 'relaxed' may make. Both are how the first build with levels dealt, and a level has to deal
+ * the same board on every build: either changed re-deals some seeds (tests/unit/puzzle.test.js).
+ * @param {string[]} words swapped in place @param {string[]} spare likewise
+ * @param {number} size @param {Rng} rng @param {'strict'|'swap'|'relaxed'} mode @param {string} name
  * @returns {Laid|null}
  */
-function lay(words, spare, size, rng, mode, name, allowed) {
+function lay(words, spare, size, rng, mode, name) {
   const strict = mode !== 'relaxed';
   /** @type {(string|null)[][]} */
   const g = Array.from({ length: size }, () => new Array(size).fill(null));
@@ -58,13 +61,13 @@ function lay(words, spare, size, rng, mode, name, allowed) {
   const used = DIRS.map(() => 0);
   const halo = [0, 1, 2, 3].map(() => new Uint8Array(size * size));
   // The even share per direction, the same rule at every board size: 1 for 8 words, 2 for 12.
-  const share = Math.ceil(words.length / allowed.length);
+  const share = Math.ceil(words.length / DIRS.length);
   for (let i = 0; i < words.length; i++) {
     for (;;) {
       const w = words[i];
       const spot = strict
-        ? placeIn(g, w, size, used, rng, halo, allowed, true, share, words.length - i - 1)
-        : choosePlacement(g, w, size, used, rng, halo, allowed);
+        ? placeIn(g, w, size, used, rng, halo, true, share, words.length - i - 1)
+        : choosePlacement(g, w, size, used, rng, halo);
       if (spot) {
         const [dx, dy] = DIRS[spot.d], ring = halo[axisOf(spot.d)];
         for (let j = 0; j < w.length; j++) {
@@ -80,8 +83,8 @@ function lay(words, spare, size, rng, mode, name, allowed) {
       }
       if (mode === 'strict') return null;
       const alt = spare.findIndex(s => s.length === w.length);
-      if (mode === 'swap' && (alt === -1 || ++swaps > MAX_SWAPS)) return null;
-      if (alt === -1 || ++swaps > MAX_SWAPS) {
+      if (alt === -1 || ++swaps > (mode === 'swap' ? MAX_SWAPS / 2 : MAX_SWAPS)) {
+        if (mode === 'swap') return null;
         throw new Error(`could not place ${w} in a ${size}x${size} grid for "${name}"`);
       }
       words[i] = spare.splice(alt, 1)[0];
@@ -91,15 +94,15 @@ function lay(words, spare, size, rng, mode, name, allowed) {
 }
 
 /** @param {(string|null)[][]} g @param {string} w @param {number} size @param {number[]} used
- * @param {Rng} rng @param {Uint8Array[]} halo @param {number[]} allowed @param {boolean} apart
+ * @param {Rng} rng @param {Uint8Array[]} halo @param {boolean} apart
  * @param {number} [share] strict layouts only: no direction past this many words
  * @param {number} [left] strict layouts only: words still to place after this one. A used
  *   direction is allowed only while enough remain to reach every unused one.
  * @returns {{x0:number, y0:number, d:number}|null} */
-function placeIn(g, w, size, used, rng, halo, allowed, apart, share = Infinity, left = Infinity) {
-  const unused = allowed.filter(d => used[d] === 0).length;
+function placeIn(g, w, size, used, rng, halo, apart, share = Infinity, left = Infinity) {
+  const unused = ALL_DIRS.filter(d => used[d] === 0).length;
   // Stable sort after a shuffle: ties keep their shuffled order.
-  const order = rng.shuffle(allowed).sort((a, b) => used[a] - used[b]);
+  const order = rng.shuffle(ALL_DIRS).sort((a, b) => used[a] - used[b]);
   const span = w.length - 1;
   for (const d of order) {
     if (used[d] >= share || (used[d] > 0 && left < unused)) continue;
@@ -196,7 +199,7 @@ export function pickWords(pool, rng, { count, mix, undrawn }) {
   return out;
 }
 
-// Each swap costs a full 400-attempt placement pass, and a board that cannot be filled
+// Each swap re-tries the word against every position, and a board that cannot be filled
 // in eight swaps is a broken subject, not an unlucky seed.
 const MAX_SWAPS = 8;
 
@@ -210,7 +213,6 @@ const MAX_SWAPS = 8;
  * @returns {Puzzle}
  */
 export function buildPuzzle({ name, pool, rng, size, count, mix, undrawn }) {
-  const allowed = ALL_DIRS;
   const fits = pool.filter(w => w.length <= size - 1);
   const chosen = pickWords(fits, rng, { count, mix, undrawn });
   // Longest first: a long word has the fewest legal positions, so placing it into an
@@ -222,9 +224,9 @@ export function buildPuzzle({ name, pool, rng, size, count, mix, undrawn }) {
   // share. Fresh layouts first, then fresh layouts that may trade a stuck word for a spare
   // of the same length; only a pool with no spares (outside the content contract) relaxes.
   let laid = null;
-  for (let t = 0; t < BOARD_TRIES && !laid; t++) laid = lay(words, spare, size, rng, 'strict', name, allowed);
-  for (let t = 0; t < SWAP_TRIES && !laid; t++) laid = lay(words, spare, size, rng, 'swap', name, allowed);
-  const { g, placements } = laid ?? /** @type {Laid} */ (lay(words, spare, size, rng, 'relaxed', name, allowed));
+  for (let t = 0; t < BOARD_TRIES && !laid; t++) laid = lay(words, spare, size, rng, 'strict', name);
+  for (let t = 0; t < SWAP_TRIES && !laid; t++) laid = lay(words, spare, size, rng, 'swap', name);
+  const { g, placements } = laid ?? /** @type {Laid} */ (lay(words, spare, size, rng, 'relaxed', name));
 
   /** @type {string[]} */
   const cells = [];
@@ -251,8 +253,8 @@ export function snap(sx, sy, fx, fy, size) {
   return { x1: sx + ux * L, y1: sy + uy * L };
 }
 
-/** Flat `cells` indices under a selection. Shared so reading letters and colouring
- * found ones cannot walk a selection differently.
+/** Flat `cells` indices under a selection, start to end inclusive: the cells a found
+ * word colours.
  * @param {number} size @param {Selection} sel @returns {number[]} */
 export function lineIndices(size, sel) {
   const dx = Math.sign(sel.x1 - sel.x0), dy = Math.sign(sel.y1 - sel.y0);
@@ -261,12 +263,6 @@ export function lineIndices(size, sel) {
   const out = [];
   for (let i = 0; i < len; i++) out.push((sel.y0 + dy * i) * size + (sel.x0 + dx * i));
   return out;
-}
-
-/** Read the letters under a selection, start to end inclusive.
- * @param {string[]} cells @param {number} size @param {Selection} sel @returns {string} */
-export function readLine(cells, size, sel) {
-  return lineIndices(size, sel).map(i => cells[i]).join('');
 }
 
 /** A cell run's identity: its two endpoints, unordered. Two points determine exactly one
@@ -291,10 +287,14 @@ export function runKey(size, sel) {
 export function matchWord(placements, found, size, sel) {
   const want = runKey(size, sel);
   for (const p of placements) {
-    if (found[p.word]) continue;
-    const last = p.word.length - 1;
-    const run = runKey(size, { x0: p.x0, y0: p.y0, x1: p.x0 + p.dx * last, y1: p.y0 + p.dy * last });
-    if (run === want) return p.word;
+    if (!found[p.word] && runKey(size, spanOf(p)) === want) return p.word;
   }
   return null;
+}
+
+/** The selection a placement fills, first letter to last.
+ * @param {Placement} p @returns {Selection} */
+export function spanOf(p) {
+  const last = p.word.length - 1;
+  return { x0: p.x0, y0: p.y0, x1: p.x0 + p.dx * last, y1: p.y0 + p.dy * last };
 }

@@ -3,18 +3,24 @@
  * @typedef {import('../../src/puzzle.js').Selection} Selection
  */
 
+/** Waits for the board: the deal lands after `load`, so a navigation alone does not mean one.
+ * @param {Page} page @returns {Promise<void>} */
+const dealt = (page) => page.locator('.cell').first().waitFor();
+
 /** Grid origin, cell size and board size, read from the live DOM. The board is 13x13
  * or 10x10 depending on the device, so nothing here may assume a size — `.cell` count
  * is the source of truth, and it is a perfect square by construction.
  * @param {Page} page @returns {Promise<{left:number, top:number, cell:number, pad:number, n:number}>} */
 async function gridGeometry(page) {
+  await dealt(page);
   return page.evaluate(() => {
     const gb = document.getElementById('gridbox');
     if (!gb) throw new Error('missing #gridbox');
     const n = Math.round(Math.sqrt(document.querySelectorAll('.cell').length));
     if (!n) throw new Error('grid has not rendered yet');
+    // Inside the board's border, where the cells are placed from.
     const r = gb.getBoundingClientRect();
-    return { left: r.left, top: r.top, cell: (gb.offsetWidth - 20) / n, pad: 10, n };
+    return { left: r.left + gb.clientLeft, top: r.top + gb.clientTop, cell: (gb.clientWidth - 20) / n, pad: 10, n };
   });
 }
 
@@ -31,6 +37,7 @@ async function gridGeometry(page) {
  * @returns {Promise<{word:string, x0:number, y0:number, x1:number, y1:number}[]>}
  */
 export async function findRunsInGrid(page, word) {
+  await dealt(page);
   const runs = await page.evaluate((target) => {
     const letters = [...document.querySelectorAll('.cell')].map(e => e.textContent);
     const N = Math.round(Math.sqrt(letters.length));
@@ -77,13 +84,13 @@ export async function findWordInGrid(page, word) {
  *
  * A word can read at several runs but is placed at exactly one, so a single drag at the
  * first match is a coin flip on any board where the word's letters recur.
- * @param {Page} page @param {string} word
+ * @param {Page} page @param {string} word @param {typeof dragCells} [drag] how to drag a run
  * @returns {Promise<{word:string, x0:number, y0:number, x1:number, y1:number}>}
  */
-export async function findAndDrag(page, word) {
+export async function findAndDrag(page, word, drag = dragCells) {
   const runs = await findRunsInGrid(page, word);
   for (const run of runs) {
-    await dragCells(page, run);
+    await drag(page, run);
     const done = await page.locator('.w.done, .w.glow').allTextContents();
     if (done.some(t => t.trim().toUpperCase() === word.toUpperCase())) return run;
   }
@@ -95,6 +102,7 @@ export async function findAndDrag(page, word) {
  * @returns {Promise<{word:string, x0:number, y0:number, x1:number, y1:number}>}
  */
 export async function findDiagonalWord(page) {
+  await dealt(page);
   const all = await page.locator('.w').allTextContents();
   for (const w of all) {
     // Every run, not just the first: the first match can be a straight ghost of a word
@@ -106,20 +114,54 @@ export async function findDiagonalWord(page) {
   throw new Error('no diagonally placed word in this puzzle');
 }
 
+/** The page coordinates of a cell's centre.
+ * @param {Page} page @param {number} x @param {number} y @returns {Promise<{x:number, y:number}>} */
+export async function cellCentre(page, x, y) {
+  const g = await gridGeometry(page);
+  return { x: g.left + g.pad + (x + 0.5) * g.cell, y: g.top + g.pad + (y + 0.5) * g.cell };
+}
+
 /** Drag across a selection using real pointer events, with intermediate steps.
  * @param {Page} page @param {Selection} sel @returns {Promise<void>} */
 export async function dragCells(page, sel) {
-  const g = await gridGeometry(page);
-  /** @param {number} x @param {number} y @returns {{x:number, y:number}} */
-  const pt = (x, y) => ({
-    x: g.left + g.pad + (x + 0.5) * g.cell,
-    y: g.top + g.pad + (y + 0.5) * g.cell,
-  });
-  const a = pt(sel.x0, sel.y0), b = pt(sel.x1, sel.y1);
+  const a = await cellCentre(page, sel.x0, sel.y0), b = await cellCentre(page, sel.x1, sel.y1);
   await page.mouse.move(a.x, a.y);
   await page.mouse.down();
   await page.mouse.move(b.x, b.y, { steps: 12 });
   await page.mouse.up();
+}
+
+/** dragCells with a finger: touch input through Chromium's DevTools protocol, which the page
+ * receives as touch pointers. page.mouse stays a mouse, hasTouch or not.
+ * @param {Page} page @param {Selection} sel @returns {Promise<void>} */
+export async function touchDrag(page, sel) {
+  const a = await cellCentre(page, sel.x0, sel.y0), b = await cellCentre(page, sel.x1, sel.y1);
+  const cdp = await page.context().newCDPSession(page);
+  /** @param {number} f @returns {{x:number, y:number}[]} */
+  const at = (f) => [{ x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f }];
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: at(0) });
+  for (let i = 1; i <= 12; i++) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: at(i / 12) });
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await cdp.detach();
+}
+
+/** Open a page and wait for its board. The deal lands after `load`, from a lazily imported
+ * word pool, so a read straight after goto() can find no cells at all — and two empty
+ * boards compare equal.
+ * @param {Page} page @param {string} url @returns {Promise<void>} */
+export async function openBoard(page, url) {
+  await page.goto(url);
+  await dealt(page);
+}
+
+/** Move the page's clock `ms` ahead at once, firing every timer due in that time, then give
+ * whatever they started (a deal's module load, a repaint) real time to land. For checks that
+ * nothing happens before a deadline. Needs page.clock.install() before the page loads;
+ * until this is called, time runs as normal.
+ * @param {Page} page @param {number} ms @returns {Promise<void>} */
+export async function skipAhead(page, ms) {
+  await page.clock.fastForward(ms);
+  await page.waitForTimeout(500);
 }
 
 /** Remove service-worker registration before any page script runs.

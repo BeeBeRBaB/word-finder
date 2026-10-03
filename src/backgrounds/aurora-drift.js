@@ -1,28 +1,15 @@
 // Aurora Drift: large soft colour blobs on slow Lissajous paths, stretched and turning.
 // Drawn at 1/6 resolution so the browser's upscale does the blurring.
+import { makeRng } from '../rng.js';
+import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
 
 /** @typedef {{colors:string[], dark:boolean, reducedMotion:boolean}} BackgroundOptions */
-
-/** @type {{name:string, style:'pixel'|'modern', animated:boolean}} */
-export const meta = { name: 'Aurora Drift', style: 'modern', animated: true };
 
 const DARK = ['#14b8a6', '#8b5cf6', '#ec4899', '#0ea5e9', '#f59e0b', '#6366f1'];
 const LIGHT = ['#5eead4', '#c4b5fd', '#f9a8d4', '#7dd3fc', '#fcd34d', '#a5b4fc'];
 const SCALE = 6; // CSS px per canvas px
-const FRAME = 1000 / 30;
 const SPEED = 0.0001; // radians per ms at frequency 1 (~60s loop)
 const TAU = Math.PI * 2;
-
-/** Seeded [0, 1) generator, so the blob layout is the same every visit.
- * @param {number} seed @returns {() => number} */
-function rng(seed) {
-  return () => {
-    seed = (seed + 0x6d2b79f5) | 0;
-    let x = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
-    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 /** @param {string} hex '#rrggbb' @returns {string} 'r,g,b' */
 function rgb(hex) {
@@ -52,24 +39,14 @@ function sprite(hex) {
 export function start(host, opts = {}) {
   const dark = opts.dark !== false;
   const reduced = !!opts.reducedMotion;
-  const rand = rng(20240926);
+  // Seeded, so the layout is the same every visit.
+  const rand = makeRng(20240926).random;
   /** @param {number} a @param {number} b @returns {number} */
   const span = (a, b) => a + (b - a) * rand();
 
-  const cv = document.createElement('canvas');
-  cv.setAttribute('aria-hidden', 'true');
-  const st = cv.style;
-  st.position = 'absolute';
-  st.inset = '0';
-  st.width = '100%';
-  st.height = '100%';
-  st.display = 'block';
-  st.pointerEvents = 'none';
-  host.appendChild(cv);
-  const c2d = cv.getContext('2d');
-  if (!c2d) return () => cv.remove();
-  // Aliased: narrowing does not reach the hoisted functions below.
-  const ctx = c2d;
+  const layer = hostCanvas(host);
+  if (!layer) return () => {};
+  const { cv, ctx } = layer;
 
   const blobs = (dark ? DARK : LIGHT).map((c, i) => ({
     img: sprite(c),
@@ -84,7 +61,7 @@ export function start(host, opts = {}) {
     alpha: dark ? span(0.38, 0.52) : span(0.45, 0.6),
   }));
 
-  let w = 1, h = 1, raf = 0, last = 0, due = 0, t = span(0, 60000);
+  let w = 1, h = 1, t = span(0, 60000);
 
   /** @returns {void} */
   function draw() {
@@ -109,7 +86,7 @@ export function start(host, opts = {}) {
 
   /** @returns {void} */
   function size() {
-    const W = host.clientWidth || window.innerWidth, H = host.clientHeight || window.innerHeight;
+    const [W, H] = hostSize(host);
     const nw = Math.max(1, Math.ceil(W / SCALE)), nh = Math.max(1, Math.ceil(H / SCALE));
     if (nw !== w || nh !== h || cv.width !== nw) {
       w = cv.width = nw;
@@ -118,44 +95,7 @@ export function start(host, opts = {}) {
     }
   }
 
-  /** @param {number} now @returns {void} */
-  function frame(now) {
-    raf = requestAnimationFrame(frame);
-    if (now < due - 2) return;
-    // Exactly 30fps at any refresh rate: each draw books the next 1/30s slot; a pause resyncs.
-    due = (now - due > FRAME ? now : due) + FRAME;
-    const dt = now - last;
-    last = now;
-    t += Math.min(dt, 100);
-    draw();
-  }
-
-  /** @returns {void} */
-  function play() {
-    if (reduced || raf || document.hidden) return;
-    last = performance.now();
-    raf = requestAnimationFrame(frame);
-  }
-  /** @returns {void} */
-  function pause() {
-    cancelAnimationFrame(raf);
-    raf = 0;
-  }
-  const onVis = () => (document.hidden ? pause() : play());
-
-  const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(size) : null;
-  if (ro) ro.observe(host);
-  window.addEventListener('resize', size);
-  document.addEventListener('visibilitychange', onVis);
-  size();
-  draw();
-  play();
-
-  return function stop() {
-    pause();
-    if (ro) ro.disconnect();
-    window.removeEventListener('resize', size);
-    document.removeEventListener('visibilitychange', onVis);
-    cv.remove();
-  };
+  size();   // which paints the first frame
+  const stop = frameLoop(host, size, (dt) => { t += dt * 1000; draw(); }, reduced);
+  return () => { stop(); cv.remove(); };
 }

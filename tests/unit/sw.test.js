@@ -13,7 +13,7 @@ function assets() {
   return JSON.parse(m[1].replace(/'/g, '"'));
 }
 
-// GitHub Pages serves code with `cache-control: max-age=600` (see sw.js:21-26, where
+// GitHub Pages serves code with `cache-control: max-age=600` (see sw.js, where
 // `revalidate()` already documents and works around this for the fetch handler). A
 // plain fetch -- which is exactly what `caches.open(CACHE).then(c=>c.addAll(ASSETS))`
 // issues -- can be answered straight from the browser's own HTTP cache, so a bare
@@ -82,38 +82,79 @@ test('every src module is precached and every precached path exists', () => {
 // The cost of getting this wrong is invisible until a deploy: the shell sweep would
 // delete every downloaded category, so a one-line CSS fix would cost every player a
 // full re-download and would strand an offline one with nothing to play.
-test('word pools live in their own cache, which the activate sweep spares', () => {
+test('activate sweeps only older builds: word pools and other sites\' caches stay', async () => {
   assert.match(sw, /const SUBJECT_CACHE='wordfinder-subjects'/, 'subjects need an unversioned cache');
-  const line = sw.split('\n').find((l) => l.includes("addEventListener('activate'"));
-  assert.ok(line, 'could not find the activate handler in sw.js');
-  assert.ok(
-    line.includes('k!==SUBJECT_CACHE'),
-    'the activate sweep deletes every cache that is not CACHE; it must spare SUBJECT_CACHE',
-  );
+  const cache = /const CACHE='([^']+)'/.exec(sw)?.[1] ?? '';
+  /** @type {string[]} */
+  const deleted = [];
+  const caches = { keys: async () => [cache, 'wordfinder-subjects', 'wordfinder-v1', 'otherproj-v1'],
+    delete: async (/** @type {string} */ k) => { deleted.push(k); return true; } };
+  /** @type {Record<string, (e: object) => void>} */
+  const on = {};
+  const self = { clients: { claim: async () => {} }, location: new URL('https://beeberbab.github.io/word-finder/sw.js'),
+    addEventListener: (/** @type {string} */ t, /** @type {(e: object) => void} */ f) => { on[t] = f; } };
+  vm.runInNewContext(sw, { self, caches, URL });
+  /** @type {Promise<unknown>|undefined} */
+  let done;
+  on.activate({ waitUntil: (/** @type {Promise<unknown>} */ p) => { done = p; } });
+  await done;
+  // user.github.io is one origin for every Pages site the account hosts.
+  assert.deepEqual(deleted, ['wordfinder-v1']);
 });
 
-test('a subject module is routed to the subject cache, cache-first', () => {
-  assert.match(sw, /isSubject/, 'the fetch handler needs to recognise a word pool');
+// A pool changes whenever a subject is added to it, so it takes the code path, which
+// revalidates; only the cache it is kept in differs.
+test('a subject module is kept in the subject cache, on the same path as code', () => {
+  /** @type {string[]} */
+  const opened = [];
+  const handler = swFetchHandler({ open: (name) => opened.push(name) });
+  answers(handler, 'https://beeberbab.github.io/word-finder/src/subjects/animals.js?retry=1');
+  answers(handler, 'https://beeberbab.github.io/word-finder/src/main.js');
+  assert.deepEqual(opened, ['wordfinder-subjects', /const CACHE='([^']+)'/.exec(sw)?.[1]]);
 });
 
 // Matching with ignoreSearch while storing under the full URL let a ?subject= visit pin an
 // index.html that later refreshes never replaced; a coupled deploy then broke every launch.
-test('same-origin code is read and refreshed under one path-only key', () => {
+// subjects.js's `?retry=N` loads are the same file too, and must land on the one entry.
+test('same-origin code is read and refreshed under one path-only key', async () => {
   assert.ok(!/ignoreSearch\s*:/.test(sw), 'a search-blind match reads entries that refreshes never write');
-  assert.match(sw, /const key=url\.origin===sw\.location\.origin\?url\.origin\+url\.pathname:req;/);
-  assert.match(sw, /cache\.match\(key\)/);
-  assert.match(sw, /cache\.put\(key,res\.clone\(\)\)/);
+  /** @param {unknown} k @returns {string} */
+  const keyOf = (k) => (typeof k === 'string' ? k : /** @type {Request} */ (k).url);
+  /** @type {string[]} */
+  const read = [], wrote = [];
+  const cache = {
+    match: async (/** @type {unknown} */ k) => { read.push(keyOf(k)); },
+    put: async (/** @type {unknown} */ k) => { wrote.push(keyOf(k)); },
+  };
+  const handler = swFetchHandler({ cache, fetch: async () => new Response('ok') });
+  const base = 'https://beeberbab.github.io/word-finder/';
+  for (const url of [`${base}index.html?subject=nature/birds`, `${base}src/subjects/nature.js?retry=2`]) {
+    /** @type {Promise<unknown>|undefined} */
+    let answer;
+    handler({ request: new Request(url), respondWith(/** @type {Promise<unknown>} */ p) { answer = p; }, waitUntil() {} });
+    await answer;
+  }
+  const keys = [`${base}index.html`, `${base}src/subjects/nature.js`];
+  assert.deepEqual(read, keys, 'looked up under the full URL');
+  assert.deepEqual(wrote, keys, 'stored under the full URL');
 });
 
-/** Runs sw.js against stub globals and returns the fetch listener. @returns {(e: object) => void} */
-function swFetchHandler() {
+/** Runs sw.js against stub globals and returns the fetch listener. By default every cache
+ * and fetch stays pending, which is enough to see what the handler answers and opens.
+ * @param {{open?: (name: string) => void, cache?: object, fetch?: () => Promise<Response>}} [stubs]
+ *   open: told each cache the handler opens; cache: what every open resolves to
+ * @returns {(e: object) => void} */
+function swFetchHandler({ open = () => {}, cache, fetch = () => new Promise(() => {}) } = {}) {
   /** @type {Record<string, (e: object) => void>} */
   const on = {};
   const self = {
     location: new URL('https://beeberbab.github.io/word-finder/sw.js'),
     addEventListener: (/** @type {string} */ t, /** @type {(e: object) => void} */ f) => { on[t] = f; },
   };
-  vm.runInNewContext(sw, { self, caches: { open: () => new Promise(() => {}) }, fetch: () => new Promise(() => {}), URL, Request, Response });
+  const caches = {
+    open: (/** @type {string} */ n) => { open(n); return cache ? Promise.resolve(cache) : new Promise(() => {}); },
+  };
+  vm.runInNewContext(sw, { self, caches, fetch, URL, Request, Response });
   return on.fetch;
 }
 
@@ -123,6 +164,212 @@ function answers(handler, url) {
   handler({ request: new Request(url), respondWith() { took = true; }, waitUntil() {} });
   return took;
 }
+
+/** @returns {{promise: Promise<void>, resolve: () => void}} */
+function deferred() {
+  /** @type {() => void} */
+  let resolve = () => {};
+  const promise = new Promise((r) => { resolve = () => r(undefined); });
+  return { promise, resolve };
+}
+
+const BASE = 'https://beeberbab.github.io/word-finder/';
+const CACHE = /const CACHE='([^']+)'/.exec(sw)?.[1] ?? '';
+const PAGE = readFileSync(new URL('index.html', ROOT), 'utf8');
+const SHEET = /href="(https:\/\/fonts\.googleapis\.com\/css[^"]+)"/.exec(PAGE)?.[1] ?? '';
+
+/** Runs sw.js's install against an in-memory CacheStorage.
+ * @param {Record<string, Record<string, string>>} caches name -> url -> body, before install
+ * @param {(url: string, opts: {cache?: string, signal?: AbortSignal}) => Promise<Response>} fetch
+ * @param {(op: 'put'|'match', url: string) => boolean} [fails] which cache calls reject, as a put over
+ *   the storage quota does
+ * @returns {{store: Map<string, Map<string, Response>>, installed: Promise<unknown>, budget: () => void}}
+ *   budget runs carryOver's time limit now */
+function install(caches, fetch, fails = () => false) {
+  const store = new Map(Object.entries(caches).map(([n, m]) => [n, new Map(Object.entries(m).map(([u, b]) => [u, new Response(b)]))]));
+  /** @param {unknown} k @returns {string} */
+  const keyOf = (k) => (typeof k === 'string' ? k : /** @type {{url:string}} */ (k).url);
+  const cacheStorage = {
+    keys: async () => [...store.keys()],
+    open: async (/** @type {string} */ name) => {
+      const m = store.get(name) ?? new Map();
+      store.set(name, m);
+      return {
+        keys: async () => [...m.keys()].map(url => ({ url })),
+        match: async (/** @type {unknown} */ k) => {
+          if (fails('match', keyOf(k))) throw new Error('UnknownError');
+          return m.get(keyOf(k))?.clone();
+        },
+        put: async (/** @type {unknown} */ k, /** @type {Response} */ r) => {
+          if (fails('put', keyOf(k))) throw new Error('QuotaExceededError');
+          m.set(keyOf(k), r);
+        },
+        // The page as it is, since the fonts carried are the ones its stylesheet names.
+        addAll: async (/** @type {{url:string}[]} */ reqs) => {
+          for (const r of reqs) m.set(r.url, new Response(r.url === `${BASE}index.html` ? PAGE : 'precached'));
+        },
+      };
+    },
+  };
+  /** @type {Record<string, (e: object) => void>} */
+  const on = {};
+  const self = { location: new URL(`${BASE}sw.js`), skipWaiting: () => {},
+    addEventListener: (/** @type {string} */ t, /** @type {(e: object) => void} */ f) => { on[t] = f; } };
+  const Request = class { constructor(/** @type {string} */ u, /** @type {{cache?:string}} */ o = {}) { this.url = new URL(u, self.location).href; this.cache = o.cache; } };
+  let budget = () => {};
+  vm.runInNewContext(sw, {
+    self, caches: cacheStorage, URL, Request, Response, AbortController,
+    // By URL only: a stored Request comes back from cache.keys() as no-cors, and refetching a font
+    // with it made an opaque copy the page's cors request could not use.
+    fetch: (/** @type {unknown} */ req, /** @type {{cache?:string, signal?:AbortSignal}} */ opts) => {
+      assert.equal(typeof req, 'string', `fetched with a stored request: ${keyOf(req)}`);
+      return fetch(keyOf(req), opts);
+    },
+    setTimeout: (/** @type {() => void} */ f) => { budget = f; return 0; }, clearTimeout: () => {},
+  });
+  /** @type {Promise<unknown>} */
+  let installed = Promise.resolve();
+  on.install({ waitUntil: (/** @type {Promise<unknown>} */ p) => { installed = p; } });
+  return { store, installed, budget: () => budget() };
+}
+
+// A bump used to throw away, with the old cache, everything pages had loaded on demand: the first
+// launch after an update, if offline, came back without its background or its fonts.
+test('install carries on-demand entries into a bumped cache, each fetched again for this build', async () => {
+  const font = 'https://fonts.gstatic.com/s/x.woff2', oldFont = 'https://fonts.gstatic.com/s/old.woff2';
+  /** @type {string[]} */
+  const fetched = [];
+  const { store, installed } = install({
+    'wordfinder-v1': {
+      [`${BASE}src/main.js`]: 'old main',
+      [`${BASE}src/backgrounds/drifting-icons.js`]: 'old drift',
+      [`${BASE}src/backgrounds/gone.js`]: 'old gone',
+      [`${BASE}index.html?subject=nature/birds`]: 'old page',
+      [`${BASE}src/subjects/nature.js`]: 'old pool',
+      // An older build's stylesheet, and a file only it named.
+      'https://fonts.googleapis.com/css2?family=Space+Mono&display=swap': 'old sheet',
+      [oldFont]: 'old font',
+      [font]: 'font',
+      'https://firestore.googleapis.com/v1/doc': 'a document',
+    },
+    'wordfinder-subjects': { [`${BASE}src/subjects/food.js`]: 'pool' },
+    // Another Pages site on the same origin.
+    'otherproj-v1': { 'https://beeberbab.github.io/otherproj/app.js': 'theirs' },
+  }, async (url, opts) => {
+    fetched.push(`${url} ${opts.cache}`);
+    if (url.endsWith('gone.js')) return new Response('', { status: 404 });
+    // This build's drift imports a module the old one never loaded, and one the shell precaches.
+    if (url.endsWith('drifting-icons.js')) return new Response("import { frameLoop } from './frame-loop.js';\nimport { makeRng } from '../rng.js';");
+    if (url === SHEET) return new Response(`@font-face{src:url(${font}) format('woff2')}`);
+    return new Response(`new ${url}`);
+  });
+  await installed;
+  const now = /** @type {Map<string, Response>} */ (store.get(CACHE));
+  assert.match(await now.get(`${BASE}src/backgrounds/drifting-icons.js`)?.text() ?? '', /frame-loop/);
+  assert.equal(await now.get(`${BASE}src/backgrounds/frame-loop.js`)?.text(), `new ${BASE}src/backgrounds/frame-loop.js`,
+    'a module this build newly imports comes too, or the carried background cannot load offline');
+  assert.match(await now.get(SHEET)?.text() ?? '', /@font-face/, "this build's stylesheet comes along");
+  assert.equal(await now.get(font)?.text(), `new ${font}`, 'a font is fetched again, so a bad copy does not outlive the bump');
+  assert.ok(!now.has(oldFont), 'a font this build no longer uses is left behind');
+  assert.equal(await now.get(`${BASE}src/main.js`)?.text(), 'precached', 'what the build precaches is not fetched twice');
+  assert.ok(!now.has(`${BASE}src/backgrounds/gone.js`), 'a file this build no longer has is dropped');
+  assert.ok(!now.has(`${BASE}index.html?subject=nature/birds`), 'kept by path, the key the fetch handler reads');
+  assert.ok(![...now.keys()].some(k => k.includes('/subjects/')), 'word pools live in their own cache');
+  assert.deepEqual(fetched.sort(), [`${BASE}src/backgrounds/drifting-icons.js no-cache`, `${BASE}src/backgrounds/frame-loop.js no-cache`,
+    `${BASE}src/backgrounds/gone.js no-cache`, `${SHEET} no-cache`, `${font} no-cache`].sort(),
+  "only this app's own caches, and of other origins only this build's fonts");
+});
+
+// An install cut short (the browser killed mid-way) leaves what it carried in the new cache. Taking
+// that as done skipped its imports on the retry, and the background could not load offline.
+test('a retried install still follows the imports of what an earlier attempt carried', async () => {
+  const { store, installed } = install({
+    'wordfinder-v1': { [`${BASE}src/backgrounds/drifting-icons.js`]: 'old drift' },
+    [CACHE]: { [`${BASE}src/backgrounds/drifting-icons.js`]: "import { frameLoop } from './frame-loop.js';" },
+  }, async (url) => new Response(url.endsWith('drifting-icons.js') ? "import { frameLoop } from './frame-loop.js';" : 'loop'));
+  await installed;
+  assert.ok(store.get(CACHE)?.has(`${BASE}src/backgrounds/frame-loop.js`));
+});
+
+test('a request that never settles cannot hold the update back', async () => {
+  const { installed, budget } = install({ 'wordfinder-v1': { [`${BASE}src/backgrounds/drifting-icons.js`]: 'old drift' } },
+    (_url, opts) => new Promise((_, fail) => {
+      // As fetch does: one already aborted fails at once.
+      if (opts.signal?.aborted) fail(new Error('aborted'));
+      opts.signal?.addEventListener('abort', () => fail(new Error('aborted')));
+    }));
+  let done = false;
+  void installed.then(() => { done = true; });
+  await new Promise((r) => setImmediate(r));
+  assert.equal(done, false, 'still waiting on the stalled request');
+  budget();
+  await installed;
+});
+
+// A sheet that never answered used to hold the code back until the budget ran out, and then
+// nothing was fetched at all: the first launch offline came back without its background.
+test('a font stylesheet that stalls holds back only the fonts', async () => {
+  const font = 'https://fonts.gstatic.com/s/x.woff2';
+  const { store, installed, budget } = install({
+    'wordfinder-v1': { [`${BASE}src/backgrounds/drifting-icons.js`]: 'old drift', [font]: 'font' },
+  }, (url, opts) => url === SHEET
+    ? new Promise((_, fail) => opts.signal?.addEventListener('abort', () => fail(new Error('aborted'))))
+    : Promise.resolve(new Response(`new ${url}`)));
+  for (let i = 0; i < 20; i++) await new Promise((r) => setImmediate(r));
+  assert.ok(store.get(CACHE)?.has(`${BASE}src/backgrounds/drifting-icons.js`), 'carried while the sheet is still waited on');
+  budget();
+  await installed;
+  assert.ok(!store.get(CACHE)?.has(font), 'a font goes by the sheet, which never came');
+});
+
+/** Whether `installed` waits for `late`, the one request still out, and carries `url` once it is in.
+ * @param {ReturnType<typeof install>} run @param {{resolve: () => void}} late @param {string} url */
+async function waitsFor({ store, installed }, late, url) {
+  let done = false;
+  void installed.then(() => { done = true; });
+  for (let i = 0; i < 20; i++) await new Promise((r) => setImmediate(r));
+  assert.equal(done, false, 'still waiting on the request that is out');
+  late.resolve();
+  await installed;
+  assert.ok(store.get(CACHE)?.has(url));
+}
+
+// A failure that ended the carry early ended its 20s budget too, and the rest of it ran on after
+// install, where the browser may stop it halfway.
+test('one file that cannot be stored does not cut the carry short', async () => {
+  const late = deferred();
+  const silk = `${BASE}src/backgrounds/silk-bokeh.js`;
+  await waitsFor(install({ 'wordfinder-v1': { [`${BASE}src/backgrounds/aurora-drift.js`]: 'old', [silk]: 'old' } },
+    async (url) => { if (url === silk) await late.promise; return new Response(`new ${url}`); },
+    (op, url) => op === 'put' && url.endsWith('aurora-drift.js')), late, silk);
+});
+
+test('nor does one import that cannot be stored while another is on the way', async () => {
+  const late = deferred();
+  const b = `${BASE}src/backgrounds/b.js`;
+  await waitsFor(install({ 'wordfinder-v1': { [`${BASE}src/backgrounds/drifting-icons.js`]: 'old' } }, async (url) => {
+    if (url.endsWith('drifting-icons.js')) return new Response("import './a.js';\nimport './b.js';");
+    if (url === b) await late.promise;
+    return new Response('');
+  }, (op, url) => op === 'put' && url.endsWith('/a.js')), late, b);
+});
+
+test('nor does a font stylesheet that cannot be read back', async () => {
+  const late = deferred();
+  const drift = `${BASE}src/backgrounds/drifting-icons.js`;
+  await waitsFor(install({ 'wordfinder-v1': { [drift]: 'old', 'https://fonts.gstatic.com/s/x.woff2': 'font' } },
+    async (url) => { if (url === drift) await late.promise; return new Response(''); },
+    (op, url) => op === 'match' && url.endsWith('index.html')), late, drift);
+});
+
+test('an install with no fonts to carry asks Google Fonts nothing', async () => {
+  /** @type {string[]} */
+  const fetched = [];
+  const { installed } = install({ 'wordfinder-v1': { [`${BASE}src/backgrounds/drifting-icons.js`]: 'old drift' } },
+    async (url) => { fetched.push(url); return new Response(''); });
+  await installed;
+  assert.deepEqual(fetched, [`${BASE}src/backgrounds/drifting-icons.js`]);
+});
 
 // Firestore document URLs have no extension, so cache-first would hand cloud.load() a
 // device's first copy forever, to every account. Only Google Fonts is worth caching.

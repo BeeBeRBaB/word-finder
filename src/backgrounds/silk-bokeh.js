@@ -1,5 +1,7 @@
 // Silk Bokeh: three ribbons of fine flowing strands that pinch and fan as they wave,
 // with a few soft out-of-focus circles rising slowly past them.
+import { makeRng } from '../rng.js';
+import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
 
 /**
  * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean}} BackgroundOptions
@@ -7,10 +9,6 @@
  * @typedef {{img:HTMLCanvasElement, x:number, y:number, r:number, vy:number, sway:number, ph:number, tw:number}} Dot
  */
 
-/** @type {{name:string, style:'pixel'|'modern', animated:boolean}} */
-export const meta = { name: 'Silk Bokeh', style: 'modern', animated: true };
-
-const FRAME = 1000 / 30;
 const TAU = Math.PI * 2;
 const STRANDS = 9;
 const STEP = 14; // CSS px between path points
@@ -35,16 +33,6 @@ const RIBBONS = [
   { y: 0.54, tilt: -0.18, amp: 0.08, len: 0.95, sp: -0.00016, ph: 2.2, twist: 1.3, spread: 0.09 },
   { y: 0.86, tilt: 0.1, amp: 0.05, len: 1.5, sp: 0.00018, ph: 4.1, twist: 0.65, spread: 0.06 },
 ];
-
-/** Seeded, so the dot field is the same every time. @param {number} seed @returns {() => number} */
-function rng(seed) {
-  return () => {
-    seed = (seed + 0x6d2b79f5) | 0;
-    let x = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
-    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 /** @param {string} hex '#rrggbb' @returns {string} 'r,g,b' */
 function rgb(hex) {
@@ -79,15 +67,12 @@ export function start(host, opts) {
   const dark = opts.dark !== false;
   const reduced = !!opts.reducedMotion;
   const P = dark ? PAL.dark : PAL.light;
-  const rand = rng(7331);
+  // Seeded, so the dot field is the same every time.
+  const rand = makeRng(7331).random;
 
-  const cv = document.createElement('canvas');
-  cv.setAttribute('aria-hidden', 'true');
-  cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none';
-  host.appendChild(cv);
-  const c2d = cv.getContext('2d');
-  if (!c2d) return () => cv.remove();
-  const ctx = c2d;
+  const layer = hostCanvas(host);
+  if (!layer) return () => {};
+  const { cv, ctx } = layer;
 
   const sprites = P.dot.map(sprite);
   /** @type {Dot[]} */
@@ -102,7 +87,7 @@ export function start(host, opts) {
     });
   }
 
-  let W = 1, H = 1, dpr = 1, n = 0, count = 10, raf = 0, last = 0, due = 0, t = 0;
+  let W = 1, H = 1, dpr = 1, n = 0, count = 10, t = 0;
   /** @type {CanvasGradient[]} */
   let grads = [];
   let ys = new Float32Array(0), top = new Float32Array(0);
@@ -168,7 +153,7 @@ export function start(host, opts) {
   /** @returns {void} */
   function size() {
     dpr = Math.min(devicePixelRatio || 1, 1.5);
-    const cw = host.clientWidth || innerWidth, ch = host.clientHeight || innerHeight;
+    const [cw, ch] = hostSize(host);
     const nw = Math.max(1, Math.round(cw * dpr)), nh = Math.max(1, Math.round(ch * dpr));
     if (nw === W && nh === H && cv.width === nw) return;
     W = cv.width = nw;
@@ -188,43 +173,7 @@ export function start(host, opts) {
     draw();
   }
 
-  /** @param {number} now @returns {void} */
-  function frame(now) {
-    raf = requestAnimationFrame(frame);
-    if (now < due - 2) return;
-    // Exactly 30fps at any refresh rate: each draw books the next 1/30s slot; a pause resyncs.
-    due = (now - due > FRAME ? now : due) + FRAME;
-    const dt = now - last;
-    last = now;
-    t += Math.min(dt, 100);
-    draw();
-  }
-
-  /** @returns {void} */
-  function play() {
-    if (reduced || raf || document.hidden) return;
-    last = performance.now();
-    raf = requestAnimationFrame(frame);
-  }
-  /** @returns {void} */
-  function pause() {
-    cancelAnimationFrame(raf);
-    raf = 0;
-  }
-  const onVis = () => (document.hidden ? pause() : play());
-
-  const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(size) : null;
-  if (ro) ro.observe(host);
-  window.addEventListener('resize', size);
-  document.addEventListener('visibilitychange', onVis);
   size();
-  play();
-
-  return function stop() {
-    pause();
-    if (ro) ro.disconnect();
-    window.removeEventListener('resize', size);
-    document.removeEventListener('visibilitychange', onVis);
-    cv.remove();
-  };
+  const stop = frameLoop(host, size, (dt) => { t += dt * 1000; draw(); }, reduced);
+  return () => { stop(); cv.remove(); };
 }

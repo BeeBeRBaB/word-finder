@@ -54,40 +54,8 @@ test('every theme has both a dark and a light block, and appearance.js lists exa
     assert.ok(THEME_BLOCKS.some(s => s.startsWith(`:root[data-theme="${k}"], `)), `${k} has no dark block`);
     assert.ok(THEME_BLOCKS.includes(`:root[data-theme="${k}"][data-appearance="light"]`), `${k} has no light block`);
   }
-  // The default theme rides on the base palettes and has no block of its own.
+  // The default theme rides on the base blocks and has no block of its own.
   assert.deepEqual([...inCss].sort(), THEMES.filter(t => t !== THEMES[0]).slice().sort());
-});
-
-// Palette blocks recolour a theme: every colour token and nothing else, so each theme keeps
-// its own shape, shadows and art opacity underneath whichever palette is on.
-const PALETTE_BLOCKS = [...css.matchAll(/^(:root\[data-palette="[\w-]+"\][^{]*)\{/gm)].map(m => m[1].trim());
-const PALETTE_TOKENS = ['--bg', '--surface', '--border', '--text', '--text-strong', '--muted', '--label',
-  '--hint', '--accent', '--accent-text', '--accent-ink', '--accent-wash', '--scrim', '--found-text',
-  '--done-text', '--glow', '--pill-1', '--pill-2', '--pill-3', '--pill-4', '--pill-sel',
-  ...[1, 2, 3, 4, 5, 6].map(i => `--confetti-${i}`)];
-
-test('every palette covers every theme in both modes, with exactly the colour tokens', async () => {
-  const { THEMES, PALETTES } = await import('../../src/appearance.js');
-  const dark = tokensIn(DEFAULT_DARK);
-  for (const t of PALETTE_TOKENS) assert.ok(dark.has(t), `${t} is not a palette token any more`);
-  for (const p of PALETTES.slice(1)) for (const th of THEMES) {
-    const sel = `:root[data-palette="${p}"][data-theme="${th}"]`;
-    for (const block of [`${sel}, ${sel}[data-appearance="dark"]`, `${sel}[data-appearance="light"]`]) {
-      assert.ok(PALETTE_BLOCKS.includes(block), `no \`${block}\` block`);
-      // Plum rings its board in a tone of its own colours, so its palettes restate the shadow.
-      const want = th === 'plum' ? [...PALETTE_TOKENS, '--shadow'] : PALETTE_TOKENS;
-      assert.deepEqual([...tokensIn(block)].sort(), [...want].sort(), `${block} tokens`);
-    }
-  }
-  assert.equal(PALETTE_BLOCKS.length, (PALETTES.length - 1) * THEMES.length * 2, 'a palette block for a palette or theme appearance.js does not list');
-});
-
-// Order does not decide any token today (see the comment above the palette blocks); this
-// keeps a future selector change from making it decide the wrong way.
-test('the palette blocks come after every theme block', () => {
-  const lastTheme = Math.max(...THEME_BLOCKS.map(s => css.indexOf(s)));
-  const firstPalette = Math.min(...PALETTE_BLOCKS.map(s => css.indexOf(s)));
-  assert.ok(firstPalette > lastTheme);
 });
 
 test('the type block is first, so it is what a bare `:root` lookup finds', () => {
@@ -102,7 +70,7 @@ test('every var() the stylesheet references is declared in the palettes or the t
   assert.deepEqual([...used].filter(t => !declared.has(t)), [], 'referenced but never declared');
 });
 
-// effects.js builds these names by template (`--confetti-${i}`), so no var() appears
+// main.js reads these names by template (`--confetti-${i}`), so no var() appears
 // in the stylesheet for the parity test above to catch a missing one.
 test('all six confetti slots exist in both palettes', () => {
   for (const block of [DEFAULT_DARK, LIGHT_ONLY]) {
@@ -111,18 +79,20 @@ test('all six confetti slots exist in both palettes', () => {
   }
 });
 
-// Three numbers are written in both a module and the stylesheet, and each is commented
-// "must match" with nothing checking. A drift renders wrong rather than throwing: the
-// grid overlaps the rail, the solved mark is cropped, or a word strikes out mid-glow.
+// Numbers written in both a module and the stylesheet, each commented "must match". A drift
+// renders wrong rather than throwing: the grid overlaps the rail, the solved mark is cropped,
+// a word strikes out mid-glow, the next-puzzle bar drains at a different pace than the deal,
+// or a pane is placed for a card on a screen that shows it as a page.
+/** @param {string} p @returns {string} */
+const read = (p) => readFileSync(new URL(p, import.meta.url), 'utf8');
+/** @param {string} src @param {RegExp} re @param {string} what @returns {number} */
+const num = (src, re, what) => {
+  const m = src.match(re);
+  assert.ok(m, `could not find ${what} — did it get renamed?`);
+  return Number(m[1]);
+};
+
 test('the numbers shared between a module and the stylesheet agree', () => {
-  /** @param {string} p @returns {string} */
-  const read = (p) => readFileSync(new URL(p, import.meta.url), 'utf8');
-  /** @param {string} src @param {RegExp} re @param {string} what @returns {number} */
-  const num = (src, re, what) => {
-    const m = src.match(re);
-    assert.ok(m, `could not find ${what} — did it get renamed?`);
-    return Number(m[1]);
-  };
   assert.equal(
     num(read('../../src/layout.js'), /const GAP = (\d+)/, 'GAP in layout.js'),
     num(css, /#app\[data-landscape\]\{[^}]*column-gap:(\d+)px/, "#app[data-landscape]'s column-gap"),
@@ -135,6 +105,33 @@ test('the numbers shared between a module and the stylesheet agree', () => {
     num(read('../../src/main.js'), /const GLOW_MS = (\d+)/, 'GLOW_MS in main.js'),
     num(css, /\.w\.glow\{[^}]*animation:foundGlow ([\d.]+)s/, "the foundGlow duration") * 1000,
     'main.js strikes a word through at a different moment than the glow ends');
+  const main = read('../../src/main.js');
+  assert.equal(
+    num(main, /const AUTO_NEXT_MS = (\d+)/, 'AUTO_NEXT_MS in main.js'),
+    num(css, /#winnext\.run #winbar i\{animation:drain ([\d.]+)s/, 'the drain duration') * 1000,
+    'the next-puzzle bar empties at a different moment than the deal');
+});
+
+test('the illustration tones in the stylesheet are art.js\'s', async () => {
+  const { TONE } = await import('../../src/art.js');
+  for (const [k, v] of Object.entries(TONE)) {
+    assert.equal(num(css, new RegExp(`#art \\.t-${k},#railart \\.t-${k}\\{fill-opacity:([\\d.]+)\\}`), `#art .t-${k}`), v, `tone ${k}`);
+  }
+});
+
+test('main.js places panes at the same breakpoints the stylesheet lays them out at', () => {
+  const main = read('../../src/main.js');
+  const page = /** @type {RegExpMatchArray} */ (main.match(/const SETTINGS_PAGE = '([^']+)'/));
+  assert.ok(page, 'could not find SETTINGS_PAGE in main.js');
+  assert.ok(css.includes(`@media ${page[1]}{\n  #settings{`), `no \`@media ${page[1]}\` block styles #settings as a page`);
+  assert.equal(
+    num(main, /innerWidth < (\d+)/, "anchorPane's width cut-off"),
+    num(css, /@media \(min-width:(\d+)px\)\{\s*#picker,#settings\{/, 'the pane card breakpoint'),
+    'anchorPane anchors a card the stylesheet draws as a full-width sheet, or the reverse');
+  assert.equal(
+    num(main, /innerHeight > (\d+)/, "anchorPane's height cut-off"),
+    num(css, /@media \(min-width:\d+px\) and \(max-height:(\d+)px\)\{\s*#picker,#settings\{padding-top/, 'the short-screen pane breakpoint'),
+    'anchorPane drops a pane under the header on a screen the stylesheet pins it to the top');
 });
 
 // The category list is laid out as a fixed number of rows so it fills by column. Adding a
@@ -153,14 +150,27 @@ test('the category list rows match the catalog', async () => {
 // block ends last, rather than assuming DEFAULT_DARK is second — hard-coding one
 // block's position silently scans an empty (or wrong) string the moment the file
 // order changes again.
-test('no bare hex literal survives outside the palette blocks', () => {
+test('no bare colour literal survives outside the palette blocks', () => {
   const closeOf = (selector) => {
     const at = css.indexOf(selector);
     const open = css.indexOf('{', at);
     return css.indexOf('}', open);
   };
-  const lastClose = Math.max(closeOf(DEFAULT_DARK), closeOf(LIGHT_ONLY), ...THEME_BLOCKS.map(closeOf), ...PALETTE_BLOCKS.map(closeOf));
+  const lastClose = Math.max(closeOf(DEFAULT_DARK), closeOf(LIGHT_ONLY), ...THEME_BLOCKS.map(closeOf));
   const body = css.slice(lastClose + 1);
   assert.ok(body.length > 100, 'suspiciously little CSS left after the palette blocks — did the slice point go wrong?');
-  assert.deepEqual(body.match(/#[0-9a-fA-F]{3,8}\b/g) ?? [], []);
+  assert.deepEqual(body.match(/#[0-9a-fA-F]{3,8}\b/g) ?? [], [], 'hex');
+  assert.deepEqual(body.match(/\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch)\([^)]*\)/g) ?? [], [], 'colour functions');
+});
+
+// An installed app opens in the manifest's colours, then the page's meta tag takes over: any
+// difference flips the title bar on every launch.
+test('the manifest and the first-paint meta tag use the default look\'s --bg', () => {
+  const at = css.indexOf(DEFAULT_DARK), open = css.indexOf('{', at), close = css.indexOf('}', open);
+  const bg = /--bg:\s*([^;]+);/.exec(css.slice(open, close))?.[1].trim();
+  const manifest = JSON.parse(readFileSync(new URL('../../manifest.webmanifest', import.meta.url), 'utf8'));
+  const html = readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
+  assert.equal(manifest.theme_color, bg);
+  assert.equal(manifest.background_color, bg);
+  assert.equal(/<meta name="theme-color" content="([^"]+)">/.exec(html)?.[1], bg);
 });

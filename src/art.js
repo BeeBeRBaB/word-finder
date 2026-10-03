@@ -3,6 +3,8 @@
 //
 // Rows are 16 chars: '.' empty, 'a' main tone, 'b' shade, 'c' highlight. tests/unit/art.test.js
 // holds every category in the catalog to having a well-formed sprite here.
+import { stringHash } from './rng.js';
+import { categoryOf } from './catalog.js';
 
 /** @type {Record<string, string[]>} */
 export const SPRITES = {
@@ -515,27 +517,15 @@ export const ILLUSTRATIONS = {
   garden: '<path class="ln" d="M32 24Q29.5 34 32 43" stroke-width="3"/><path class="t-b" d="M31 39Q22 33 13 31Q20 42 31 39Z"/><path class="t-a" d="M31 39Q24 27 13 31Q22 33 31 39Z"/><path class="t-b" d="M31.5 35Q41 29 51 27Q45 38 31.5 35Z"/><path class="t-a" d="M31.5 35Q40 24 51 27Q41 29 31.5 35Z"/><path class="t-b" d="M34.7 9.5C32.9 7.2 34 3.8 35.3 2.9C36.6 1.9 38.8 2.8 39 4.4C39.2 6 37.6 9.1 34.7 9.5ZM38.5 13.3C38.9 10.4 42 8.8 43.6 9C45.2 9.2 46.1 11.4 45.1 12.7C44.2 14 40.8 15.1 38.5 13.3ZM38.5 18.7C40.8 16.9 44.2 18 45.1 19.3C46.1 20.6 45.2 22.8 43.6 23C42 23.2 38.9 21.6 38.5 18.7ZM34.7 22.5C37.6 22.9 39.2 26 39 27.6C38.8 29.2 36.6 30.1 35.3 29.1C34 28.2 32.9 24.8 34.7 22.5ZM29.3 22.5C31.1 24.8 30 28.2 28.7 29.1C27.4 30.1 25.2 29.2 25 27.6C24.8 26 26.4 22.9 29.3 22.5ZM25.5 18.7C25.1 21.6 22 23.2 20.4 23C18.8 22.8 17.9 20.6 18.9 19.3C19.8 18 23.2 16.9 25.5 18.7ZM25.5 13.3C23.2 15.1 19.8 14 18.9 12.7C17.9 11.4 18.8 9.2 20.4 9C22 8.8 25.1 10.4 25.5 13.3ZM29.3 9.5C26.4 9.1 24.8 6 25 4.4C25.2 2.8 27.4 1.9 28.7 2.9C30 3.8 31.1 7.2 29.3 9.5Z"/><path class="t-a" d="M32 10.5C28 9 27.6 5 28.6 3.2C29.6 1.4 34.4 1.4 35.4 3.2C36.4 5 36 9 32 10.5ZM35.9 12.1C34.1 8.2 36.7 5.1 38.6 4.5C40.6 4 44 7.4 43.5 9.4C42.9 11.3 39.8 13.9 35.9 12.1ZM37.5 16C39 12 43 11.6 44.8 12.6C46.6 13.6 46.6 18.4 44.8 19.4C43 20.4 39 20 37.5 16ZM35.9 19.9C39.8 18.1 42.9 20.7 43.5 22.6C44 24.6 40.6 28 38.6 27.5C36.7 26.9 34.1 23.8 35.9 19.9ZM32 21.5C36 23 36.4 27 35.4 28.8C34.4 30.6 29.6 30.6 28.6 28.8C27.6 27 28 23 32 21.5ZM28.1 19.9C29.9 23.8 27.3 26.9 25.4 27.5C23.4 28 20 24.6 20.5 22.6C21.1 20.7 24.2 18.1 28.1 19.9ZM26.5 16C25 20 21 20.4 19.2 19.4C17.4 18.4 17.4 13.6 19.2 12.6C21 11.6 25 12 26.5 16ZM28.1 12.1C24.2 13.9 21.1 11.3 20.5 9.4C20 7.4 23.4 4 25.4 4.5C27.3 5.1 29.9 8.2 28.1 12.1Z"/><circle class="t-b" cx="32" cy="16" r="6"/><circle class="t-c" cx="30.2" cy="14.2" r="1.3"/><circle class="t-c" cx="33.8" cy="15" r=".9"/><circle class="t-c" cx="31.5" cy="18" r=".9"/><path class="t-a" d="M17.5 49H46.5L43 60.5Q42.6 62 41 62H23Q21.4 62 21 60.5Z"/><path class="t-b" d="M40 51.2H45.9L43 60.5Q42.6 62 41 62H38.5Z"/><path class="t-b" d="M17.5 49H46.5L45.9 51.2H18.1Z"/><rect class="t-a" x="15" y="42" width="34" height="7.5" rx="2"/><rect class="t-b" x="43" y="42" width="6" height="7.5" rx="2"/><rect class="t-c" x="17.5" y="43.6" width="11" height="1.8" rx=".9"/><path class="t-c" d="M22.5 53H25L26.3 59H24Z"/>',
 };
 
-/** The Background setting's values, default first.
- * @type {readonly ['illustrated', 'pixel', 'none']} */
-export const ART_STYLES = ['illustrated', 'pixel', 'none'];
-
-/** Anything unrecognised is the default, like the theme and mode preferences.
- * @param {string|null|undefined} s @returns {'illustrated'|'pixel'|'none'} */
-export function normalizeArtStyle(s) {
-  return ART_STYLES.find(x => x === s) ?? ART_STYLES[0];
-}
-
-// Each tone's opacity as a share of the art's own opacity token, so 'b' is the densest.
+// Each tone's opacity as a share of the art's own opacity token, so 'b' is the densest: the
+// pixel sprites' letters and the illustrations' t-a/t-b/t-c classes (styles.css repeats these
+// for #art; tokens.test.js holds the two together).
 /** @type {Record<string, number>} */
-const TONE = { a: 0.72, b: 1, c: 0.4 };
+export const TONE = { a: 0.72, b: 1, c: 0.4 };
 
-/** Same string hash main.js uses for the subject's underline hue.
- * @param {string} s @returns {number} */
-function hash(s) {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
-  return h;
-}
+// Where the corner-anchored board art sits, [left, top] by artFor's `corner`: it bleeds a
+// tenth past two edges, so it reads as scenery rather than a stamp in the middle of the letters.
+export const CORNERS = [['-10%', '-10%'], ['32%', '-10%'], ['-10%', '32%'], ['32%', '32%']];
 
 /**
  * The art for a subject: its category's sprite, and a hue, mirror and corner that vary by
@@ -544,10 +534,10 @@ function hash(s) {
  * @returns {{motif:string, rows:string[], hue:number, flip:boolean, corner:number}|null}
  */
 export function artFor(subjectId) {
-  const motif = subjectId.split('/')[0];
+  const motif = categoryOf(subjectId);
   const rows = SPRITES[motif];
   if (!rows) return null;
-  const h = hash(subjectId);
+  const h = stringHash(subjectId);
   return { motif, rows, hue: h % 4 + 1, flip: ((h >>> 3) & 1) === 1, corner: (h >>> 5) % 4 };
 }
 

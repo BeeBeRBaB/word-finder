@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildPuzzle, pickWords, snap, readLine, matchWord, runKey, cap } from '../../src/puzzle.js';
+import { buildPuzzle, pickWords, snap, lineIndices, matchWord, runKey, cap, spanOf } from '../../src/puzzle.js';
 import { makeRng } from '../../src/rng.js';
 
 const FULL_MIX = [
@@ -97,6 +97,59 @@ test('buildPuzzle never silently returns a short board', () => {
   for (let seed = 1; seed <= 60; seed++) assert.equal(build(seed).words.length, 12);
 });
 
+// Outside the content contract, where the strict rules cannot hold. On a 4x4 board no two
+// three-letter words on one diagonal line can keep a cell apart, yet a strict layout of eight
+// words needs both directions of every line; with no spares to swap in, only the relaxed
+// layout, which lets words touch, can deal. It may still find no spot for a word: then it
+// throws, and never deals a board short.
+test('a pool no strict layout can hold is dealt in full by the relaxed one, or throws', () => {
+  const tight = ['AAA', 'AAB', 'ABA', 'ABB', 'BAA', 'BAB', 'BBA', 'BBB'];
+  const mix = [{ min: 3, max: 3, take: 8 }];
+  let dealt = 0;
+  for (let seed = 1; seed <= 40; seed++) {
+    let p;
+    try { p = buildPuzzle({ name: 'Tight', pool: tight, rng: makeRng(seed), size: 4, count: 8, mix }); } catch (err) {
+      assert.match(String(err), /could not place \w+ in a 4x4 grid for "Tight"/);
+      continue;
+    }
+    dealt++;
+    assert.deepEqual(p.words.slice().sort(), tight, `seed ${seed}`);
+    for (const pl of p.placements) {
+      const read = [...pl.word].map((_, j) => p.cells[(pl.y0 + pl.dy * j) * 4 + pl.x0 + pl.dx * j]).join('');
+      assert.equal(read, pl.word, `seed ${seed}: ${pl.word} is not where its placement says`);
+    }
+  }
+  assert.ok(dealt >= 30, `only ${dealt} of 40 seeds dealt`);
+  const apart = ['ABC', 'DEF', 'GHI', 'JKL', 'MNO', 'PQR', 'STU', 'VWX'];   // 24 letters, 16 cells
+  assert.throws(() => buildPuzzle({ name: 'Apart', pool: apart, rng: makeRng(1), size: 4, count: 8, mix }), /could not place/);
+});
+
+// Pinned: a level is dealt by its seed on every device and every build, so a change to how a
+// board is laid out re-deals levels in progress and drops their finds. Two pools as subjects held
+// them when levels shipped, frozen here, reach the swap layouts on the two seeds named first:
+// copying the words for each layout, or one swap limit for both modes, re-deals them.
+test('the board a seed deals is pinned, swap layouts included', () => {
+  const pools = [
+    'JAM,SAX,GIG,HORN,SCAT,RIFF,COOL,CLUB,BEAT,JIVE,SWAY,SOLO,SWING,BLUES,COMBO,TEMPO,BEBOP,VENUE,CHORD,GROOVE,RHYTHM,MELODY,LOUNGE,BALLAD,FUSION,IMPROV,TRUMPET,QUINTET,QUARTET,HARMONY,SESSION,WALKING,SOLOIST,OFFBEAT,STANDARD,CLARINET,DOWNBEAT,TROMBONE,BACKBEAT,RESONANT,MODULATE,IMPROVISE,CHROMATIC,DISSONANT,DIMINISHED,SAXOPHONE,VIBRAPHONE,SYNCOPATE,MODULATION,NIGHTCLUB',
+    'SEA,BOW,AFT,JIB,PORT,BOOM,KEEL,MAST,DOCK,BUOY,PIER,WIND,CREW,GALE,TIDE,DECK,SAIL,BOAT,LINE,FLAG,STERN,CLEAT,YACHT,MARINA,RUDDER,HARBOR,ANCHOR,BREEZE,VESSEL,DINGHY,COMPASS,HALYARD,CAPSIZE,TACKING,SKIPPER,RIGGING,HORIZON,LATITUDE,STARBOARD,CATAMARAN,SPINNAKER,LONGITUDE,NAVIGATION,LIFEJACKET,EQUIPMENT,CENTERBOARD,MAINSHEET,WINDSPEED',
+  ].map(p => p.split(','));
+  const hard = [{ min: 3, max: 4, take: 1 }, { min: 5, max: 6, take: 3 }, { min: 7, max: 9, take: 4 }];
+  /** @param {string[]} pool @param {number} seed @param {object} [opts] */
+  const deal = (pool, seed, opts = {}) => {
+    const p = buildPuzzle({ name: 'Pinned', pool, rng: makeRng(seed), size: 10, count: 8, mix: hard, ...opts });
+    return `${p.cells.join('')}|${p.placements.map(q => `${q.word}${q.x0}${q.y0}${q.dx}${q.dy}`).join(',')}`;
+  };
+  assert.equal(deal(pools[0], 887559150), 'MEGNUOLKCJBDHQIMBLIOFUSBTMAKTLUMLXTRPRAESZZCIEHRMRIGYNTQDTOROSENGHAFRVNTHKIEGMHLFJWFBCBICUVSAXOPHONE|NIGHTCLUB89-1-1,CHROMATIC880-1,SAXOPHONE1910,CLARINET80-11,LOUNGE60-10,IMPROV4111,FUSION0201,BEAT481-1');
+  let h = 0x811c9dc5;
+  const eat = (/** @type {string} */ s) => { for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193); };
+  eat(deal(pools[1], 2493169476));
+  for (let seed = 1; seed <= 60; seed++) {
+    for (const pool of pools) eat(deal(pool, seed));
+    eat(deal(POOL, seed, { size: 13, count: 12, mix: FULL_MIX }));
+  }
+  assert.equal(h >>> 0, 2136339958);
+});
+
 test('buildPuzzle respects the maximum word length for its grid size', () => {
   const p = build(5, { size: 10, count: 8, mix: [
     { min: 3, max: 4, take: 2 }, { min: 5, max: 6, take: 3 }, { min: 7, max: 9, take: 3 },
@@ -143,9 +196,15 @@ test('a tap with no movement selects a single cell', () => {
   assert.deepEqual(snap(4, 4, 4.1, 4.1, 13), { x1: 4, y1: 4 });
 });
 
-test('readLine reads a selection in order', () => {
-  const cells = Array.from({ length: 169 }, (_, i) => 'ABCDEFGHIJKLM'[i % 13]);
-  assert.equal(readLine(cells, 13, { x0: 0, y0: 0, x1: 3, y1: 0 }), 'ABCD');
+test('lineIndices walks a selection from its start, in any direction', () => {
+  assert.deepEqual(lineIndices(13, { x0: 0, y0: 0, x1: 3, y1: 0 }), [0, 1, 2, 3]);
+  assert.deepEqual(lineIndices(13, { x0: 2, y0: 2, x1: 0, y1: 0 }), [28, 14, 0]);
+  assert.deepEqual(lineIndices(13, { x0: 4, y0: 4, x1: 4, y1: 4 }), [56]);
+});
+
+test('spanOf runs a placement from its first letter to its last, in its direction', () => {
+  assert.deepEqual(spanOf({ word: 'CAT', x0: 4, y0: 1, dx: -1, dy: 1 }), { x0: 4, y0: 1, x1: 2, y1: 3 });
+  assert.deepEqual(spanOf({ word: 'A', x0: 0, y0: 0, dx: 1, dy: 0 }), { x0: 0, y0: 0, x1: 0, y1: 0 });
 });
 
 test('matchWord matches a placement, and nothing for an empty run', () => {

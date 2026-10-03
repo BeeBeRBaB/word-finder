@@ -36,7 +36,7 @@
     ["best is last level","src/scoring.js","best = Math.max(best, level);","best = level;"],
     ["slow scores positive","src/scoring.js","* (speed - 1)) : 0","* Math.abs(speed - 1)) : 0"],
     ["plural always","src/scoring.js","n === 1 ? 'word' : 'words'","'words'"],
-    ["x not ×","src/scoring.js","`${NAMES[diff]} ×${dm}`","`${NAMES[diff]} x${dm}`"],
+    ["x not ×","src/scoring.js","`${DIFFICULTY_NAMES[diff]} ×${dm}`","`${DIFFICULTY_NAMES[diff]} x${dm}`"],
     ["reveals before time","src/scoring.js","  add('time', 'Speed'","  add('reveals', 'Reveals', words(revealed), -revealCost);\n  add('time', 'Speed'"],
     ["total from unrounded parts","src/scoring.js","total: lines.reduce((sum, l) => sum + l.points, 0),","total: Math.round((wordPts + streakPts) * dm * (complete ? speed : 1)) - revealCost + (complete && found ? Math.round(SCORING.complete * dm) : 0) + (complete && !revealed ? Math.round(SCORING.perfect * dm) : 0),"],
     ["window from chain start","src/scoring.js","    lastFind = at;","    if (level === 0 || lastFind === null) lastFind = at;"],

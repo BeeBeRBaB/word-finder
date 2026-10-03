@@ -1,7 +1,7 @@
 // Rendering. Everything here writes to the DOM and returns nothing; it holds no
 // state of its own, so what you see is a pure function of the arguments passed in.
 import { cap, lineIndices } from './puzzle.js';
-import { artFor, spriteRects, ILLUSTRATIONS } from './art.js';
+import { artFor, spriteRects, ILLUSTRATIONS, CORNERS } from './art.js';
 
 /**
  * @typedef {import('./puzzle.js').Puzzle} Puzzle
@@ -65,8 +65,8 @@ export function renderGrid(els, puzzle, dims, size, pad, scale = 0.46) {
   }
 }
 
-// Which palette slot each found word gets, cycling. The colours themselves live in
-// styles.css so they can follow the appearance setting; this module now holds none.
+// Which colour slot each found word gets, cycling. The colours themselves live in
+// styles.css so they follow the theme; this module holds none.
 const PILL_CLASS = ['p1', 'p2', 'p3', 'p4'];
 
 /** One rounded bar over a selection. `thick` is its height as a fraction of the cell —
@@ -142,10 +142,6 @@ export function renderList(els, puzzle, state, justFound) {
     els.list.appendChild(s);
   });
 }
-
-// Where the corner-anchored board art sits: it bleeds a tenth past two edges, so it reads as
-// scenery rather than a stamp in the middle of the letters.
-const CORNERS = [['-10%', '-10%'], ['32%', '-10%'], ['-10%', '32%'], ['32%', '32%']];
 
 /** Draw the subject's category art into both hosts; CSS and placeArt decide which shows.
  * `style` is the Background setting: an illustration (pixel sprite where a category has none),

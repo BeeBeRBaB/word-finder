@@ -1,11 +1,12 @@
 // CIE76 distance of colour tokens from --accent and from --bg (each composited over --bg), for every
-// palette x theme x mode with the cascade resolved: palette blocks inherit the tokens they leave out.
-// Picked --pill-miss for the score card's negative bar; rerun it when a palette changes.
+// theme in each flavour with the cascade resolved, so a block inherits any token it leaves out.
+// Picked --pill-miss for the score card's negative bar; rerun it when a theme's colours change.
 //   node tools/levels-review/token-distance.mjs [--pill-miss --muted ...]    cells read accent/bg
 import { readFileSync } from 'node:fs';
+import { THEMES, PREFS } from '../../src/appearance.js';
 
 const css = readFileSync(new URL('../../styles.css', import.meta.url), 'utf8');
-const ALT = /^:root((?:\[data-(?:palette|theme|appearance)="[^"]+"\])*)$/;
+const ALT = /^:root((?:\[data-(?:theme|appearance)="[^"]+"\])*)$/;
 const blocks = [];
 for (const m of css.matchAll(/^(:root[^{]*)\{([^}]*)\}/gm)) {
   const alts = m[1].split(',').map((s) => s.trim().match(ALT));
@@ -44,15 +45,12 @@ const lab = ([r, g, b]) => {
 };
 const dE = (a, b) => { const A = lab(a), B = lab(b); return Math.hypot(A[0] - B[0], A[1] - B[1], A[2] - B[2]); };
 
-const themes = [...new Set(blocks.flatMap((b) => b.attrs.map((a) => a.theme)).filter(Boolean)), 'phosphor'];
-const palettes = ['classic', ...new Set(blocks.flatMap((b) => b.attrs.map((a) => a.palette)).filter(Boolean))];
 const cands = process.argv.slice(2).length ? process.argv.slice(2) : ['--pill-miss', '--muted', '--label', '--pill-1', '--pill-2', '--pill-3', '--pill-4', '--text'];
 const rows = [];
-for (const palette of palettes) for (const theme of [...new Set(themes)]) for (const appearance of ['dark', 'light']) {
-  const t = resolve({ palette, theme, appearance });
-  if (!t['--bg'] || !t['--accent']) continue;
+for (const theme of THEMES) for (const appearance of PREFS) {
+  const t = resolve({ theme, appearance });
   const bg = rgb(t['--bg']).slice(0, 3), acc = over(rgb(t['--accent']), bg);
-  const r = { combo: `${palette}/${theme}/${appearance}` };
+  const r = { look: `${theme}/${appearance}` };
   for (const c of cands) { const v = t[c] && rgb(t[c]); r[c] = v ? `${dE(over(v, bg), acc).toFixed(0)}/${dE(over(v, bg), bg).toFixed(0)}` : '-'; }
   rows.push(r);
 }

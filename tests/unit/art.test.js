@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { SPRITES, artFor, spriteRects, normalizeArtStyle, ART_STYLES, ILLUSTRATIONS } from '../../src/art.js';
+import { SPRITES, artFor, spriteRects, ILLUSTRATIONS } from '../../src/art.js';
 import { CATEGORIES } from '../../src/catalog.js';
 
 test('every catalog category has a well-formed 16x16 sprite, and no sprite is orphaned', () => {
@@ -48,14 +48,6 @@ test('spriteRects draws one rect per filled pixel, mirrored when asked', () => {
   assert.equal((spriteRects(rows, false).match(/<rect/g) || []).length, 1);
   assert.match(spriteRects(rows, false), /x="0"/);
   assert.match(spriteRects(rows, true), /x="15"/);
-});
-
-test('the Background setting normalizes like the other preferences', () => {
-  assert.deepEqual([...ART_STYLES], ['illustrated', 'pixel', 'none']);
-  assert.equal(normalizeArtStyle('pixel'), 'pixel');
-  assert.equal(normalizeArtStyle('none'), 'none');
-  assert.equal(normalizeArtStyle('banana'), 'illustrated');
-  assert.equal(normalizeArtStyle(null), 'illustrated');
 });
 
 test('every illustration is safe, plain shapes with tone classes only', () => {

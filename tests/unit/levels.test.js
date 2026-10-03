@@ -211,10 +211,12 @@ test('normalize drops each bad history entry on its own and keeps the last 50', 
 
 test('normalize drops an invalid or stale current, whole', () => {
   const ok = normalizeProgress({ v: 1, seed: 1, level: 4, current: current(4) });
-  assert.deepEqual(ok?.current, current(4));
+  assert.deepEqual(ok?.current, current(4), 'no size, as builds before it was kept wrote');
+  assert.deepEqual(normalizeProgress({ v: 1, seed: 1, level: 4, current: current(4, { size: 10 }) })?.current, current(4, { size: 10 }));
   const bad = [
     'x', current(3), current(5), current(4, { subject: '' }), current(4, { difficulty: 'x' }),
     current(4, { elapsedMs: -1 }), current(4, { events: 'x' }), current(4, { level: 0 }),
+    current(4, { size: 0 }), current(4, { size: 10.5 }), current(4, { size: '10' }), current(4, { size: null }),
     current(4, { events: [{ word: 'A', at: 1, revealed: false }, null] }),
     current(4, { events: [{ word: '', at: 1, revealed: false }] }),
     current(4, { events: [{ word: 'A', at: -1, revealed: false }] }),
@@ -301,7 +303,7 @@ test('merge across different seeds takes the remote: the account seed wins', () 
   assert.deepEqual(mergeProgress(local, remote), remote);
 });
 
-test('merge on one seed: level, then points, then events, then remote', () => {
+test('merge on one seed: level, then points, then the smaller board, then events, then remote', () => {
   const tag = (/** @type {string} */ s) => [result(1, { subject: s })];
   const pairs = [
     [progress({ level: 5, history: tag('l') }), progress({ level: 4, points: 999, history: tag('r') })],
@@ -310,6 +312,15 @@ test('merge on one seed: level, then points, then events, then remote', () => {
       progress({ level: 4, current: current(4, { events: [{ word: 'OAK', at: 1, revealed: false }] }), history: tag('r') })],
     [progress({ level: 4, current: current(4, { events: [{ word: 'OAK', at: 1, revealed: false }] }), history: tag('l') }),
       progress({ level: 4, current: null, history: tag('r') })],
+    // The smaller board's game wins over more finds on a larger one; a size not said is no rule.
+    [progress({ level: 4, current: current(4, { size: 10, events: [] }), history: tag('l') }),
+      progress({ level: 4, current: current(4, { size: 13 }), history: tag('r') })],
+    [progress({ level: 4, points: 50, current: current(4, { size: 13 }), history: tag('l') }),
+      progress({ level: 4, points: 49, current: current(4, { size: 10 }), history: tag('r') })],
+    [progress({ level: 4, current: current(4, { size: 13 }), history: tag('l') }),
+      progress({ level: 4, current: current(4, { events: [] }), history: tag('r') })],
+    [progress({ level: 4, current: current(4), history: tag('l') }),
+      progress({ level: 4, current: current(4, { size: 10, events: [] }), history: tag('r') })],
   ];
   for (const [winner, loser] of pairs) {
     assert.equal(mergeProgress(winner, loser)?.history[0].subject, 'l', 'as local');

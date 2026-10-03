@@ -29,8 +29,8 @@ export const SCORING = Object.freeze({
   perfect: 50,
 });
 
-/** @type {Record<string, string>} */
-const NAMES = { easy: 'Easy', normal: 'Normal', hard: 'Hard' };
+/** Every difficulty, by the name the player sees. @type {Readonly<Record<string, string>>} */
+export const DIFFICULTY_NAMES = Object.freeze({ easy: 'Easy', normal: 'Normal', hard: 'Hard' });
 
 /** Negative, NaN and non-numeric times count as 0. @param {unknown} t @returns {number} */
 const ms = (t) => (typeof t === 'number' && t > 0 ? t : 0);
@@ -76,7 +76,9 @@ export function scoreLevel({ events, elapsedMs, difficulty, wordCount }) {
       continue;
     }
     const at = ms(e.at);
-    level = lastFind !== null && at - lastFind <= SCORING.streakWindowMs
+    // Finds at one instant were on the board before the level took it over (levelplay's
+    // carry), not found in a run, so they never chain.
+    level = lastFind !== null && at > lastFind && at - lastFind <= SCORING.streakWindowMs
       ? Math.min(level + 1, SCORING.streak.length - 1) : 0;
     lastFind = at;
     found++;
@@ -96,7 +98,7 @@ export function scoreLevel({ events, elapsedMs, difficulty, wordCount }) {
   /** @param {LineKey} key @param {string} label @param {string} detail @param {number} points */
   const add = (key, label, detail, points) => { if (points) lines.push({ key, label, detail, points }); };
   add('streak', 'Streak', `best ×${SCORING.streak[best]}`, streakPts);
-  add('difficulty', `${NAMES[diff]} ×${dm}`, 'words + streak', diffPts);
+  add('difficulty', `${DIFFICULTY_NAMES[diff]} ×${dm}`, 'words + streak', diffPts);
   add('time', 'Speed', `${formatClock(elapsed)} · par ${formatClock(parMs)} · ×${speed}`, timePts);
   add('reveals', 'Reveals', words(revealed), -revealCost);
   add('complete', 'Level complete', `all ${words(n)}`, complete && found ? Math.round(SCORING.complete * dm) : 0);

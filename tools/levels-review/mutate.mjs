@@ -22,8 +22,9 @@ const copy = mkdtempSync(join(tmpdir(), `wf-mutate-${set}-`));
 for (const p of ['src', 'tests', 'styles.css', 'index.html', 'sw.js', 'package.json', 'manifest.webmanifest']) {
   cpSync(join(REPO, p), join(copy, p), { recursive: true });
 }
-// node --test has no timeout of its own, and a mutant can deadlock a test.
-const run = () => spawnSync(process.execPath, ['--test', ...tests], { cwd: copy, encoding: 'utf8', timeout: 30000 });
+// node --test has no timeout of its own, and a mutant can deadlock a test. A failed assert on a
+// fake element prints megabytes, which past the default buffer read as a hang.
+const run = () => spawnSync(process.execPath, ['--test', ...tests], { cwd: copy, encoding: 'utf8', timeout: 30000, maxBuffer: 1 << 28 });
 
 let caught = 0, missed = 0, skipped = 0, hung = 0, equiv = 0;
 try {
@@ -38,8 +39,9 @@ try {
     writeFileSync(path, orig.replace(from, () => to));
     const r = run();
     writeFileSync(path, orig);
-    const fails = [...new Set((r.stdout.match(/^✖ .*$/gm) || []).filter((l) => !l.includes('failing tests'))
-      .map((l) => l.replace(/\s*\([\d.]+m?s\)$/, '')))];
+    // The spec reporter's ✖ lines on a terminal, TAP's top-level `not ok` lines through a pipe.
+    const fails = [...new Set((r.stdout.match(/^(?:✖ |not ok \d+ - ).*$/gm) || []).filter((l) => !l.includes('failing tests'))
+      .map((l) => l.replace(/^not ok \d+ - /, '✖ ').replace(/\s*\([\d.]+m?s\)$/, '')))];
     if (r.error || r.signal) { hung++; console.log(`HUNG    ${name}`); }
     else if (r.status !== 0) { caught++; console.log(`caught  ${name}  <- ${fails.slice(0, 2).join(' | ')}`); }
     else if (note) { equiv++; console.log(`equiv   ${name}  (${note})`); }

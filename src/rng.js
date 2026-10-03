@@ -35,6 +35,23 @@ export function makeRng(seed) {
   };
 }
 
+/** A string's hash, for a pick that follows the string rather than its place in a list, so
+ * reordering the catalog does not reshuffle it (a subject's hue).
+ * @param {string} s @returns {number} unsigned 32-bit */
+export function stringHash(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h;
+}
+
+/** FNV-1a over UTF-16 code units: better mixed than stringHash, for seeding an rng.
+ * @param {string} s @returns {number} unsigned 32-bit */
+export function fnv1a(s) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193);
+  return h >>> 0;
+}
+
 /** `?seed=N` when present and numeric, else the clock.
  * @param {string} search @returns {number} */
 export function resolveSeed(search) {

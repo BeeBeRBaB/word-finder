@@ -6,9 +6,6 @@ import { pixelStage } from './pixel-stage.js';
  * @typedef {{x:number, y:number, l:number, c:string, ph:number, sp:number}} Star
  */
 
-/** @type {{name:string, style:'pixel'|'modern', animated:boolean}} */
-export const meta = { name: 'Pixel Starfield', style: 'pixel', animated: true };
-
 const { floor, max, min, random, round, sin } = Math;
 const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5].map(v => (v + 0.5) / 16);
 const CROSS = [[-1, 0], [1, 0], [0, -1], [0, 1]];
@@ -46,7 +43,7 @@ export function start(host, opts = {}) {
   const ctx = stage.ctx;
 
   let W = 0, H = 0, nextShot = 3, t = 0;
-  /** @type {Star[]} */ let stars = [];
+  /** @type {Star[]} */ const stars = [];
   /** @type {{x:number, y:number, life:number} | null} */ let shot = null;
 
   /** @returns {void} */
@@ -95,11 +92,11 @@ export function start(host, opts = {}) {
     bx.putImageData(img, 0, 0);
   }
 
-  /** @returns {void} */
+  /** Stars enough for the size: the ones there are, and new ones for the room gained. @returns {void} */
   function seed() {
     const count = min(170, round(W * H / 260));
-    stars = [];
-    for (let i = 0; i < count; i++) {
+    stars.length = min(stars.length, count);
+    for (let i = stars.length; i < count; i++) {
       const l = i % 7 === 0 ? 2 : i % 3 === 0 ? 1 : 0;
       stars.push({
         x: random() * W, y: random() * H, l,
@@ -152,8 +149,10 @@ export function start(host, opts = {}) {
     }
   }
 
-  /** @param {number} w @param {number} h @returns {void} */
+  /** The sky carries on across a resize, stretched to the new size: re-seeding it made every
+   * rotation or window drag jump. @param {number} w @param {number} h @returns {void} */
   function resize(w, h) {
+    for (const s of stars) { s.x *= w / W; s.y *= h / H; }
     W = bg.width = w; H = bg.height = h;
     paintBg(); seed();
   }

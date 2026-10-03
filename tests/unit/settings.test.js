@@ -32,11 +32,14 @@ test('a change persists and is read back', () => {
 });
 
 test('an invalid value is ignored, never stored', () => {
-  const s = makeSettings({ store: memStore() });
+  const store = memStore();
+  const s = makeSettings({ store });
+  s.set('board', 'compact');
+  s.set('sound', false);
   s.set('board', /** @type {any} */ ('huge'));
   s.set('sound', /** @type {any} */ ('yes'));
-  assert.equal(s.get().board, 'auto');
-  assert.equal(s.get().sound, true);
+  assert.deepEqual([s.get().board, s.get().sound], ['compact', false], 'the choice before it stands');
+  assert.deepEqual([makeSettings({ store }).get().board, makeSettings({ store }).get().sound], ['compact', false]);
 });
 
 test('one bad field never costs the others', () => {

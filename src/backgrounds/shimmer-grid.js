@@ -1,13 +1,10 @@
 // Shimmer Grid: a pixel-font letter grid swept by colour waves, where real words light up.
+import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
 
 /**
  * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean}} BackgroundOptions
  * @typedef {{c0:number, r0:number, dx:number, dy:number, L:number, ci:number, age:number}} Found
  */
-
-/** @type {{name:string, style:'pixel'|'modern', animated:boolean}} */
-export const meta = { name: 'Shimmer Grid', style: 'pixel', animated: true };
-const STEP = 1000 / 30;
 
 // 3x5 glyphs A-Z, one octal digit per row, high bit = left column.
 const FONT = '25755 65656 34443 65556 74647 74644 34553 55755 72227 11152 55655 44447 57755 65555 25552 65644 25573 65655 34216 72222 55557 55552 55775 55255 55222 71247'.split(' ');
@@ -29,21 +26,19 @@ const shown = (f) => Math.min(f.L, Math.floor(f.age / 0.11) + 1);
 /** @param {HTMLElement} host @param {Partial<BackgroundOptions>} [opts] @returns {() => void} */
 export function start(host, opts = {}) {
   const dark = opts.dark !== false, pal = dark ? DARK : LIGHT, reduced = !!opts.reducedMotion;
-  const cv = document.createElement('canvas');
-  cv.setAttribute('aria-hidden', 'true');
-  cv.style.cssText = 'position:absolute;left:0;top:0;display:block;pointer-events:none;image-rendering:pixelated';
-  host.appendChild(cv);
+  const layer = hostCanvas(host, true);
+  if (!layer) return () => {};
+  const { cv, ctx } = layer;
   const mask = document.createElement('canvas'); // the letters, drawn once
   // Soft waves, so painted at 1/4 resolution and scaled up.
   const field = document.createElement('canvas');
   // Wave strip: one soft pulse per palette colour, tiled as a pattern.
   const strip = document.createElement('canvas');
   strip.width = PER * pal.length; strip.height = 1;
-  const c2d = cv.getContext('2d'), m2d = mask.getContext('2d');
-  const f2d = field.getContext('2d'), sctx = strip.getContext('2d');
-  if (!c2d || !m2d || !f2d || !sctx) return () => cv.remove();
+  const m2d = mask.getContext('2d'), f2d = field.getContext('2d'), sctx = strip.getContext('2d');
+  if (!m2d || !f2d || !sctx) return () => cv.remove();
   // Aliased: narrowing does not reach the hoisted functions below.
-  const ctx = c2d, mctx = m2d, fctx = f2d;
+  const mctx = m2d, fctx = f2d;
 
   for (let x = 0; x < strip.width; x++) {
     sctx.globalAlpha = Math.pow(0.5 - 0.5 * Math.cos((x % PER) / PER * 6.2832), 5);
@@ -54,11 +49,14 @@ export function start(host, opts = {}) {
 
   /** @type {Found[]} */
   const found = [];
+  /** @type {number[][]} glyph index per row and column, kept for every cell the grid has had */
+  const letters = [];
   let cw = 0, ch = 0, cols = 0, rows = 0, ox = 0, oy = 0;
-  let raf = 0, last = 0, due = 0, t = ri(60), next = 1, dead = false;
+  let t = ri(60), next = 1;
 
   /** @param {number} c @param {number} r @param {number} g glyph index @returns {void} */
   function setCell(c, r, g) {
+    (letters[r] ??= [])[c] = g;
     const x = ox + c * P + 3, y = oy + r * P + 2, f = FONT[g];
     mctx.clearRect(x - 3, y - 2, P, P);
     for (let j = 0; j < 5; j++) {
@@ -82,7 +80,7 @@ export function start(host, opts = {}) {
 
   /** @returns {void} */
   function resize() {
-    const W = host.clientWidth || innerWidth, H = host.clientHeight || innerHeight;
+    const [W, H] = hostSize(host);
     const w = Math.floor(W / U), h = Math.floor(H / U);
     if (w === cw && h === ch) return;
     cw = cv.width = mask.width = w; ch = cv.height = mask.height = h;
@@ -90,10 +88,15 @@ export function start(host, opts = {}) {
     cv.style.width = cw * U + 'px'; cv.style.height = ch * U + 'px';
     cols = Math.floor(cw / P); rows = Math.floor(ch / P);
     ox = (cw - cols * P) >> 1; oy = (ch - rows * P) >> 1;
+    // The grid carries on across a resize: its letters and the words lit in it stay where they
+    // are, and only cells it gains are new. Re-rolling it made every rotation or window drag jump.
     mctx.fillStyle = '#fff';
-    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) setCell(c, r, ri(26));
-    found.length = 0;
-    if (reduced) { addWord(2); addWord(2); } else addWord(1.2);
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) setCell(c, r, letters[r]?.[c] ?? ri(26));
+    for (let i = found.length - 1; i >= 0; i--) {
+      const f = found[i], c1 = f.c0 + f.dx * (f.L - 1), r1 = f.r0 + f.dy * (f.L - 1);
+      if (f.c0 >= cols || c1 >= cols || Math.max(f.r0, r1) >= rows) found.splice(i, 1);
+    }
+    if (!found.length) { if (reduced) { addWord(2); addWord(2); } else addWord(1.2); }
     draw();
   }
 
@@ -154,37 +157,10 @@ export function start(host, opts = {}) {
     }
   }
 
-  /** @param {number} now @returns {void} */
-  function frame(now) {
-    raf = requestAnimationFrame(frame);
-    if (now < due - 2) return;
-    // Exactly 30fps at any refresh rate: each draw books the next 1/30s slot; a pause resyncs.
-    due = (now - due > STEP ? now : due) + STEP;
-    const dt = last ? Math.min(0.1, (now - last) / 1000) : 0;
-    last = now;
-    step(dt); draw();
-  }
-
-  /** @returns {void} */
-  function play() {
-    if (dead || reduced || raf || document.hidden) return;
-    last = 0; raf = requestAnimationFrame(frame);
-  }
-  /** @returns {void} */
-  function pause() { cancelAnimationFrame(raf); raf = 0; }
-  const onVis = () => (document.hidden ? pause() : play());
-
-  const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(resize) : null;
-  if (ro) ro.observe(host); else addEventListener('resize', resize);
-  document.addEventListener('visibilitychange', onVis);
   resize();
-  play();
-
-  return function stop() {
-    dead = true; pause();
-    if (ro) ro.disconnect(); else removeEventListener('resize', resize);
-    document.removeEventListener('visibilitychange', onVis);
-    cv.remove();
-    found.length = 0;
-  };
+  const stop = frameLoop(host, resize, (dt) => {
+    step(dt);
+    draw();
+  }, reduced);
+  return () => { stop(); cv.remove(); found.length = 0; };
 }

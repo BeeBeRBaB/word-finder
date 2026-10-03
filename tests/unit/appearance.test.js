@@ -1,81 +1,80 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
-  PREFS, PREF_KEY, normalizePref, nextPref, appearanceLabel, makeAppearance,
+  PREFS, PREF_KEY, THEMES, THEME_KEY, normalizePref, normalizeTheme, themeName, prefName, makeAppearance,
 } from '../../src/appearance.js';
 import { memStore } from './helpers.js';
 
+/** @returns {{dataset:Record<string,string>}} */
 const fakeRoot = () => ({ dataset: {} });
 
-test('there are exactly two preferences and they toggle', () => {
+test('a theme comes in two flavours, light first as the Theme page shows them', () => {
   assert.deepEqual([...PREFS], ['light', 'dark']);
-  assert.equal(nextPref('light'), 'dark');
-  assert.equal(nextPref('dark'), 'light');
+  assert.equal(prefName('light'), 'Light');
+  assert.equal(prefName('dark'), 'Dark');
+  assert.equal(prefName('sepia'), 'Dark', 'an unknown flavour is named as what it resolves to');
 });
 
-test('nextPref is total: anything unrecognised normalizes first', () => {
-  assert.equal(nextPref('system'), 'light', 'system normalizes to dark, whose next is light');
-  assert.equal(nextPref('sepia'), 'light');
-  assert.equal(nextPref(null), 'light');
-});
-
-test('normalizePref falls back to dark, which is also the system migration', () => {
+test('normalizePref falls back to dark, which is also the migration off the old system setting', () => {
   assert.equal(normalizePref('light'), 'light');
   assert.equal(normalizePref('dark'), 'dark');
-  assert.equal(normalizePref('system'), 'dark', 'the old third setting must land on dark');
+  assert.equal(normalizePref('system'), 'dark');
   assert.equal(normalizePref(null), 'dark');
   assert.equal(normalizePref(''), 'dark');
   assert.equal(normalizePref('sepia'), 'dark');
 });
 
-test('appearanceLabel names the preference', () => {
-  assert.equal(appearanceLabel('light'), 'Appearance: Light');
-  assert.equal(appearanceLabel('dark'), 'Appearance: Dark');
+test('themes: default first, each listed once, and anything unknown is the default', () => {
+  assert.equal(THEMES[0], 'phosphor');
+  assert.equal(new Set(THEMES).size, THEMES.length);
+  assert.equal(normalizeTheme('grove'), 'grove');
+  assert.equal(normalizeTheme('banana'), 'phosphor');
+  assert.equal(normalizeTheme(null), 'phosphor');
+  assert.equal(themeName('plum'), 'Plum');
+  assert.equal(themeName('retired'), 'Phosphor');
 });
 
-test('start() applies the preference to the root element', () => {
+test('start() applies the default look when nothing is stored', () => {
   const root = fakeRoot();
-  makeAppearance({ store: memStore(), root }).start();
-  assert.equal(root.dataset.appearance, 'dark', 'no stored preference means dark');
+  /** @type {[string, string][]} */
+  const seen = [];
+  makeAppearance({ store: memStore(), root, onApply: (m, t) => seen.push([m, t]) }).start();
+  assert.deepEqual(root.dataset, { appearance: 'dark', theme: 'phosphor' });
+  assert.deepEqual(seen, [['dark', 'phosphor']]);
 });
 
-test('the preference persists and is read back on construction', () => {
+test('setLook applies a theme and its flavour at once, and both are read back on construction', () => {
   const store = memStore();
-  makeAppearance({ store, root: fakeRoot() }).set('light');
+  const root = fakeRoot();
+  /** @type {[string, string][]} */
+  const seen = [];
+  const a = makeAppearance({ store, root, onApply: (m, t) => seen.push([m, t]) });
+  a.start();
+  a.setLook('grove', 'light');
+  assert.deepEqual(root.dataset, { appearance: 'light', theme: 'grove' });
+  assert.deepEqual(seen, [['dark', 'phosphor'], ['light', 'grove']], 'one apply per choice');
+  assert.equal(store.getItem(THEME_KEY), 'grove');
   assert.equal(store.getItem(PREF_KEY), 'light');
+  const b = makeAppearance({ store, root: fakeRoot() });
+  assert.equal(b.getTheme(), 'grove');
+  assert.equal(b.get(), 'light');
+});
 
+test('a stored or chosen value it does not know is normalized, never applied verbatim', () => {
+  const store = memStore();
+  store.setItem(PREF_KEY, 'sepia');
+  store.setItem(THEME_KEY, 'retired-theme');
   const root = fakeRoot();
   const a = makeAppearance({ store, root });
   a.start();
-  assert.equal(a.get(), 'light');
-  assert.equal(root.dataset.appearance, 'light');
+  assert.deepEqual(root.dataset, { appearance: 'dark', theme: 'phosphor' });
+  a.setLook('banana', 'system');
+  assert.deepEqual(root.dataset, { appearance: 'dark', theme: 'phosphor' });
+  assert.equal(store.getItem(THEME_KEY), 'phosphor');
 });
 
-test('a stored value from a future build is normalized, never applied verbatim', () => {
-  const store = memStore();
-  store.setItem(PREF_KEY, 'sepia');
-  const root = fakeRoot();
-  makeAppearance({ store, root }).start();
-  assert.equal(root.dataset.appearance, 'dark');
-});
-
-test('cycle() flips and returns the new preference', () => {
-  const a = makeAppearance({ store: memStore(), root: fakeRoot() });
-  assert.equal(a.get(), 'dark');
-  assert.equal(a.cycle(), 'light');
-  assert.equal(a.cycle(), 'dark');
-});
-
-test('onApply reports the resolved mode', () => {
-  /** @type {string[]} */
-  const seen = [];
-  const a = makeAppearance({ store: memStore(), root: fakeRoot(), onApply: (m) => seen.push(m) });
-  a.start();
-  a.set('light');
-  assert.deepEqual(seen, ['dark', 'light']);
-});
-
-test('a throwing store degrades to "not remembered" rather than throwing', () => {
+test('a throwing store degrades to "not remembered", and a choice still applies for the session', () => {
   const bad = {
     getItem() { throw new Error('SecurityError'); },
     setItem() { throw new Error('QuotaExceeded'); },
@@ -85,74 +84,29 @@ test('a throwing store degrades to "not remembered" rather than throwing', () =>
   let a;
   assert.doesNotThrow(() => { a = makeAppearance({ store: bad, root }); });
   assert.equal(a.get(), 'dark');
-  assert.doesNotThrow(() => a.set('light'));
-  assert.equal(root.dataset.appearance, 'light', 'the setting still applies for this session');
+  assert.equal(a.getTheme(), 'phosphor');
+  assert.doesNotThrow(() => a.setLook('plum', 'light'));
+  assert.deepEqual(root.dataset, { appearance: 'light', theme: 'plum' });
 });
 
 test('a null store is accepted and simply does not persist', () => {
   const root = fakeRoot();
   const a = makeAppearance({ store: null, root });
   a.start();
-  a.set('light');
+  a.setLook('sticker', 'light');
   assert.equal(a.get(), 'light');
-  assert.equal(root.dataset.appearance, 'light');
+  assert.equal(a.getTheme(), 'sticker');
+  assert.deepEqual(root.dataset, { appearance: 'light', theme: 'sticker' });
 });
 
-test('themes: default first, unknown values normalize to it, and a choice persists', async () => {
-  const { THEMES, THEME_KEY, normalizeTheme, themeName } = await import('../../src/appearance.js');
-  assert.equal(THEMES[0], 'phosphor');
-  assert.equal(normalizeTheme('grove'), 'grove');
-  assert.equal(normalizeTheme('banana'), 'phosphor');
-  assert.equal(normalizeTheme(null), 'phosphor');
-  assert.equal(themeName('plum'), 'Plum');
-  const store = memStore();
-  const root = fakeRoot();
-  /** @type {[string, string][]} */
-  const seen = [];
-  const a = makeAppearance({ store, root, onApply: (m, t) => seen.push([m, t]) });
-  a.start();
-  assert.equal(/** @type {any} */ (root).dataset.theme, 'phosphor');
-  a.setLook('sticker', 'classic');
-  assert.equal(store.getItem(THEME_KEY), 'sticker');
-  assert.equal(/** @type {any} */ (root).dataset.theme, 'sticker');
-  assert.deepEqual(seen.at(-1), ['dark', 'sticker']);
-  const b = makeAppearance({ store, root: fakeRoot() });
-  assert.equal(b.getTheme(), 'sticker', 'read back on construction');
-  a.setLook('retired-theme', 'classic');
-  assert.equal(a.getTheme(), 'phosphor');
-});
-
-test('a throwing store still yields the default theme', () => {
-  const bad = { getItem() { throw new Error('blocked'); }, setItem() { throw new Error('blocked'); } };
-  const a = makeAppearance({ store: bad, root: fakeRoot() });
-  assert.equal(a.getTheme(), 'phosphor');
-  a.setLook('plum', 'classic');
-  assert.equal(a.getTheme(), 'plum', 'applied for the session even though it cannot be stored');
-});
-
-test('palettes: default first, unknown values normalize to it, and a choice persists and is applied', async () => {
-  const { PALETTES, PALETTE_KEY, normalizePalette, paletteName } = await import('../../src/appearance.js');
-  assert.equal(PALETTES[0], 'classic');
-  assert.equal(normalizePalette('jewel'), 'jewel');
-  assert.equal(normalizePalette('neon'), 'classic');
-  assert.equal(normalizePalette(undefined), 'classic');
-  assert.equal(paletteName('duotone'), 'Duotone');
-  const store = memStore();
-  const root = fakeRoot();
-  /** @type {string[]} */
-  const seen = [];
-  const a = makeAppearance({ store, root, onApply: (_m, _t, p) => seen.push(p) });
-  a.start();
-  assert.equal(/** @type {any} */ (root).dataset.palette, 'classic');
-  a.setLook('grove', 'calm');
-  assert.equal(store.getItem(PALETTE_KEY), 'calm');
-  assert.equal(/** @type {any} */ (root).dataset.palette, 'calm');
-  assert.equal(/** @type {any} */ (root).dataset.theme, 'grove');
-  assert.deepEqual(seen, ['classic', 'calm'], 'a theme and palette together apply once');
-  assert.equal(makeAppearance({ store, root: fakeRoot() }).getPalette(), 'calm', 'read back on construction');
-  const bad = { getItem() { throw new Error('blocked'); }, setItem() { throw new Error('blocked'); } };
-  const b = makeAppearance({ store: bad, root: fakeRoot() });
-  assert.equal(b.getPalette(), 'classic');
-  b.setLook('phosphor', 'jewel');
-  assert.equal(b.getPalette(), 'jewel', 'applied for the session even though it cannot be stored');
+// index.html resolves the stored look before any module runs, so it carries its own copy of
+// the theme list. A theme missing there paints the default at first paint, then switches.
+test('the inline first-paint resolver knows every theme appearance.js does', () => {
+  const html = readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
+  const m = /if\((\[[^\]]*\])\.indexOf\(t\)<0\)t='phosphor'/.exec(html);
+  assert.ok(m, 'could not find the theme list in the inline resolver');
+  const inline = JSON.parse(m[1].replace(/'/g, '"'));
+  // The default theme rides on the base palette blocks, so the resolver need not name it.
+  assert.deepEqual(inline, THEMES.slice(1));
+  assert.equal(THEMES[0], 'phosphor', 'the resolver falls back to phosphor by name');
 });

@@ -1,5 +1,6 @@
 // The category dialog. Owns no game state: it reports a chosen category id and lets
 // main.js decide what that means.
+import { makePane } from './pane.js';
 
 /**
  * @typedef {import('./catalog.js').Category} Category
@@ -11,17 +12,16 @@
  */
 
 /**
- * `heading` takes focus on open: focusing the select instead opened it at once on an iPhone.
  * @param {{
  *   root:HTMLElement, heading:HTMLElement, select:HTMLSelectElement, warning:HTMLElement, error:HTMLElement,
  *   start:HTMLElement, cancel:HTMLElement, categories:Category[],
  *   isUnavailable:(categoryId:string)=>boolean,
  *   isComplete:(categoryId:string)=>boolean,
- *   onStart:(categoryId:string|null)=>Promise<void>,
- *   opener?:HTMLElement, levels?:LevelSide,
- * }} deps
+ *   onStart:(categoryId:string)=>Promise<void>,
+ *   opener?:HTMLElement, levels?:LevelSide, behind?:HTMLElement[], onClose?:() => void,
+ * }} deps `behind` is the page under the dialog, inert while it is open; `onClose` runs once it closes.
  */
-export function makePicker({ root, heading, select, warning, error, start, cancel, categories, isUnavailable, isComplete, onStart, opener, levels }) {
+export function makePicker({ root, heading, select, warning, error, start, cancel, categories, isUnavailable, isComplete, onStart, opener, levels, behind = [], onClose }) {
   // A disabled placeholder, then the real categories. Random is the header's one-click New
   // game, so the list holds only things you can choose — no action hiding among the values.
   select.innerHTML = '';
@@ -95,21 +95,17 @@ export function makePicker({ root, heading, select, warning, error, start, cance
     if (!on) syncDisabled();
   }
 
-  // Focus goes back to the button that opened the pane, or it is left on a hidden element.
-  const close = () => {
-    if (pending || root.style.display !== 'flex') return;
-    root.style.display = 'none';
-    opener?.setAttribute('aria-expanded', 'false');
-    opener?.focus();
-  };
+  const modal = makePane({ root, heading, opener, behind, onClose });
+  const close = () => { if (!pending) modal.close(); };
 
   // Derived from main.js's shared failure record on every call, never tracked here, so
   // a category the random draw found dead is disabled even though this dialog never
-  // showed it failing. Start follows the select: nothing chosen, nothing to start.
+  // showed it failing. Start follows the select: nothing chosen, nothing to start; and nothing
+  // while a deal is in flight, whatever is chosen meanwhile.
   /** @returns {void} */
   function syncDisabled() {
     for (const o of select.options) if (o.value) o.disabled = isUnavailable(o.value);
-    start.toggleAttribute('disabled', onLevels() ? !levelReady : !select.value);
+    start.toggleAttribute('disabled', pending || (onLevels() ? !levelReady : !select.value));
   }
 
   /** Rewrite the option labels, marking categories the player has fully covered.
@@ -142,12 +138,11 @@ export function makePicker({ root, heading, select, warning, error, start, cance
     syncDisabled();
     warning.style.display = inProgress ? '' : 'none';
     error.hidden = true;
-    root.style.display = 'flex';
-    opener?.setAttribute('aria-expanded', 'true');
-    heading.focus();
+    modal.open();
   }
 
-  /** @param {string|null} chosen @param {string} label @returns {Promise<void>} */
+  /** @param {string} chosen the category; unused on the Levels side @param {string} label
+   * @returns {Promise<void>} */
   async function deal(chosen, label) {
     if (pending) return;
     const lv = onLevels();
@@ -157,15 +152,20 @@ export function makePicker({ root, heading, select, warning, error, start, cance
       setBusy(false);
       close();
     } catch {
-      // Offline with an uncached category, or a random draw that lost the race with the
-      // network. Stay open and say so: closing would leave a half-built board with
-      // nothing explaining it.
+      // Offline with an uncached category or level. Stay open and say so: closing would leave
+      // a half-built board with nothing explaining it. A session that lapsed meanwhile is no
+      // network failure: the Levels side is drawn again, and asks the player to sign in.
+      if (lv) showSide();
+      error.hidden = lv && !levelReady;
       error.textContent = lv ? "This level isn't available offline yet. Try again once you're back online."
-        : chosen ? `${label} isn't available offline yet. Try another category.`
-          : "No category is available offline yet. Try again once you're back online.";
-      error.hidden = false;
-      if (chosen && !lv) select.value = '';
+        : `${label} isn't available offline yet. Try another category.`;
+      if (!lv && select.value === chosen) select.value = '';   // not a choice made while it loaded
       setBusy(false);
+      // Disabling Start for the deal dropped focus out of the dialog. Back on Start to try the
+      // level again, else on the heading: focusing the select opens it on an iPhone.
+      /** @type {HTMLElement} */ (start.hasAttribute('disabled') ? heading : start).focus({ preventScroll: true });
+      // A short screen scrolls the card: keep the message and the buttons under it in view.
+      start.scrollIntoView({ block: 'nearest' });
     }
   }
 
@@ -183,23 +183,27 @@ export function makePicker({ root, heading, select, warning, error, start, cance
   // appended "(done)" to that, which would then read back in the failure message as
   // "Nature (done) isn't available offline yet."
   start.addEventListener('click', () => {
-    const id = select.value || null;
-    void deal(id, (id && categories.find(c => c.id === id)?.name) || '');
+    const id = select.value;
+    void deal(id, categories.find(c => c.id === id)?.name ?? '');
   });
   cancel.addEventListener('click', close);
   root.addEventListener('click', (e) => { if (e.target === root) close(); });
 
-  /** Redraw the Levels pane, as when the account it shows has changed. Focus inside it moves to
-   * its new button, else to Start, else to the heading, never to the page. @returns {void} */
-  function refresh() {
-    if (root.style.display !== 'flex' || pending) return;
-    const had = pane.contains(doc.activeElement);
+  /** Redraw the Levels pane and the offered categories, as when the account or the network
+   * has changed. A failed deal's message goes with what it was about: any, back `online`;
+   * a level's, once the pane reads differently. Focus inside the pane moves to its new
+   * button, else to Start, else to the heading, never to the page.
+   * @param {boolean} [online] @returns {void} */
+  function refresh(online = false) {
+    if (!modal.isOpen() || pending) return;
+    const had = pane.contains(doc.activeElement), was = pane.textContent;
     showSide();
     syncDisabled();
+    if (online || pane.textContent !== was) error.hidden = true;
     if (!had) return;
     const next = pane.querySelector('button') ?? (start.hasAttribute('disabled') ? heading : start);
     /** @type {HTMLElement} */ (next).focus();
   }
 
-  return { open, close, refresh };
+  return { open, close, refresh, isOpen: modal.isOpen };
 }

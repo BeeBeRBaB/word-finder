@@ -186,15 +186,14 @@ test('the picker action buttons stay reachable on a short landscape phone', asyn
   expect(c.y).toBeGreaterThanOrEqual(0);
   expect(c.y + c.height, 'the card must not extend past the fold').toBeLessThanOrEqual(300);
 
-  // ...and Start must be REACHABLE, which is the guarantee that actually matters. If it
-  // needs scrolling the card must be a scroll container; the bug this guards is a cap
-  // with no overflow, where the button is clipped and unreachable by any means.
+  // ...and Start must be in view, which is the guarantee that actually matters. The card
+  // scrolls it there when the error appears; the bug this guards first was a cap with no
+  // overflow, where the button was clipped and unreachable by any means.
   const start = page.locator('#picker-start');
-  await start.scrollIntoViewIfNeeded();
   const box = await start.boundingBox();
   expect(box).not.toBeNull();
   const b = /** @type {{y:number,height:number}} */ (box);
-  expect(b.y, 'Start must not sit above the fold after scrolling').toBeGreaterThanOrEqual(0);
+  expect(b.y, 'Start must not sit above the top').toBeGreaterThanOrEqual(0);
   expect(b.y + b.height, 'nor below it').toBeLessThanOrEqual(300);
   await expect(start).toBeVisible();
   // Cancel rather than Start: a failed deal clears the select, which correctly disables

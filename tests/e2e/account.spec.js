@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { openBoard } from './helpers.js';
 
 /** @typedef {import('@playwright/test').Page} Page */
 
@@ -41,7 +42,7 @@ async function mount(page, status, what) {
       m.renderAccount(host, play, { onSignIn: () => w.calls.push(['onSignIn']), onSignOut: () => w.calls.push(['onSignOut']) });
     };
     if (what === 'account') w.redraw();
-    else w.form = m.renderSignIn(host, play, { onDone: (/** @type {any} */ a) => w.calls.push(['onDone', a.username]) });
+    else m.renderSignIn(host, play, { onDone: (/** @type {any} */ a) => w.calls.push(['onDone', a.username]) });
   }, { status, what });
 }
 
@@ -184,7 +185,7 @@ test('every control is a 44px touch target, and the fields are 16px so iOS does 
 });
 
 /** Mount the Levels side of New game under the open dialog's heading.
- * @param {Page} page @param {object} status @param {object|null} progress */
+ * @param {Page} page @param {{signedIn:boolean}} status @param {object|null} progress */
 async function mountChoice(page, status, progress) {
   await page.goto('/?seed=1&subject=nature/birds');
   await page.click('#catbtn');
@@ -196,7 +197,8 @@ async function mountChoice(page, status, progress) {
     const host = document.createElement('div');
     host.id = 'lv-host';
     document.querySelector('#pickercard h2')?.after(host);
-    const play = { status: () => status, progress: () => progress };
+    // As levelplay.js: no progress without a session, though the device keeps its copy.
+    const play = { status: () => status, progress: () => (status.signedIn ? progress : null) };
     w.result = m.renderLevelChoice(host, play, { difficulty: 'easy', onSignIn: () => w.calls.push(['onSignIn']), onRetry: () => w.calls.push(['onRetry']) });
   }, { status, progress });
 }
@@ -222,7 +224,6 @@ test('a level already started keeps its own difficulty, and one point is singula
 });
 
 test('signed out, the Levels side offers Sign in and cannot start', async ({ page }) => {
-  // Progress left over from a signed-out session must not be offered.
   await mountChoice(page, OUT, PROGRESS);
   const host = page.locator('#lv-host');
   await expect(host).toContainText('Numbered puzzles that keep your points on any device.');
@@ -244,21 +245,26 @@ test('signed in with no progress to deal from, it says so and offers to try agai
   expect(b && b.height).toBeGreaterThanOrEqual(44);
 });
 
-test('the score card footnote is the new total, or why it did not change', async ({ page }) => {
-  await page.goto('/?seed=1&subject=nature/birds');
+test('the score card footnote is the account\'s new total', async ({ page }) => {
+  await openBoard(page, '/?seed=1&subject=nature/birds');
   const lines = await page.evaluate(async () => {
     const url = '/src/account.js';
     const m = await import(url);
-    return [m.levelFootnote({ banked: true, progress: { points: 5644 } }), m.levelFootnote({ banked: true, progress: { points: 1 } }),
-      m.levelFootnote({ banked: false, progress: { points: 5644 } })];
+    const card = /** @type {HTMLElement} */ (document.getElementById('wincard'));
+    return [5644, 1].map((points) => {
+      m.showLevelWin(card, card.querySelector('h2'), 12, { breakdown: { lines: [], total: 0 }, progress: { points } },
+        { reduceMotion: true, countdownMs: 0, onNext() {} }).cancel();
+      return card.querySelector('.sc-all')?.textContent;
+    });
   });
-  expect(lines).toEqual(['5,644 points in all', '1 point in all', 'Already finished on another device, so these points were not added.']);
+  expect(lines).toEqual(['5,644 points in all', '1 point in all']);
 });
 
 /** The real win card, showing, with a level's score card in it.
  * @param {Page} page @param {object} [opts] */
 async function levelWin(page, opts = {}) {
-  await page.goto('/?seed=1&subject=nature/birds');
+  // The board first: its deal clears the win card, so one landing late would take this one.
+  await openBoard(page, '/?seed=1&subject=nature/birds');
   await page.evaluate(async (opts) => {
     const url = '/src/account.js', scoring = '/src/scoring.js';
     const m = await import(url);
@@ -271,8 +277,8 @@ async function levelWin(page, opts = {}) {
     w.card = document.getElementById('wincard');
     w.title = w.card.querySelector('h2');
     /** @type {HTMLElement} */ (document.getElementById('win')).style.display = 'flex';
-    w.pb = m.showLevelWin(w.card, w.title, 12, { breakdown, banked: true, progress: { points: 5644 } },
-      { onNext: () => w.calls.push('next'), onStay: () => w.calls.push('stay'), ...opts });
+    w.pb = m.showLevelWin(w.card, w.title, 12, { breakdown, progress: { points: 5644 } },
+      { onNext: () => w.calls.push('next'), ...opts });
   }, opts);
 }
 
@@ -312,33 +318,28 @@ test('while the score plays, focus waits on Skip', async ({ page }) => {
   await expect(page.locator('#wincard .sc-skip')).toBeFocused();
 });
 
-test('clearing it stops the countdown and puts the plain card back', async ({ page }) => {
-  await levelWin(page, { countdownMs: 1500, reduceMotion: true });
+test('clearing it puts the plain card back, and twice is harmless', async ({ page }) => {
+  await levelWin(page, { countdownMs: 0, reduceMotion: true });
   await page.evaluate(() => { const w = /** @type {any} */ (window); w.m.clearLevelWin(w.card, w.title); });
   const card = page.locator('#wincard');
   await expect(card.locator('h2')).toHaveText('Puzzle solved!');
   await expect(card).not.toHaveAttribute('data-level');
   await expect(card.locator('.sc-host')).toHaveCount(0);
-  await page.waitForTimeout(2000);
-  expect(await calls(page)).toEqual([]);
-  // Twice is harmless, and showing again after a clear starts clean.
   await page.evaluate(() => { const w = /** @type {any} */ (window); w.m.clearLevelWin(w.card, w.title); });
   await expect(card.locator('h2')).toHaveText('Puzzle solved!');
 });
 
 test('showing a second level replaces the first score card rather than stacking it', async ({ page }) => {
-  await levelWin(page, { countdownMs: 1500, reduceMotion: true });
+  await levelWin(page, { countdownMs: 0, reduceMotion: true });
   await page.evaluate(() => {
     const w = /** @type {any} */ (window);
-    w.m.showLevelWin(w.card, w.title, 13, { breakdown: { lines: [], total: 0 }, banked: false, progress: { points: 1 } },
-      { reduceMotion: true, countdownMs: 0, onNext: () => w.calls.push('next2'), onStay() {} });
+    w.m.showLevelWin(w.card, w.title, 13, { breakdown: { lines: [], total: 0 }, progress: { points: 1 } },
+      { reduceMotion: true, countdownMs: 0, onNext() {} });
   });
   const card = page.locator('#wincard');
   await expect(card.locator('.sc-host')).toHaveCount(1);
   await expect(card.locator('h2')).toHaveText('Level 13 complete');
-  await expect(card.locator('.sc-all')).toHaveText('Already finished on another device, so these points were not added.');
-  await page.waitForTimeout(2000);
-  expect(await calls(page)).toEqual([]);   // the first card's countdown was stopped
+  await expect(card.locator('.sc-all')).toHaveText('1 point in all');
   await page.evaluate(() => { const w = /** @type {any} */ (window); w.m.clearLevelWin(w.card, w.title); });
   await expect(card.locator('h2')).toHaveText('Puzzle solved!', { timeout: 1000 });
 });

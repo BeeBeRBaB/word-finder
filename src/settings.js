@@ -1,7 +1,7 @@
-// Player preferences other than theme and mode (appearance.js) and least-seen (progress.js):
+// Player preferences other than the look (appearance.js) and least-seen (progress.js):
 // one record, validated field by field, stored under one key. Pure: the store is injected,
 // and a missing, throwing or garbled one degrades to the defaults, never into the game.
-import { defaultStore } from './storage.js';
+import { safeStore } from './storage.js';
 import { BACKGROUNDS } from './backgrounds.js';
 
 export const SETTINGS_KEY = 'wordfinder-settings-v1';
@@ -45,13 +45,13 @@ export function normalizeSettings(raw) {
 
 /** @param {{store?:SettingsStore|null}} [deps] */
 export function makeSettings(deps = {}) {
-  const store = deps.store === undefined ? defaultStore() : deps.store;
+  const kv = safeStore(deps.store);
   /** @type {Settings} */
   let data = { ...DEFAULTS };
+  const raw = kv.get(SETTINGS_KEY);
   try {
-    const raw = store ? store.getItem(SETTINGS_KEY) : null;
     if (raw) data = normalizeSettings(JSON.parse(raw));
-    else if (store && store.getItem(LEGACY_AUTO_KEY) === 'off') data = { ...data, autoNext: false };
+    else if (kv.get(LEGACY_AUTO_KEY) === 'off') data = { ...data, autoNext: false };
   } catch { data = { ...DEFAULTS }; }
 
   return {
@@ -60,8 +60,10 @@ export function makeSettings(deps = {}) {
     /** Set one field; an invalid value is ignored rather than stored.
      * @template {keyof Settings} K @param {K} key @param {Settings[K]} value @returns {Settings} */
     set(key, value) {
-      data = normalizeSettings({ ...data, [key]: value });
-      try { if (store) store.setItem(SETTINGS_KEY, JSON.stringify(data)); } catch { /* not remembered */ }
+      const next = normalizeSettings({ ...data, [key]: value });
+      if (next[key] !== value) return { ...data };
+      data = next;
+      kv.set(SETTINGS_KEY, JSON.stringify(data));
       return { ...data };
     },
   };

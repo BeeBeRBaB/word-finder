@@ -1,7 +1,9 @@
 // The levels screens outside the board: the Account section of Settings, the sign-in form, the
 // Levels side of New game and a level's score card. Each renders into a host main.js gives it,
 // and talks to the account only through levelplay.js; how dialogs and pages open is main.js's.
-import { playBreakdown } from './scorecard.js';
+import { playBreakdown, make, grouped } from './scorecard.js';
+import { codeOf } from './levelplay.js';
+import { DIFFICULTY_NAMES } from './scoring.js';
 
 /**
  * @typedef {import('./levelplay.js').Status} Status
@@ -13,27 +15,15 @@ import { playBreakdown } from './scorecard.js';
  *   signUp(u:string, p:string):Promise<Account>, signOut():void}} AccountPlay
  * @typedef {{status():Status, progress():LevelProgress|null}} ChoicePlay
  * @typedef {import('./scorecard.js').Playback} Playback
- * @typedef {Omit<import('./scorecard.js').PlayOptions, 'footnote'|'nextLabel'> & {focus?:boolean}} LevelWinOptions
+ * @typedef {Omit<import('./scorecard.js').PlayOptions, 'footnote'> & {focus?:boolean}} LevelWinOptions
  *   focus: move focus into the card, as when no pane is open over it.
  */
 
-/** @param {Document} doc @param {string} tag @param {string} [cls] @param {string} [text]
- * @returns {HTMLElement} */
-function make(doc, tag, cls, text) {
-  const el = doc.createElement(tag);
-  if (cls) el.className = cls;
-  if (text) el.textContent = text;
-  return el;
-}
-
-/** @param {number} n @returns {string} */
-const grouped = (n) => String(Math.max(0, Math.round(n))).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-
 /** @param {number} n @returns {string} "1 point", "4,210 points" */
-const points = (n) => `${grouped(n)} ${n === 1 ? 'point' : 'points'}`;
+const points = (n) => `${grouped(Math.max(0, Math.round(n)))} ${n === 1 ? 'point' : 'points'}`;
 
 /** One line on where the account stands. @param {Status} s @returns {string} */
-export function accountLine(s) {
+function accountLine(s) {
   const saved = s.error === 'offline' ? 'offline, saved here'
     : s.error || s.pending ? 'not saved online yet' : 'saved';
   return `Level ${s.level} · ${points(s.points)} · ${saved}`;
@@ -77,6 +67,7 @@ export function renderAccount(host, play, on) {
   const warn = make(doc, 'p', 'panenote acct-warn', "Your latest progress isn't saved online yet. Signing out here loses it.");
   warn.setAttribute('role', 'alert');   // shown in place of an action, so it is read out as it appears
   warn.hidden = true;
+  if (!s.signedIn) btn.setAttribute('aria-expanded', 'false');   // it opens the sign-in page
   host.replaceChildren(make(doc, 'h3', 'panesection', 'Account'), row, warn);
   btn.addEventListener('click', () => {
     if (!s.signedIn) { on.onSignIn(); return; }
@@ -93,7 +84,7 @@ export function renderAccount(host, play, on) {
 /** Render the sign-in form into `host`. One form serves both Sign in and Create an account;
  * a refused attempt shows the account's own message and keeps what was typed.
  * @param {HTMLElement} host @param {AccountPlay} play @param {{onDone:(a:Account) => void}} on
- * @returns {{focus():void}} */
+ * @returns {void} */
 export function renderSignIn(host, play, on) {
   const doc = host.ownerDocument;
   let creating = false, busy = false;
@@ -169,14 +160,12 @@ export function renderSignIn(host, play, on) {
       on.onDone(a);
     } catch (x) {
       setBusy(false);
-      const code = x && typeof x === 'object' && 'code' in x ? x.code : '';
+      const code = codeOf(x);
       err.textContent = x instanceof Error && x.message ? x.message : 'Something went wrong. Try again later.';
       err.hidden = false;
       (code === 'invalid' || code === 'taken' ? user : pass).focus();
     }
   });
-
-  return { focus: () => user.focus() };
 }
 
 /** Render the Levels side of the New game dialog into `host`: the level to play and where the
@@ -188,11 +177,11 @@ export function renderSignIn(host, play, on) {
 export function renderLevelChoice(host, play, on) {
   const doc = host.ownerDocument;
   const s = play.status();
-  const p = s.signedIn ? play.progress() : null;
+  const p = play.progress();
   if (p) {
     const d = p.current ? p.current.difficulty : on.difficulty;
     host.replaceChildren(make(doc, 'p', 'acct-lvl', `Level ${p.level}`),
-      make(doc, 'p', 'acct-lvl-line', `${points(p.points)} · ${d.charAt(0).toUpperCase()}${d.slice(1)}`));
+      make(doc, 'p', 'acct-lvl-line', `${points(p.points)} · ${DIFFICULTY_NAMES[d]}`));
     return { ready: true, start: `Play level ${p.level}` };
   }
   // Signed in with nothing to deal from: this device has no copy and the cloud has not answered.
@@ -206,19 +195,12 @@ export function renderLevelChoice(host, play, on) {
   return { ready: false, start: 'Play level' };
 }
 
-/** The line under a level's total: the account's new total, or why it did not change.
- * @param {Finish} f @returns {string} */
-export function levelFootnote(f) {
-  return f.banked ? `${points(f.progress.points)} in all` : 'Already finished on another device, so these points were not added.';
-}
-
-/** @type {WeakMap<HTMLElement, Playback>} */
-const levelWins = new WeakMap();
-
 /** Make the win card a level's score card: "Level N complete" over the breakdown, played a line
  * at a time, and the account's new total. `card[data-level]` lets the stylesheet hide the plain
- * card's message and buttons. @param {HTMLElement} card @param {HTMLElement} title its heading
- * @param {number} level @param {Finish} f @param {LevelWinOptions} opts @returns {Playback} */
+ * card's message and buttons. Cancel the playback it returns before the card is cleared or shown
+ * again: taking the card down does not stop it. @param {HTMLElement} card
+ * @param {HTMLElement} title its heading @param {number} level @param {Finish} f
+ * @param {LevelWinOptions} opts @returns {Playback} */
 export function showLevelWin(card, title, level, f, opts) {
   clearLevelWin(card, title);
   const doc = card.ownerDocument;
@@ -228,8 +210,7 @@ export function showLevelWin(card, title, level, f, opts) {
   const host = make(doc, 'div', 'sc-host');
   title.after(host);
   const { focus, ...rest } = opts;
-  const pb = playBreakdown(host, f.breakdown, { ...rest, nextLabel: 'Next level', footnote: levelFootnote(f) });
-  levelWins.set(card, pb);
+  const pb = playBreakdown(host, f.breakdown, { ...rest, footnote: `${points(f.progress.points)} in all`, scope: card });
   if (focus) {
     const skip = /** @type {HTMLElement|null} */ (host.querySelector('.sc-skip'));
     const go = /** @type {HTMLElement|null} */ (host.querySelector('.sc-go'));
@@ -238,11 +219,8 @@ export function showLevelWin(card, title, level, f, opts) {
   return pb;
 }
 
-/** Put the plain win card back, stopping a score card still playing. @param {HTMLElement} card
- * @param {HTMLElement} title @returns {void} */
+/** Put the plain win card back. @param {HTMLElement} card @param {HTMLElement} title @returns {void} */
 export function clearLevelWin(card, title) {
-  levelWins.get(card)?.cancel();
-  levelWins.delete(card);
   card.querySelector('.sc-host')?.remove();
   if (title.dataset.plain !== undefined) {
     title.textContent = title.dataset.plain;

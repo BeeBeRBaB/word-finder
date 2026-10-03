@@ -9,6 +9,7 @@ function el(name) {
   const e = {
     name, hidden: true, scrollTop: 40, dataset: /** @type {Record<string, string>} */ ({}), attrs, checked: /** @type {any} */ (null),
     setAttribute: (/** @type {string} */ k, /** @type {string} */ v) => { attrs[k] = v; },
+    hasAttribute: (/** @type {string} */ k) => k in attrs,
     addEventListener: (/** @type {string} */ type, /** @type {() => void} */ fn) => { if (type === 'click') clicks.push(fn); },
     click: () => { for (const f of clicks) f(); },
     focus: () => { focused = e; },
@@ -94,10 +95,16 @@ test('a re-rendered row is looked up each time and never bound; focus can be pic
   sp.open();
   assert.equal(focused, field);
   assert.equal(row.attrs['aria-expanded'], 'true');
-  row = el('second');   // the section re-rendered while the page was open
+  row = el('second');   // the section re-rendered while the page was open, as Sign in again
+  row.setAttribute('aria-expanded', 'false');
   back.click();
   assert.equal(focused, row, 'Back lands on the row as it is now');
   assert.equal(row.attrs['aria-expanded'], 'false');
+  // Re-rendered as a button that opens nothing (Sign out, once signed in): left without one.
+  sp.open();
+  row = el('third');
+  sp.close();
+  assert.equal(row.attrs['aria-expanded'], undefined);
   // No row at all, and a focus pick that finds nothing: Back takes focus, closing is harmless.
   const sp2 = makeSubpage(/** @type {any} */ ({ card, page, row: () => null, back, name: 'signin', focus: () => null }));
   sp2.open();

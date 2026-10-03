@@ -36,32 +36,47 @@ function boardHolds({ size, count, cells, placements }) {
 /** The real `localStorage`, or `null` if it is unavailable. Merely *reading* the
  * property throws on Safari with "Block All Cookies" and in some private modes —
  * which once broke app boot — so the access itself has to be guarded, not just the
- * calls on it. Shared with `appearance.js` so that guard exists in exactly one place.
+ * calls on it, which safeStore guards.
  * @returns {Storage|null} */
-export function defaultStore() {
+function defaultStore() {
   try { return globalThis.localStorage; } catch { return null; }
+}
+
+/** `store`'s calls, each guarded, so a missing, full or throwing store reads as empty and
+ * forgets quietly rather than throwing into the game. Every module that keeps something in
+ * localStorage goes through here; undefined means the real one.
+ * @param {{getItem(k:string):string|null, setItem(k:string, v:string):void, removeItem?(k:string):void}|null} [store] */
+export function safeStore(store = defaultStore()) {
+  return {
+    /** @param {string} key @returns {string|null} */
+    get(key) { try { return store ? store.getItem(key) : null; } catch { return null; } },
+    /** @param {string} key @param {string} value @returns {void} */
+    set(key, value) { try { store?.setItem(key, value); } catch { /* not remembered */ } },
+    /** @param {string} key @returns {void} */
+    remove(key) { try { store?.removeItem?.(key); } catch { /* nothing to forget */ } },
+  };
 }
 
 /** @param {Pick<Storage,'getItem'|'setItem'>|null} [store] */
 export function makeStorage(store) {
-  if (store === undefined) store = defaultStore();
+  const kv = safeStore(store);
   return {
     /** @param {SaveData} data @returns {void} */
-    save(data) { if (!store) return; try { store.setItem(KEY, JSON.stringify(data)); } catch { /* no persistence */ } },
+    save(data) { kv.set(KEY, JSON.stringify(data)); },
     /** A save is either complete or it is not a save. A board written before `size` and
      * `count` existed cannot be rebuilt at all, so the missing field is not migrated —
      * it is the detection rule.
      * @returns {SaveData|null} */
     load() {
-      if (!store) return null;
+      const s = kv.get(KEY);
+      if (!s) return null;
       try {
-        const s = store.getItem(KEY);
-        if (!s) return null;
         const d = /** @type {SaveData} */ (JSON.parse(s));
         if (typeof d?.seed !== 'number') return null;
         if (typeof d.subjectId !== 'string') return null;
         if (typeof d.size !== 'number' || typeof d.count !== 'number') return null;
         if (!Array.isArray(d.found)) return null;
+        d.found = d.found.filter((f) => typeof f?.word === 'string');
         // Unlike the fields above, a bad board costs only itself: restore falls back to
         // the seed, as it did before boards were saved.
         if (!boardHolds(d)) { delete d.cells; delete d.placements; }

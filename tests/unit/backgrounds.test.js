@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync } from 'node:fs';
-import { BACKGROUNDS, findBackground, makeBackdrop } from '../../src/backgrounds.js';
+import { BACKGROUNDS, findBackground, makeBackdrop, importBackground } from '../../src/backgrounds.js';
 
 const OPTS = { colors: ['#111111', '#222222'], dark: true, reducedMotion: false, subject: 'space/jupiter', seed: 1 };
 /** @param {string} id */
@@ -117,11 +117,15 @@ test('no host means nothing starts', async () => {
   assert.equal(await bd.show('aurora', null, OPTS), false);
 });
 
-test('the default loader imports the module from src/backgrounds/', async () => {
-  // No DOM here, so the real module's start() throws; show() must absorb that like a failed load.
+test('the default loader finds every registry module, and each exports start()', async () => {
+  for (const b of BACKGROUNDS) {
+    if (b.file) assert.equal(typeof (await importBackground(b.file)).start, 'function', b.file);
+  }
+});
+
+test('a module whose start() throws leaves nothing running, like a failed load', async () => {
+  // No DOM here, so the real module's start() throws.
   const bd = makeBackdrop();
   assert.equal(await bd.show('aurora', host('side'), OPTS), false);
   assert.equal(bd.running(), '');
-  const mod = await import('../../src/backgrounds/aurora-drift.js');
-  assert.equal(typeof mod.start, 'function');
 });

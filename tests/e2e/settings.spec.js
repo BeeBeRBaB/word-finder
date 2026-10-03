@@ -1,30 +1,46 @@
 import { test, expect } from '@playwright/test';
-import { findAndDrag } from './helpers.js';
+import { findAndDrag, skipAhead, openBoard } from './helpers.js';
 
 /** @typedef {import('@playwright/test').Page} Page */
 
-// Palette tests read the resolved tokens, so a cached main.js must not stand in for the
+// Theme tests read the resolved tokens, so a cached main.js must not stand in for the
 // one under test. Same reasoning as appearance.spec.js.
 test.use({ serviceWorkers: 'block' });
 
 /** @param {Page} page @returns {Promise<string>} */
 const bgOf = (page) => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--bg').trim());
 
-/** Open Settings if it is closed, then the Theme page, and pick a theme in a palette.
- * @param {Page} page @param {string} theme @param {string} [palette] */
-async function pickLook(page, theme, palette = 'classic') {
+/** Open Settings if it is closed, then the Theme page, and pick a theme in one flavour.
+ * @param {Page} page @param {string} theme @param {'light'|'dark'} [mode] */
+async function pickLook(page, theme, mode = 'dark') {
   if (!(await page.locator('#settings').isVisible())) await page.locator('#appearance').click();
   if (!(await page.locator('#settings-themepage').isVisible())) await page.locator('#settings-theme').click();
-  await page.locator(`.looktile[data-look="${theme}/${palette}"]`).click();
+  await page.locator(`.looktile[data-look="${theme}/${mode}"]`).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
-  await expect(page.locator('html')).toHaveAttribute('data-palette', palette);
+  await expect(page.locator('html')).toHaveAttribute('data-appearance', mode);
 }
 
 /** @param {Page} page @returns {Promise<void>} */
 async function solve(page) {
+  await page.locator('.cell').first().waitFor();   // the deal lands after load
   for (const w of await page.locator('.w').allTextContents()) await findAndDrag(page, w.toUpperCase());
   await expect(page.locator('#win')).toBeVisible();
 }
+
+// Both panes say aria-modal; Tab used to walk out of them onto the board's controls behind.
+test('Tab stays inside Settings and New game while they are open', async ({ page }) => {
+  await page.goto('/?seed=1&subject=nature/birds');
+  for (const opener of ['#appearance', '#catbtn']) {
+    await page.locator(opener).click();
+    for (let i = 0; i < 30; i++) {
+      await page.keyboard.press('Tab');
+      expect(await page.evaluate(() => !!document.activeElement?.closest('#app, #win, #toast')), `${opener} tab ${i}`).toBe(false);
+    }
+    await page.keyboard.press('Escape');
+    await expect(page.locator(opener)).toBeFocused();
+  }
+  await expect(page.locator('#pickercard')).toHaveAttribute('role', 'dialog');
+});
 
 test('the header button opens Settings, and Escape closes it with focus returned', async ({ page }) => {
   await page.goto('/?seed=1&subject=nature/birds');
@@ -40,18 +56,16 @@ test('the header button opens Settings, and Escape closes it with focus returned
   await expect(btn).toBeFocused();
 });
 
-test('every theme repaints in both modes, and no two share a background', async ({ page }) => {
+test('every theme repaints in both flavours, and no two looks share a background', async ({ page }) => {
   await page.goto('/?seed=1&subject=nature/birds');
   await page.locator('#appearance').click();
   const themes = await page.locator('.lookgroup').evaluateAll(gs => gs.map(g => g.getAttribute('aria-labelledby')?.slice(5)));
   expect(themes.length).toBeGreaterThanOrEqual(7);
   /** @type {Set<string>} */
   const seen = new Set();
-  for (const mode of ['dark', 'light']) {
-    if (await page.locator('#settings-themepage').isVisible()) await page.locator('#theme-back').click();
-    await page.locator(`#mode-${mode}`).click();
+  for (const mode of /** @type {const} */ (['dark', 'light'])) {
     for (const t of themes) {
-      await pickLook(page, /** @type {string} */ (t));
+      await pickLook(page, /** @type {string} */ (t), mode);
       const bg = await bgOf(page);
       expect(seen.has(bg), `${t}/${mode} repeats background ${bg}`).toBe(false);
       seen.add(bg);
@@ -79,7 +93,7 @@ test('an unknown stored theme falls back to the default at first paint', async (
 });
 
 test('a win counts down and deals the next puzzle on its own', async ({ page }) => {
-  await page.goto('/?seed=1&subject=nature/birds');
+  await openBoard(page, '/?seed=1&subject=nature/birds');
   const before = await page.locator('#letters').textContent();
   await solve(page);
   await expect(page.locator('#winnext')).toBeVisible();
@@ -96,18 +110,20 @@ for (const [how, act] of /** @type {[string, (p: Page) => Promise<void>][]} */ (
   ['Escape', (p) => p.keyboard.press('Escape')],
 ])) {
   test(`${how} cancels the countdown and keeps the solved board`, async ({ page }) => {
+    await page.clock.install();
     await page.goto('/?seed=1&subject=nature/birds');
     await solve(page);
     const letters = await page.locator('#letters').textContent();
     await act(page);
     await expect(page.locator('#winnext')).toBeHidden();
-    await page.waitForTimeout(6000);
+    await skipAhead(page, 6000);
     expect(await page.locator('#letters').textContent()).toBe(letters);
     await expect(page.locator('.w.done')).toHaveCount(await page.locator('.w').count());
   });
 }
 
 test('with auto-start turned off, a win waits for the player', async ({ page }) => {
+  await page.clock.install();
   await page.goto('/?seed=1&subject=nature/birds');
   await page.locator('#appearance').click();
   await page.locator('#settings-auto-box').uncheck();
@@ -116,41 +132,93 @@ test('with auto-start turned off, a win waits for the player', async ({ page }) 
   await solve(page);
   await expect(page.locator('#winnext')).toBeHidden();
   await expect(page.locator('#winstats')).not.toContainText('Next puzzle');
-  await page.waitForTimeout(6000);
+  await skipAhead(page, 6000);
   await expect(page.locator('#win')).toBeVisible();
 });
 
-test('turning auto-start off mid-countdown stops it', async ({ page }) => {
+test('opening Settings mid-countdown stops it, and closing Settings does not restart it', async ({ page }) => {
+  await page.clock.install();
   await page.goto('/?seed=1&subject=nature/birds');
   await solve(page);
   const letters = await page.locator('#letters').textContent();
   // Keyboard reaches the header behind the card; this is that path, driven directly.
   await page.evaluate(() => /** @type {HTMLElement} */ (document.getElementById('appearance')).click());
-  await expect(page.locator('#winnext')).toBeHidden();   // opening Settings already cancels it
-  await page.locator('#settings-auto-box').uncheck();
-  await page.waitForTimeout(6000);
+  await expect(page.locator('#winnext')).toBeHidden();
+  await page.locator('#settings-close').click();
+  await skipAhead(page, 6000);
   expect(await page.locator('#letters').textContent()).toBe(letters);
 });
 
 test('a slow win-card deal the player walked away from never replaces their next board', async ({ page }) => {
-  // Every pool except the one the player picks loads 4s late, so the win card's random
-  // draw is still in flight when they close it and start a board of their own.
-  await page.route('**/src/subjects/*.js', async (route) => {
-    if (!route.request().url().endsWith('/nature.js')) await new Promise(r => setTimeout(r, 4000));
-    await route.continue();
+  // Every pool except the one the player picks is held until they have started a board of
+  // their own, so the win card's random draw is still in flight when they walk away from it.
+  let release = () => {};
+  const held = new Promise((r) => { release = () => r(undefined); });
+  /** @type {Promise<void>[]} */
+  const late = [];
+  await page.route('**/src/subjects/*.js', (route) => {
+    if (route.request().url().endsWith('/nature.js')) return route.continue();
+    const done = held.then(() => route.continue());
+    late.push(done);
+    return done;
   });
   await page.goto('/?seed=1&subject=nature/birds');
   await solve(page);
+  // The draw must not land on Nature, whose pool is loaded already: that deal would not be slow.
+  await page.evaluate(() => { Math.random = () => 0.99; });
   await page.locator('#winbtn').click();          // starts the slow random deal
+  await expect.poll(() => late.length).toBe(1);
   await page.keyboard.press('Escape');            // ...and walks away from it
   await page.locator('#catbtn').click();
   await page.locator('#picker-select').selectOption('nature');
   await page.locator('#picker-start').click();
   await expect(page.locator('#picker')).toBeHidden();
   const subject = await page.locator('#subject').textContent();
-  await page.waitForTimeout(5000);                // the abandoned deal resolves in here
+  release();                                      // the abandoned deal resolves now
+  await Promise.all(late);
+  await page.waitForTimeout(500);
   await expect(page.locator('#subject')).toHaveText(/** @type {string} */ (subject));
   await expect(page.locator('#category')).toHaveText('Nature');
+});
+
+// The header stays in reach of the keyboard behind the win card. New game pressed there while the
+// card's own deal loads is the deal the player asked for: the card's gives way, not lands first.
+test('New game pressed behind the win card while its deal loads deals once', async ({ page }) => {
+  /** @type {Record<string, () => void>} */
+  const release = {};
+  for (const id of ['garden', 'food']) {
+    const held = new Promise((r) => { release[id] = () => r(undefined); });
+    await page.route(`**/src/subjects/${id}.js`, async (route) => { await held; await route.continue(); });
+  }
+  await page.goto('/?seed=1&subject=nature/birds');
+  await solve(page);
+  await page.evaluate(() => { Math.random = () => 0.99; });   // the last category: Garden
+  await page.locator('#winbtn').click();
+  await page.evaluate(() => { Math.random = () => 0.04; });   // the second: Food & Drink
+  await page.evaluate(() => /** @type {HTMLElement} */ (document.getElementById('newbtn')).click());
+  release.garden();
+  await page.waitForTimeout(500);
+  await expect(page.locator('#category')).toHaveText('Nature');
+  release.food();
+  await expect(page.locator('#category')).toHaveText('Food & Drink');
+  await expect(page.locator('#win')).toBeHidden();
+});
+
+test('a New game that fails behind the win card leaves Play working', async ({ page }) => {
+  await page.route('**/src/subjects/garden.js', () => {});           // the card's deal: never answered
+  await page.route('**/src/subjects/food.js', (route) => route.abort());
+  await page.goto('/?seed=1&subject=nature/birds');
+  await solve(page);
+  await page.evaluate(() => { Math.random = () => 0.99; });   // Garden
+  await page.locator('#winbtn').click();
+  await page.evaluate(() => { Math.random = () => 0.04; });   // Food & Drink, which fails
+  await page.evaluate(() => /** @type {HTMLElement} */ (document.getElementById('newbtn')).click());
+  await expect(page.locator('#toast-msg')).toHaveText("Couldn't load a new game. Check your connection.");
+  await expect(page.locator('#win')).toBeVisible();
+  await page.evaluate(() => { Math.random = () => 0.06; });   // with Food struck off the draw: Sports & Games
+  await page.locator('#winbtn').click();
+  await expect(page.locator('#category')).toHaveText('Sports & Games');
+  await expect(page.locator('#win')).toBeHidden();
 });
 
 // A themed dropdown's list is part of the page, so Escape reaches the app's own handler.

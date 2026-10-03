@@ -56,9 +56,10 @@ async function mount(page, sign, opts = {}) {
     for (const id of ['solved', 'winmsg', 'winstats', 'winnext', 'winbtn']) document.getElementById(id).hidden = true;
     let host = document.getElementById('schost');
     if (!host) { host = document.createElement('div'); host.id = 'schost'; card.querySelector('h2').after(host); }
-    window.__calls = { next: 0, stay: 0 };
+    window.__calls = { next: 0 };
     win.style.display = 'flex';
-    window.__pb = playBreakdown(host, bd, { ...opts, onNext: () => window.__calls.next++, onStay: () => window.__calls.stay++ });
+    window.__pb?.cancel();   // the last card mounted here, which replacing it does not stop
+    window.__pb = playBreakdown(host, bd, { ...opts, onNext: () => window.__calls.next++ });
   }, { sign, opts, W });
 }
 

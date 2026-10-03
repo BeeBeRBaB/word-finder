@@ -1,16 +1,13 @@
 // Pixel Confetti: pixel-art strips, squares, rings and squiggles falling and tumbling.
 // Rasterised by hand into one reused buffer, so edges stay crisp.
+import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
 
 /** @typedef {{colors:string[], dark:boolean, reducedMotion:boolean}} BackgroundOptions */
-
-/** @type {{name:string, style:'pixel'|'modern', animated:boolean}} */
-export const meta = { name: 'Pixel Confetti', style: 'pixel', animated: true };
 
 const DARK = [[255, 107, 139], [255, 200, 87], [94, 230, 168], [76, 201, 240], [167, 139, 250], [255, 159, 90]];
 const LIGHT = [[214, 58, 100], [201, 138, 0], [15, 153, 96], [27, 130, 196], [109, 79, 214], [217, 102, 31]];
 const MAX = 56;
 const KINDS = 6;
-const FRAME = 1000 / 30;
 const LE = new Uint8Array(new Uint32Array([1]).buffer)[0] === 1;
 
 /** One RGBA pixel in the platform's byte order.
@@ -39,15 +36,9 @@ export function start(host, opts = {}) {
   const pal = light ? LIGHT : DARK;
   const still = !!opts.reducedMotion;
 
-  const cv = document.createElement('canvas');
-  cv.setAttribute('aria-hidden', 'true');
-  cv.style.cssText = 'position:absolute;left:0;top:0;display:block;pointer-events:none;' +
-    'image-rendering:crisp-edges;image-rendering:pixelated';
-  host.appendChild(cv);
-  const c2d = cv.getContext('2d');
-  if (!c2d) return () => cv.remove();
-  // Aliased: narrowing does not reach the hoisted functions below.
-  const ctx = c2d;
+  const layer = hostCanvas(host, true);
+  if (!layer) return () => {};
+  const { cv, ctx } = layer;
 
   // Colour table: [layer near/far][face front/back][palette index].
   const col = new Uint32Array(4 * pal.length);
@@ -69,7 +60,7 @@ export function start(host, opts = {}) {
   let S = 4, gw = 0, gh = 0, w = 0, h = 0, n = 0, seeded = 0;
   // Placeholders; resize() sizes them to the grid.
   let img = ctx.createImageData(1, 1), buf = new Uint32Array(img.data.buffer);
-  let raf = 0, last = 0, due = 0, t = 0, alive = true;
+  let t = 0;
 
   /** @param {number} i @param {boolean} top @returns {void} */
   function seed(i, top) {
@@ -92,8 +83,7 @@ export function start(host, opts = {}) {
 
   /** @returns {void} */
   function resize() {
-    const nw = host.clientWidth || window.innerWidth;
-    const nh = host.clientHeight || window.innerHeight;
+    const [nw, nh] = hostSize(host);
     if (nw === w && nh === h) return;
     w = nw; h = nh;
     S = w < 700 ? 3 : 4;
@@ -150,49 +140,11 @@ export function start(host, opts = {}) {
     ctx.putImageData(img, 0, 0);
   }
 
-  /** @param {number} now @returns {void} */
-  function tick(now) {
-    raf = requestAnimationFrame(tick);
-    if (now < due - 2) return;
-    // Exactly 30fps at any refresh rate: each draw books the next 1/30s slot; a pause resyncs.
-    due = (now - due > FRAME ? now : due) + FRAME;
-    const el = now - last;
-    last = now;
-    const dt = Math.min(el, 100) / 1000;
+  resize();
+  const stop = frameLoop(host, resize, (dt) => {
     t += dt;
     step(dt);
     draw();
-  }
-
-  /** @returns {void} */
-  function play() {
-    if (still || raf || !alive || document.hidden) return;
-    last = performance.now();
-    raf = requestAnimationFrame(tick);
-  }
-  /** @returns {void} */
-  function pause() {
-    if (raf) cancelAnimationFrame(raf);
-    raf = 0;
-  }
-  const onVis = () => (document.hidden ? pause() : play());
-
-  /** @type {ResizeObserver | null} */
-  let ro = null;
-  if (typeof ResizeObserver === 'function') {
-    ro = new ResizeObserver(resize);
-    ro.observe(host);
-  } else window.addEventListener('resize', resize);
-  document.addEventListener('visibilitychange', onVis);
-
-  resize();
-  play();
-
-  return function stop() {
-    alive = false;
-    pause();
-    if (ro) ro.disconnect(); else window.removeEventListener('resize', resize);
-    document.removeEventListener('visibilitychange', onVis);
-    cv.remove();
-  };
+  }, still);
+  return () => { stop(); cv.remove(); };
 }

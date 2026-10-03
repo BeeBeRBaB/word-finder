@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { findAndDrag, dragCells } from './helpers.js';
-import { buildPuzzle, runKey } from '../../src/puzzle.js';
+import { findAndDrag, dragCells, openBoard, skipAhead, blockServiceWorker } from './helpers.js';
+import { buildPuzzle, runKey, spanOf } from '../../src/puzzle.js';
 import { makeRng } from '../../src/rng.js';
 import { PRESETS } from '../../src/layout.js';
 import { WORDS } from '../../src/subjects/home.js';
@@ -8,21 +8,18 @@ import { WORDS } from '../../src/subjects/home.js';
 // Regression for 43c8402. Winning schedules the overlay on a 700ms timer. Starting
 // a new puzzle inside that window used to let the stale timer drop the overlay over
 // a fresh grid, where it swallowed every pointer event and made the game unplayable.
-// #newbtn now opens the picker rather than dealing directly, so "starting a new game"
-// goes through it: pick a category explicitly (nature, the same one already on
-// screen) rather than Surprise me, so this does not depend on which of the 25
-// categories happen to have a subjects/ module on disk yet (see ux.spec.js's reload
-// test for the same caveat) -- and pinned to nature/birds rather than an unseeded
-// load for the same reason.
+// The new game goes through the category picker, picking the category already on
+// screen (nature).
 test('starting a new game during the win delay leaves the board playable', async ({ page }) => {
-  await page.goto('/?seed=1&subject=nature/birds');
+  await page.clock.install();
+  await openBoard(page, '/?seed=1&subject=nature/birds');
   const words = await page.locator('.w').allTextContents();
   for (const w of words) await findAndDrag(page, w.toUpperCase());
 
   await page.locator('#catbtn').click();   // inside the 700ms window
   await page.locator('#picker-select').selectOption('nature');
   await page.locator('#picker-start').click();
-  await page.waitForTimeout(1200);         // let any stale timer fire
+  await skipAhead(page, 1200);             // let any stale timer fire
 
   const total = await page.locator('.w').count();
   await expect(page.locator('#win')).toBeHidden();
@@ -34,14 +31,23 @@ test('starting a new game during the win delay leaves the board playable', async
   await expect(page.locator('#count')).toContainText(`1 of ${total} found`);
 });
 
+// A save naming a subject the catalog no longer has, or a board no size can rebuild, booted to
+// "Unavailable" on every launch.
+for (const [what, save] of /** @type {[string, object][]} */ ([
+  ['a retired subject', { seed: 1, subjectId: 'nature/retired-subject', size: 10, count: 8, found: [] }],
+  ['an impossible board', { seed: 1, subjectId: 'nature/birds', size: 0, count: 12, found: [] }],
+])) test(`a save naming ${what} gives way to a new deal`, async ({ page }) => {
+  await page.addInitScript((s) => localStorage.setItem('wordfinder-save-v1', JSON.stringify(s)), save);
+  await page.goto('/');
+  await expect(page.locator('.cell').first()).toBeVisible();
+  await expect(page.locator('#subject')).not.toHaveText(/^(Offline|Unavailable|Loading…)$/);
+});
+
 // Regression for 5e2bbf6. Selection length came from Euclidean distance, but a
 // k-cell diagonal spans k*sqrt(2), so diagonal drags selected too many cells.
 test('a diagonal drag selects exactly the cells under the pointer', async ({ page }) => {
-  // Pinned rather than a random deal: this only exercises grid geometry, and the
-  // catalog currently lists more categories than have a subjects/ module on disk
-  // (parallel content authoring), so an unpinned load would sometimes boot to
-  // "Offline" instead of a puzzle.
-  await page.goto('/?subject=nature/birds');
+  // Pinned: this only exercises grid geometry.
+  await openBoard(page, '/?subject=nature/birds');
   const len = await page.evaluate(() => {
     const gb = document.getElementById('gridbox');
     if (!gb) throw new Error('missing #gridbox');
@@ -53,7 +59,7 @@ test('a diagonal drag selects exactly the cells under the pointer', async ({ pag
     const a = pt(0, 0), b = pt(3, 3);
     /** @param {string} t @param {{x:number, y:number}} p @returns {boolean} */
     const ev = (t, p) => gb.dispatchEvent(new PointerEvent(t, {
-      clientX: p.x, clientY: p.y, bubbles: true, pointerId: 1,
+      clientX: p.x, clientY: p.y, bubbles: true, pointerId: 1, isPrimary: true,
     }));
     ev('pointerdown', a);
     ev('pointermove', b);
@@ -68,6 +74,15 @@ test('a diagonal drag selects exactly the cells under the pointer', async ({ pag
   expect(len).toBe(4);   // (0,0)..(3,3) inclusive. Pre-fix this measured 5 or 6.
 });
 
+/** Waits for the page's own service worker to take control; whether it did.
+ * Run in the page. @returns {Promise<boolean>} */
+async function controlled() {
+  await navigator.serviceWorker.register('./sw.js');
+  await navigator.serviceWorker.ready;
+  for (let i = 0; i < 40 && !navigator.serviceWorker.controller; i++) await new Promise(r => setTimeout(r, 250));
+  return !!navigator.serviceWorker.controller;
+}
+
 // Regression for d468bd7. The service worker used to fall back to index.html for any
 // FAILED request (a rejected fetch(), e.g. offline), so a missing .js asset came back
 // as HTML and produced a baffling "Unexpected token '<'" instead of a clean network
@@ -77,12 +92,8 @@ test('a diagonal drag selects exactly the cells under the pointer', async ({ pag
 // that with context.setOffline(true) rather than requesting a merely-missing URL.
 test('the service worker only falls back to index.html for navigations', async ({ page, context }) => {
   await page.goto('/');
-  await page.evaluate(async () => {
-    await navigator.serviceWorker.register('./sw.js');
-    await navigator.serviceWorker.ready;
-    for (let i = 0; i < 40 && !navigator.serviceWorker.controller; i++)
-      await new Promise(r => setTimeout(r, 250));
-  });
+  // Without control the offline fetch below rejects natively, which is what the fix expects too.
+  expect(await page.evaluate(controlled)).toBe(true);
 
   await context.setOffline(true);
   /** @type {{rejected:false, text:string} | {rejected:true, message:string}} */
@@ -106,6 +117,85 @@ test('the service worker only falls back to index.html for navigations', async (
   // missing .js resolves with the precached index.html document.
   const cameBackAsIndexHtml = !result.rejected && result.text.includes('<!DOCTYPE html>');
   expect(cameBackAsIndexHtml).toBe(false);
+});
+
+// A first visit deals before the worker controls the page, so nothing cached that board's word
+// pool or its background, and the next launch offline said "Offline", or lost the background.
+test('the board and background from a first visit come back offline', async ({ page, context }) => {
+  await page.addInitScript(() => {
+    if (!localStorage.getItem('wordfinder-settings-v1')) localStorage.setItem('wordfinder-settings-v1', JSON.stringify({ art: 'drift' }));
+  });
+  await openBoard(page, '/');
+  const letters = await page.locator('#letters').textContent();
+  const drawn = page.locator('#bg canvas, #bgside canvas');
+  await expect(drawn).not.toHaveCount(0);
+  expect(await page.evaluate(controlled)).toBe(true);
+  await expect.poll(() => page.evaluate(async () => {
+    const paths = new Set();
+    for (const k of await caches.keys()) for (const r of await (await caches.open(k)).keys()) paths.add(new URL(r.url).pathname);
+    return ['/src/backgrounds/drifting-icons.js', '/src/backgrounds/icons.js'].every(p => paths.has(p))
+      && [...paths].some(p => p.startsWith('/src/subjects/'));
+  })).toBe(true);
+  // Offline for the worker as well: context.setOffline stops holding back the worker's own
+  // requests once the page reloads, so the board came back without anything having been cached.
+  await context.route('**/*', (route) => route.abort());
+  await page.reload();
+  await page.locator('.cell').first().waitFor();
+  expect(await page.locator('#letters').textContent()).toBe(letters);
+  await expect(drawn).not.toHaveCount(0);
+});
+
+// A launch that could not put its save back offline tries again once the network returns, even
+// with New game open; but a board the player deals while it loads is theirs, and stays.
+test('a launch that failed offline is tried again online, and gives way to a board the player deals', async ({ page }) => {
+  await blockServiceWorker(page);
+  await openBoard(page, '/?seed=3&subject=nature/birds');
+  const letters = await page.locator('#letters').textContent();
+  const pool = /\/src\/subjects\/nature\.js/;
+  await page.route(pool, (route) => route.abort());
+  const offlineLaunch = async () => {
+    await page.goto('/');
+    await expect(page.locator('#subject')).toHaveText('Offline');
+    await page.locator('#catbtn').click();
+  };
+  await offlineLaunch();
+  await page.unroute(pool);
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
+  await page.locator('#picker-cancel').click();
+  await expect.poll(() => page.locator('#letters').textContent()).toBe(letters);
+  // Again, with the save's pool slow this time, and Food dealt from New game meanwhile.
+  await page.route(pool, (route) => route.abort());
+  await offlineLaunch();
+  await page.unroute(pool);
+  /** @type {() => void} */
+  let release = () => {};
+  const held = new Promise((r) => { release = () => r(undefined); });
+  await page.route(pool, async (route) => { await held; await route.continue(); });
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
+  await page.locator('#picker-select').selectOption('food');
+  await page.locator('#picker-start').click();
+  await expect(page.locator('#category')).toHaveText('Food & Drink');
+  release();
+  await page.waitForTimeout(500);
+  await expect(page.locator('#category')).toHaveText('Food & Drink');
+});
+
+// A save the launch could not put back offline is a game in progress too. New game warns before a
+// deal replaces it, and the one-click button, with no board to keep for Undo, asks the same way.
+test('a save waiting for the network is warned about before a new deal replaces it', async ({ page }) => {
+  await blockServiceWorker(page);
+  await openBoard(page, '/?seed=3&subject=nature/birds');
+  await findAndDrag(page, String(await page.locator('.w').first().textContent()).toUpperCase());
+  await page.route(/\/src\/subjects\/nature\.js/, (route) => route.abort());
+  await page.goto('/');
+  await expect(page.locator('#subject')).toHaveText('Offline');
+  for (const button of ['#catbtn', '#newbtn']) {
+    await page.locator(button).click();
+    await expect(page.locator('#picker')).toBeVisible();
+    await expect(page.locator('#picker-warning')).toBeVisible();
+    await page.locator('#picker-cancel').click();
+  }
+  await expect(page.locator('#subject')).toHaveText('Offline');
 });
 
 // Regression for 121de94 + 60b5099. Code is stale-while-revalidate: a changed asset
@@ -147,42 +237,17 @@ test('code revalidates in the background, icons stay cache-first', async ({ page
   expect(after['/icon-192.png'] || 0).toBe(before['/icon-192.png'] || 0);
 });
 
-// Guard for the src/ split. A path typo in the precache list breaks offline support
-// SILENTLY — install rejects, the old worker keeps serving, and nothing surfaces an
-// error. Parse the shipped list and prove every entry actually resolves.
-test('every asset in the service worker precache list actually resolves', async ({ page, baseURL }) => {
-  await page.goto('/');
-  const sw = await (await fetch(`${baseURL}/sw.js`)).text();
-  const assetsMatch = sw.match(/const ASSETS=(\[[^\]]*\])/);
-  if (!assetsMatch) throw new Error('could not find ASSETS list in sw.js');
-  /** @type {string[]} */
-  const list = JSON.parse(assetsMatch[1].replace(/'/g, '"'));
-  expect(list.length, 'ASSETS list failed to parse').toBeGreaterThan(5);
-  const results = await page.evaluate(async (paths) => {
-    /** @type {Record<string, number>} */
-    const out = {};
-    for (const p of paths) out[p] = (await fetch(p, { cache: 'reload' })).status;
-    return out;
-  }, list);
-  for (const [path, status] of Object.entries(results)) {
-    expect(status, `${path} did not resolve`).toBe(200);
-  }
-});
-
-// The other half of the guard above. "Every ASSETS entry resolves" says nothing
-// about the reverse: an asset the app actually loads that ISN'T in ASSETS. Add
-// src/input.js, import it from main.js, forget to add it to sw.js — install still
-// succeeds, every existing ASSETS entry still resolves, both precache tests stay
-// green, and offline silently 404s on the forgotten module with no error anywhere.
+// The other half of sw.test.js's "every precached path exists", which says nothing about
+// the reverse: an asset the app actually loads that ISN'T in ASSETS. Add src/input.js,
+// import it from main.js, forget to add it to sw.js — install still succeeds, every
+// existing ASSETS entry still resolves, and offline silently 404s on the forgotten
+// module with no error anywhere.
 // Collect the same-origin resources the page really loaded and prove each one is
 // covered by the parsed ASSETS list, so a forgotten entry fails loudly by name.
 test('every same-origin asset the app loads is covered by the precache list', async ({ page, baseURL }) => {
   // networkidle + the full cell count together prove main.js and its entire ES
   // module import graph (rng/puzzle/layout/view/effects/catalog/subjects) actually
-  // ran, not just that the top-level script tag resolved. Pinned to a subject rather
-  // than a random deal: the catalog currently lists more categories than have a
-  // subjects/ module on disk (parallel content authoring), so an unpinned load would
-  // sometimes boot to "Offline" and never reach the module graph this test checks.
+  // ran, not just that the top-level script tag resolved.
   await page.goto('/?subject=nature/birds', { waitUntil: 'networkidle' });
   // 169 on a desktop board, 100 on a phone — see smoke.spec.js for why a perfect
   // square is asserted rather than a fixed number.
@@ -213,16 +278,15 @@ test('every same-origin asset the app loads is covered by the precache list', as
   ]);
 
   // Legitimately not app assets and not expected in ASSETS: the test harness's own
-  // endpoints, and sw.js itself (a service worker doesn't precache itself). Chromium
-  // did not request favicon.ico in practice here (no <link rel="icon">, headless),
-  // but it's excluded on principle rather than by accident of what one browser does.
+  // endpoints, and sw.js itself (a service worker doesn't precache itself). favicon.ico
+  // is excluded on principle: index.html links icon-192.png as the icon, so no browser
+  // should ask for it, but that is not this test's to pin.
   const EXCLUDED = new Set(['__probe.js', '__stats', '__reset', 'sw.js', 'favicon.ico']);
   // A per-category word pool, e.g. src/subjects/nature.js, is the one thing this app
-  // loads that must NOT be in ASSETS -- see the "loaded lazily" comment atop
-  // src/subjects.js. Precaching it would pull every category's words into the
-  // installed shell, defeating the whole point of fetching only the one a player
-  // actually deals. src/subjects.js (the loader) is a different, always-precached
-  // file and is not matched by this.
+  // loads here that must NOT be in ASSETS: precaching it would pull every category's
+  // words into the installed shell, defeating the whole point of fetching only the one
+  // a player actually deals. src/subjects.js (the loader) is a different,
+  // always-precached file and is not matched by this.
   const LAZY_SUBJECT = /^src\/subjects\/[^/]+\.js$/;
 
   /** @type {string[]} */
@@ -263,10 +327,7 @@ test('a run that only spells a word does not find it', async ({ page }) => {
   // The board the page rendered must be the board we just rebuilt, or the rest is fiction.
   expect((await page.locator('.cell').allTextContents()).join('')).toBe(puzzle.cells.join(''));
 
-  const placed = new Set(puzzle.placements.map((p) => {
-    const last = p.word.length - 1;
-    return runKey(shape.size, { x0: p.x0, y0: p.y0, x1: p.x0 + p.dx * last, y1: p.y0 + p.dy * last });
-  }));
+  const placed = new Set(puzzle.placements.map((p) => runKey(shape.size, spanOf(p))));
   const ghost = findGhostRun(puzzle, shape.size, placed);
   if (!ghost) {
     // The compact 10x10 board draws 8 shorter words, so a pinned seed that ghosts on the
@@ -316,7 +377,7 @@ function findGhostRun(puzzle, size, placed) {
 // 320x400 also meets the short-screen block, which sets the card's padding there.
 for (const height of [568, 400]) test(`the win card and the score card in it fit a 320x${height} screen`, async ({ page }) => {
   await page.setViewportSize({ width: 320, height });
-  await page.goto('/?seed=7&subject=nature/birds');
+  await openBoard(page, '/?seed=7&subject=nature/birds');
   const words = await page.locator('.w').allTextContents();
   for (const w of words) await findAndDrag(page, w.toUpperCase());
   await expect(page.locator('#win')).toBeVisible();
@@ -328,17 +389,18 @@ for (const height of [568, 400]) test(`the win card and the score card in it fit
     expect(b && b.x + b.width).toBeLessThanOrEqual(320);
   };
   await inside();
-  // The score card, mounted under the title where the levels wiring will put it.
+  // The level's score card, as the app shows it: card[data-level] restyles the whole card.
   await page.evaluate(async () => {
-    const card = '/src/scorecard.js', scoring = '/src/scoring.js';
-    const { playBreakdown } = await import(card);
+    const account = '/src/account.js', scoring = '/src/scoring.js';
+    const { showLevelWin } = await import(account);
     const { scoreLevel } = await import(scoring);
     const W = ['SPARROW', 'ROBIN', 'EAGLE', 'HERON', 'FINCH', 'OWL', 'PELICAN', 'WREN', 'CRANE', 'SWALLOW', 'MAGPIE', 'KESTREL'];
     const bd = scoreLevel({ events: W.map((w, i) => ({ word: w, at: 9000 * (i + 1), revealed: i === 7 })), elapsedMs: 118000, difficulty: 'normal', wordCount: 12 });
-    const host = document.createElement('div');
-    document.querySelector('#wincard h2')?.after(host);
-    playBreakdown(host, bd, { onNext() {}, onStay() {} }).skip();
+    const card = /** @type {HTMLElement} */ (document.getElementById('wincard'));
+    showLevelWin(card, card.querySelector('h2'), 12, { breakdown: bd, progress: { points: 5644 } },
+      { reduceMotion: true, countdownMs: 0, onNext() {} }).skip();
   });
+  await expect(page.locator('#wincard')).toHaveAttribute('data-level', '12');
   await inside();
   const sc = await page.locator('.sc').boundingBox();
   expect(sc && sc.width).toBeGreaterThanOrEqual(240);

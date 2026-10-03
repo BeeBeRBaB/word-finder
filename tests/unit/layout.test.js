@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { computeLayout, pickPreset, reservePortrait, PRESETS } from '../../src/layout.js';
+import { computeLayout, pickPreset, reservePortrait, PRESETS, MIXES, mixFor } from '../../src/layout.js';
 
 const at = (vw, vh, count = 12) => computeLayout({ vw, vh, size: 13, pad: 10, count });
 
@@ -181,8 +181,18 @@ test('the rail leaves room for the longest subject title beside the action butto
     `rail ${roomy.sideWidth} leaves only ${roomy.sideWidth - ACTIONS - GAP_TO_TITLE}px for a ${WIDEST_TITLE}px title`);
 });
 
-test('difficulty picks the word mix: Normal is the preset, Easy leans short, Hard leans long', async () => {
-  const { mixFor, MIXES } = await import('../../src/layout.js');
+// Pinned: a level's board is dealt at these, so a change re-deals levels in progress
+// (tests/unit/puzzle.test.js pins the layout itself).
+test('the board shapes and difficulty mixes are pinned', () => {
+  const shape = (/** @type {import('../../src/layout.js').Preset} */ p) => [p.size, p.count,
+    ...(/** @type {const} */ (['easy', 'normal', 'hard'])).map(d => mixFor(p, d).map(b => [b.min, b.max, b.take]))];
+  assert.deepEqual([PRESETS.full, PRESETS.compact].map(shape), [
+    [13, 12, [[3, 5, 6], [6, 8, 6]], [[3, 5, 3], [6, 8, 5], [9, 12, 4]], [[3, 5, 2], [6, 8, 5], [9, 12, 5]]],
+    [10, 8, [[3, 4, 4], [5, 6, 4]], [[3, 4, 2], [5, 6, 3], [7, 9, 3]], [[3, 4, 1], [5, 6, 3], [7, 9, 4]]],
+  ]);
+});
+
+test('difficulty picks the word mix: Normal is the preset, Easy leans short, Hard leans long', () => {
   /** @param {import('../../src/layout.js').Bucket[]} mix */
   const avg = (mix) => mix.reduce((s, b) => s + b.take * (b.min + b.max) / 2, 0) / mix.reduce((s, b) => s + b.take, 0);
   for (const [name, p] of Object.entries(PRESETS)) {

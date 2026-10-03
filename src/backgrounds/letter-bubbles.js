@@ -1,5 +1,6 @@
 // Letter bubbles: soap bubbles with a letter inside drift up, wobble, and pop.
 // Each bubble owns one small sprite canvas, repainted only when it respawns.
+import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
 
 /**
  * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean}} BackgroundOptions
@@ -8,10 +9,6 @@
  *   ph:number, y0:number, y:number, popY:number, pop:number, ch:string, ci:number, half:number,
  * }} Bubble
  */
-
-/** @type {{name:string, style:'pixel'|'modern', animated:boolean}} */
-export const meta = { name: 'Letter Bubbles', style: 'modern', animated: true };
-const STEP = 1000 / 30;
 
 const DARK = ['#ff7aa2', '#ffb35c', '#ffe46b', '#6ee7b7', '#67c8ff', '#b79cff'];
 const LIGHT = ['#d63f73', '#d8701a', '#b08a00', '#169a68', '#1a82c8', '#7250d6'];
@@ -35,16 +32,12 @@ export function start(host, opts) {
   const dark = opts.dark !== false;
   const pal = dark ? DARK : LIGHT;
   const reduced = !!opts.reducedMotion;
-  const cv = document.createElement('canvas');
-  cv.setAttribute('aria-hidden', 'true');
-  cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none';
-  host.appendChild(cv);
-  const c2d = cv.getContext('2d');
-  if (!c2d) return () => cv.remove();
-  const ctx = c2d;
+  const layer = hostCanvas(host);
+  if (!layer) return () => {};
+  const { cv, ctx } = layer;
   /** @type {Bubble[]} */
   const parts = [];
-  let W = 0, H = 0, dpr = 1, n = 0, raf = 0, last = 0, due = 0, t = 0, dead = false;
+  let W = 0, H = 0, dpr = 1, n = 0, t = 0;
   /** @param {number} a @param {number} b @returns {number} */
   const rnd = (a, b) => a + Math.random() * (b - a);
 
@@ -99,14 +92,23 @@ export function start(host, opts) {
 
   /** @returns {void} */
   function resize() {
-    const w = host.clientWidth || innerWidth, h = host.clientHeight || innerHeight;
-    const d = Math.min(2, devicePixelRatio || 1);
+    const [w, h] = hostSize(host);
+    const d = Math.min(3, devicePixelRatio || 1);
     if (w === W && h === H && d === dpr && n) return;
+    const sx = w / W, sy = h / H, repaint = d !== dpr, was = n;
     W = w; H = h; dpr = d;
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     n = Math.max(12, Math.min(46, Math.round(W * H / 32000)));
     while (parts.length < n) parts.push(bubble());
-    for (let i = 0; i < n; i++) spawn(parts[i], true);
+    // The field carries on across a resize, stretched to the new box: re-rolling it made every
+    // rotation or window drag jump. Only bubbles it gains are new.
+    for (let i = 0; i < n; i++) {
+      const p = parts[i];
+      if (i >= was) { spawn(p, true); continue; }
+      const dy = p.y * (sy - 1);
+      p.x0 *= sx; p.y += dy; p.y0 += dy; p.popY *= sy;
+      if (repaint) paint(p);
+    }
     draw();
   }
 
@@ -142,39 +144,11 @@ export function start(host, opts) {
     ctx.globalAlpha = 1;
   }
 
-  /** @param {number} now @returns {void} */
-  function frame(now) {
-    raf = requestAnimationFrame(frame);
-    if (now < due - 2) return;
-    // Exactly 30fps at any refresh rate: each draw books the next 1/30s slot; a pause resyncs.
-    due = (now - due > STEP ? now : due) + STEP;
-    const dt = last ? Math.min(0.1, (now - last) / 1000) : 0;
-    last = now;
-    step(dt); draw();
-  }
-
-  /** @returns {void} */
-  function play() {
-    if (dead || reduced || raf || document.hidden) return;
-    last = 0; raf = requestAnimationFrame(frame);
-  }
-  /** @returns {void} */
-  function pause() { cancelAnimationFrame(raf); raf = 0; }
-  const onVis = () => (document.hidden ? pause() : play());
-
-  const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(resize) : null;
-  if (ro) ro.observe(host); else window.addEventListener('resize', resize);
-  document.addEventListener('visibilitychange', onVis);
-  resize();
   if (!reduced) t = rnd(0, 20);
-  draw();
-  play();
-
-  return function stop() {
-    dead = true; pause();
-    if (ro) ro.disconnect(); else window.removeEventListener('resize', resize);
-    document.removeEventListener('visibilitychange', onVis);
-    cv.remove();
-    parts.length = 0;
-  };
+  resize();   // which paints the first frame
+  const stop = frameLoop(host, resize, (dt) => {
+    step(dt);
+    draw();
+  }, reduced);
+  return () => { stop(); cv.remove(); parts.length = 0; };
 }

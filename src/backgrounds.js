@@ -1,17 +1,19 @@
 // Background choices: the still category art (art.js) and the animated modules in
 // src/backgrounds/, which load only when picked. Pure: the import is injected, and the
 // host a background draws into is passed in.
+import { retryingImport } from './importer.js';
 
 /**
  * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed:number, corner?:boolean}} BackgroundOptions
- * `colors` are the palette's six confetti colours; `subject` and `seed` are the dealt puzzle's.
+ * `colors` are the theme's six confetti colours, which the subject backgrounds draw in (the
+ * others keep their own); `subject` and `seed` are the dealt puzzle's.
  * `corner` asks a scene for its main icon alone, placed by the host's CSS like the category art.
  */
 /** @typedef {{start:(host:HTMLElement, opts:BackgroundOptions)=>()=>void}} BackgroundModule */
 /**
  * @typedef {{id:string, name:string, animated:boolean, file?:string, glyph:string, perDeal?:boolean}} Background
  * `file` is the module under src/backgrounds/; `glyph` is the picker tile's picture, the inner
- * markup of a 48x32 SVG whose g1..g4 classes take the palette's confetti colours. `perDeal`
+ * markup of a 48x32 SVG whose g1..g4 classes take the theme's confetti colours. `perDeal`
  * restarts it for every new subject or seed; the others keep running across deals.
  */
 
@@ -52,6 +54,11 @@ export function findBackground(id, list = BACKGROUNDS) {
   return list.find(b => b.id === id) ?? list[0];
 }
 
+/** A background's module, by its registry `file`, tried again under a new URL after a failure
+ * (importer.js says why). Relative to this file, not the page.
+ * @type {(file:string) => Promise<BackgroundModule>} */
+export const importBackground = retryingImport((file, query) => import(`./backgrounds/${file}.js${query}`));
+
 /**
  * Runs at most one animated background at a time. show() resolves once the new one is
  * drawing, or immediately for a still choice; a show() overtaken by a later call never
@@ -59,7 +66,7 @@ export function findBackground(id, list = BACKGROUNDS) {
  * @param {{importFn?:(file:string)=>Promise<BackgroundModule>, list?:readonly Background[]}} [deps]
  */
 export function makeBackdrop(deps = {}) {
-  const importFn = deps.importFn ?? (file => import(`./backgrounds/${file}.js`));
+  const importFn = deps.importFn ?? importBackground;
   /** @type {Map<string, Promise<BackgroundModule>>} */
   const loaded = new Map();
   /** @type {(() => void)|null} */

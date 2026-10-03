@@ -2,6 +2,7 @@
 // fetched rather than read, and where a network failure becomes actionable.
 
 import { findCategory, categoryOf, subjectName } from './catalog.js';
+import { retryingImport } from './importer.js';
 
 /** @typedef {{id:string, name:string, subjectIds:string[], words:Record<string,string>}} CategoryData */
 /** @typedef {{id:string, name:string, category:string, categoryName:string, words:string[]}} Subject */
@@ -18,20 +19,9 @@ export class SubjectLoadError extends Error {
   }
 }
 
-/** The real import, plus a retry. A failed dynamic import is remembered as failed for
- * the life of the page, so a retry must name a URL the page has not already failed on
- * — hence a counter, not a flag: `?retry=1` is poisoned once it fails too. Kept in here
- * so the injected-importer contract stays one argument.
+/** The real import, tried again under a new URL after a failure (importer.js says why).
  * @returns {(category:string) => Promise<{WORDS:Record<string,string>}>} */
-function realImport() {
-  /** @type {Map<string, number>} */
-  const failures = new Map();
-  return (category) => {
-    const n = failures.get(category) ?? 0;
-    return import(n === 0 ? `./subjects/${category}.js` : `./subjects/${category}.js?retry=${n}`)
-      .catch((err) => { failures.set(category, n + 1); throw err; });
-  };
-}
+const realImport = () => retryingImport((category, query) => import(`./subjects/${category}.js${query}`));
 
 /**
  * The importer is injected so a unit test can fail one without a network, and so the

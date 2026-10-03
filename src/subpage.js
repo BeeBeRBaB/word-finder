@@ -35,7 +35,8 @@ export function makeSubpage({ card, page, row, back, name, onOpen, focus }) {
     delete card.dataset.page;
     page.hidden = true;
     const r = rowEl();
-    r?.setAttribute('aria-expanded', 'false');
+    // A row redrawn while the page was open (Sign in, now Sign out) never controlled it.
+    if (r?.hasAttribute('aria-expanded')) r.setAttribute('aria-expanded', 'false');
     if (refocus) r?.focus({ preventScroll: true });
   }
   if (typeof row !== 'function') {

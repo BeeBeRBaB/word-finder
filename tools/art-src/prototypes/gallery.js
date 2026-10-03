@@ -18,8 +18,8 @@ for (const [i, bg] of BACKGROUNDS.filter(b => b.file).entries()) {
   tiles.append(tile);
   try {
     const mod = await import(`../../../src/backgrounds/${bg.file}.js`);
-    label.textContent = `${i + 1}. ${bg.name} (${bg.id}) · ${mod.meta?.style ?? ''}`;
-    mod.start(host, { colors, dark, reducedMotion: q.has('rm') });
+    label.textContent = `${i + 1}. ${bg.name} (${bg.id})`;
+    mod.start(host, { colors, dark, reducedMotion: q.has('rm'), subject: 'nature/trees' });
   } catch (err) {
     label.textContent = `${i + 1}. ${bg.file} failed: ${err instanceof Error ? err.message : err}`;
   }

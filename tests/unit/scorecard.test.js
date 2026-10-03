@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { playBreakdown, formatPoints, WIPE_MS } from '../../src/scorecard.js';
+import { playBreakdown, formatPoints } from '../../src/scorecard.js';
 
 // A DOM just big enough for scorecard.js, and a window whose clock, frames and timers the
 // test drives. Frames run every 16ms; timers fire in order, `late` ms after they are due,
@@ -81,13 +81,6 @@ class FakeEl {
   contains(other) {
     for (let n = other; n; n = n.parentNode) if (n === this) return true;
     return false;
-  }
-  /** Only `#id`, which is all scorecard.js asks for. @param {string} sel @returns {FakeEl|null} */
-  closest(sel) {
-    /** @type {FakeEl|null} */
-    let n = this;
-    for (; n; n = n.parentNode) if (`#${n.id}` === sel) return n;
-    return null;
   }
   /** In the document and not under anything hidden: what a player could see. */
   get rendered() {
@@ -171,7 +164,6 @@ function makeEnv({ late = 2 } = {}) {
   };
   const doc = new FakeDoc(win);
   const card = doc.createElement('div');
-  card.id = 'wincard';
   const host = doc.createElement('div');
   card.append(host);
   doc.body.append(card);
@@ -215,9 +207,9 @@ const STEP = 570, REVEAL = (BREAKDOWN.lines.length) * STEP + 450;
 
 /** @param {ReturnType<typeof makeEnv>} env @param {object} [breakdown] @param {object} [opts] */
 function play(env, breakdown = BREAKDOWN, opts = {}) {
-  const calls = { next: 0, stay: 0 };
+  const calls = { next: 0 };
   const pb = playBreakdown(/** @type {any} */ (env.host), /** @type {any} */ (breakdown), {
-    onNext: () => { calls.next++; }, onStay: () => { calls.stay++; }, ...opts,
+    onNext: () => { calls.next++; }, scope: /** @type {any} */ (env.card), ...opts,
   });
   return { pb, calls };
 }
@@ -367,7 +359,6 @@ test('the countdown shows whole seconds, fills its bar, and fires onNext exactly
   env.advance(10000);
   press(env.host.one('sc-go'));
   assert.equal(calls.next, 1, 'the button cannot fire it a second time');
-  assert.equal(calls.stay, 0);
 });
 
 test('the Next button continues at once', () => {
@@ -391,14 +382,12 @@ test('Stay cancels the countdown, hands focus to Next, and Next still works', ()
   const stay = env.host.one('sc-stay');
   stay.focus();
   press(stay);
-  assert.equal(calls.stay, 1);
   assert.ok(!env.host.one('sc-line').rendered && !env.host.one('sc-bar').rendered);
   assert.ok(env.host.one('sc-go').rendered);
   assert.equal(env.doc.activeElement, env.host.one('sc-go'));
   env.advance(20000);
   assert.equal(calls.next, 0, 'the countdown is gone');
   stay.click();   // a stale event on the hidden button
-  assert.equal(calls.stay, 1);
   env.doc.setHidden(true);
   env.doc.setHidden(false);
   env.advance(20000);
@@ -419,7 +408,6 @@ test('hold() stops the countdown, or keeps it from starting, without Stay or a m
   pb.hold();
   assert.ok(!env.host.one('sc-line').rendered && !env.host.one('sc-bar').rendered);
   assert.equal(live.textContent, 'Total +600 points.');
-  assert.equal(calls.stay, 0, 'not the Stay button');
   assert.equal(env.timers.size + env.frames.size, 0, 'nothing left running');
   env.doc.setHidden(true);
   env.doc.setHidden(false);
@@ -507,27 +495,6 @@ test('the bar and the colour follow the sign of the total', () => {
   assert.notEqual(neg[1], pos[1]);
 });
 
-test('the countdown pauses while the page is hidden and resumes where it was', () => {
-  const env = makeEnv();
-  const { calls } = play(env);
-  env.advance(REVEAL + 16);
-  env.advance(3000);
-  assert.equal(env.host.one('sc-secs').textContent, '7');
-  env.doc.setHidden(true);
-  env.doc.setHidden(true);   // a repeat is harmless
-  assert.equal(env.timers.size + env.frames.size, 0);
-  env.advance(60000);
-  assert.equal(calls.next, 0);
-  env.doc.setHidden(false);
-  env.doc.setHidden(false);   // and does not start a second loop
-  assert.ok(env.frames.size <= 1 && env.timers.size <= 1);
-  env.advance(6900);
-  assert.equal(calls.next, 0, 'the hidden minute did not count');
-  assert.equal(env.host.one('sc-secs').textContent, '1');
-  env.advance(200);
-  assert.equal(calls.next, 1);
-});
-
 test('the reveal pauses while hidden, too', () => {
   const env = makeEnv();
   play(env);
@@ -536,25 +503,31 @@ test('the reveal pauses while hidden, too', () => {
   env.advance(10000);
   assert.deepEqual(shownRows(env.host), [true, false, false, false]);
   env.doc.setHidden(false);
+  env.doc.setHidden(false);   // a repeat does not start a second loop
+  assert.ok(env.frames.size <= 1);
   env.advance(STEP);
   assert.deepEqual(shownRows(env.host), [true, true, false, false]);
 });
 
-test('a card mounted while the page is hidden waits for it', () => {
+test('a card mounted while the page is hidden starts its reveal when it shows', () => {
   const env = makeEnv();
   env.doc.hidden = true;
-  const { calls } = play(env, BREAKDOWN, { reduceMotion: true, countdownMs: 2000 });
+  play(env);
   env.advance(5000);
-  assert.equal(calls.next, 0);
+  assert.deepEqual(shownRows(env.host), [false, false, false, false]);
   env.doc.setHidden(false);
-  env.advance(2016);
-  assert.equal(calls.next, 1);
+  env.advance(16);
+  assert.deepEqual(shownRows(env.host), [true, false, false, false]);
+});
 
-  const env2 = makeEnv();
-  env2.doc.hidden = true;
-  play(env2);
-  env2.advance(5000);
-  assert.deepEqual(shownRows(env2.host), [false, false, false, false]);
+// Hiding the page drops the countdown, and that is main.js's call (hold()), as for the plain card.
+test('once the reveal is over, hiding the page leaves the card alone', () => {
+  const env = makeEnv();
+  const { calls } = play(env);
+  env.advance(REVEAL + 16);
+  assert.equal(env.doc.listeners.get('visibilitychange')?.size ?? 0, 0);
+  env.advance(10016);
+  assert.equal(calls.next, 1);
 });
 
 test('reduced motion renders the finished card at once, without the bar', () => {
@@ -595,24 +568,9 @@ test('cancel() stops everything and nothing fires afterwards', () => {
     env.doc.setHidden(true);
     env.doc.setHidden(false);
     env.advance(30000);
-    assert.deepEqual(calls, { next: 0, stay: 0 });
+    assert.deepEqual(calls, { next: 0 });
     pb.cancel();   // twice is fine
   }
-});
-
-test('a second call on the same host cancels the first', () => {
-  const env = makeEnv();
-  const first = play(env);
-  env.advance(REVEAL + 16);
-  const second = play(env, NEGATIVE, { countdownMs: 20000 });
-  assert.ok(env.host.one('sc').classes.has('sc-neg'));
-  assert.equal(env.host.all('sc').length, 1);
-  env.advance(15000);
-  assert.deepEqual(first.calls, { next: 0, stay: 0 }, 'the first countdown went with its card');
-  first.pb.cancel();   // a stale handle must not stop the new run
-  env.advance(10000);
-  assert.deepEqual(first.calls, { next: 0, stay: 0 });
-  assert.equal(second.calls.next, 1);
 });
 
 test('focus moves to Next only from inside the card or from nowhere', () => {
@@ -640,14 +598,14 @@ test('focus moves to Next only from inside the card or from nowhere', () => {
   field.focus();
   play(env, BREAKDOWN, { reduceMotion: true });
   assert.equal(env.doc.activeElement, field);
-  // A host outside any #wincard judges by the host alone.
+  // With no scope given, the host alone is the card.
   env = makeEnv();
   const loose = env.doc.createElement('div');
   env.doc.body.append(loose);
   const other = env.doc.createElement('button');
   env.doc.body.append(other);
   other.focus();
-  playBreakdown(/** @type {any} */ (loose), /** @type {any} */ (BREAKDOWN), { reduceMotion: true, onNext() {}, onStay() {} });
+  playBreakdown(/** @type {any} */ (loose), /** @type {any} */ (BREAKDOWN), { reduceMotion: true, onNext() {} });
   assert.equal(env.doc.activeElement, other);
   // No active element at all.
   env = makeEnv();
@@ -657,13 +615,13 @@ test('focus moves to Next only from inside the card or from nowhere', () => {
   assert.equal(env.doc.activeElement, env.host.one('sc-go'));
 });
 
-test('no countdown when countdownMs is 0 or Infinity, and nextLabel names the button', () => {
+test('no countdown when countdownMs is 0 or Infinity', () => {
   for (const countdownMs of [0, -5, Infinity, NaN]) {
     const env = makeEnv();
-    const { calls } = play(env, BREAKDOWN, { countdownMs, nextLabel: 'Next puzzle' });
+    const { calls } = play(env, BREAKDOWN, { countdownMs });
     env.advance(REVEAL + 16);
     assert.ok(!env.host.one('sc-line').rendered && !env.host.one('sc-bar').rendered, String(countdownMs));
-    assert.equal(env.host.one('sc-go').textContent, 'Next puzzle \u2192');
+    assert.equal(env.host.one('sc-go').textContent, 'Next level \u2192');
     const live = /** @type {FakeEl} */ (env.host.all('sr').find(s => s.getAttribute('role') === 'status'));
     env.advance(60000);
     assert.equal(live.textContent, 'Total +600 points.');
@@ -672,11 +630,8 @@ test('no countdown when countdownMs is 0 or Infinity, and nextLabel names the bu
     assert.equal(calls.next, 1);
   }
   const env = makeEnv();
-  play(env, BREAKDOWN, { reduceMotion: true, nextLabel: 'Next puzzle' });
-  assert.equal(env.host.one('sc-count').textContent, 'Next puzzle in 10');
-  const blank = makeEnv();
-  play(blank, BREAKDOWN, { reduceMotion: true, nextLabel: '' });
-  assert.equal(blank.host.one('sc-count').textContent, 'Next level in 10');
+  play(env, BREAKDOWN, { reduceMotion: true });
+  assert.equal(env.host.one('sc-count').textContent, 'Next level in 10');
 });
 
 test('a footnote sits under the total, appears with it and is read out with it', () => {
@@ -703,25 +658,14 @@ test('a footnote sits under the total, appears with it and is read out with it',
   env2.advance(300);
   assert.equal(/** @type {FakeEl} */ (env2.host.all('sr').find(s => s.getAttribute('role') === 'status')).textContent,
     'Total +600 points. Not added again.');
-  for (const footnote of [undefined, '', '   ', 7]) {
+  for (const footnote of [undefined, '', '   ']) {
     const e = makeEnv();
     play(e, BREAKDOWN, { footnote, reduceMotion: true });
     assert.equal(e.host.all('sc-all').length, 0, String(footnote));
   }
 });
 
-test('a malformed breakdown still renders a total', () => {
-  const env = makeEnv();
-  play(env, /** @type {any} */ ({ lines: 'nope', total: 'x' }), { reduceMotion: true });
-  assert.equal(env.host.all('sc-row').length, 1);
-  assert.deepEqual(numbers(env.host), ['0']);
-  const env2 = makeEnv();
-  play(env2, /** @type {any} */ ({ lines: [null, { points: NaN }, 7], total: 12.4 }), { reduceMotion: true });
-  const rows = env2.host.one('sc-list').all('sc-row');
-  assert.equal(rows.length, 1);
-  assert.equal(rows[0].one('sc-label').textContent, '');
-  assert.deepEqual(numbers(env2.host), ['0', '+12']);
-  // No lines at all: the total is the first and only row to wipe in.
+test('with no lines, the total is the first and only row to wipe in', () => {
   const env3 = makeEnv();
   play(env3, { ...BREAKDOWN, lines: [] });
   env3.advance(16);
@@ -734,7 +678,12 @@ test('the stylesheet agrees with the module and stays inside its own classes', (
   const css = readFileSync(new URL('../../styles.css', import.meta.url), 'utf8');
   const m = /\.sc-row\.sc-in\{[^}]*animation:sc-wipe ([\d.]+)s/.exec(css);
   assert.ok(m, 'no sc-wipe animation on .sc-row.sc-in');
-  assert.equal(Number(m[1]) * 1000, WIPE_MS);
+  const src = readFileSync(new URL('../../src/scorecard.js', import.meta.url), 'utf8');
+  const t = /const COUNT_DELAY_MS = (\d+), COUNT_MS = (\d+)/.exec(src);
+  assert.ok(t, 'no COUNT_DELAY_MS / COUNT_MS in scorecard.js');
+  const wipe = Number(m[1]) * 1000, delay = Number(t[1]), count = Number(t[2]);
+  assert.ok(wipe > delay && wipe <= delay + count,
+    `the count must start inside the ${wipe}ms wipe and end after it (it runs ${delay}–${delay + count}ms)`);
   const at = css.indexOf('/* Level score card */');
   assert.notEqual(at, -1, 'no Level score card section');
   const end = css.indexOf('/* End level score card */', at);

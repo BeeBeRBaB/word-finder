@@ -2,9 +2,9 @@
 // Level n's category, subject and puzzle seed are a function of (account seed, n) and the
 // catalog, so every device deals the same level. Changing a hash here, or adding a category
 // or subject, re-deals every account's unplayed levels.
-import { makeRng } from './rng.js';
-import { defaultStore } from './storage.js';
-import { CHOICES } from './settings.js';
+import { makeRng, fnv1a } from './rng.js';
+import { safeStore } from './storage.js';
+import { DIFFICULTY_NAMES } from './scoring.js';
 
 export const LEVELS_KEY = 'wordfinder-levels-v1';
 export const HISTORY_MAX = 50;
@@ -15,7 +15,8 @@ export const HISTORY_MAX = 50;
  *   reveals:number, at:number}} LevelResult
  * @typedef {{word:string, at:number, revealed:boolean}} LevelEvent
  * @typedef {{level:number, subject:string, difficulty:Difficulty, events:LevelEvent[],
- *   elapsedMs:number}} LevelCurrent  An unfinished level, so another device can resume it.
+ *   elapsedMs:number, size?:number}} LevelCurrent  An unfinished level, so another device can
+ *   resume it. `size` is its board's width, which builds before 2026-10-03 did not keep.
  * @typedef {{v:1, seed:number, level:number, points:number, history:LevelResult[],
  *   current:LevelCurrent|null}} LevelProgress  `level` is the next one to play (>= 1).
  * @typedef {Pick<Storage,'getItem'|'setItem'|'removeItem'>} LevelStore
@@ -42,13 +43,6 @@ function hash(...parts) {
   return h;
 }
 
-/** FNV-1a over UTF-16 code units. @param {string} s @returns {number} */
-function hashString(s) {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193);
-  return h >>> 0;
-}
-
 /** @param {unknown} n @returns {n is number} */
 const isInt = (n) => Number.isInteger(n);
 /** @param {unknown} n @returns {n is number} */
@@ -60,7 +54,7 @@ const isLevel = (n) => isInt(n) && n >= 1;
 /** @param {unknown} s @returns {s is string} */
 const isText = (s) => typeof s === 'string' && s.length > 0;
 /** @param {unknown} d @returns {d is Difficulty} */
-const isDifficulty = (d) => CHOICES.difficulty.some(v => v === d);
+const isDifficulty = (d) => typeof d === 'string' && Object.keys(DIFFICULTY_NAMES).includes(d);
 /** @param {unknown} o @returns {o is Record<string, unknown>} */
 const isRecord = (o) => !!o && typeof o === 'object' && !Array.isArray(o);
 
@@ -93,16 +87,16 @@ function toResult(r) {
  * @param {unknown} c @returns {LevelCurrent|null} */
 function toCurrent(c) {
   if (!isRecord(c)) return null;
-  const { level, subject, difficulty, events, elapsedMs } = c;
+  const { level, subject, difficulty, events, elapsedMs, size } = c;
   if (!isLevel(level) || !isText(subject) || !isDifficulty(difficulty) || !isTime(elapsedMs)
-    || !Array.isArray(events)) return null;
+    || !Array.isArray(events) || (size !== undefined && !(isInt(size) && size > 0))) return null;
   /** @type {LevelEvent[]} */
   const out = [];
   for (const e of events) {
     if (!isRecord(e) || !isText(e.word) || !isTime(e.at) || typeof e.revealed !== 'boolean') return null;
     out.push({ word: e.word, at: e.at, revealed: e.revealed });
   }
-  return { level, subject, difficulty, events: out, elapsedMs };
+  return { level, subject, difficulty, events: out, elapsedMs, ...(size === undefined ? {} : { size }) };
 }
 
 /** A fresh, trusted copy, or null without a v:1 record and a uint32 seed. Otherwise lenient:
@@ -172,7 +166,7 @@ export function levelSubject(accountSeed, level, categoryId, subjectIds, categor
   if (!isLevel(categoryCount)) throw new RangeError(`categoryCount must be an integer >= 1, got ${categoryCount}`);
   const visit = Math.floor((level - 1) / categoryCount);
   const round = Math.floor(visit / m);
-  const rng = makeRng(hash(SALT_SUBJECT, accountSeed, hashString(categoryId), round));
+  const rng = makeRng(hash(SALT_SUBJECT, accountSeed, fnv1a(categoryId), round));
   return rng.shuffle([...subjectIds].sort())[visit % m];
 }
 
@@ -202,15 +196,22 @@ export function saveCurrent(progress, current) {
 /** @param {LevelProgress} p @returns {number} */
 const eventCount = (p) => (p.current ? p.current.events.length : 0);
 
+/** @param {LevelProgress} p @returns {number} the width of the board its level in progress is on;
+ * 0 when there is none, or it does not say (builds before 2026-10-03 did not keep it) */
+const boardOf = (p) => p.current?.size ?? 0;
+
 /** Pick one whole record, never splice two. Different seeds: remote, since the account's seed
- * is authoritative. Same seed: higher level, then points, then events in `current`, then remote.
- * Both sides are normalized, so garbage counts as null; null only when both are.
+ * is authoritative. Same seed: higher level, then points, then of two games of the level on boards
+ * of different sizes the one on the smaller board, which every device can deal (a phone, which
+ * cannot deal the large one, starts such a level over on its own), then events in `current`, then
+ * remote. Both sides are normalized, so garbage counts as null; null only when both are.
  * @param {unknown} local @param {unknown} remote @returns {LevelProgress|null} */
 export function mergeProgress(local, remote) {
   const l = normalizeProgress(local), r = normalizeProgress(remote);
   if (!l || !r) return r ?? l;
   if (l.seed !== r.seed) return r;
-  const lead = l.level - r.level || l.points - r.points || eventCount(l) - eventCount(r);
+  const a = boardOf(l), b = boardOf(r);
+  const lead = l.level - r.level || l.points - r.points || (a && b ? b - a : 0) || eventCount(l) - eventCount(r);
   return lead > 0 ? l : r;
 }
 
@@ -218,24 +219,19 @@ export function mergeProgress(local, remote) {
  * degrades to null and never throws into the game.
  * @param {{store?:LevelStore|null}} [deps] */
 export function makeLevelStore(deps = {}) {
-  const store = deps.store === undefined ? defaultStore() : deps.store;
+  const kv = safeStore(deps.store);
   return {
     /** @returns {LevelProgress|null} */
     load() {
-      try {
-        const raw = store ? store.getItem(LEVELS_KEY) : null;
-        return raw ? normalizeProgress(JSON.parse(raw)) : null;
-      } catch { return null; }
+      const raw = kv.get(LEVELS_KEY);
+      try { return raw ? normalizeProgress(JSON.parse(raw)) : null; } catch { return null; }
     },
     /** An invalid record is not written. @param {LevelProgress} p @returns {void} */
     save(p) {
       const n = normalizeProgress(p);
-      if (!store || !n) return;
-      try { store.setItem(LEVELS_KEY, JSON.stringify(n)); } catch { /* not remembered */ }
+      if (n) kv.set(LEVELS_KEY, JSON.stringify(n));
     },
     /** @returns {void} */
-    clear() {
-      try { if (store) store.removeItem(LEVELS_KEY); } catch { /* nothing to forget */ }
-    },
+    clear() { kv.remove(LEVELS_KEY); },
   };
 }
