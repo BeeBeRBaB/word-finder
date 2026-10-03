@@ -353,8 +353,8 @@ function claim(hit, s, revealed = false) {
   const puzzle = /** @type {Puzzle} */ (state.puzzle);
   state.found[hit] = revealed ? { sel: s, revealed } : { sel: s };
   state.foundOrder.push(hit);
-  // A session that lapsed mid-level leaves an ordinary board; the next sync says so.
-  const level = play.account() ? levelBoard : null;
+  if (levelBoard && !play.account()) letLevelGo();
+  const level = levelBoard;
   if (level) play.note(hit, revealed);
   renderFoundCells(els, state, state.size);
   const won = state.foundOrder.length === puzzle.words.length;
@@ -620,14 +620,16 @@ function advance(level = false) {
   /** @returns {boolean} */
   const wanted = () => gen === dealGen;
   const card = levelCard;
+  // Dropped because a pane opened over the card while it loaded: its Next works again.
+  const rearm = () => { if (card && card === levelCard && els.win.style.display === 'flex') card.rearm(); };
   // Signed out since the level was won, as when the session lapsed: an ordinary game instead.
   const asLevel = level && !!play.account();
   (asLevel ? dealLevel(wanted) : newGame(null, wanted)).then((dealt) => {
     if (dealt && level && !asLevel) showToast("You're signed out, so this is a random game.", false);
-    // Dropped because a pane opened over the card while it loaded: its Next works again.
-    if (!dealt && card && card === levelCard && els.win.style.display === 'flex') card.rearm();
+    if (!dealt) rearm();
   }).catch((err) => {
-    if (gen !== dealGen) return;   // the player has moved on; this failure is not news
+    // The player has moved on, so this failure is not news; a card still up can try again.
+    if (gen !== dealGen) { rearm(); return; }
     // newGame rejects before newPuzzle runs, so the solved board and win card are still
     // up with nothing saying the tap did nothing. Hide the overlay so the header's
     // failure text is what the player actually sees.
@@ -803,10 +805,16 @@ els.win.addEventListener('click', (e) => { if (e.target === els.win) hideWin(); 
 // the page is hidden, and saving it then lets another device carry on.
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { cancelAutoNext(); if (levelBoard) play.pause(); return; }
-  if (levelBoard) play.resume();
-  // Another device may have played on meanwhile: read before this one saves over it.
-  if (play.account()) void play.sync().then(afterSync);
+  if (levelBoard && play.account()) play.resume();
+  catchUp();
 });
+/** Another device may have played on meanwhile: read the cloud before this one saves over it.
+ * A session that lapsed while the page was away (a save was refused) says so on the board.
+ * @returns {void} */
+function catchUp() {
+  if (play.account()) void play.sync().then(afterSync);
+  else if (levelBoard) afterSync();
+}
 
 // appearance.js owns the preference and resolves it onto <html>; this callback is the
 // page-shaped half. The status-bar colour is read back off the resolved palette rather
@@ -936,8 +944,7 @@ function signedOut() {
 function reconcileLevel() {
   const puzzle = state.puzzle;
   if (!puzzle || els.win.style.display === 'flex') return;
-  // The session ended here without Sign out (it lapsed, or was refused): an ordinary board now.
-  if (levelBoard && !play.account()) { levelBoard = null; showCategory(); return; }
+  if (levelBoard && !play.account()) { letLevelGo(); return; }
   if (!levelBoard) {
     const deal = subjectId ? play.resumable(subjectId, currentSeed) : null;
     if (deal) { levelBoard = deal; showCategory(); startLevel(deal); }
@@ -956,7 +963,19 @@ function reconcileLevel() {
   pills();
   list();
   persist();
-  if (state.foundOrder.length === puzzle.words.length) play.finish();
+  if (state.foundOrder.length < puzzle.words.length) return;
+  // The two devices' finds together complete it, and this one is being looked at: its score card.
+  const level = levelBoard;
+  const finished = play.finish();
+  progress.addSolve();
+  if (finished) showLevelCard(finished, level.level, els.picker.style.display === 'flex' || settings.style.display === 'flex');
+}
+/** The session ended here without Sign out (it lapsed, or a save was refused): an ordinary
+ * board now, and the player is told why the header changed. @returns {void} */
+function letLevelGo() {
+  levelBoard = null;
+  showCategory();
+  showToast("You've been signed out, so this game no longer counts as a level.", false);
 }
 /** @returns {void} */
 function afterSync() {
@@ -1174,7 +1193,7 @@ async function restore(saved) {
 renderAccountSection();
 // The account's progress, once the cloud has answered; and again whenever the device is back online.
 void booted.then(afterSync);
-window.addEventListener('online', () => { if (play.account()) void play.sync().then(afterSync); });
+window.addEventListener('online', catchUp);
 // boot() never rejects — it reports any failure into the DOM itself.
 void boot();
 // './sw.js' resolves against the DOCUMENT, not this module. Writing '../sw.js' because

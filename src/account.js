@@ -41,7 +41,7 @@ export function accountLine(s) {
 
 /** A name over a muted line, beside one button: the layout of every account row.
  * @param {Document} doc @param {HTMLElement} name @param {string} line @param {string} label
- * @returns {{row:HTMLElement, btn:HTMLButtonElement}} */
+ * @returns {{row:HTMLElement, btn:HTMLButtonElement, note:HTMLElement}} */
 function accountRow(doc, name, line, label) {
   const row = make(doc, 'div', 'acct-row');
   const who = make(doc, 'span', 'acct-who');
@@ -49,9 +49,10 @@ function accountRow(doc, name, line, label) {
   const btn = /** @type {HTMLButtonElement} */ (make(doc, 'button', '', label));
   btn.type = 'button';
   seg.append(btn);
-  who.append(name, make(doc, 'small', 'acct-line', line));
+  const note = make(doc, 'small', 'acct-line', line);
+  who.append(name, note);
   row.append(who, seg);
-  return { row, btn };
+  return { row, btn, note };
 }
 
 const PITCH = 'Numbered puzzles that keep your points on any device.';
@@ -65,6 +66,11 @@ export function renderAccount(host, play, on) {
   const s = play.status();
   // Signed in at level 0: no copy here, and the cloud has not answered.
   const line = s.level ? accountLine(s) : "Your levels haven't loaded yet.";
+  // Asked once already: a redraw (a sync landing) keeps the warning and Sign out anyway, so the
+  // second tap still means what it says. Only the line under the name moves on.
+  const asked = host.querySelector('.acct-warn:not([hidden])');
+  const shown = host.querySelector('.acct-line');
+  if (asked && shown && s.signedIn && s.pending) { shown.textContent = line; return; }
   const { row, btn } = s.signedIn
     ? accountRow(doc, make(doc, 'b', 'acct-name', s.username ?? ''), line, 'Sign out')
     : accountRow(doc, make(doc, 'span', 'acct-name', 'Levels'), PITCH, 'Sign in');
@@ -190,9 +196,11 @@ export function renderLevelChoice(host, play, on) {
     return { ready: true, start: `Play level ${p.level}` };
   }
   // Signed in with nothing to deal from: this device has no copy and the cloud has not answered.
-  const { row, btn } = s.signedIn
+  const { row, btn, note } = s.signedIn
     ? accountRow(doc, make(doc, 'span', 'acct-name', 'Levels'), "Your levels haven't loaded yet. Check your connection, then try again.", 'Try again')
     : accountRow(doc, make(doc, 'span', 'acct-name', 'Levels'), PITCH, 'Sign in');
+  // Drawn again after each Try again that fails, and read out each time, so the tap is answered.
+  if (s.signedIn) note.setAttribute('role', 'alert');
   btn.addEventListener('click', s.signedIn ? on.onRetry : on.onSignIn);
   host.replaceChildren(row);
   return { ready: false, start: 'Play level' };

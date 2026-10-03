@@ -213,6 +213,7 @@ test('leaving the page holds a level score card\'s countdown, as it cancels the 
   await page.goto('/?subject=nature/birds');
   await levelsSide(page);
   await page.click('#picker-start');
+  await expect(page.locator('#category')).toHaveText('Level 3');
   await findTheRest(page);
   const card = page.locator('#wincard');
   await card.getByRole('button', { name: 'Skip' }).click();
@@ -280,6 +281,7 @@ test('a tab coming back reads the cloud before it saves, so it never writes over
   await page.goto('/?subject=nature/birds');
   await levelsSide(page);
   await page.click('#picker-start');
+  await expect(page.locator('#category')).toHaveText('Level 3');
   const first = (await page.locator('#list .w').first().textContent())?.trim() ?? '';
   await findAndDrag(page, first.toUpperCase());
   /** @param {boolean} hidden */
@@ -308,6 +310,7 @@ test('a reveal stays a reveal across a reload, and the level scores it as one', 
   await page.goto('/?subject=nature/birds');
   await levelsSide(page);
   await page.click('#picker-start');
+  await expect(page.locator('#category')).toHaveText('Level 3');
   await page.click('#reveal');
   await expect(page.locator('#list .w.done, #list .w.glow')).toHaveCount(1);
   await page.goto('/');
@@ -374,6 +377,101 @@ test('a session that lapses leaves an ordinary board, and Next level then deals 
   await page.goto('/');
   await expect(page.locator('#category')).not.toHaveText('Level 3');
   await expect(page.locator('#letters .cell')).not.toHaveCount(0);
+});
+
+/** Refuse this tab's session from here on: every document request is a 401 and the refresh token
+ * has expired, so the next request signs the device out. @param {Page} page */
+async function refuseSession(page) {
+  const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization,content-type', 'Access-Control-Allow-Methods': 'GET,POST,PATCH,OPTIONS' };
+  await page.route(/^https:\/\/(securetoken|firestore)\.googleapis\.com\//, (route) => {
+    if (route.request().method() === 'OPTIONS') return route.fulfill({ status: 204, headers: cors });
+    const expired = route.request().url().includes('securetoken');
+    return route.fulfill({ status: expired ? 400 : 401, headers: { ...cors, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ error: expired ? { message: 'TOKEN_EXPIRED' } : { status: 'UNAUTHENTICATED' } }) });
+  });
+}
+
+/** @param {Page} page @param {boolean} hidden */
+const setHidden = (page, hidden) => page.evaluate((h) => {
+  Object.defineProperty(document, 'hidden', { value: h, configurable: true });
+  document.dispatchEvent(new Event('visibilitychange'));
+}, hidden);
+
+test('a session refused mid-level says so when the player is back, and signing in again picks the level up', async ({ page }) => {
+  const fb = makeFirebase();
+  const uid = fb.add('ana_reads', 'hunter22');
+  fb.put(uid, PROGRESS);
+  await fb.install(page);
+  await signedInAs(page, uid, 'ana_reads');
+  await page.goto('/?subject=nature/birds');
+  await levelsSide(page);
+  await page.click('#picker-start');
+  await expect(page.locator('#category')).toHaveText('Level 3');
+  const words = (await page.locator('#list .w').allTextContents()).map(w => w.trim().toUpperCase());
+  await findAndDrag(page, words[0]);
+  await refuseSession(page);
+  await setHidden(page, true);    // the save on the way out is refused, which signs this device out
+  await setHidden(page, false);
+  await expect(page.locator('#toast-msg')).toHaveText("You've been signed out, so this game no longer counts as a level.");
+  await expect(page.locator('#category')).not.toHaveText('Level 3');
+  await findAndDrag(page, words[1]);
+  // Signing in again: the board is the level it was, with both finds on it.
+  await page.unroute(/^https:\/\/(securetoken|firestore)\.googleapis\.com\//);
+  await fb.install(page);
+  await page.click('#appearance');
+  await page.locator('#settings-account').getByRole('button', { name: 'Sign in' }).click();
+  await page.getByLabel('Username').fill('ana_reads');
+  await page.getByLabel('Password').fill('hunter22');
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#category')).toHaveText('Level 3');
+  await setHidden(page, true);
+  await expect.poll(() => fb.progress(uid)?.current?.events?.map((/** @type {any} */ e) => e.word)).toEqual(words.slice(0, 2));
+});
+
+test('a session that lapses while a score card shows makes Next level deal a random game', async ({ page }) => {
+  const fb = makeFirebase();
+  const uid = fb.add('ana_reads', 'hunter22');
+  fb.put(uid, PROGRESS);
+  await fb.install(page);
+  await signedInAs(page, uid, 'ana_reads');
+  await page.goto('/?subject=nature/birds');
+  await levelsSide(page);
+  await page.click('#picker-start');
+  await expect(page.locator('#category')).toHaveText('Level 3');
+  await findTheRest(page);
+  const card = page.locator('#wincard');
+  await expect(card.locator('h2')).toHaveText('Level 3 complete');
+  await expect.poll(() => fb.progress(uid)?.level).toBe(4);
+  await refuseSession(page);
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));   // its sync is refused
+  await card.getByRole('button', { name: 'Skip' }).click();
+  await card.getByRole('button', { name: 'Next level' }).click();
+  await expect(page.locator('#toast-msg')).toHaveText("You're signed out, so this is a random game.");
+  await expect(page.locator('#category')).not.toHaveText(/^Level/);
+  await expect(page.locator('#win')).toBeHidden();
+});
+
+test('when the finds of two devices together complete a level, the one being looked at shows its score card', async ({ page }) => {
+  const fb = makeFirebase();
+  const uid = fb.add('ana_reads', 'hunter22');
+  fb.put(uid, PROGRESS);
+  await fb.install(page);
+  await signedInAs(page, uid, 'ana_reads');
+  await page.goto('/?subject=nature/birds');
+  await levelsSide(page);
+  await page.click('#picker-start');
+  await expect(page.locator('#category')).toHaveText('Level 3');
+  const words = (await page.locator('#list .w').allTextContents()).map(w => w.trim().toUpperCase());
+  for (const w of words.slice(0, -1)) await findAndDrag(page, w);
+  await setHidden(page, true);
+  await expect.poll(() => fb.progress(uid)?.current?.events?.length).toBe(words.length - 1);
+  // Meanwhile another device found the last word.
+  const p = fb.progress(uid);
+  fb.put(uid, { ...p, current: { ...p.current, events: [...p.current.events, { word: words[words.length - 1], at: p.current.elapsedMs + 1, revealed: false }] } });
+  await setHidden(page, false);
+  await expect(page.locator('#wincard h2')).toHaveText('Level 3 complete');
+  await expect.poll(() => fb.progress(uid)?.level).toBe(4);
 });
 
 // Short landscape phones: Random | Levels and the level's score card both have to fit about 300px.

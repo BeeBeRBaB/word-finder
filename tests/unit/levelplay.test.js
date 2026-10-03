@@ -558,3 +558,21 @@ test('another device\'s finds on the level being played join this one\'s, with t
   assert.ok(play.elapsed() < 99999);
   assert.deepEqual(makeLevelPlay({ cloud: fakeCloud(), store: memStore() }).events(), []);
 });
+
+test('a sync while the clock runs saves only when this device has something new, not the clock alone', async () => {
+  const { play, cloud, clock } = setup();
+  await play.signUp('ana', 'secret1');
+  const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
+  play.start(deal, WORDS);
+  play.note('OWL', false);
+  await play.sync();
+  const saved = cloud.saves.length;
+  clock.tick(4000);
+  await play.sync();
+  assert.equal(cloud.saves.length, saved, 'the clock moving on is not a save');
+  assert.equal(play.status().pending, false);
+  play.pause();   // the page hidden: the stopped clock is news
+  await settle(); await settle();
+  assert.equal(cloud.saves.length, saved + 1);
+  assert.equal(/** @type {any} */ (cloud.docs.get('uid-ana')).current.elapsedMs, 4000);
+});

@@ -134,7 +134,13 @@ export function makeLevelPlay(deps) {
       if (c.elapsedMs > elapsed()) { live.base = c.elapsedMs; if (live.since !== null) live.since = clock(); }
     }
     remember();
-    return JSON.stringify(normalizeProgress(prog)) !== JSON.stringify(r);
+    const mine = normalizeProgress(prog);
+    if (JSON.stringify(mine) === JSON.stringify(r)) return false;
+    // Only the running clock has moved on since the cloud's copy: not worth a write until this
+    // device has something to say (a find, or the clock stopping when the page is hidden).
+    /** @param {LevelProgress|null} p */
+    const still = (p) => JSON.stringify(p && p.current ? { ...p, current: { ...p.current, elapsedMs: 0 } } : p);
+    return dirty || still(mine) !== still(r);
   }
 
   /** Bring this device's copy and the cloud's together: read the cloud's, fold it in, and save the

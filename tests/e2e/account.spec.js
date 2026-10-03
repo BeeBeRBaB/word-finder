@@ -35,7 +35,12 @@ async function mount(page, status, what) {
     host.className = 'panegroup';
     document.getElementById('settings-account')?.remove();
     document.getElementById('settings-body')?.prepend(host);
-    if (what === 'account') m.renderAccount(host, play, { onSignIn: () => w.calls.push(['onSignIn']), onSignOut: () => w.calls.push(['onSignOut']) });
+    // Drawn again, as a sync landing does, optionally with a new status.
+    w.redraw = (/** @type {any} */ next) => {
+      if (next) s = next;
+      m.renderAccount(host, play, { onSignIn: () => w.calls.push(['onSignIn']), onSignOut: () => w.calls.push(['onSignOut']) });
+    };
+    if (what === 'account') w.redraw();
     else w.form = m.renderSignIn(host, play, { onDone: (/** @type {any} */ a) => w.calls.push(['onDone', a.username]) });
   }, { status, what });
 }
@@ -86,7 +91,21 @@ test('signing out with progress not saved online asks once more', async ({ page 
   await host.getByRole('button', { name: 'Sign out' }).click();
   await expect(host).toContainText("Your latest progress isn't saved online yet.");
   expect(await calls(page)).toEqual([]);
+  // A sync landing meanwhile redraws the section: the question stands, and its line moves on.
+  await page.evaluate((st) => /** @type {any} */ (window).redraw(st), { ...IN, level: 13, pending: true, error: 'offline' });
+  await expect(host.locator('.acct-line')).toHaveText('Level 13 · 4,210 points · offline, saved here');
+  await expect(host.getByRole('alert')).toHaveText("Your latest progress isn't saved online yet. Signing out here loses it.");
   await host.getByRole('button', { name: 'Sign out anyway' }).click();
+  expect(await calls(page)).toEqual([['signOut'], ['onSignOut']]);
+});
+
+test('once the progress is saved, a redraw drops the warning and Sign out signs out', async ({ page }) => {
+  await mount(page, { ...IN, pending: true, error: 'offline' }, 'account');
+  const host = page.locator('#acct-host');
+  await host.getByRole('button', { name: 'Sign out' }).click();
+  await page.evaluate((st) => /** @type {any} */ (window).redraw(st), IN);
+  await expect(host.getByRole('alert')).toBeHidden();
+  await host.getByRole('button', { name: 'Sign out', exact: true }).click();
   expect(await calls(page)).toEqual([['signOut'], ['onSignOut']]);
 });
 
@@ -216,7 +235,8 @@ test('signed out, the Levels side offers Sign in and cannot start', async ({ pag
 test('signed in with no progress to deal from, it says so and offers to try again', async ({ page }) => {
   await mountChoice(page, IN, null);
   const host = page.locator('#lv-host');
-  await expect(host).toContainText("Your levels haven't loaded yet. Check your connection, then try again.");
+  // An alert, so the line is read out again each time a Try again fails and draws it anew.
+  await expect(host.getByRole('alert')).toHaveText("Your levels haven't loaded yet. Check your connection, then try again.");
   expect(await result(page)).toEqual({ ready: false, start: 'Play level' });
   await host.getByRole('button', { name: 'Try again' }).click();
   expect(await calls(page)).toEqual([['onRetry']]);
@@ -267,6 +287,24 @@ test('a level\'s win card names the level and plays its score, with the new tota
   await expect(card.getByRole('button', { name: /Next level/ })).toBeFocused();
   await card.getByRole('button', { name: /Next level/ }).click();
   expect(await calls(page)).toEqual(['next']);
+});
+
+// A phone in split screen: one row cut the countdown to "Nex…", so Next level goes under it.
+for (const [w, h] of [[412, 360], [463, 400]]) test(`at ${w}x${h} the score card's countdown is whole and nothing scrolls`, async ({ page }) => {
+  await page.setViewportSize({ width: w, height: h });
+  await levelWin(page, { focus: true });
+  await page.evaluate(() => /** @type {any} */ (window).pb.skip());
+  await page.locator('#wincard').evaluate((e) => Promise.all(e.getAnimations().map(a => a.finished)));
+  await expect(page.locator('#wincard .sc-line')).toBeVisible();
+  const m = await page.evaluate(() => {
+    const win = /** @type {HTMLElement} */ (document.getElementById('win'));
+    const count = /** @type {HTMLElement} */ (document.querySelector('.sc-count'));
+    const go = /** @type {HTMLElement} */ (document.querySelector('.sc-go'));
+    return { scroll: win.scrollHeight - win.clientHeight, clipped: count.scrollWidth > count.clientWidth, goBottom: go.getBoundingClientRect().bottom };
+  });
+  expect(m.clipped, 'the countdown is cut short').toBe(false);
+  expect(m.scroll).toBeLessThanOrEqual(0);
+  expect(m.goBottom).toBeLessThanOrEqual(h);
 });
 
 test('while the score plays, focus waits on Skip', async ({ page }) => {

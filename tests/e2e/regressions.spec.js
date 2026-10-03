@@ -321,6 +321,8 @@ for (const height of [568, 400]) test(`the win card and the score card in it fit
   for (const w of words) await findAndDrag(page, w.toUpperCase());
   await expect(page.locator('#win')).toBeVisible();
   const inside = async () => {
+    // After its pop-in, which overshoots to 1.06 on the way and would read as wider than it is.
+    await page.locator('#wincard').evaluate((e) => Promise.all(e.getAnimations().map(a => a.finished)));
     const b = await page.locator('#wincard').boundingBox();
     expect(b && b.x).toBeGreaterThanOrEqual(0);
     expect(b && b.x + b.width).toBeLessThanOrEqual(320);
