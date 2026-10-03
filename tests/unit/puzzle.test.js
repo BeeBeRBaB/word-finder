@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildPuzzle, pickWords, snap, lineIndices, matchWord, runKey, cap } from '../../src/puzzle.js';
+import { buildPuzzle, pickWords, snap, lineIndices, matchWord, runKey, cap, spanOf } from '../../src/puzzle.js';
 import { makeRng } from '../../src/rng.js';
 
 const FULL_MIX = [
@@ -174,6 +174,11 @@ test('lineIndices walks a selection from its start, in any direction', () => {
   assert.deepEqual(lineIndices(13, { x0: 0, y0: 0, x1: 3, y1: 0 }), [0, 1, 2, 3]);
   assert.deepEqual(lineIndices(13, { x0: 2, y0: 2, x1: 0, y1: 0 }), [28, 14, 0]);
   assert.deepEqual(lineIndices(13, { x0: 4, y0: 4, x1: 4, y1: 4 }), [56]);
+});
+
+test('spanOf runs a placement from its first letter to its last, in its direction', () => {
+  assert.deepEqual(spanOf({ word: 'CAT', x0: 4, y0: 1, dx: -1, dy: 1 }), { x0: 4, y0: 1, x1: 2, y1: 3 });
+  assert.deepEqual(spanOf({ word: 'A', x0: 0, y0: 0, dx: 1, dy: 0 }), { x0: 0, y0: 0, x1: 0, y1: 0 });
 });
 
 test('matchWord matches a placement, and nothing for an empty run', () => {

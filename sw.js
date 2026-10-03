@@ -51,24 +51,24 @@ async function carryOver(){
   const have=new Set(ASSETS.map(u=>new URL(u,sw.location.href).href));
   // A request that never settles would hold the update back for good.
   const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),20000);
-  /** @param {string|Request} req a same-origin path, or a font's request as stored
-   * @returns {Promise<unknown>} */
-  const take=async req=>{
-    const url=typeof req==='string'?req:req.url;
+  /** @param {string} url same-origin by path, or a font's whole URL @returns {Promise<unknown>} */
+  const take=async url=>{
     if(have.has(url))return;
     have.add(url);
-    const res=await fetch(req,{cache:'no-cache',signal:ctl.signal}).catch(()=>null);
-    if(!res||!(res.ok||res.type==='opaque'))return;
-    await cache.put(req,res.clone());
+    // By URL, so in cors mode, never the stored request's: cache.keys() hands every request back
+    // as no-cors, and an opaque copy of a font file is one the page's cors request cannot use.
+    const res=await fetch(url,{cache:'no-cache',signal:ctl.signal}).catch(()=>null);
+    if(!res?.ok)return;
+    await cache.put(url,res.clone());
     // Static relative imports only: a dynamic one loads what the page picks next, online.
     if(url.endsWith('.js'))return Promise.all([...(await res.text()).matchAll(/(?:from|import)\s*['"](\.\.?\/[^'"]+)['"]/g)].map(m=>take(new URL(m[1],url).href)));
   };
   try{
     const old=await Promise.all((await caches.keys()).filter(isStale).map(async k=>(await caches.open(k)).keys()));
-    await Promise.all(old.flat().map(req=>{
-      const u=new URL(req.url);
+    await Promise.all(old.flat().map(({url})=>{
+      const u=new URL(url);
       if(u.origin===sw.location.origin)return isSubject(u)?null:take(u.origin+u.pathname);
-      return isFont(u)?take(req):null;
+      return isFont(u)?take(url):null;
     }));
   }finally{clearTimeout(timer)}
 }

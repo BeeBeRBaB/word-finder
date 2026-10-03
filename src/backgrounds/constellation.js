@@ -1,6 +1,6 @@
 // Constellation: coloured stars drifting slowly, linked by fading lines when close,
 // with the faintest low-poly fill wherever three of them form a triangle.
-import { frameLoop, hostCanvas } from './frame-loop.js';
+import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
 
 /** @typedef {{colors:string[], dark:boolean, reducedMotion:boolean}} BackgroundOptions */
 
@@ -45,8 +45,7 @@ export function start(host, opts) {
 
   /** @returns {void} */
   function resize() {
-    const nw = host.clientWidth || window.innerWidth;
-    const nh = host.clientHeight || window.innerHeight;
+    const [nw, nh] = hostSize(host);
     if (nw === w && nh === h) return;
     if (w && h) for (let i = 0; i < seeded; i++) { X[i] *= nw / w; Y[i] *= nh / h; }
     w = nw; h = nh;

@@ -507,6 +507,28 @@ test('a sync between the last find and the score card leaves the level in the he
   await expect(page.locator('#category')).toHaveText('Level 3');
 });
 
+// A level won here was banked at its last find, so a session that lapses afterwards takes nothing.
+test('a level finished here goes quietly when the session lapses afterwards', async ({ page }) => {
+  const fb = makeFirebase();
+  const uid = fb.add('ana_reads', 'hunter22');
+  fb.put(uid, PROGRESS);
+  await fb.install(page);
+  await signedInAs(page, uid, 'ana_reads');
+  await page.goto('/?subject=nature/birds');
+  await levelsSide(page);
+  await page.click('#picker-start');
+  await expect(page.locator('#category')).toHaveText('Level 3');
+  await findTheRest(page);
+  await expect(page.locator('#wincard h2')).toHaveText('Level 3 complete');
+  await expect.poll(() => fb.progress(uid)?.level).toBe(4);
+  await page.locator('#winclose').click();
+  await refuseSession(page);
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));   // its sync is refused
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('wordfinder-session-v1'))).toBeNull();
+  await expect(page.locator('#category')).not.toHaveText(/^Level/);
+  await expect(page.locator('#toast')).toBeHidden();
+});
+
 test('a session that lapses while a score card shows makes Next level deal a random game', async ({ page }) => {
   const fb = makeFirebase();
   const uid = fb.add('ana_reads', 'hunter22');

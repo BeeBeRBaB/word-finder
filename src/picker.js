@@ -203,5 +203,5 @@ export function makePicker({ root, heading, select, warning, error, start, cance
     /** @type {HTMLElement} */ (next).focus();
   }
 
-  return { open, close, refresh };
+  return { open, close, refresh, isOpen: modal.isOpen };
 }

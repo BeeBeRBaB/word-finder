@@ -1,7 +1,7 @@
 // Silk Bokeh: three ribbons of fine flowing strands that pinch and fan as they wave,
 // with a few soft out-of-focus circles rising slowly past them.
 import { makeRng } from '../rng.js';
-import { frameLoop, hostCanvas } from './frame-loop.js';
+import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
 
 /**
  * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean}} BackgroundOptions
@@ -153,7 +153,7 @@ export function start(host, opts) {
   /** @returns {void} */
   function size() {
     dpr = Math.min(devicePixelRatio || 1, 1.5);
-    const cw = host.clientWidth || innerWidth, ch = host.clientHeight || innerHeight;
+    const [cw, ch] = hostSize(host);
     const nw = Math.max(1, Math.round(cw * dpr)), nh = Math.max(1, Math.round(ch * dpr));
     if (nw === W && nh === H && cv.width === nw) return;
     W = cv.width = nw;

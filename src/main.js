@@ -4,7 +4,7 @@
 import { CATEGORIES, categoryOf } from './catalog.js';
 import { loadCategory, loadSubject, SubjectLoadError } from './subjects.js';
 import { makeRng, resolveSeed, resolveTarget, stringHash } from './rng.js';
-import { buildPuzzle, cap, matchWord, snap } from './puzzle.js';
+import { buildPuzzle, cap, matchWord, snap, spanOf } from './puzzle.js';
 import { computeLayout, pickPreset, PRESETS, mixFor } from './layout.js';
 import { applyLayout, renderGrid, renderList, renderPills, renderFoundCells, renderSolvedShape, renderArt, placeArt } from './view.js';
 import { burst, pop } from './effects.js';
@@ -304,7 +304,8 @@ function onResize() {
   resizeFrame = requestAnimationFrame(() => {
     layout();
     // After it, not in the resize event: an open pane's offsets follow the header's buttons.
-    for (const p of [els.picker, settings]) if (shown(p)) anchorPane(p);
+    if (picker.isOpen()) anchorPane(els.picker);
+    if (settingsPane.isOpen()) anchorPane(settings);
   });
 }
 
@@ -369,7 +370,7 @@ function claim(hit, s, revealed = false) {
   const puzzle = /** @type {Puzzle} */ (state.puzzle);
   state.found[hit] = revealed ? { sel: s, revealed } : { sel: s };
   state.foundOrder.push(hit);
-  if (levelBoard && !play.account()) letLevelGo();
+  if (levelBoard && !play.account()) letLevelGo(SIGNED_OUT);
   const level = levelBoard;
   if (level) play.note(hit, revealed);
   renderFoundCells(els, state, state.size);
@@ -425,9 +426,8 @@ function revealWord() {
   const left = puzzle.placements.filter(p => !state.found[p.word]);
   if (!left.length) return;
   const p = left[Math.floor(Math.random() * left.length)];
-  const n = p.word.length - 1;
   hideToast();   // like any move on the board, this accepts a one-click deal
-  claim(p.word, { x0: p.x0, y0: p.y0, x1: p.x0 + p.dx * n, y1: p.y0 + p.dy * n }, true);
+  claim(p.word, spanOf(p), true);
   pills();
 }
 
@@ -609,17 +609,18 @@ let autoTimer = null;
 // The score card while the win card is a level's. It runs its own countdown.
 /** @type {import('./scorecard.js').Playback|null} */
 let levelCard = null;
-// True while the win card's deal is in flight, so a tap on Play as the countdown fires
-// (or a double tap) deals once, not twice.
-let dealing = false;
-// Bumped whenever the player moves on from the win card (closes it, opens a pane, or a
-// board is dealt). A win-card deal still loading checks it and quietly drops its result.
+// Bumped whenever the player moves on from the win card (closes it, opens a pane, or starts
+// another deal). A win-card deal still loading checks it and quietly drops its result.
 let dealGen = 0;
+// The generation of the win card's deal in flight, so a tap on Play as the countdown fires (or a
+// double tap) deals once, not twice. A bump of dealGen drops that deal and frees Play at once.
+let dealingGen = -1;
+const LOAD_FAILED = "Couldn't load a new game. Check your connection.";
 
-/** @param {HTMLElement} el @returns {boolean} whether a pane or card is showing */
-function shown(el) { return el.style.display === 'flex'; }
+/** @returns {boolean} whether the win card is up */
+function winShown() { return els.win.style.display === 'flex'; }
 /** @returns {boolean} whether New game or Settings is open over the board */
-function paneOpen() { return shown(els.picker) || shown(settings); }
+function paneOpen() { return picker.isOpen() || settingsPane.isOpen(); }
 
 /** @returns {void} */
 function cancelAutoNext() {
@@ -634,15 +635,15 @@ function cancelAutoNext() {
  * Next level and countdown likewise. @param {boolean} [level] the account's next level
  * @returns {void} */
 function advance(level = false) {
-  if (dealing) return;
+  if (dealingGen === dealGen) return;
   cancelAutoNext();
-  dealing = true;
-  const gen = ++dealGen;
+  quickGen++;   // the latest deal asked for wins: a one-click one still loading gives way
+  const gen = dealingGen = ++dealGen;
   /** @returns {boolean} */
   const wanted = () => gen === dealGen;
   const card = levelCard;
   // Dropped because a pane opened over the card while it loaded: its Next works again.
-  const rearm = () => { if (card && card === levelCard && shown(els.win)) card.rearm(); };
+  const rearm = () => { if (card && card === levelCard && winShown()) card.rearm(); };
   (async () => {
     const dealt = level ? await dealLevel(wanted) : null;
     if (dealt !== null) return dealt;
@@ -652,15 +653,14 @@ function advance(level = false) {
     return random;
   })().then((dealt) => {
     if (!dealt) rearm();
-  }).catch((err) => {
+  }).catch(() => {
     // The player has moved on, so this failure is not news; a card still up can try again.
     if (gen !== dealGen) { rearm(); return; }
-    // newGame rejects before newPuzzle runs, so the solved board and win card are still
-    // up with nothing saying the tap did nothing. Hide the overlay so the header's
-    // failure text is what the player actually sees.
+    // newGame rejects before newPuzzle runs, so the solved board and the card are still up with
+    // nothing saying the tap did nothing. The board stays, so the toast says it, as New game's does.
     hideWin();
-    reportLoadFailure(err);
-  }).finally(() => { dealing = false; });
+    showToast(LOAD_FAILED, false);
+  }).finally(() => { if (dealingGen === gen) dealingGen = -1; });
 }
 /** Start counting down, unless the player turned it off or is looking elsewhere.
  * Timed from a deadline rather than by counting ticks, so a throttled timer cannot drift.
@@ -684,10 +684,8 @@ function startAutoNext() {
 function hideWin() {
   cancelAutoNext();
   dealGen++;
-  // Unblock Play: a superseded deal may still be loading, and must not hold the button.
-  dealing = false;
   // Hiding the focused Play button would drop focus to <body>; give it to New game.
-  if (els.win.contains(document.activeElement)) must('newbtn').focus({ preventScroll: true });
+  if (els.win.contains(document.activeElement)) newbtn.focus({ preventScroll: true });
   els.win.style.display = 'none';
   clearLevelWin(wincard, wintitle);
   levelCard = null;
@@ -718,9 +716,10 @@ let undoSnap = null;
 /** @type {ReturnType<typeof setTimeout>|null} */
 let toastTimer = null;
 // Its own generation and guard, apart from the win card's: closing a pane or pressing
-// Escape must not cancel a deal the player asked for with this button.
+// Escape must not cancel a deal the player asked for with this button. quickDealingGen is the
+// one in flight, so a bump of quickGen drops that deal and frees the button at once.
 let quickGen = 0;
-let quickDealing = false;
+let quickDealingGen = -1;
 
 /** @returns {Snapshot|null} */
 function snapshot() {
@@ -764,7 +763,7 @@ function hideToast() {
  * Undo instead, so the common case stays one click and a misclick costs one more.
  * @returns {void} */
 function quickDeal() {
-  if (quickDealing) return;
+  if (quickDealingGen === quickGen) return;
   // A save still waiting for the network has no board to keep for Undo, so New game asks first.
   if (!state.puzzle && progressAtStake()) { openPicker(); return; }
   // A second press on a board still untouched keeps the first offer, rather than losing
@@ -773,8 +772,7 @@ function quickDeal() {
   hideToast();
   cancelAutoNext();
   dealGen++;   // a deal the win card started gives way to this one
-  quickDealing = true;
-  const gen = ++quickGen;
+  const gen = quickDealingGen = ++quickGen;
   /** @type {Snapshot|null} */
   let snap = null;
   newGame(null, () => {
@@ -787,10 +785,12 @@ function quickDeal() {
     if (dealt && snap) { undoSnap = snap; showToast('New game dealt.', true); }
   }).catch((err) => {
     if (gen !== quickGen) return;
-    // A board is still on screen and playable; say so in the toast, not by renaming it.
-    if (state.puzzle) showToast("Couldn't load a new game. Check your connection.", false);
-    else reportLoadFailure(err);
-  }).finally(() => { quickDealing = false; });
+    // A board is still on screen and playable; say so in the toast, not by renaming it. An Undo
+    // this press took over still stands: the board it keeps is not saved anywhere else.
+    if (!state.puzzle) { reportLoadFailure(err); return; }
+    undoSnap = carried;
+    showToast(LOAD_FAILED, !!carried);
+  }).finally(() => { if (quickDealingGen === gen) quickDealingGen = -1; });
 }
 newbtn.addEventListener('click', quickDeal);
 toastUndo.addEventListener('click', () => {
@@ -933,7 +933,6 @@ function renderAccountSection() {
 }
 /** Settings, at its sign-in page. @param {boolean} fromPicker @returns {void} */
 function openSignIn(fromPicker) {
-  picker.close();
   openSettings();
   signInFromPicker = fromPicker;
   signInPage.open();
@@ -941,13 +940,13 @@ function openSignIn(fromPicker) {
 /** @returns {void} */
 function signedIn() {
   afterSync();   // New game may have opened over the sign-in while it was in flight
-  if (signInFromPicker) { signInFromPicker = false; closeSettings(); openPicker(); return; }
+  if (signInFromPicker) { closeSettings(); openPicker(); return; }   // closing clears the flag
   signInPage.close();
 }
 /** The board stays, as an ordinary one; a level's score card goes with the account.
  * @returns {void} */
 function signedOut() {
-  if (levelBoard) { levelBoard = null; showCategory(); }
+  if (levelBoard) letLevelGo('');
   if (wincard.dataset.level) hideWin();
   renderAccountSection();
 }
@@ -956,18 +955,16 @@ function signedOut() {
  * Not while the win card shows, or waits to: that board is done. @returns {void} */
 function reconcileLevel() {
   const puzzle = state.puzzle;
-  if (!puzzle || shown(els.win) || state.winTimer) return;
-  if (levelBoard && !play.account()) { letLevelGo(); return; }
+  if (!puzzle || winShown() || state.winTimer) return;
+  if (levelBoard && (!play.account() || !play.playing())) {
+    // A level won here was banked at its last find, so letting it go then is no news.
+    const solved = state.foundOrder.length === puzzle.words.length;
+    letLevelGo(solved ? '' : play.account() ? 'This level was finished on another device.' : SIGNED_OUT);
+    return;
+  }
   if (!levelBoard) {
     const deal = subjectId ? play.resumable(subjectId, currentSeed) : null;
     if (deal) { levelBoard = deal; showCategory(); startLevel(deal); }
-    return;
-  }
-  if (!play.playing()) {
-    const solved = state.foundOrder.length === puzzle.words.length;
-    levelBoard = null;
-    showCategory();
-    if (!solved) showToast('This level was finished on another device.', false);
     return;
   }
   // Finds another device made on this level, which the sync folded into it.
@@ -979,12 +976,13 @@ function reconcileLevel() {
   progress.addSolve();
   if (finished) showLevelCard(finished, level.level, paneOpen());
 }
-/** The session ended here without Sign out (it lapsed, or a save was refused): an ordinary
- * board now, and the player is told why the header changed. @returns {void} */
-function letLevelGo() {
+const SIGNED_OUT = "You've been signed out, so this game no longer counts as a level.";
+/** The board is an ordinary one now. `why` tells the player why the header changed, unless it
+ * is empty. @param {string} why @returns {void} */
+function letLevelGo(why) {
   levelBoard = null;
   showCategory();
-  showToast("You've been signed out, so this game no longer counts as a level.", false);
+  if (why) showToast(why, false);
 }
 /** @returns {void} */
 function afterSync() {
@@ -1011,7 +1009,7 @@ function openSettings() {
 }
 /** @returns {void} */
 function closeSettings() {
-  if (!shown(settings)) return;
+  if (!settingsPane.isOpen()) return;
   bgPage.close(false);
   lookPage.close(false);
   signInPage.close(false);
@@ -1020,7 +1018,7 @@ function closeSettings() {
   settingsPane.close();
 }
 els.appearance.addEventListener('click', () => {
-  if (shown(settings)) closeSettings(); else openSettings();
+  if (settingsPane.isOpen()) closeSettings(); else openSettings();
 });
 /** Show the stored settings in the pane's controls. Every control under [data-setting] is a
  * settings.js field: a checkbox (data-on/data-off map it to a two-value choice), a radio, a
@@ -1092,7 +1090,7 @@ document.addEventListener('keydown', (e) => {
     // One layer a press: a pane first, then a win card the pane opened over. Only when it
     // is showing: hideWin() also cancels a win-card deal in flight.
     if (paneOpen()) { picker.close(); closeSettings(); }
-    else if (shown(els.win)) hideWin();
+    else if (winShown()) hideWin();
   }
 });
 // Styles or fonts that land after boot change the chrome around the board; re-measure once.

@@ -4,7 +4,7 @@ import {
   newProgress, normalizeProgress, levelSeed, levelCategory, levelSubject, recordLevel, saveCurrent, mergeProgress, makeLevelStore,
 } from './levels.js';
 import { scoreLevel } from './scoring.js';
-import { buildPuzzle } from './puzzle.js';
+import { buildPuzzle, spanOf } from './puzzle.js';
 import { makeRng } from './rng.js';
 import { mixFor } from './layout.js';
 import { safeStore } from './storage.js';
@@ -50,8 +50,7 @@ export function replaySelections(puzzle, events) {
   for (const e of events) {
     const p = puzzle.placements.find(q => q.word === e.word);
     if (!p || out.some(o => o.word === e.word)) continue;
-    const n = p.word.length - 1;
-    out.push({ word: e.word, sel: { x0: p.x0, y0: p.y0, x1: p.x0 + p.dx * n, y1: p.y0 + p.dy * n } });
+    out.push({ word: e.word, sel: spanOf(p) });
   }
   return out;
 }

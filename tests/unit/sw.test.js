@@ -197,7 +197,12 @@ function install(caches, fetch) {
   let budget = () => {};
   vm.runInNewContext(sw, {
     self, caches: cacheStorage, URL, Request, Response, AbortController,
-    fetch: (/** @type {unknown} */ req, /** @type {{cache?:string, signal?:AbortSignal}} */ opts) => fetch(keyOf(req), opts),
+    // By URL only: a stored Request comes back from cache.keys() as no-cors, and refetching a font
+    // with it made an opaque copy the page's cors request could not use.
+    fetch: (/** @type {unknown} */ req, /** @type {{cache?:string, signal?:AbortSignal}} */ opts) => {
+      assert.equal(typeof req, 'string', `fetched with a stored request: ${keyOf(req)}`);
+      return fetch(keyOf(req), opts);
+    },
     setTimeout: (/** @type {() => void} */ f) => { budget = f; return 0; }, clearTimeout: () => {},
   });
   /** @type {Promise<unknown>} */

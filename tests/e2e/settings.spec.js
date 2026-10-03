@@ -204,6 +204,23 @@ test('New game pressed behind the win card while its deal loads deals once', asy
   await expect(page.locator('#win')).toBeHidden();
 });
 
+test('a New game that fails behind the win card leaves Play working', async ({ page }) => {
+  await page.route('**/src/subjects/garden.js', () => {});           // the card's deal: never answered
+  await page.route('**/src/subjects/food.js', (route) => route.abort());
+  await page.goto('/?seed=1&subject=nature/birds');
+  await solve(page);
+  await page.evaluate(() => { Math.random = () => 0.99; });   // Garden
+  await page.locator('#winbtn').click();
+  await page.evaluate(() => { Math.random = () => 0.04; });   // Food & Drink, which fails
+  await page.evaluate(() => /** @type {HTMLElement} */ (document.getElementById('newbtn')).click());
+  await expect(page.locator('#toast-msg')).toHaveText("Couldn't load a new game. Check your connection.");
+  await expect(page.locator('#win')).toBeVisible();
+  await page.evaluate(() => { Math.random = () => 0.06; });   // with Food struck off the draw: Sports & Games
+  await page.locator('#winbtn').click();
+  await expect(page.locator('#category')).toHaveText('Sports & Games');
+  await expect(page.locator('#win')).toBeHidden();
+});
+
 // A themed dropdown's list is part of the page, so Escape reaches the app's own handler.
 // It must close the list and leave the pane around it open.
 test('Escape in an open themed dropdown closes the list, not the pane', async ({ page }) => {

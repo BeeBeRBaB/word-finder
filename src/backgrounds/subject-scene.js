@@ -5,6 +5,7 @@
 import { makeRng } from '../rng.js';
 import { CORNERS } from '../art.js';
 import { iconMarkup, iconsFor, layoutScene, variantOf, withHero } from './icon-scene.js';
+import { hostSize } from './frame-loop.js';
 
 /** @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number, corner?:boolean}} BackgroundOptions */
 
@@ -41,7 +42,7 @@ export function start(host, opts) {
 
   /** @returns {void} */
   function draw() {
-    const w = host.clientWidth || innerWidth, h = host.clientHeight || innerHeight;
+    const [w, h] = hostSize(host);
     if (w === W && h === H) return;
     W = w; H = h;
     svg.setAttribute('viewBox', `0 0 ${W} ${H}`);

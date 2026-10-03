@@ -1,5 +1,5 @@
 // Shimmer Grid: a pixel-font letter grid swept by colour waves, where real words light up.
-import { frameLoop, hostCanvas } from './frame-loop.js';
+import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
 
 /**
  * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean}} BackgroundOptions
@@ -80,7 +80,7 @@ export function start(host, opts = {}) {
 
   /** @returns {void} */
   function resize() {
-    const W = host.clientWidth || innerWidth, H = host.clientHeight || innerHeight;
+    const [W, H] = hostSize(host);
     const w = Math.floor(W / U), h = Math.floor(H / U);
     if (w === cw && h === ch) return;
     cw = cv.width = mask.width = w; ch = cv.height = mask.height = h;

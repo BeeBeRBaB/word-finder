@@ -1,6 +1,6 @@
 // Shared by the pixel backgrounds, and not a background itself: one canvas of 4-8px cells
 // scaled up with pixelated rendering, run by the 30fps loop in frame-loop.js.
-import { frameLoop, hostCanvas } from './frame-loop.js';
+import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
 
 /**
  * @typedef {{resize:(W:number, H:number) => void, step:(dt:number) => void, draw:() => void}} Scene
@@ -28,7 +28,7 @@ export function pixelStage(host) {
 
     /** @returns {void} */
     function size() {
-      const w = host.clientWidth || innerWidth, h = host.clientHeight || innerHeight;
+      const [w, h] = hostSize(host);
       if (w === pw && h === ph) return;
       pw = w; ph = h;
       const px = Math.max(4, Math.min(8, Math.round(Math.min(w, h) / 140)));

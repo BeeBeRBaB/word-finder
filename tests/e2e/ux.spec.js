@@ -28,6 +28,7 @@ test('the win overlay can be dismissed, leaving the solved board', async ({ page
 // fetched before the route is even relevant, and boot()'s own subject resolution
 // never touches Math.random() (it draws from the seeded rng instead).
 
+// The solved board stays, so its header does too: the toast says what happened, as New game's does.
 test('a failed deal from the win card tells the player, rather than leaving a stale overlay', async ({ page }) => {
   const target = CATEGORIES[CATEGORIES.length - 1].id;
   await blockServiceWorker(page);
@@ -48,8 +49,9 @@ test('a failed deal from the win card tells the player, rather than leaving a st
   await page.locator('#winbtn').click();
 
   await expect(page.locator('#win')).toBeHidden();
-  await expect(page.locator('#subject')).toHaveText('Offline');
-  await expect(page.locator('#category')).toHaveText('');
+  await expect(page.locator('#toast-msg')).toHaveText("Couldn't load a new game. Check your connection.");
+  await expect(page.locator('#subject')).toHaveText('Birds');
+  await expect(page.locator('#category')).toHaveText('Nature');
 });
 
 test('progress and puzzle survive a reload', async ({ page }) => {

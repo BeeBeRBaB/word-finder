@@ -3,7 +3,7 @@
 // Each icon is rasterised once into a sprite canvas in its own colour.
 
 import { makeRng } from '../rng.js';
-import { frameLoop, hostCanvas } from './frame-loop.js';
+import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
 import { iconSvg, iconsFor, variantOf, withHero } from './icon-scene.js';
 
 /**
@@ -73,7 +73,7 @@ export function start(host, opts) {
 
   /** @returns {void} */
   function resize() {
-    const w = host.clientWidth || innerWidth, h = host.clientHeight || innerHeight;
+    const [w, h] = hostSize(host);
     const d = Math.min(3, devicePixelRatio || 1);
     if (w === W && h === H && d === dpr && parts.length) return;
     const remake = d !== dpr || !parts.length;

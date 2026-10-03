@@ -1,7 +1,7 @@
 // Aurora Drift: large soft colour blobs on slow Lissajous paths, stretched and turning.
 // Drawn at 1/6 resolution so the browser's upscale does the blurring.
 import { makeRng } from '../rng.js';
-import { frameLoop, hostCanvas } from './frame-loop.js';
+import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
 
 /** @typedef {{colors:string[], dark:boolean, reducedMotion:boolean}} BackgroundOptions */
 
@@ -86,7 +86,7 @@ export function start(host, opts = {}) {
 
   /** @returns {void} */
   function size() {
-    const W = host.clientWidth || window.innerWidth, H = host.clientHeight || window.innerHeight;
+    const [W, H] = hostSize(host);
     const nw = Math.max(1, Math.ceil(W / SCALE)), nh = Math.max(1, Math.ceil(H / SCALE));
     if (nw !== w || nh !== h || cv.width !== nw) {
       w = cv.width = nw;

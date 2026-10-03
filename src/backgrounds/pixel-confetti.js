@@ -1,6 +1,6 @@
 // Pixel Confetti: pixel-art strips, squares, rings and squiggles falling and tumbling.
 // Rasterised by hand into one reused buffer, so edges stay crisp.
-import { frameLoop, hostCanvas } from './frame-loop.js';
+import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
 
 /** @typedef {{colors:string[], dark:boolean, reducedMotion:boolean}} BackgroundOptions */
 
@@ -83,8 +83,7 @@ export function start(host, opts = {}) {
 
   /** @returns {void} */
   function resize() {
-    const nw = host.clientWidth || window.innerWidth;
-    const nh = host.clientHeight || window.innerHeight;
+    const [nw, nh] = hostSize(host);
     if (nw === w && nh === h) return;
     w = nw; h = nh;
     S = w < 700 ? 3 : 4;

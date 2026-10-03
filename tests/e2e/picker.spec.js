@@ -268,6 +268,38 @@ test('Escape does not cancel a one-click deal that is still loading', async ({ p
   await expect.poll(() => page.locator('#letters').textContent(), { timeout: 5000 }).not.toBe(board);
 });
 
+// The Undo a second press takes over is for the board that had finds, which nothing else keeps:
+// a second deal that fails must hand it back, not drop it.
+test('a second New game that fails keeps the Undo for the board that had progress', async ({ page }) => {
+  await blockServiceWorker(page);
+  await page.route('**/src/subjects/garden.js', (route) => route.abort());
+  await openBoard(page, '/?seed=1&subject=nature/birds');
+  const first = /** @type {string} */ (await page.locator('.w').first().textContent()).toUpperCase();
+  await dragCells(page, await findWordInGrid(page, first));
+  const board = await page.locator('#letters').textContent();
+  await page.evaluate(() => { Math.random = () => 0.04; });   // the second category: Food & Drink
+  await page.locator('#newbtn').click();
+  await expect(page.locator('#category')).toHaveText('Food & Drink');
+  await page.evaluate(() => { Math.random = () => 0.99; });   // the last: Garden, which fails
+  await page.locator('#newbtn').click();
+  await expect(page.locator('#toast-msg')).toHaveText("Couldn't load a new game. Check your connection.");
+  await page.locator('#toast-undo').click();
+  await expect.poll(() => page.locator('#letters').textContent()).toBe(board);
+});
+
+test('New game works at once after the pane supersedes a one-click deal still loading', async ({ page }) => {
+  await blockServiceWorker(page);
+  await page.route('**/src/subjects/garden.js', () => {});   // never answered
+  await openBoard(page, '/?seed=1&subject=nature/birds');
+  await page.evaluate(() => { Math.random = () => 0.99; });   // Garden
+  await page.locator('#newbtn').click();
+  await page.locator('#catbtn').click();
+  await page.locator('#picker-cancel').click();
+  await page.evaluate(() => { Math.random = () => 0.04; });   // Food & Drink
+  await page.locator('#newbtn').click();
+  await expect(page.locator('#category')).toHaveText('Food & Drink');
+});
+
 /** The real dialog, rebuilt by a second makePicker with a stand-in Levels side, so picker.js
  * is tested in the page's own markup and CSS.
  * @param {import('@playwright/test').Page} page

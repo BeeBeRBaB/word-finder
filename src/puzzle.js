@@ -286,10 +286,14 @@ export function runKey(size, sel) {
 export function matchWord(placements, found, size, sel) {
   const want = runKey(size, sel);
   for (const p of placements) {
-    if (found[p.word]) continue;
-    const last = p.word.length - 1;
-    const run = runKey(size, { x0: p.x0, y0: p.y0, x1: p.x0 + p.dx * last, y1: p.y0 + p.dy * last });
-    if (run === want) return p.word;
+    if (!found[p.word] && runKey(size, spanOf(p)) === want) return p.word;
   }
   return null;
+}
+
+/** The selection a placement fills, first letter to last.
+ * @param {Placement} p @returns {Selection} */
+export function spanOf(p) {
+  const last = p.word.length - 1;
+  return { x0: p.x0, y0: p.y0, x1: p.x0 + p.dx * last, y1: p.y0 + p.dy * last };
 }

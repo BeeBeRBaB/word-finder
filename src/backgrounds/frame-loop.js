@@ -1,6 +1,6 @@
-// Shared by the animated backgrounds, and not a background itself: the canvas they draw on,
-// and the 30fps frame loop, paused while the page is hidden, with a re-measure whenever the
-// host's box changes.
+// Shared by the backgrounds, and not a background itself: the canvas the animated ones draw on,
+// the host's size, and the 30fps frame loop, paused while the page is hidden, with a re-measure
+// whenever the host's box changes.
 
 // Nothing here is precached, so changing an export needs a CACHE bump in sw.js: else an
 // importer cached last week can meet this file's new copy.
@@ -24,6 +24,10 @@ export function hostCanvas(host, pixelated = false) {
   host.appendChild(cv);
   return { cv, ctx };
 }
+
+/** The host's size in CSS pixels, or the window's while the host has none (not laid out yet).
+ * @param {HTMLElement} host @returns {[number, number]} */
+export const hostSize = (host) => [host.clientWidth || innerWidth, host.clientHeight || innerHeight];
 
 /**
  * Calls `tick` at exactly 30fps unless `still`, never while the page is hidden, and `resize`
