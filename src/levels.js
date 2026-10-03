@@ -196,15 +196,22 @@ export function saveCurrent(progress, current) {
 /** @param {LevelProgress} p @returns {number} */
 const eventCount = (p) => (p.current ? p.current.events.length : 0);
 
+/** @param {LevelProgress} p @returns {number} the width of the board its level in progress is on;
+ * 0 when there is none, or it does not say (builds before 2026-10-03 did not keep it) */
+const boardOf = (p) => p.current?.size ?? 0;
+
 /** Pick one whole record, never splice two. Different seeds: remote, since the account's seed
- * is authoritative. Same seed: higher level, then points, then events in `current`, then remote.
- * Both sides are normalized, so garbage counts as null; null only when both are.
+ * is authoritative. Same seed: higher level, then points, then of two games of the level on boards
+ * of different sizes the one on the smaller board, which every device can deal (a phone, which
+ * cannot deal the large one, starts such a level over on its own), then events in `current`, then
+ * remote. Both sides are normalized, so garbage counts as null; null only when both are.
  * @param {unknown} local @param {unknown} remote @returns {LevelProgress|null} */
 export function mergeProgress(local, remote) {
   const l = normalizeProgress(local), r = normalizeProgress(remote);
   if (!l || !r) return r ?? l;
   if (l.seed !== r.seed) return r;
-  const lead = l.level - r.level || l.points - r.points || eventCount(l) - eventCount(r);
+  const a = boardOf(l), b = boardOf(r);
+  const lead = l.level - r.level || l.points - r.points || (a && b ? b - a : 0) || eventCount(l) - eventCount(r);
   return lead > 0 ? l : r;
 }
 

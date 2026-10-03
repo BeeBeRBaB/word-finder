@@ -65,6 +65,10 @@ const ofRun = (p, deal) => levelSeed(p.seed, deal.level) === deal.seed;
  * the size was kept left it out. @param {LevelCurrent|null} c @param {number} size @returns {boolean} */
 const onBoard = (c, size) => (c?.size ?? size) === size;
 
+/** Whether a saved level is a game on a board smaller than `size`, which wins it over one on this
+ * board (mergeProgress). @param {LevelCurrent|null} c @param {number} size @returns {boolean} */
+const onSmaller = (c, size) => (c?.size ?? size) < size;
+
 /** What went wrong, from a thrown cloud error; 'server' for anything else.
  * @param {unknown} e @returns {CloudCode} */
 export const codeOf = (e) => {
@@ -73,15 +77,13 @@ export const codeOf = (e) => {
 };
 
 /** @param {{cloud:CloudLike, store?:LevelStore|null, now?:() => number, clock?:() => number,
- *   random?:() => number, shows?:(size:number) => boolean}} deps  clock: a monotonic ms clock for
- *   play time. shows: whether this device can deal a board that wide; a phone cannot deal the large one. */
+ *   random?:() => number}} deps  clock: a monotonic ms clock for play time. */
 export function makeLevelPlay(deps) {
   const { cloud } = deps;
   const kv = safeStore(deps.store);
   const now = deps.now ?? Date.now;
   const clock = deps.clock ?? (() => performance.now());
   const random = deps.random ?? Math.random;
-  const shows = deps.shows ?? (() => true);
   const local = makeLevelStore({ store: deps.store });
 
   /** @type {LevelProgress|null} */
@@ -154,11 +156,8 @@ export function makeLevelPlay(deps) {
     const r = normalizeProgress(remote);
     const merged = mergeProgress(prog, r) ?? newProgress((random() * 0x100000000) >>> 0);
     // The level being played is the cloud's no longer: it moved on, another device's run with its
-    // own seed won, or another device's game of it won on a board of another size that this device
-    // can deal. A game on a board it cannot deal (a phone, the large one) gives way to this one.
-    const there = merged.current?.size;
-    if (live && (merged.level !== live.deal.level || !ofRun(merged, live.deal)
-      || (there !== undefined && there !== live.size && shows(there)))) live = null;
+    // own seed won, or another device's game of it on a smaller board won.
+    if (live && (merged.level !== live.deal.level || !ofRun(merged, live.deal) || !onBoard(merged.current, live.size))) live = null;
     keep(merged);
     const c = live && r && r.seed === merged.seed && r.level === live.deal.level ? r.current : null;
     if (live && c && c.subject === live.deal.subject && c.difficulty === live.deal.difficulty && onBoard(c, live.size)) {
@@ -307,8 +306,8 @@ export function makeLevelPlay(deps) {
     playing: () => (live ? live.deal : null),
 
     /** Why a sync let go of `deal`: the account is past its level on the run it was dealt from
-     * ('finished'), or still on it there, as another device's game on a board of another size
-     * ('moved'), or on another device's run ('replaced'). @param {Deal} deal
+     * ('finished'), or still on it there, as another device's game on a smaller board ('moved'),
+     * or on another device's run ('replaced'). @param {Deal} deal
      * @returns {'finished'|'moved'|'replaced'} */
     lost(deal) {
       const p = progress();
@@ -319,14 +318,15 @@ export function makeLevelPlay(deps) {
     /** The level's finds so far, in order, including any another device added. @returns {LevelEvent[]} */
     events: () => (live ? live.events.map(e => ({ ...e })) : []),
 
-    /** Start timing a dealt level, unless the session has lapsed or the account has moved on from
-     * it since it was dealt. Returns the finds to put back when it resumes one, in order; a saved
-     * level played on a board of another size, or whose words are not all on this board, starts over.
+    /** Start timing a dealt level, unless the session has lapsed, the account has moved on from it
+     * since it was dealt, or another device's game of it on a smaller board has won it. Returns the
+     * finds to put back when it resumes one, in order; a saved level played on a larger board (a
+     * phone cannot deal it), or whose words are not all on this board, starts over.
      * @param {Deal} deal @param {string[]} words the board's words @param {number} size its width
      * @param {boolean} [paused] the page is hidden: the clock waits for resume() @returns {LevelEvent[]} */
     start(deal, words, size, paused = false) {
       const p = progress();
-      if (!p || deal.level !== p.level || !ofRun(p, deal)) { live = null; return []; }
+      if (!p || deal.level !== p.level || !ofRun(p, deal) || onSmaller(p.current, size)) { live = null; return []; }
       const set = new Set(words);
       const c = p.current;
       const resume = !!c && c.subject === deal.subject && c.difficulty === deal.difficulty && onBoard(c, size)

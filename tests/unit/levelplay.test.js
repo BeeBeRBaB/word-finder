@@ -297,49 +297,66 @@ test('each find is saved, so the level resumes with its finds and its time', asy
   assert.deepEqual(again, { ...deal, size: 10 }, 'the saved difficulty, not this device\'s setting, and its board');
   assert.deepEqual(other.start(again, WORDS, 10), [{ word: 'WREN', at: 2500, revealed: false }]);
   assert.equal(other.elapsed(), 3500);
-  // A board of another size starts the level over, and so does one without the words found.
+  // A board without that word starts the level over.
   const third = makeLevelPlay({ cloud, store: memStore(), clock: clock.now });
   await third.boot();
-  assert.deepEqual(third.start(again, WORDS, 13), []);
+  assert.deepEqual(third.start(again, ['ROBIN', 'OWL'], 10), []);
   assert.equal(third.elapsed(), 0);
-  assert.deepEqual(third.progress()?.current, { level: 1, subject: deal.subject, difficulty: 'easy', size: 13, events: [], elapsedMs: 0 });
-  const fourth = makeLevelPlay({ cloud, store: memStore(), clock: clock.now });
-  await fourth.boot();
-  assert.deepEqual(fourth.start(again, ['ROBIN', 'OWL'], 10), []);
+  assert.deepEqual(third.progress()?.current, { level: 1, subject: deal.subject, difficulty: 'easy', size: 10, events: [], elapsedMs: 0 });
   assert.ok(store.getItem(LEVELS_KEY));
 });
 
-test('a sync keeps a level on one board: another device\'s game on a board of another size wins it if this device can deal that board', async () => {
+// A phone cannot deal the large board, so it starts such a level over on its own; the game on the
+// smaller board is the level from then on, on every device, whichever has more finds.
+test('a sync keeps one game of a level: another device\'s on a smaller board wins over this board\'s', async () => {
   const { play, cloud } = setup();
   await play.signUp('ana', 'secret1');
   const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
   play.start(deal, WORDS, 13);
-  play.note('OWL', false);
-  // A phone carried on with the level on its smaller board and found two words there.
+  for (const w of ['OWL', 'ROBIN']) play.note(w, false);
   const phone = { level: 1, subject: deal.subject, difficulty: 'normal', size: 10, elapsedMs: 9000,
-    events: [{ word: 'ROBIN', at: 1, revealed: false }, { word: 'WREN', at: 2, revealed: false }] };
+    events: [{ word: 'WREN', at: 1, revealed: false }] };
   cloud.docs.set('uid-ana', { ...newProgress(0x40000000), current: phone });
   await play.sync();
   assert.equal(play.playing(), null, 'this board is not the level any more');
   assert.equal(play.lost(deal), 'moved');
   assert.deepEqual(play.progress()?.current, phone, 'the phone\'s finds are kept, and not mixed with this board\'s');
-  assert.equal(play.note('ROBIN', false), false);
+  assert.equal(/** @type {any} */ (cloud.docs.get('uid-ana')).current.size, 10, 'and the cloud keeps them');
+  assert.equal(play.note('WREN', false), false);
   assert.deepEqual(await play.deal(IDS, loadCategory, 'easy'), { ...deal, size: 10 }, 'dealt again on the phone\'s board');
+  // Brought back on this board, as Undo does, it is not that level: the phone's game stays.
+  assert.deepEqual(play.start(deal, WORDS, 13), []);
+  assert.equal(play.playing(), null);
+  assert.deepEqual(play.progress()?.current, phone);
 });
 
-test('a sync never takes a level from a device that cannot deal the other device\'s board: its own game replaces that one', async () => {
-  const { play, cloud } = setup({ shows: (/** @type {number} */ size) => size === 10 });
-  await play.signUp('ana', 'secret1');
+test('a level saved by a build that did not keep its board size resumes on any board holding its finds', async () => {
+  const { play, cloud } = setup();
+  cloud.docs.set('uid-ana', { ...newProgress(0x40000000), current: { level: 1, subject: 'nature/trees', difficulty: 'normal',
+    elapsedMs: 9000, events: [{ word: 'WREN', at: 1, revealed: false }] } });
+  await play.signIn('ana', 'secret1');
   const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
-  play.start(deal, WORDS, 10);
-  play.note('OWL', false);
-  // The large board's game has more finds, of words this board holds too, but on another board.
-  cloud.docs.set('uid-ana', { ...newProgress(0x40000000), current: { level: 1, subject: deal.subject, difficulty: 'normal', size: 13,
+  assert.equal('size' in deal, false);
+  assert.deepEqual(play.resumable(deal.subject, deal.seed, 13), { ...deal, size: 13 });
+  assert.deepEqual(play.start(deal, WORDS, 13), [{ word: 'WREN', at: 1, revealed: false }]);
+  assert.equal(play.progress()?.current?.size, 13, 'and kept from now on');
+});
+
+test('a level saved on a larger board starts over on a smaller one, and its game then wins over that one', async () => {
+  const { play, cloud } = setup();
+  cloud.docs.set('uid-ana', { ...newProgress(0x40000000), current: { level: 1, subject: 'nature/trees', difficulty: 'normal', size: 13,
     elapsedMs: 9000, events: [{ word: 'ROBIN', at: 1, revealed: false }, { word: 'WREN', at: 2, revealed: false }] } });
-  await play.sync();
+  await play.signIn('ana', 'secret1');
+  const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
+  assert.equal(deal.size, 13);
+  // This device deals the smaller board: those finds are not on it, though their words are.
+  assert.deepEqual(play.start(deal, WORDS, 10), []);
   assert.equal(play.playing(), deal);
+  assert.equal(play.elapsed(), 0);
+  play.note('OWL', false);
+  await play.sync();
+  assert.equal(play.playing(), deal, 'not let go for the larger board\'s game, which has more finds');
   assert.deepEqual(play.events().map(e => e.word), ['OWL']);
-  assert.ok(play.elapsed() < 9000);
   const saved = /** @type {any} */ (cloud.docs.get('uid-ana')).current;
   assert.deepEqual([saved.size, saved.events.map((/** @type {any} */ e) => e.word)], [10, ['OWL']]);
 });

@@ -126,7 +126,7 @@ let currentSeed;
 let subjectId;
 // Levels: the signed-in account's numbered puzzles. Its copy on this device loads now, before
 // boot() restores a board that may be the level in progress; the cloud's answers later.
-const play = makeLevelPlay({ cloud: makeCloud(), shows: (size) => !!shapeOf(size) });
+const play = makeLevelPlay({ cloud: makeCloud() });
 const booted = play.boot();
 // The level on screen, or null for an ordinary game. Still set on its solved board, until the
 // next deal.
@@ -239,14 +239,15 @@ function showCategory() {
 
 /** Time the level on screen. Finds the account already has for it go back on the board, and
  * finds the board has that the account lacks are recorded. A level the account has moved past
- * leaves an ordinary board. @param {Deal} deal @returns {void} */
-function startLevel(deal) {
+ * leaves an ordinary board, saying `why` if that is news. @param {Deal} deal @param {string} [why]
+ * @returns {void} */
+function startLevel(deal, why = '') {
   const puzzle = state.puzzle;
   if (!puzzle) return;
   // A page loaded or dealt in the background starts the clock when it is shown, not before.
   const events = play.start(deal, puzzle.words, state.size, document.hidden);
-  // A sign-out since it was dealt (before an Undo, say) is news; a level the account moved past is not.
-  if (!play.playing()) { letLevelGo(play.account() ? '' : SIGNED_OUT); return; }
+  // A sign-out since it was dealt (before an Undo, say) is news.
+  if (!play.playing()) { letLevelGo(play.account() ? why : SIGNED_OUT); return; }
   const won = state.foundOrder.length === puzzle.words.length;
   addFinds(events);
   play.carry(state.foundOrder.map(w => ({ word: w, revealed: !!state.found[w].revealed })));
@@ -987,7 +988,10 @@ function reconcileLevel() {
   if (levelBoard && (!play.account() || !play.playing())) {
     // A level won here was banked at its last find, so letting it go then is no news.
     const solved = state.foundOrder.length === puzzle.words.length;
-    letLevelGo(solved ? '' : !play.account() ? SIGNED_OUT : LET_GO[play.lost(levelBoard)]);
+    if (solved || !play.account()) letLevelGo(solved ? '' : SIGNED_OUT);
+    // Signing in again after a lapse nothing caught stopped it, and it is still the account's
+    // level: it picks up where it was. Otherwise the sync let it go.
+    else startLevel(levelBoard, LET_GO[play.lost(levelBoard)]);
     return;
   }
   if (!levelBoard) {
