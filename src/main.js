@@ -62,6 +62,10 @@ const shapeFor = () => {
   if (b === 'auto' || (b === 'full' && PRESET === PRESETS.compact)) return PRESET;
   return PRESETS[b];
 };
+/** The board this device deals `size` wide, or null when it cannot, as a phone the large one.
+ * @param {number|undefined} size @returns {Preset|null} */
+const shapeOf = (size) => (size === PRESETS.compact.size ? PRESETS.compact
+  : size === PRESETS.full.size && PRESET === PRESETS.full ? PRESETS.full : null);
 // How long a found word glows before it strikes through. Matches the `foundGlow`
 // animation duration in styles.css.
 const GLOW_MS = 900;
@@ -122,7 +126,7 @@ let currentSeed;
 let subjectId;
 // Levels: the signed-in account's numbered puzzles. Its copy on this device loads now, before
 // boot() restores a board that may be the level in progress; the cloud's answers later.
-const play = makeLevelPlay({ cloud: makeCloud() });
+const play = makeLevelPlay({ cloud: makeCloud(), shows: (size) => !!shapeOf(size) });
 const booted = play.boot();
 // The level on screen, or null for an ordinary game. Still set on its solved board, until the
 // next deal.
@@ -199,6 +203,8 @@ function showBoard(b) {
   // Or a stale timer drops the win overlay over the fresh grid, swallowing every tap.
   if (state.winTimer) { clearTimeout(state.winTimer); state.winTimer = null; }
   hideWin();
+  // A toast is about the board this replaces, and its Undo would restore over this one.
+  hideToast();
   layout();   // a new puzzle object, so this rebuilds the cells, found ones and pills
   showBackdrop();   // after layout: the scene's place depends on the orientation it settles
   list();
@@ -238,7 +244,7 @@ function startLevel(deal) {
   const puzzle = state.puzzle;
   if (!puzzle) return;
   // A page loaded or dealt in the background starts the clock when it is shown, not before.
-  const events = play.start(deal, puzzle.words, document.hidden);
+  const events = play.start(deal, puzzle.words, state.size, document.hidden);
   // A sign-out since it was dealt (before an Undo, say) is news; a level the account moved past is not.
   if (!play.playing()) { letLevelGo(play.account() ? '' : SIGNED_OUT); return; }
   const won = state.foundOrder.length === puzzle.words.length;
@@ -544,15 +550,10 @@ async function dealLevel(stillWanted = () => true) {
   if (!deal) return null;
   const subject = await loadSubject(deal.subject);
   if (!stillWanted()) return false;
-  let shape = shapeFor(), puzzle = levelPuzzle(deal, subject, shape);
-  // Board was changed since the level was started: it stays on the board its finds are on, if
-  // this device can show that one (a phone cannot show the full board).
-  const other = shape === PRESETS.full ? PRESETS.compact : PRESET === PRESETS.full ? PRESETS.full : null;
-  if (other && !play.fits(deal, puzzle.words)) {
-    const there = levelPuzzle(deal, subject, other);
-    if (play.fits(deal, there.words)) { shape = other; puzzle = there; }
-  }
-  newPuzzle(deal.seed, subject, shape, false, puzzle, deal);
+  // A level already started goes back on its own board, whatever Board says now, unless this
+  // device cannot deal that one: then it starts over on this device's.
+  const shape = shapeOf(deal.size) ?? shapeFor();
+  newPuzzle(deal.seed, subject, shape, false, levelPuzzle(deal, subject, shape), deal);
   startLevel(deal);
   return true;
 }
@@ -619,7 +620,7 @@ function progressAtStake() {
   if (p) return !levelBoard && state.foundOrder.length > 0 && state.foundOrder.length < p.words.length;
   const saved = store.load();
   return !!saved && saved.found.length > 0 && saved.found.length < saved.count
-    && !play.resumable(saved.subjectId, saved.seed);
+    && !play.resumable(saved.subjectId, saved.seed, saved.size);
 }
 must('catbtn').addEventListener('click', openPicker);
 // ---- The win card's countdown ----
@@ -986,20 +987,25 @@ function reconcileLevel() {
   if (levelBoard && (!play.account() || !play.playing())) {
     // A level won here was banked at its last find, so letting it go then is no news.
     const solved = state.foundOrder.length === puzzle.words.length;
-    // Finished on this run elsewhere, or replaced: the cloud's copy is a run another device began.
-    letLevelGo(solved ? '' : !play.account() ? SIGNED_OUT
-      : play.passed(levelBoard) ? 'This level was finished on another device.' : 'Your progress from another device replaced this level.');
+    letLevelGo(solved ? '' : !play.account() ? SIGNED_OUT : LET_GO[play.lost(levelBoard)]);
     return;
   }
   if (!levelBoard) {
-    const deal = subjectId ? play.resumable(subjectId, currentSeed) : null;
-    if (deal) { levelBoard = deal; showCategory(); startLevel(deal); }
+    const deal = subjectId ? play.resumable(subjectId, currentSeed, state.size) : null;
+    // A notice that the board stopped being a level is wrong from here; an Undo offer is not.
+    if (deal) { levelBoard = deal; showCategory(); if (toastUndo.hidden) hideToast(); startLevel(deal); }
     return;
   }
   // Finds another device made on this level, which the sync folded into it.
   if (addFinds(play.events()) && state.foundOrder.length === puzzle.words.length) completeLevel(levelBoard, false);
 }
 const SIGNED_OUT = "You've been signed out, so this game no longer counts as a level.";
+// Why a sync let go of the level on the board, by play.lost().
+const LET_GO = {
+  finished: 'This level was finished on another device.',
+  moved: 'Another device carried on with this level on a board of another size.',
+  replaced: 'Your progress from another device replaced this level.',
+};
 /** The board is an ordinary one now. `why` tells the player why the header changed, unless it
  * is empty. @param {string} why @returns {void} */
 function letLevelGo(why) {
@@ -1194,7 +1200,7 @@ async function restore(saved, stillWanted) {
   if (!stillWanted()) return;
   // The level in progress, when that is what this board is: the save does not say, the
   // account's progress does.
-  const level = play.resumable(saved.subjectId, saved.seed);
+  const level = play.resumable(saved.subjectId, saved.seed, saved.size);
   const { cells, placements } = saved;
   const dealt = cells && placements
     ? { name: subject.name, cells: [...cells], words: placements.map(p => p.word), placements }

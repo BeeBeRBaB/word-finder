@@ -211,10 +211,12 @@ test('normalize drops each bad history entry on its own and keeps the last 50', 
 
 test('normalize drops an invalid or stale current, whole', () => {
   const ok = normalizeProgress({ v: 1, seed: 1, level: 4, current: current(4) });
-  assert.deepEqual(ok?.current, current(4));
+  assert.deepEqual(ok?.current, current(4), 'no size, as builds before it was kept wrote');
+  assert.deepEqual(normalizeProgress({ v: 1, seed: 1, level: 4, current: current(4, { size: 10 }) })?.current, current(4, { size: 10 }));
   const bad = [
     'x', current(3), current(5), current(4, { subject: '' }), current(4, { difficulty: 'x' }),
     current(4, { elapsedMs: -1 }), current(4, { events: 'x' }), current(4, { level: 0 }),
+    current(4, { size: 0 }), current(4, { size: 10.5 }), current(4, { size: '10' }), current(4, { size: null }),
     current(4, { events: [{ word: 'A', at: 1, revealed: false }, null] }),
     current(4, { events: [{ word: '', at: 1, revealed: false }] }),
     current(4, { events: [{ word: 'A', at: -1, revealed: false }] }),

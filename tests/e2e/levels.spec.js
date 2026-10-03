@@ -145,7 +145,61 @@ test('signing up from New game comes back to it, and a level plays through to it
   await expect(card.locator('h2')).toHaveText('Puzzle solved!');
 });
 
-test('a level started on the large board stays on it, finds and all, after Board is set to Compact', async ({ page }) => {
+/** Settings ▸ Board. @param {Page} page @param {'auto'|'compact'|'full'} board */
+async function setBoard(page, board) {
+  await page.click('#appearance');
+  await page.locator(`.seg[data-setting="board"] button[data-value="${board}"]`).click();
+  await page.keyboard.press('Escape');
+}
+
+/** The first word on the list, found. @param {Page} page @returns {Promise<string>} */
+async function findFirst(page) {
+  const word = ((await page.locator('#list .w:not(.done):not(.glow)').first().textContent()) ?? '').trim().toUpperCase();
+  await findAndDrag(page, word);
+  return word;
+}
+
+const CELLS = { full: 169, compact: 100 };
+for (const [from, to] of /** @type {const} */ ([['full', 'compact'], ['compact', 'full']])) {
+  test(`a level started on the ${from} board stays on it, finds and all, after Board is set to ${to}`, async ({ page }) => {
+    const fb = makeFirebase();
+    const uid = fb.add('ana_reads', 'hunter22');
+    fb.put(uid, PROGRESS);
+    await fb.install(page);
+    await signedInAs(page, uid, 'ana_reads');
+    await page.goto('/?subject=nature/birds');
+    await setBoard(page, from);
+    await levelsSide(page);
+    await page.click('#picker-start');
+    await expect(page.locator('#category')).toHaveText('Level 3');
+    await expect(page.locator('#letters .cell')).toHaveCount(CELLS[from]);
+    const board = await page.locator('#letters').textContent();
+    await findFirst(page);
+    await setBoard(page, to);
+    await page.click('#newbtn');   // away from the level, then back to it
+    await expect(page.locator('#category')).not.toHaveText('Level 3');
+    await expect(page.locator('#letters .cell')).toHaveCount(CELLS[to]);
+    await levelsSide(page);
+    await page.click('#picker-start');
+    await expect(page.locator('#category')).toHaveText('Level 3');
+    await expect(page.locator('#letters')).toHaveText(board ?? '');
+    await expect(page.locator('#list .w.done')).toHaveCount(1);
+  });
+}
+
+/** A second device signed in to the account: a phone, with its own storage.
+ * @param {import('@playwright/test').Browser} browser @param {string|undefined} baseURL
+ * @param {ReturnType<typeof makeFirebase>} fb @param {string} uid @returns {Promise<Page>} */
+async function phoneOf(browser, baseURL, fb, uid) {
+  const context = await browser.newContext({ baseURL, viewport: { width: 390, height: 844 }, serviceWorkers: 'block' });
+  const phone = await context.newPage();
+  await fb.install(phone);
+  await signedInAs(phone, uid, 'ana_reads');
+  await phone.goto('/?subject=nature/birds');
+  return phone;
+}
+
+test('a level a phone carried on with is let go here when the account syncs, and dealt again on the phone\'s board', async ({ page, browser, baseURL }) => {
   const fb = makeFirebase();
   const uid = fb.add('ana_reads', 'hunter22');
   fb.put(uid, PROGRESS);
@@ -156,19 +210,60 @@ test('a level started on the large board stays on it, finds and all, after Board
   await page.click('#picker-start');
   await expect(page.locator('#category')).toHaveText('Level 3');
   await expect(page.locator('#letters .cell')).toHaveCount(169);
-  const board = await page.locator('#letters').textContent();
-  await findAndDrag(page, ((await page.locator('#list .w').first().textContent()) ?? '').trim().toUpperCase());
-  await page.click('#appearance');
-  await page.locator('.seg[data-setting="board"] button[data-value="compact"]').click();
-  await page.keyboard.press('Escape');
-  await page.click('#newbtn');   // away from the level, then back to it
+  await setHidden(page, true);
+  // The phone cannot show the large board, so it starts the level over on its own.
+  const phone = await phoneOf(browser, baseURL, fb, uid);
+  await levelsSide(phone);
+  await phone.click('#picker-start');
+  await expect(phone.locator('#category')).toHaveText('Level 3');
+  await expect(phone.locator('#letters .cell')).toHaveCount(100);
+  const board = await phone.locator('#letters').textContent();
+  const found = [await findFirst(phone), await findFirst(phone)];
+  await setHidden(phone, true);
+  await expect.poll(() => fb.progress(uid)?.current?.events?.length).toBe(2);
+  await setHidden(page, false);
+  await expect(page.locator('#toast-msg')).toHaveText('Another device carried on with this level on a board of another size.');
   await expect(page.locator('#category')).not.toHaveText('Level 3');
-  await expect(page.locator('#letters .cell')).toHaveCount(100);
   await levelsSide(page);
   await page.click('#picker-start');
   await expect(page.locator('#category')).toHaveText('Level 3');
   await expect(page.locator('#letters')).toHaveText(board ?? '');
-  await expect(page.locator('#list .w.done')).toHaveCount(1);
+  await expect.poll(async () => (await page.locator('#list .w.done').allTextContents()).map(w => w.trim().toUpperCase()).sort())
+    .toEqual([...found].sort());
+  await phone.context().close();
+});
+
+test('a phone keeps playing a level started on the large board, and its game replaces that one', async ({ page, browser, baseURL }) => {
+  const fb = makeFirebase();
+  const uid = fb.add('ana_reads', 'hunter22');
+  fb.put(uid, PROGRESS);
+  await fb.install(page);
+  await signedInAs(page, uid, 'ana_reads');
+  await page.goto('/?subject=nature/birds');
+  await levelsSide(page);
+  await page.click('#picker-start');
+  await expect(page.locator('#category')).toHaveText('Level 3');
+  await expect(page.locator('#letters .cell')).toHaveCount(169);
+  await findFirst(page);
+  await findFirst(page);
+  await setHidden(page, true);
+  await expect.poll(() => fb.progress(uid)?.current?.events?.length).toBe(2);
+  const phone = await phoneOf(browser, baseURL, fb, uid);
+  await levelsSide(phone);
+  await phone.click('#picker-start');
+  await expect(phone.locator('#category')).toHaveText('Level 3');
+  await expect(phone.locator('#letters .cell')).toHaveCount(100);
+  const word = await findFirst(phone);
+  // Its sync on the way out meets the large board's game, which has more finds.
+  await setHidden(phone, true);
+  await expect.poll(() => fb.progress(uid)?.current?.size).toBe(10);
+  expect(fb.progress(uid).current.events.map((/** @type {any} */ e) => e.word)).toEqual([word]);
+  await setHidden(phone, false);
+  await expect(phone.locator('#category')).toHaveText('Level 3');
+  await expect(phone.locator('#toast')).toBeHidden();
+  await findTheRest(phone);
+  await expect(phone.locator('#wincard h2')).toHaveText('Level 3 complete');
+  await phone.context().close();
 });
 
 test('a level in progress survives a reload with its finds, then scores as the same level', async ({ page }) => {
@@ -372,6 +467,26 @@ test('a level let go under Settings says so once Settings closes, for the toast\
   await expect(toast).toBeHidden();
 });
 
+test('a level let go under New game is not news once the next level is dealt from it', async ({ page }) => {
+  const fb = makeFirebase();
+  const uid = fb.add('ana_reads', 'hunter22');
+  fb.put(uid, PROGRESS);
+  await fb.install(page);
+  await signedInAs(page, uid, 'ana_reads');
+  await page.goto('/?subject=nature/birds');
+  await levelsSide(page);
+  await page.click('#picker-start');
+  await expect(page.locator('#category')).toHaveText('Level 3');
+  await levelsSide(page);
+  fb.put(uid, { ...PROGRESS, level: 4, points: 900, history: [{ level: 3, subject: 'x/y', difficulty: 'normal', score: 480, ms: 60000, reveals: 0, at: 1 }] });
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
+  await expect(page.locator('#toast-msg')).toHaveText('This level was finished on another device.');
+  await expect(page.locator('#picker-start')).toHaveText('Play level 4');
+  await page.click('#picker-start');
+  await expect(page.locator('#category')).toHaveText('Level 4');
+  await expect(page.locator('#toast')).toBeHidden({ timeout: 1000 });
+});
+
 // Two devices that each began the account's progress, as when its first save never reached the
 // cloud: the cloud's copy wins, and this level number is another board there.
 for (const [where, level] of [['at this level', 3], ['further on', 5]]) {
@@ -562,6 +677,31 @@ test('a session refused mid-level says so when the player is back, and signing i
   await expect(page.locator('#category')).toHaveText('Level 3');
   await setHidden(page, true);
   await expect.poll(() => fb.progress(uid)?.current?.events?.map((/** @type {any} */ e) => e.word)).toEqual(words.slice(0, 2));
+});
+
+test('a sign-out raised under Settings is not news once signing in again there picks the level up', async ({ page }) => {
+  const fb = makeFirebase();
+  const uid = fb.add('ana_reads', 'hunter22');
+  fb.put(uid, PROGRESS);
+  await fb.install(page);
+  await signedInAs(page, uid, 'ana_reads');
+  await page.goto('/?subject=nature/birds');
+  await levelsSide(page);
+  await page.click('#picker-start');
+  await expect(page.locator('#category')).toHaveText('Level 3');
+  await findFirst(page);
+  await refuseSession(page);
+  await page.click('#appearance');   // it syncs the unsent find, which is refused and signs this device out
+  await expect(page.locator('#toast-msg')).toHaveText("You've been signed out, so this game no longer counts as a level.");
+  await page.unroute(/^https:\/\/(securetoken|firestore)\.googleapis\.com\//);
+  await fb.install(page);
+  await page.locator('#settings-account').getByRole('button', { name: 'Sign in' }).click();
+  await page.getByLabel('Username').fill('ana_reads');
+  await page.getByLabel('Password').fill('hunter22');
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await expect(page.locator('#category')).toHaveText('Level 3');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#toast')).toBeHidden({ timeout: 1000 });
 });
 
 // Level 3 of seed 4242 is in Space, a category this page has not loaded, so its deal waits on

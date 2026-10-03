@@ -15,6 +15,7 @@ export const OWNER_KEY = 'wordfinder-levels-owner-v1';
 /**
  * @typedef {import('./levels.js').LevelProgress} LevelProgress
  * @typedef {import('./levels.js').LevelEvent} LevelEvent
+ * @typedef {import('./levels.js').LevelCurrent} LevelCurrent
  * @typedef {import('./levels.js').Difficulty} Difficulty
  * @typedef {import('./levels.js').LevelStore} LevelStore
  * @typedef {import('./cloud.js').Account} Account
@@ -22,8 +23,9 @@ export const OWNER_KEY = 'wordfinder-levels-owner-v1';
  * @typedef {{enabled:boolean, session():Account|null, signIn(u:string, p:string):Promise<Account>,
  *   signUp(u:string, p:string):Promise<Account>, signOut():void, load():Promise<unknown>,
  *   save(data:unknown):Promise<void>}} CloudLike
- * @typedef {{level:number, subject:string, seed:number, difficulty:Difficulty}} Deal
+ * @typedef {{level:number, subject:string, seed:number, difficulty:Difficulty, size?:number}} Deal
  *   seed: the puzzle seed. Build the board from it with the difficulty's mix and no coverage bag.
+ *   size: the board a level already started was played on, to deal it there again.
  * @typedef {{subjectIds:string[]}} CategoryLike
  * @typedef {{breakdown:import('./scoring.js').Breakdown, progress:LevelProgress, saved:Promise<void>}} Finish
  *   saved: settles when the save it starts has landed or failed, which status() then tells.
@@ -59,6 +61,10 @@ export function replaySelections(puzzle, events) {
  * replace it. @param {LevelProgress} p @param {Deal} deal @returns {boolean} */
 const ofRun = (p, deal) => levelSeed(p.seed, deal.level) === deal.seed;
 
+/** Whether a saved level was played on a board `size` wide, as far as it says: builds before
+ * the size was kept left it out. @param {LevelCurrent|null} c @param {number} size @returns {boolean} */
+const onBoard = (c, size) => (c?.size ?? size) === size;
+
 /** What went wrong, from a thrown cloud error; 'server' for anything else.
  * @param {unknown} e @returns {CloudCode} */
 export const codeOf = (e) => {
@@ -67,18 +73,20 @@ export const codeOf = (e) => {
 };
 
 /** @param {{cloud:CloudLike, store?:LevelStore|null, now?:() => number, clock?:() => number,
- *   random?:() => number}} deps  clock: a monotonic ms clock for play time. */
+ *   random?:() => number, shows?:(size:number) => boolean}} deps  clock: a monotonic ms clock for
+ *   play time. shows: whether this device can deal a board that wide; a phone cannot deal the large one. */
 export function makeLevelPlay(deps) {
   const { cloud } = deps;
   const kv = safeStore(deps.store);
   const now = deps.now ?? Date.now;
   const clock = deps.clock ?? (() => performance.now());
   const random = deps.random ?? Math.random;
+  const shows = deps.shows ?? (() => true);
   const local = makeLevelStore({ store: deps.store });
 
   /** @type {LevelProgress|null} */
   let prog = null;
-  /** @type {{deal:Deal, words:Set<string>, events:LevelEvent[], base:number, since:number|null}|null} */
+  /** @type {{deal:Deal, words:Set<string>, size:number, events:LevelEvent[], base:number, since:number|null}|null} */
   let live = null;
   // Bumped on every change of account, so a load or save that lands afterwards is dropped.
   let gen = 0;
@@ -136,21 +144,24 @@ export function makeLevelPlay(deps) {
   function remember() {
     if (!live || !prog) return;
     const { level, subject, difficulty } = live.deal;
-    keep(saveCurrent(prog, { level, subject, difficulty, events: live.events.map(e => ({ ...e })), elapsedMs: Math.round(elapsed()) }));
+    keep(saveCurrent(prog, { level, subject, difficulty, size: live.size, events: live.events.map(e => ({ ...e })), elapsedMs: Math.round(elapsed()) }));
   }
 
   /** Fold the cloud's copy into this device's: whichever is further on wins, and while a level
-   * is being played, another device's finds on that same level join this one's, with the longer
-   * of the two clocks. @param {unknown} remote @returns {boolean} whether the cloud needs the result */
+   * is being played, another device's finds on that same level and board join this one's, with
+   * the longer of the two clocks. @param {unknown} remote @returns {boolean} whether the cloud needs the result */
   function take(remote) {
     const r = normalizeProgress(remote);
     const merged = mergeProgress(prog, r) ?? newProgress((random() * 0x100000000) >>> 0);
-    // The level being played is the cloud's no longer (it moved on, or another device's record
-    // with its own seed won): deal whatever level it says.
-    if (live && (merged.level !== live.deal.level || !ofRun(merged, live.deal))) live = null;
+    // The level being played is the cloud's no longer: it moved on, another device's run with its
+    // own seed won, or another device's game of it won on a board of another size that this device
+    // can deal. A game on a board it cannot deal (a phone, the large one) gives way to this one.
+    const there = merged.current?.size;
+    if (live && (merged.level !== live.deal.level || !ofRun(merged, live.deal)
+      || (there !== undefined && there !== live.size && shows(there)))) live = null;
     keep(merged);
     const c = live && r && r.seed === merged.seed && r.level === live.deal.level ? r.current : null;
-    if (live && c && c.subject === live.deal.subject && c.difficulty === live.deal.difficulty) {
+    if (live && c && c.subject === live.deal.subject && c.difficulty === live.deal.difficulty && onBoard(c, live.size)) {
       const have = new Set(live.events.map(e => e.word));
       for (const e of c.events) if (live.words.has(e.word) && !have.has(e.word)) { live.events.push({ ...e }); have.add(e.word); }
       live.events.sort((a, b) => a.at - b.at);
@@ -272,7 +283,8 @@ export function makeLevelPlay(deps) {
         if (!cloud.session() || !prog) return null;
         const p = prog, g = gen;
         const seed = levelSeed(p.seed, p.level);
-        if (p.current) return { level: p.level, subject: p.current.subject, seed, difficulty: p.current.difficulty };
+        const c = p.current;
+        if (c) return { level: p.level, subject: c.subject, seed, difficulty: c.difficulty, ...(c.size ? { size: c.size } : {}) };
         const category = levelCategory(p.seed, p.level, categoryIds);
         const cat = await loadCategory(category);
         if (g !== gen || !cloud.session()) return null;
@@ -282,31 +294,26 @@ export function makeLevelPlay(deps) {
       }
     },
 
-    /** The saved board is the level in progress when its subject and seed are that level's:
-     * returns its deal, to start() once the board is back. @param {string} subjectId
-     * @param {number} seed @returns {Deal|null} */
-    resumable(subjectId, seed) {
-      const p = progress();
-      if (!p || !p.current || p.current.subject !== subjectId || levelSeed(p.seed, p.level) !== seed) return null;
-      return { level: p.level, subject: subjectId, seed, difficulty: p.current.difficulty };
-    },
-
-    /** Whether a board of `words` holds every find saved for `deal`'s level, so start() picks it
-     * up there rather than starting it over: true when none are saved.
-     * @param {Deal} deal @param {string[]} words @returns {boolean} */
-    fits(deal, words) {
-      const c = progress()?.current;
-      return !c || c.level !== deal.level || c.events.every(e => words.includes(e.word));
+    /** A board is the level in progress when its subject, seed and size are that level's:
+     * returns its deal, to start() with the board. @param {string} subjectId
+     * @param {number} seed @param {number} size @returns {Deal|null} */
+    resumable(subjectId, seed, size) {
+      const p = progress(), c = p?.current;
+      if (!p || !c || c.subject !== subjectId || levelSeed(p.seed, p.level) !== seed || !onBoard(c, size)) return null;
+      return { level: p.level, subject: subjectId, seed, difficulty: c.difficulty, size };
     },
 
     /** The deal being played and timed, or null. @returns {Deal|null} */
     playing: () => (live ? live.deal : null),
 
-    /** The account is past `deal`'s level on the run it was dealt from, not on another device's.
-     * @param {Deal} deal @returns {boolean} */
-    passed(deal) {
+    /** Why a sync let go of `deal`: the account is past its level on the run it was dealt from
+     * ('finished'), or still on it there, as another device's game on a board of another size
+     * ('moved'), or on another device's run ('replaced'). @param {Deal} deal
+     * @returns {'finished'|'moved'|'replaced'} */
+    lost(deal) {
       const p = progress();
-      return !!p && p.level > deal.level && ofRun(p, deal);
+      if (!p || !ofRun(p, deal)) return 'replaced';
+      return p.level > deal.level ? 'finished' : 'moved';
     },
 
     /** The level's finds so far, in order, including any another device added. @returns {LevelEvent[]} */
@@ -314,17 +321,17 @@ export function makeLevelPlay(deps) {
 
     /** Start timing a dealt level, unless the session has lapsed or the account has moved on from
      * it since it was dealt. Returns the finds to put back when it resumes one, in order; a saved
-     * level whose words are not all on this board (another device's board size) starts over.
-     * @param {Deal} deal @param {string[]} words the board's words
+     * level played on a board of another size, or whose words are not all on this board, starts over.
+     * @param {Deal} deal @param {string[]} words the board's words @param {number} size its width
      * @param {boolean} [paused] the page is hidden: the clock waits for resume() @returns {LevelEvent[]} */
-    start(deal, words, paused = false) {
+    start(deal, words, size, paused = false) {
       const p = progress();
       if (!p || deal.level !== p.level || !ofRun(p, deal)) { live = null; return []; }
       const set = new Set(words);
       const c = p.current;
-      const resume = !!c && c.subject === deal.subject && c.difficulty === deal.difficulty
+      const resume = !!c && c.subject === deal.subject && c.difficulty === deal.difficulty && onBoard(c, size)
         && c.events.every(e => set.has(e.word)) && new Set(c.events.map(e => e.word)).size === c.events.length;
-      live = { deal, words: set, events: resume && c ? c.events.map(e => ({ ...e })) : [], base: resume && c ? c.elapsedMs : 0, since: paused ? null : clock() };
+      live = { deal, words: set, size, events: resume && c ? c.events.map(e => ({ ...e })) : [], base: resume && c ? c.elapsedMs : 0, since: paused ? null : clock() };
       remember();
       return live.events.map(e => ({ ...e }));
     },

@@ -93,7 +93,7 @@ test('signed out, there is nothing to deal, time or bank', async () => {
   assert.equal(play.account(), null);
   assert.equal(play.progress(), null);
   assert.equal(await play.deal(IDS, loadCategory, 'normal'), null);
-  assert.deepEqual(play.start({ level: 1, subject: 'nature/birds', seed: 1, difficulty: 'normal' }, WORDS), []);
+  assert.deepEqual(play.start({ level: 1, subject: 'nature/birds', seed: 1, difficulty: 'normal' }, WORDS, 10), []);
   assert.equal(play.note('ROBIN', false), false);
   assert.equal(play.finish(), null);
   play.pause(); play.resume();
@@ -222,7 +222,7 @@ test('a level is timed in active play only, and its score is the scorer\'s', asy
   const { play, clock, cloud } = setup();
   await play.signUp('ana', 'secret1');
   const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'hard'));
-  assert.deepEqual(play.start(deal, WORDS), []);
+  assert.deepEqual(play.start(deal, WORDS, 10), []);
   clock.tick(4000);
   assert.equal(play.note('ROBIN', false), true);
   play.pause();
@@ -256,7 +256,7 @@ test('a banked level is saved to the cloud by finish(), with no save under way t
   const { play, cloud } = setup();
   await play.signUp('ana', 'secret1');
   const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
-  play.start(deal, WORDS);
+  play.start(deal, WORDS, 10);
   for (const w of WORDS) play.note(w, false);
   await play.sync();
   assert.equal(play.status().pending, false, 'the finds are online and nothing is in flight');
@@ -273,7 +273,7 @@ test('only a word on the board, once, is recorded', async () => {
   const { play } = setup();
   await play.signUp('ana', 'secret1');
   const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
-  play.start(deal, WORDS);
+  play.start(deal, WORDS, 10);
   assert.equal(play.note('EAGLE', false), false);
   assert.equal(play.note('ROBIN', false), true);
   assert.equal(play.note('ROBIN', true), false);
@@ -284,7 +284,7 @@ test('each find is saved, so the level resumes with its finds and its time', asy
   const { play, clock, cloud, store } = setup();
   await play.signUp('ana', 'secret1');
   const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'easy'));
-  play.start(deal, WORDS);
+  play.start(deal, WORDS, 10);
   clock.tick(2500);
   play.note('WREN', false);
   clock.tick(1000);
@@ -294,51 +294,75 @@ test('each find is saved, so the level resumes with its finds and its time', asy
   const other = makeLevelPlay({ cloud, store: memStore(), clock: clock.now, random: () => 0.9 });
   await other.boot();
   const again = /** @type {import('../../src/levelplay.js').Deal} */ (await other.deal(IDS, loadCategory, 'hard'));
-  assert.deepEqual(again, deal, 'the saved difficulty, not this device\'s setting');
-  assert.deepEqual(other.start(again, WORDS), [{ word: 'WREN', at: 2500, revealed: false }]);
+  assert.deepEqual(again, { ...deal, size: 10 }, 'the saved difficulty, not this device\'s setting, and its board');
+  assert.deepEqual(other.start(again, WORDS, 10), [{ word: 'WREN', at: 2500, revealed: false }]);
   assert.equal(other.elapsed(), 3500);
-  // A board without that word (another board size) starts the level over.
+  // A board of another size starts the level over, and so does one without the words found.
   const third = makeLevelPlay({ cloud, store: memStore(), clock: clock.now });
   await third.boot();
-  assert.deepEqual(third.start(again, ['ROBIN', 'OWL']), []);
+  assert.deepEqual(third.start(again, WORDS, 13), []);
   assert.equal(third.elapsed(), 0);
-  assert.deepEqual(third.progress()?.current?.events, []);
+  assert.deepEqual(third.progress()?.current, { level: 1, subject: deal.subject, difficulty: 'easy', size: 13, events: [], elapsedMs: 0 });
+  const fourth = makeLevelPlay({ cloud, store: memStore(), clock: clock.now });
+  await fourth.boot();
+  assert.deepEqual(fourth.start(again, ['ROBIN', 'OWL'], 10), []);
   assert.ok(store.getItem(LEVELS_KEY));
 });
 
-test('fits() says whether a board holds every find saved for the level, as start() needs to resume it', async () => {
+test('a sync keeps a level on one board: another device\'s game on a board of another size wins it if this device can deal that board', async () => {
   const { play, cloud } = setup();
   await play.signUp('ana', 'secret1');
   const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
-  assert.equal(play.fits(deal, []), true, 'nothing saved yet');
-  play.start(deal, WORDS);
+  play.start(deal, WORDS, 13);
   play.note('OWL', false);
-  assert.equal(play.fits(deal, WORDS), true);
-  assert.equal(play.fits(deal, ['ROBIN', 'WREN']), false);
-  assert.equal(play.fits({ ...deal, level: 2 }, ['ROBIN']), true, 'not this level\'s finds');
-  cloud.signOut();
-  assert.equal(play.fits(deal, ['ROBIN']), true, 'no session, nothing to resume');
+  // A phone carried on with the level on its smaller board and found two words there.
+  const phone = { level: 1, subject: deal.subject, difficulty: 'normal', size: 10, elapsedMs: 9000,
+    events: [{ word: 'ROBIN', at: 1, revealed: false }, { word: 'WREN', at: 2, revealed: false }] };
+  cloud.docs.set('uid-ana', { ...newProgress(0x40000000), current: phone });
+  await play.sync();
+  assert.equal(play.playing(), null, 'this board is not the level any more');
+  assert.equal(play.lost(deal), 'moved');
+  assert.deepEqual(play.progress()?.current, phone, 'the phone\'s finds are kept, and not mixed with this board\'s');
+  assert.equal(play.note('ROBIN', false), false);
+  assert.deepEqual(await play.deal(IDS, loadCategory, 'easy'), { ...deal, size: 10 }, 'dealt again on the phone\'s board');
+});
+
+test('a sync never takes a level from a device that cannot deal the other device\'s board: its own game replaces that one', async () => {
+  const { play, cloud } = setup({ shows: (/** @type {number} */ size) => size === 10 });
+  await play.signUp('ana', 'secret1');
+  const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
+  play.start(deal, WORDS, 10);
+  play.note('OWL', false);
+  // The large board's game has more finds, of words this board holds too, but on another board.
+  cloud.docs.set('uid-ana', { ...newProgress(0x40000000), current: { level: 1, subject: deal.subject, difficulty: 'normal', size: 13,
+    elapsedMs: 9000, events: [{ word: 'ROBIN', at: 1, revealed: false }, { word: 'WREN', at: 2, revealed: false }] } });
+  await play.sync();
+  assert.equal(play.playing(), deal);
+  assert.deepEqual(play.events().map(e => e.word), ['OWL']);
+  assert.ok(play.elapsed() < 9000);
+  const saved = /** @type {any} */ (cloud.docs.get('uid-ana')).current;
+  assert.deepEqual([saved.size, saved.events.map((/** @type {any} */ e) => e.word)], [10, ['OWL']]);
 });
 
 test('a saved level of another subject or difficulty is not resumed into this one', async () => {
   const { play, cloud } = setup();
   await play.signUp('ana', 'secret1');
   const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
-  play.start(deal, WORDS);
+  play.start(deal, WORDS, 10);
   play.note('OWL', false);
-  assert.deepEqual(play.start({ ...deal, difficulty: 'hard' }, WORDS), []);
+  assert.deepEqual(play.start({ ...deal, difficulty: 'hard' }, WORDS, 10), []);
   play.note('OWL', false);
-  assert.deepEqual(play.start({ ...deal, subject: 'food/bread' }, WORDS), []);
+  assert.deepEqual(play.start({ ...deal, subject: 'food/bread' }, WORDS, 10), []);
   // A duplicated find in a stored level is not trusted either.
   cloud.docs.set('uid-ana', { ...newProgress(0x40000000), current: { level: 1, subject: deal.subject, difficulty: 'normal', elapsedMs: 5,
     events: [{ word: 'OWL', at: 1, revealed: false }, { word: 'OWL', at: 2, revealed: false }] } });
   const fresh = makeLevelPlay({ cloud, store: memStore() });
   await fresh.boot();
-  assert.deepEqual(fresh.start(deal, WORDS), []);
-  assert.deepEqual(play.start({ ...deal, level: 9 }, WORDS), [], 'not this account\'s level');
+  assert.deepEqual(fresh.start(deal, WORDS, 10), []);
+  assert.deepEqual(play.start({ ...deal, level: 9 }, WORDS, 10), [], 'not this account\'s level');
   assert.equal(play.note('OWL', false), false);
   // Its number, on a run another device began: dealt before a sync took that run.
-  assert.deepEqual(play.start({ ...deal, seed: deal.seed + 1 }, WORDS), []);
+  assert.deepEqual(play.start({ ...deal, seed: deal.seed + 1 }, WORDS, 10), []);
   assert.equal(play.playing(), null);
 });
 
@@ -346,18 +370,17 @@ test('when the cloud has moved past the level being played, the sync drops it, s
   const { play, cloud } = setup();
   await play.signUp('ana', 'secret1');
   const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
-  play.start(deal, WORDS);
+  play.start(deal, WORDS, 10);
   for (const w of WORDS) play.note(w, false);
-  assert.equal(play.passed(deal), false);
   // Another device banked level 1 meanwhile and the merge took its record.
   cloud.docs.set('uid-ana', { ...newProgress(0x40000000), level: 2, points: 50 });
   await play.sync();
   assert.equal(play.playing(), null);
   assert.equal(play.finish(), null);
   assert.deepEqual([play.progress()?.level, play.progress()?.points], [2, 50]);
-  assert.equal(play.passed(deal), true);
+  assert.equal(play.lost(deal), 'finished');
   cloud.signOut();   // the session lapsed
-  assert.equal(play.passed(deal), false);
+  assert.equal(play.lost(deal), 'replaced', 'no account, so no run it is on');
 });
 
 // Two devices that each made a record before either reached the cloud: the cloud's seed wins, and
@@ -366,7 +389,7 @@ test('when another device\'s record with its own seed wins, the level being play
   const { play, cloud } = setup();
   await play.signUp('ana', 'secret1');
   const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
-  play.start(deal, WORDS);
+  play.start(deal, WORDS, 10);
   play.note('OWL', false);
   cloud.docs.set('uid-ana', newProgress(0x12345678));
   await play.sync();
@@ -374,16 +397,17 @@ test('when another device\'s record with its own seed wins, the level being play
   assert.equal(play.progress()?.seed, 0x12345678);
   assert.equal(play.progress()?.current, null, 'this device\'s finds are not the cloud seed\'s level 1');
   assert.equal(play.note('WREN', false), false);
+  assert.equal(play.lost(deal), 'replaced', 'at the same number');
   cloud.docs.set('uid-ana', { ...newProgress(0x12345678), level: 3 });
   await play.sync();
-  assert.equal(play.passed(deal), false, 'replaced, though that run is further on');
+  assert.equal(play.lost(deal), 'replaced', 'though that run is further on');
 });
 
 test('finds carried onto a level are noted at one instant, skipping words already noted, and saved once', async () => {
   const { play, clock, store } = setup();
   await play.signUp('ana', 'secret1');
   const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
-  play.start(deal, WORDS);
+  play.start(deal, WORDS, 10);
   clock.tick(1000);
   play.note('ROBIN', false);
   clock.tick(1500);
@@ -403,7 +427,7 @@ test('a failed save stays pending and is retried by the next one; saves never ov
   await play.signUp('ana', 'secret1');
   cloud.saveError = new CloudError('offline');
   const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
-  play.start(deal, WORDS);
+  play.start(deal, WORDS, 10);
   play.note('OWL', false);
   play.pause();
   await settle();
@@ -432,7 +456,7 @@ test('a save that lands after the account changed is ignored', async () => {
   cloud.saveGate = () => gate.promise;
   cloud.saveError = new CloudError('server');
   const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
-  play.start(deal, WORDS);
+  play.start(deal, WORDS, 10);
   play.pause();
   play.signOut();
   gate.resolve();
@@ -446,7 +470,7 @@ test('a save that lands after the account changed is ignored', async () => {
   await cloud.signIn('ana');
   await play.boot();
   const d2 = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
-  play.start(d2, WORDS);
+  play.start(d2, WORDS, 10);
   play.pause();
   await within(play.signUp('bo', 'secret1'), 'a sign-up waiting on the last account\'s save');
   assert.equal(play.note('OWL', false), false, 'ana\'s level is not bo\'s');
@@ -476,7 +500,7 @@ test('without an injected clock or random it uses performance.now and Math.rando
   const seed = play.progress()?.seed;
   assert.ok(Number.isInteger(seed) && seed >= 0 && seed <= 0xffffffff);
   const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
-  play.start(deal, WORDS);
+  play.start(deal, WORDS, 10);
   assert.ok(play.elapsed() >= 0);
   const s = makeLevelPlay({ cloud });
   assert.equal(s.enabled, true);
@@ -486,7 +510,7 @@ test('once the session has expired, nothing is sent until the player signs in ag
   const { play, cloud } = setup();
   await play.signUp('ana', 'secret1');
   const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
-  play.start(deal, WORDS);
+  play.start(deal, WORDS, 10);
   const sent = cloud.saves.length;
   cloud.signOut();   // what cloud.js does when Auth refuses the refresh token
   play.note('OWL', false);
@@ -495,8 +519,8 @@ test('once the session has expired, nothing is sent until the player signs in ag
   assert.equal(cloud.saves.length, sent);
   assert.deepEqual(play.status(), { signedIn: false, username: null, level: 0, points: 0, pending: false, error: null });
   assert.equal(play.progress(), null, 'kept on the device for signing in again, not offered meanwhile');
-  assert.equal(play.resumable(deal.subject, deal.seed), null, 'no level to resume for a player no longer signed in');
-  assert.deepEqual(play.start(deal, WORDS), [], 'nor to start again, as Undo would');
+  assert.equal(play.resumable(deal.subject, deal.seed, 10), null, 'no level to resume for a player no longer signed in');
+  assert.deepEqual(play.start(deal, WORDS, 10), [], 'nor to start again, as Undo would');
   assert.equal(play.playing(), null);
 });
 
@@ -512,26 +536,27 @@ test('a level\'s board depends only on its seed, difficulty and board size', () 
   }
 });
 
-test('a board saved mid-level is known by its subject and seed, and by nothing else', async () => {
+test('a board saved mid-level is known by its subject, seed and size, and by nothing else', async () => {
   const { play } = setup();
-  assert.equal(play.resumable('nature/birds', 1), null, 'signed out');
+  assert.equal(play.resumable('nature/birds', 1, 10), null, 'signed out');
   await play.signUp('ana', 'secret1');
   const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'hard'));
-  assert.equal(play.resumable(deal.subject, deal.seed), null, 'dealt but not started: no board yet');
+  assert.equal(play.resumable(deal.subject, deal.seed, 10), null, 'dealt but not started: no board yet');
   assert.equal(play.playing(), null);
-  play.start(deal, WORDS);
+  play.start(deal, WORDS, 10);
   assert.equal(play.playing(), deal);
-  assert.deepEqual(play.resumable(deal.subject, deal.seed), deal);
-  assert.equal(play.resumable('food/bread', deal.seed), null, 'another subject');
-  assert.equal(play.resumable(deal.subject, deal.seed + 1), null, 'another board of that subject');
+  assert.deepEqual(play.resumable(deal.subject, deal.seed, 10), { ...deal, size: 10 });
+  assert.equal(play.resumable(deal.subject, deal.seed, 13), null, 'a board of another size');
+  assert.equal(play.resumable('food/bread', deal.seed, 10), null, 'another subject');
+  assert.equal(play.resumable(deal.subject, deal.seed + 1, 10), null, 'another board of that subject');
   for (const w of WORDS) play.note(w, false);
   assert.ok(play.finish());
   assert.equal(play.playing(), null);
-  assert.equal(play.resumable(deal.subject, deal.seed), null, 'finished, so the next level is current');
+  assert.equal(play.resumable(deal.subject, deal.seed, 10), null, 'finished, so the next level is current');
   const next = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
-  play.start(next, WORDS);
+  play.start(next, WORDS, 10);
   play.signOut();
-  assert.equal(play.resumable(next.subject, next.seed), null);
+  assert.equal(play.resumable(next.subject, next.seed, 10), null);
   assert.equal(play.playing(), null);
 });
 
@@ -580,7 +605,7 @@ test('a level started while the page is hidden waits for resume() to start its c
   const { play, clock } = setup();
   await play.signUp('ana', 'secret1');
   const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
-  play.start(deal, WORDS, true);
+  play.start(deal, WORDS, 10, true);
   clock.tick(5000);
   assert.equal(play.elapsed(), 0);
   play.resume();
@@ -592,7 +617,7 @@ test('a find is pending until it is saved online, so Sign out can warn about it'
   const { play, cloud } = setup();
   await play.signUp('ana', 'secret1');
   const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
-  play.start(deal, WORDS);
+  play.start(deal, WORDS, 10);
   assert.equal(play.status().pending, false, 'starting a level is not news');
   play.note('OWL', false);
   assert.equal(play.status().pending, true);
@@ -605,7 +630,7 @@ test('a device coming back with an old copy reads the cloud before it saves, and
   const { play, cloud, clock } = setup();
   await play.signUp('ana', 'secret1');
   const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
-  play.start(deal, WORDS);
+  play.start(deal, WORDS, 10);
   play.note('OWL', false);
   play.pause();
   await settle();
@@ -626,7 +651,7 @@ test('another device\'s finds on the level being played join this one\'s, with t
   const { play, cloud, clock } = setup();
   await play.signUp('ana', 'secret1');
   const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
-  play.start(deal, WORDS);
+  play.start(deal, WORDS, 10);
   clock.tick(1000);
   play.note('OWL', true);
   // The other device found WREN (and a word this board lacks) and played longer.
@@ -652,7 +677,7 @@ test('a sync while the clock runs saves only when this device has something new,
   const { play, cloud, clock } = setup();
   await play.signUp('ana', 'secret1');
   const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
-  play.start(deal, WORDS);
+  play.start(deal, WORDS, 10);
   play.note('OWL', false);
   await play.sync();
   const saved = cloud.saves.length;

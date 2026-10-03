@@ -15,7 +15,8 @@ export const HISTORY_MAX = 50;
  *   reveals:number, at:number}} LevelResult
  * @typedef {{word:string, at:number, revealed:boolean}} LevelEvent
  * @typedef {{level:number, subject:string, difficulty:Difficulty, events:LevelEvent[],
- *   elapsedMs:number}} LevelCurrent  An unfinished level, so another device can resume it.
+ *   elapsedMs:number, size?:number}} LevelCurrent  An unfinished level, so another device can
+ *   resume it. `size` is its board's width, which builds before 2026-10-03 did not keep.
  * @typedef {{v:1, seed:number, level:number, points:number, history:LevelResult[],
  *   current:LevelCurrent|null}} LevelProgress  `level` is the next one to play (>= 1).
  * @typedef {Pick<Storage,'getItem'|'setItem'|'removeItem'>} LevelStore
@@ -86,16 +87,16 @@ function toResult(r) {
  * @param {unknown} c @returns {LevelCurrent|null} */
 function toCurrent(c) {
   if (!isRecord(c)) return null;
-  const { level, subject, difficulty, events, elapsedMs } = c;
+  const { level, subject, difficulty, events, elapsedMs, size } = c;
   if (!isLevel(level) || !isText(subject) || !isDifficulty(difficulty) || !isTime(elapsedMs)
-    || !Array.isArray(events)) return null;
+    || !Array.isArray(events) || (size !== undefined && !(isInt(size) && size > 0))) return null;
   /** @type {LevelEvent[]} */
   const out = [];
   for (const e of events) {
     if (!isRecord(e) || !isText(e.word) || !isTime(e.at) || typeof e.revealed !== 'boolean') return null;
     out.push({ word: e.word, at: e.at, revealed: e.revealed });
   }
-  return { level, subject, difficulty, events: out, elapsedMs };
+  return { level, subject, difficulty, events: out, elapsedMs, ...(size === undefined ? {} : { size }) };
 }
 
 /** A fresh, trusted copy, or null without a v:1 record and a uint32 seed. Otherwise lenient:
