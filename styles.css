@@ -333,7 +333,9 @@ body{position:fixed;inset:0;width:100%;height:100%}
 /* The category yields before the name, and the name keeps a floor: letting both
    collapse freely rendered #subject at zero width, invisible rather than truncated. */
 #category{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#subject{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1 1 auto;min-width:5ch}
+/* overflow clips at the padding box, so 4px of padding keeps the name's underline, which reaches
+   8px below the baseline; the margin gives the height back. */
+#subject{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1 1 auto;min-width:5ch;padding-bottom:4px;margin-bottom:-4px}
 /* A 320px phone has 300px for two content-sized columns of 19px words, which peak at 316px
    (tests/viewport.js "iPhone SE portrait" clipped 26px). Smaller type and padding there only. */
 @media (max-width:359px){
@@ -352,6 +354,28 @@ body{position:fixed;inset:0;width:100%;height:100%}
   #kickerline #category{color:var(--label);font-weight:700;font-size:14px;line-height:20px;letter-spacing:.06em}
   #app #subject{font-size:20px}
   #app #newbtn{padding:9px 13px}
+}
+/* The header's own width, so a laptop window whose rail is at its floor narrows it too, not
+   just a phone. A name that does not fit takes a second line rather than an ellipsis. */
+#hdr{container:hdr/inline-size}
+@container hdr (max-width:420px){
+  #subject{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+}
+/* A tablet's or a laptop's rail has the height for that second line up to where every name fits on
+   one. A phone on its side does not: the taller header would push words below the fold. */
+@media (min-height:500px){@container hdr (max-width:469px){
+  #app[data-landscape] #subject{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+}}
+/* New game's label left the title block 83px at 320px; its icon alone lets every name and
+   category fit. A phone held upright fits the label from 341px, but the rail's larger type
+   still cut names below 385px, so a laptop window with a narrow rail drops it sooner. */
+@container hdr (max-width:340px){
+  #newbtn .when-wide{display:none}
+  #app #newbtn{width:44px;padding:0;font-size:18px}
+}
+@container hdr (max-width:384px){
+  #app[data-landscape] #newbtn .when-wide{display:none}
+  #app[data-landscape] #newbtn{width:44px;padding:0;font-size:18px}
 }
 #app[data-landscape] #listhdr{margin:2px 2px 6px 0}
 /* The pull-back has to equal .w's padding below exactly, or the text leaves the rail edge. */
@@ -444,13 +468,15 @@ body{position:fixed;inset:0;width:100%;height:100%}
    behind a letter never takes it under AA; tools/sims/backgrounds/contrast.mjs measures it.
    Only where main.js says something is drawn behind: otherwise it is 24 shadows per glyph
    painted for nothing. */
-#app[data-behind] :is(#side,#side button),#app[data-behind][data-bgarea="full"] :is(#titles,#newbtn){text-shadow:
+#app[data-behind] :is(#side,#side button){text-shadow:
   1.25px 0 var(--bg),0.88px 0.88px var(--bg),0 1.25px var(--bg),-0.88px 0.88px var(--bg),-1.25px 0 var(--bg),-0.88px -0.88px var(--bg),0 -1.25px var(--bg),0.88px -0.88px var(--bg),
   2.5px 0 var(--bg),2.31px 0.96px var(--bg),1.77px 1.77px var(--bg),0.96px 2.31px var(--bg),0 2.5px var(--bg),-0.96px 2.31px var(--bg),-1.77px 1.77px var(--bg),-2.31px 0.96px var(--bg),
   -2.5px 0 var(--bg),-2.31px -0.96px var(--bg),-1.77px -1.77px var(--bg),-0.96px -2.31px var(--bg),0 -2.5px var(--bg),0.96px -2.31px var(--bg),1.77px -1.77px var(--bg),2.31px -0.96px var(--bg)}
-/* The header's controls are filled with the ground instead: their icons cannot take a text-shadow. */
-#app[data-bgarea="full"] :is(#newgroup,#appearance){background-color:var(--bg)}
-#app[data-bgarea="full"] #appearance:hover{background-image:linear-gradient(var(--accent-wash),var(--accent-wash))}
+/* The header sits on a plate of the ground instead. Its icons cannot take a text-shadow, and the
+   ring blurred the small label on an iPhone and, in WebKit, painted over the name's underline.
+   A spread shadow draws the plate's margin, so nothing in the header moves; the spread adds its 6px
+   to the corner, which comes out at the board's radius, or square where the board's is 2px. */
+#app[data-bgarea="full"] #hdr{background-color:var(--bg);border-radius:max(0px,var(--radius-board) - 6px);box-shadow:0 0 0 6px var(--bg)}
 .hue-1{fill:var(--confetti-2);color:var(--confetti-2)}
 .hue-2{fill:var(--confetti-3);color:var(--confetti-3)}
 .hue-3{fill:var(--confetti-4);color:var(--confetti-4)}
@@ -503,6 +529,9 @@ body{position:fixed;inset:0;width:100%;height:100%}
 #reveal{margin:-12px 0 -12px 4px;min-height:44px;padding:0 8px;border:none;background:transparent;
   color:var(--accent-text);font-family:var(--utility);font-size:13px;text-decoration:underline;
   text-underline-offset:3px;cursor:pointer;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
+/* Narrower than this, "Reveal a word" was cut to "Reveal a …" at every count; "Reveal" fits. */
+#listhdr{container:listhdr/inline-size}
+@container listhdr (max-width:345px){#reveal .when-wide{display:none}}
 #reveal:hover{color:var(--text-strong)}
 #reveal[disabled]{visibility:hidden}
 #list{display:grid;gap:6px 14px;margin-left:-12px}

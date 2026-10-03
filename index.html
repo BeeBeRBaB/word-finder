@@ -49,12 +49,12 @@
       </button>
       <!-- One control in two parts: the label deals a random game in one click, the chevron
            opens the category pane. -->
-      <div id="newgroup"><button id="newbtn" type="button">&#8635; New game</button><button id="catbtn" type="button" aria-label="Choose a category" aria-haspopup="dialog" aria-controls="picker" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9.5l6 6 6-6"/></svg></button></div>
+      <div id="newgroup"><button id="newbtn" type="button" aria-label="New game">&#8635;<span class="when-wide"> New game</span></button><button id="catbtn" type="button" aria-label="Choose a category" aria-haspopup="dialog" aria-controls="picker" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9.5l6 6 6-6"/></svg></button></div>
     </div>
   </div>
   <div id="gridbox"><div id="art" aria-hidden="true" hidden></div><div id="pills"></div><div id="letters"></div><div id="fx"></div></div>
   <div id="side"><div id="bgside" aria-hidden="true"></div>
-    <div id="listhdr"><b>WORDS</b><span id="count"></span><button id="reveal" type="button">Reveal a word</button></div>
+    <div id="listhdr"><b>WORDS</b><span id="count"></span><button id="reveal" type="button" aria-label="Reveal a word">Reveal<span class="when-wide"> a word</span></button></div>
     <div id="list"></div>
     <!-- The category's art, where the rail has room below the list; else it goes in #art.
          Both ship hidden: only the current stylesheet's display rules reveal them, so a stale
