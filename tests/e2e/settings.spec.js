@@ -242,12 +242,12 @@ test('Reveal, sound, vibrate and motion toggles take effect and persist', async 
   await expect(page.locator('#settings-motion-box')).toBeChecked();
 });
 
-test('the Settings button is a gear, and Settings has Look, Game and Feedback sections', async ({ page }) => {
+test('the Settings button is a gear, and Settings has Account, Look, Game and Feedback sections', async ({ page }) => {
   await page.goto('/?seed=1&subject=nature/birds');
   await page.waitForSelector('#letters .cell');
   await expect(page.locator('#appearance svg.i-look')).toBeVisible();
   await page.locator('#appearance').click();
-  await expect(page.locator('#settings .panesection')).toHaveText(['Look', 'Game', 'Feedback']);
+  await expect(page.locator('#settings .panesection')).toHaveText(['Account', 'Look', 'Game', 'Feedback']);
 });
 
 test('Settings fits a laptop without scrolling, and is a full-screen page with Back on a phone', async ({ page }) => {

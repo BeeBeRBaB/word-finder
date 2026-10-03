@@ -2,8 +2,8 @@ import { test, expect } from '@playwright/test';
 
 /** @typedef {import('@playwright/test').Page} Page */
 
-// account.js is not wired into the game yet, so each test mounts it in a host inside the open
-// Settings card, against a stand-in for levelplay.js that records what it was asked.
+// account.js on its own: each test mounts it in a host inside the open Settings card, in place of
+// the game's own Account section, against a stand-in for levelplay.js that records what it was asked.
 test.use({ serviceWorkers: 'block' });
 
 /** @param {Page} page @param {object} status @param {string} what 'account' or 'signin' */
@@ -33,6 +33,7 @@ async function mount(page, status, what) {
     const host = document.createElement('section');
     host.id = 'acct-host';
     host.className = 'panegroup';
+    document.getElementById('settings-account')?.remove();
     document.getElementById('settings-body')?.prepend(host);
     if (what === 'account') m.renderAccount(host, play, { onSignIn: () => w.calls.push(['onSignIn']), onSignOut: () => w.calls.push(['onSignOut']) });
     else w.form = m.renderSignIn(host, play, { onDone: (/** @type {any} */ a) => w.calls.push(['onDone', a.username]) });

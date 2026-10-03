@@ -17,6 +17,9 @@ import { makeBackdrop } from './backgrounds.js';
 import { tilesMarkup, summaryMarkup } from './bgpicker.js';
 import { makeSubpage } from './subpage.js';
 import { tilesMarkup as lookTilesMarkup, summaryMarkup as lookSummaryMarkup, readLooks, varsOf, lookId } from './lookpicker.js';
+import { makeCloud } from './cloud.js';
+import { makeLevelPlay, levelPuzzle, replaySelections } from './levelplay.js';
+import { renderAccount, renderSignIn, renderLevelChoice, showLevelWin, clearLevelWin } from './account.js';
 
 /**
  * @typedef {import('./puzzle.js').Puzzle} Puzzle
@@ -25,6 +28,8 @@ import { tilesMarkup as lookTilesMarkup, summaryMarkup as lookSummaryMarkup, rea
  * @typedef {import('./layout.js').Preset} Preset
  * @typedef {import('./view.js').Els} Els
  * @typedef {import('./view.js').FoundEntry} FoundEntry
+ * @typedef {import('./levelplay.js').Deal} Deal
+ * @typedef {import('./levelplay.js').Finish} Finish
  * @typedef {{
  *   puzzle: Puzzle|null,
  *   size: number,
@@ -113,6 +118,16 @@ void navigator.storage?.persist?.().catch(() => {});
 let currentSeed;
 /** @type {string} */
 let subjectId;
+// Levels: the signed-in account's numbered puzzles. Its copy on this device loads now, before
+// boot() restores a board that may be the level in progress; the cloud's answers later.
+const play = makeLevelPlay({ cloud: makeCloud() });
+const booted = play.boot();
+// The level on screen, or null for an ordinary game. Still set on its solved board, until the
+// next deal.
+/** @type {Deal|null} */
+let levelBoard = null;
+// What the header's label line says when the board is not a level.
+let categoryName = '';
 // The word mid-glow in the list. Only ever set by a live find, never by a restore.
 /** @type {string|null} */
 let justFound = null;
@@ -149,8 +164,13 @@ function sweep() {
  *   different players. rng.js keeps its pinned branches away from the rng for exactly
  *   that second reason.
  * @param {Puzzle} [dealt] a saved board to put back instead of building one
+ * @param {Deal|null} [level] the level this board is; start timing it once its finds are back
  * @returns {void} */
-function newPuzzle(seed, subject, shape, useBag = true, dealt) {
+function newPuzzle(seed, subject, shape, useBag = true, dealt, level = null) {
+  // Leaving a level saves where it stood, so New game's Levels side picks it up again.
+  if (levelBoard) play.pause();
+  levelBoard = level;
+  categoryName = subject.categoryName;
   currentSeed = seed;
   subjectId = subject.id;
   state.size = shape.size;
@@ -171,7 +191,7 @@ function newPuzzle(seed, subject, shape, useBag = true, dealt) {
   if (useBag) progress.noteDraw(subject.id, subject.words, state.puzzle.words);
   els.subject.textContent = cap(state.puzzle.name);
   els.subject.dataset.accent = String(accentSlot(state.puzzle.name));
-  els.category.textContent = subject.categoryName;
+  showCategory();
   renderArt(els, subject.id, cfg.get().art);
   showBackdrop();
   // Or a stale timer drops the win overlay over the fresh grid, swallowing every tap.
@@ -199,6 +219,37 @@ function persist() {
     placements: state.puzzle.placements,
     found: state.foundOrder.map(w => ({ word: w, ...state.found[w].sel })),
   });
+}
+
+/** The header's label line: the level's number on a level, else the subject's category.
+ * @returns {void} */
+function showCategory() {
+  els.category.textContent = levelBoard ? `Level ${levelBoard.level}` : categoryName;
+}
+
+/** Time the level on screen. Finds the account already has for it go back on the board, and
+ * finds the board has that the account lacks are recorded. A level the account has moved past
+ * leaves an ordinary board. @param {Deal} deal @returns {void} */
+function startLevel(deal) {
+  const puzzle = state.puzzle;
+  if (!puzzle) return;
+  let added = false;
+  for (const { word, sel } of replaySelections(puzzle, play.start(deal, puzzle.words))) {
+    if (state.found[word]) continue;
+    state.found[word] = { sel };
+    state.foundOrder.push(word);
+    added = true;
+  }
+  if (!play.playing()) { levelBoard = null; showCategory(); return; }
+  for (const w of state.foundOrder) play.note(w, false);
+  // Complete without a win, as when the last find reached this device but not the account:
+  // bank it quietly, the way a restored board never pops the win card.
+  if (state.foundOrder.length === puzzle.words.length) play.finish();
+  if (!added) return;
+  renderFoundCells(els, state, state.size);
+  pills();
+  list();
+  persist();
 }
 
 /** @returns {void} */
@@ -287,16 +338,20 @@ els.gridbox.addEventListener('pointermove', (e) => {
 
 /** Record a found word and play everything that follows: cells, burst, glow, strike, save,
  * and the win card if it was the last. Shared by a drag and by Reveal.
- * @param {string} hit @param {Selection} s @returns {void} */
-function claim(hit, s) {
+ * @param {string} hit @param {Selection} s @param {boolean} [revealed] @returns {void} */
+function claim(hit, s, revealed = false) {
   // A local, so the narrowing survives into the win timer's closure, the same reason
   // effects.js aliases `ac`.
   const puzzle = /** @type {Puzzle} */ (state.puzzle);
   state.found[hit] = { sel: s };
   state.foundOrder.push(hit);
+  const level = levelBoard;
+  if (level) play.note(hit, revealed);
   renderFoundCells(els, state, state.size);
   const won = state.foundOrder.length === puzzle.words.length;
   if (won) progress.addSolve();
+  // Banked at the find, not when the card shows: a reload in between must not lose the level.
+  const finished = won && level ? play.finish() : null;
   burst(els.fx, s, won ? 90 : 34, state.dims, PAD);
   if (cfg.get().sound) pop(won);
   if (cfg.get().vibrate) navigator.vibrate?.(won ? [30, 50, 90] : 18);
@@ -314,12 +369,13 @@ function claim(hit, s) {
   // this fires `puzzle` is still the one that was just won.
   if (won) state.winTimer = setTimeout(() => {
     state.winTimer = null;
+    const paneOpen = els.picker.style.display === 'flex' || settings.style.display === 'flex';
+    if (finished && level) { showLevelCard(finished, level.level, paneOpen); return; }
     els.winmsg.textContent = 'You found every ' + cap(puzzle.name) + ' word.';
     // Written here rather than in the markup so the live region is empty until there is
     // something to announce. The count is the only number shown anywhere — no
     // fractions, which are what turn a record into a target.
     const n = progress.get().puzzles;
-    const paneOpen = els.picker.style.display === 'flex' || settings.style.display === 'flex';
     const counting = !paneOpen && startAutoNext();
     els.winstats.textContent = `${n} ${n === 1 ? 'puzzle' : 'puzzles'} solved`;
     // One announcement, including the countdown, rather than a live digit every second.
@@ -346,7 +402,7 @@ function revealWord() {
   const p = left[Math.floor(Math.random() * left.length)];
   const n = p.word.length - 1;
   hideToast();   // like any move on the board, this accepts a one-click deal
-  claim(p.word, { x0: p.x0, y0: p.y0, x1: p.x0 + p.dx * n, y1: p.y0 + p.dy * n });
+  claim(p.word, { x0: p.x0, y0: p.y0, x1: p.x0 + p.dx * n, y1: p.y0 + p.dy * n }, true);
   pills();
 }
 
@@ -436,6 +492,32 @@ async function newGame(categoryId, stillWanted = () => true) {
   newPuzzle(Date.now() >>> 0, subject, shapeFor());
   return true;
 }
+/** A category for a level, recorded like newGame's: a level is dealt from the same catalog.
+ * @param {string} id @returns {Promise<import('./subjects.js').CategoryData>} */
+async function levelCategory(id) {
+  try {
+    const cat = await loadCategory(id);
+    unavailableCategories.delete(id);
+    noteCategory(cat);
+    return cat;
+  } catch (err) {
+    unavailableCategories.add(id);
+    throw err;
+  }
+}
+/** Deal the account's level: the one in progress, else the next. No coverage bag, so every
+ * device deals one level the same board at one size. Rejects as newGame does.
+ * @param {() => boolean} [stillWanted] @returns {Promise<boolean>} whether it dealt */
+async function dealLevel(stillWanted = () => true) {
+  const deal = await play.deal(CATEGORIES.map(c => c.id), levelCategory, cfg.get().difficulty);
+  if (!deal) throw new Error('no level to deal: signed out, or the account changed');
+  const subject = await loadSubject(deal.subject);
+  if (!stillWanted()) return false;
+  const shape = shapeFor();
+  newPuzzle(deal.seed, subject, shape, false, levelPuzzle(deal, subject, shape), deal);
+  startLevel(deal);
+  return true;
+}
 // newGame rejects when a category cannot be fetched; the picker catches that to keep
 // itself open, so the rejection must survive rather than being swallowed here.
 const picker = makePicker({
@@ -451,6 +533,17 @@ const picker = makePicker({
   isComplete: (id) => progress.isComplete(id),
   onStart: async (categoryId) => { await newGame(categoryId); },
   opener: must('catbtn'),
+  levels: {
+    enabled: () => play.enabled,
+    getMode: () => cfg.get().play,
+    setMode: (m) => cfg.set('play', m),
+    render: (host) => renderLevelChoice(host, play, {
+      difficulty: cfg.get().difficulty,
+      onSignIn: () => openSignIn(true),
+      onRetry: () => { void play.sync().then(afterSync); },
+    }),
+    onLevel: async () => { await dealLevel(); },
+  },
 });
 // Unconditional, unlike the confirm it replaces: the dialog is now how a game is started,
 // and the warning is one line inside it rather than a reason to show it.
@@ -468,21 +561,28 @@ function anchorPane(pane) {
   pane.style.paddingRight = Math.max(8, innerWidth - r.right) + 'px';
   if (innerHeight > 420) pane.style.paddingTop = (r.bottom + 8) + 'px';
 }
-must('catbtn').addEventListener('click', () => {
+/** @returns {void} */
+function openPicker() {
   hideToast();   // an Undo must never restore over a board dealt from the pane
   quickGen++;    // nor a one-click deal still loading land over it
   cancelAutoNext();
   dealGen++;
   closeSettings();
   anchorPane(els.picker);
-  const inProgress = !!state.puzzle && state.foundOrder.length > 0
+  // A level keeps its finds when left, so only an ordinary board in progress is lost.
+  const inProgress = !levelBoard && !!state.puzzle && state.foundOrder.length > 0
     && state.foundOrder.length < state.puzzle.words.length;
   picker.open(inProgress);
-});
+}
+must('catbtn').addEventListener('click', openPicker);
 // ---- The win card's countdown ----
 const winnext = must('winnext'), wincount = must('wincount'), winbtn = must('winbtn');
+const wincard = must('wincard'), wintitle = must('wintitle');
 /** @type {ReturnType<typeof setInterval>|null} */
 let autoTimer = null;
+// The score card while the win card is a level's. It runs its own countdown.
+/** @type {import('./scorecard.js').Playback|null} */
+let levelCard = null;
 // True while the win card's deal is in flight, so a tap on Play as the countdown fires
 // (or a double tap) deals once, not twice.
 let dealing = false;
@@ -494,19 +594,23 @@ const prefs = defaultStore();
 /** @returns {void} */
 function cancelAutoNext() {
   if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+  levelCard?.hold();
   winnext.hidden = true;
   winnext.classList.remove('run');
   // The announcement was of a deal that is no longer coming.
   els.winstats.querySelector('.sr')?.remove();
 }
-/** Deal from the win card: the Play button and the countdown share this exactly.
+/** Deal from the win card: the Play button and the countdown share this exactly, and a level's
+ * Next level and countdown likewise. @param {boolean} [level] the account's next level
  * @returns {void} */
-function advance() {
+function advance(level = false) {
   if (dealing) return;
   cancelAutoNext();
   dealing = true;
   const gen = ++dealGen;
-  newGame(null, () => gen === dealGen).catch((err) => {
+  /** @returns {boolean} */
+  const wanted = () => gen === dealGen;
+  (level ? dealLevel(wanted) : newGame(null, wanted)).catch((err) => {
     if (gen !== dealGen) return;   // the player has moved on; this failure is not news
     // newGame rejects before newPuzzle runs, so the solved board and win card are still
     // up with nothing saying the tap did nothing. Hide the overlay so the header's
@@ -542,8 +646,23 @@ function hideWin() {
   // Hiding the focused Play button would drop focus to <body>; give it to New game.
   if (els.win.contains(document.activeElement)) must('newbtn').focus({ preventScroll: true });
   els.win.style.display = 'none';
+  clearLevelWin(wincard, wintitle);
+  levelCard = null;
 }
-winbtn.addEventListener('click', advance);
+/** The win card as a level's score card. The setting and an open pane decide its countdown, as
+ * they do the plain card's. @param {Finish} f @param {number} level @param {boolean} paneOpen
+ * @returns {void} */
+function showLevelCard(f, level, paneOpen) {
+  els.win.style.display = 'flex';
+  levelCard = showLevelWin(wincard, wintitle, level, f, {
+    reduceMotion: prefersReducedMotion(),
+    countdownMs: cfg.get().autoNext && !paneOpen && !document.hidden ? undefined : 0,
+    focus: !paneOpen,
+    onNext: () => advance(true),
+    onStay: () => {},
+  });
+}
+winbtn.addEventListener('click', () => advance());
 
 // ---- One-click New game, with Undo ----
 const toast = must('toast'), toastMsg = must('toast-msg'), toastLive = must('toast-live');
@@ -551,7 +670,7 @@ const toastUndo = must('toast-undo'), newbtn = must('newbtn');
 const UNDO_MS = 6000;
 /** A board exactly as it stood, held in memory.
  * @typedef {{puzzle:Puzzle, found:State['found'], foundOrder:string[], seed:number,
- *   subjectId:string, size:number, minCell:number, category:string}} Snapshot */
+ *   subjectId:string, size:number, minCell:number, category:string, level:Deal|null}} Snapshot */
 /** @type {Snapshot|null} */
 let undoSnap = null;
 /** @type {ReturnType<typeof setTimeout>|null} */
@@ -566,18 +685,20 @@ function snapshot() {
   const p = state.puzzle;
   if (!p) return null;
   return { puzzle: p, found: { ...state.found }, foundOrder: [...state.foundOrder], seed: currentSeed,
-    subjectId, size: state.size, minCell: state.minCell, category: els.category.textContent ?? '' };
+    subjectId, size: state.size, minCell: state.minCell, category: categoryName, level: levelBoard };
 }
 /** Put a snapshot back as the live board, without regenerating it.
  * @param {Snapshot} snap @returns {void} */
 function reinstate(snap) {
+  if (levelBoard) play.pause();
+  levelBoard = snap.level; categoryName = snap.category;
   currentSeed = snap.seed; subjectId = snap.subjectId;
   state.size = snap.size; state.minCell = snap.minCell;
   state.puzzle = snap.puzzle; state.found = snap.found; state.foundOrder = snap.foundOrder;
   state.sel = null; state.miss = null; state.drag = null; justFound = null;
   els.subject.textContent = cap(snap.puzzle.name);
   els.subject.dataset.accent = String(accentSlot(snap.puzzle.name));
-  els.category.textContent = snap.category;
+  showCategory();
   renderArt(els, snap.subjectId, cfg.get().art);
   showBackdrop();
   hideWin();
@@ -586,6 +707,7 @@ function reinstate(snap) {
   pills();
   list();
   persist();
+  if (levelBoard) startLevel(levelBoard);
 }
 /** @returns {void} */
 function armToastTimer() {
@@ -661,8 +783,12 @@ must('winstay').addEventListener('click', () => { cancelAutoNext(); winbtn.focus
 els.winclose.addEventListener('click', hideWin);
 els.win.addEventListener('click', (e) => { if (e.target === els.win) hideWin(); });
 // Cancel rather than pause: a player coming back to the tab should find the board they
-// left, not one dealt behind their back. Play is still there.
-document.addEventListener('visibilitychange', () => { if (document.hidden) cancelAutoNext(); });
+// left, not one dealt behind their back. Play is still there. A level's clock stops while
+// the page is hidden, and saving it then lets another device carry on.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { cancelAutoNext(); if (levelBoard) play.pause(); }
+  else if (levelBoard) play.resume();
+});
 
 // appearance.js owns the preference and resolves it onto <html>; this callback is the
 // page-shaped half. The status-bar colour is read back off the resolved palette rather
@@ -745,6 +871,74 @@ const lookPage = makeSubpage({
   card: must('settingscard'), page: must('settings-themepage'), row: must('settings-theme'), back: must('theme-back'), name: 'theme',
   onOpen: fillPreviews,
 });
+// ---- The account ----
+const accountHost = must('settings-account'), signInHost = must('signin-form');
+// Sign in from New game's Levels side goes back to New game once signed in.
+let signInFromPicker = false;
+// The Account section's button is redrawn with it, so the page looks it up each time.
+const signInPage = makeSubpage({
+  card: must('settingscard'), page: must('settings-signinpage'), row: () => accountHost.querySelector('.acct-seg button'),
+  back: must('signin-back'), name: 'signin',
+  onOpen: () => { renderSignIn(signInHost, play, { onDone: signedIn }); },
+  focus: () => signInHost.querySelector('input'),
+});
+/** The Account section, redrawn whenever the account or its saving changes. Focus on its
+ * button stays on the button that replaces it. @returns {void} */
+function renderAccountSection() {
+  accountHost.hidden = !play.enabled;
+  if (!play.enabled) return;
+  const had = accountHost.contains(document.activeElement);
+  renderAccount(accountHost, play, { onSignIn: () => signInPage.open(), onSignOut: signedOut });
+  if (had) /** @type {HTMLElement|null} */ (accountHost.querySelector('button'))?.focus({ preventScroll: true });
+}
+/** Settings, at its sign-in page. @param {boolean} fromPicker @returns {void} */
+function openSignIn(fromPicker) {
+  picker.close();
+  openSettings();
+  signInFromPicker = fromPicker;
+  signInPage.open();
+}
+/** @returns {void} */
+function signedIn() {
+  renderAccountSection();
+  reconcileLevel();
+  if (signInFromPicker) { signInFromPicker = false; closeSettings(); openPicker(); return; }
+  signInPage.close();
+}
+/** The board stays, as an ordinary one; a level's score card goes with the account.
+ * @returns {void} */
+function signedOut() {
+  if (levelBoard) { levelBoard = null; showCategory(); }
+  if (wincard.dataset.level) hideWin();
+  renderAccountSection();
+}
+/** After the account's progress changed under the board: link the board to the level it is,
+ * pick up finds another device made on it, or let it go once the account is past it.
+ * Not while the win card shows: that board is done. @returns {void} */
+function reconcileLevel() {
+  const puzzle = state.puzzle;
+  if (!puzzle || els.win.style.display === 'flex') return;
+  if (!levelBoard) {
+    const deal = subjectId ? play.resumable(subjectId, currentSeed) : null;
+    if (deal) { levelBoard = deal; showCategory(); startLevel(deal); }
+    return;
+  }
+  const c = play.progress()?.current;
+  if (!play.playing()) {
+    const solved = state.foundOrder.length === puzzle.words.length;
+    levelBoard = null;
+    showCategory();
+    if (!solved) showToast('This level was finished on another device.', false);
+  } else if (c && c.events.length > state.foundOrder.length && c.events.every(e => puzzle.words.includes(e.word))) {
+    startLevel(levelBoard);
+  }
+}
+/** @returns {void} */
+function afterSync() {
+  renderAccountSection();
+  picker.refresh();
+  reconcileLevel();
+}
 /** @returns {void} */
 function openSettings() {
   cancelAutoNext();
@@ -752,7 +946,13 @@ function openSettings() {
   picker.close();
   bgPage.close(false);
   lookPage.close(false);
+  signInPage.close(false);
+  signInFromPicker = false;
   syncSettings();
+  renderAccountSection();
+  // Progress this device has not got online yet is tried again when the player looks.
+  const st = play.status();
+  if (st.signedIn && (st.pending || st.error)) void play.sync().then(afterSync);
   anchorPane(settings);
   settings.style.display = 'flex';
   els.appearance.setAttribute('aria-expanded', 'true');
@@ -764,6 +964,7 @@ function closeSettings() {
   if (settings.style.display !== 'flex') return;
   bgPage.close(false);
   lookPage.close(false);
+  signInPage.close(false);
   settings.style.display = 'none';
   els.appearance.setAttribute('aria-expanded', 'false');
   els.appearance.focus();
@@ -831,6 +1032,7 @@ applySetting('motion');
 must('settings-close').addEventListener('click', closeSettings);
 must('bg-close').addEventListener('click', closeSettings);
 must('theme-close').addEventListener('click', closeSettings);
+must('signin-close').addEventListener('click', closeSettings);
 must('settings-back').addEventListener('click', closeSettings);
 settings.addEventListener('click', (e) => { if (e.target === settings) closeSettings(); });
 document.addEventListener('keydown', (e) => {
@@ -917,11 +1119,14 @@ async function restore(saved) {
   const dealt = cells && placements
     ? { name: subject.name, cells: [...cells], words: placements.map(p => p.word), placements }
     : undefined;
+  // The level in progress, when that is what this board is: the save does not say, the
+  // account's progress does.
+  const level = play.resumable(saved.subjectId, saved.seed);
   // useBag=false: this board was already dealt and its draw already recorded. Recording
   // it again would advance the bag twice for one puzzle, silently, on every reload.
   newPuzzle(saved.seed, subject, {
     size: saved.size, count: saved.count, mix: shape.mix, minCell: shape.minCell,
-  }, false, dealt);
+  }, false, dealt, level);
   for (const f of saved.found) {
     if (!state.puzzle || !state.puzzle.words.includes(f.word) || state.found[f.word]) continue;
     state.found[f.word] = { sel: { x0: f.x0, y0: f.y0, x1: f.x1, y1: f.y1 } };
@@ -933,8 +1138,13 @@ async function restore(saved) {
   // newPuzzle above already saved an empty `found`, so without this the replayed
   // progress would only live in memory and a second reload would lose it.
   persist();
+  if (level) startLevel(level);
 }
 
+renderAccountSection();
+// The account's progress, once the cloud has answered; and again whenever the device is back online.
+void booted.then(afterSync);
+window.addEventListener('online', () => { void play.sync().then(afterSync); });
 // boot() never rejects — it reports any failure into the DOM itself.
 void boot();
 // './sw.js' resolves against the DOCUMENT, not this module. Writing '../sw.js' because

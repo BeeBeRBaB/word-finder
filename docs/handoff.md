@@ -21,19 +21,19 @@ current default marked), and don't build on an assumption.
 - **Theme page** (`lookpicker.js`): 7 themes x 4 palettes (Classic, Jewel, Duotone, Calm) as one choice, each tile previewed in its own colours, read off the stylesheet once per mode. Storage keeps the two keys, `wordfinder-theme` and `wordfinder-palette`. Known gaps: the first open in each mode spends about 80ms reading the 28 looks (300–600ms at 6x CPU throttle), so split it across frames if a slow phone shows it; and a tile shows checked and focus only through `:has()` (absent before Firefox 121).
 - **Background page** (`bgpicker.js`): Area (Word list / Full screen) and a tile per registry background. The ten animations run behind the word list (`#bgside`) or the page (`#bg`), at exactly 30fps. Text over them keeps a 2.5px ring of the ground colour and the header's controls are filled, so every look passes AA over every background (`node tools/sims/backgrounds/contrast.mjs`, about 50 minutes).
 - **Subject backgrounds:** Subject scene (still) and Drifting icons (animated) draw the dealt subject's own icons, else its category's (233 icons in `src/backgrounds/icons.js`, mapped in `subject-icons.js`). Both restart on every deal, and the seed picks one of six variants per subject (`icon-scene.js`). With Word list and the list under the board, the Subject scene shows only its main icon in the board corner, like the category art (question 3). None of `src/backgrounds/` is precached, so a change to an export of the shared `icon-scene.js` needs a CACHE bump.
-- **Service worker:** the code cache is keyed by path, and CACHE is `wordfinder-v16`.
+- **Levels and accounts** (owner-approved screens, 2026-10-02): Settings starts with an Account section (Sign in, or the username, level, points and whether they are saved online, with Sign out) and a Sign in page that also creates accounts. New game has Random | Levels; Levels deals the account's level, the header's label line reads "Level N", and the win card becomes "Level N complete" with the score card and "N points in all". main.js holds the level on screen in `levelBoard`; `startLevel` puts a level's finds back and starts its clock, and `reconcileLevel` re-links or lets go of the board after a sync or sign-in. Signing in from New game returns to it. `tests/e2e/levels.spec.js` plays all of it against a stubbed Firebase.
+- **Service worker:** the code cache is keyed by path, and CACHE is `wordfinder-v17`.
 - **Tests:** `PORT=<port> npx playwright test` moves the whole e2e run.
 
 ## On main but not wired up yet (no visible effect)
 These are committed so a thread can pick them up from GitHub.
 - **Animated backgrounds** in `src/backgrounds/*.js` are wired up now (above). They stay out of sw.js ASSETS on purpose; the default stale-while-revalidate path caches them on first use. `tools/coverage.mjs` excludes `src/backgrounds/**` from the 90% floor.
   - A new background is one registry entry in `src/backgrounds.js`: its tile, its Settings choice and its place in the contrast sim follow from it. `perDeal: true` restarts it on every deal, and `show()` passes it the subject id and seed.
-- **Levels and accounts:** `src/scoring.js`, `src/levels.js`, `src/cloud.js`, `src/scorecard.js`, `src/levelplay.js` (the flow main.js will call) and `src/account.js` (the sign-in UI and the Levels side of New game, with `.acct-*` styles and `account.spec.js`), with unit tests, `firestore.rules`, and README rows plus the Accounts section.
-  - `styles.css` ends with a `/* Level score card */` section (`.sc-*` classes, unused so far).
-  - Still unstyled, for the main.js wiring to add: `.acct-lvl` and `.acct-lvl-line` (the level and its line in New game) and `.sc-all` (the score card footnote, `visibility:hidden` until `.sc-in`). The owner approved the six levels screens as mocked up on 2026-10-02 (`levels-ui-mockup-dark.png` and `-light.png` in the project's shared files).
+- **Levels and accounts** are wired up now (above). Module notes:
   - scoring and levels were reviewed clean.
   - cloud had 5 defects, fixed by its reviewer.
   - scorecard was reviewed on 2026-10-02 with no logic defects. Its open layout and contrast findings are in `tools/levels-review/README.md`.
+  - The owner publishes `firestore.rules` in the Firebase console themselves: tell them whenever it changes.
 - **Art sources:**
   - `tools/art-src/icons/part*.json` hold 233 icons. Run `node tools/art-src/icons/check.mjs <part.json>` to validate one and render a preview.
   - `tools/art-src/iconmap/<category>.json` gives all 600 subjects 4–6 icons each, hero first. Check with `node tools/art-src/iconmap/check.mjs <category>`.
@@ -69,7 +69,7 @@ These are committed so a thread can pick them up from GitHub.
    - Script-merge the round-2 icons into the mapping: prepend each new icon on the subjects that asked for it (wishlist `subjects`), capped at 6.
    - Emit lazy `src/backgrounds/icons.js` and `subject-icons.js`.
    - Add a "Subject scene" (still) background and a "Drifting icons" (animated) one. A subject's own icons override its category's, and the puzzle seed picks one of several variants per subject.
-3. **Levels mode UI.**
+3. **Levels mode UI.** Done 2026-10-03 (see What is live).
    - Random play with no login stays as today, with the per-device no-repeat.
    - Signing in gives seeded, unlimited levels that can be continued on any device. Points accumulate, and easy/normal/hard still apply.
    - End of level: the existing win card and its progress bar. The score breakdown wipes in line by line, left to right; then a 10s bar runs forward for a positive total and backward for a negative one, with Next level and Stay.

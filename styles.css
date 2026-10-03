@@ -1314,6 +1314,9 @@ label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12
 @media (max-width:359px){
   .sc{width:calc(100vw - 72px)}
 }
+/* A level's footnote under the total: the account's new total, or why it is unchanged. Shown with the total. */
+.sc-all{margin:8px 0 0;text-align:center;font-size:14px;line-height:1.35;color:var(--muted);visibility:hidden}
+.sc-all.sc-in{visibility:visible}
 /* End level score card */
 /* Account */
 /* account.js's Account section in Settings and its sign-in form. Unused until levels mode is wired in. */
@@ -1339,4 +1342,23 @@ b.acct-name{color:var(--text-strong)}
 .acct-toggle{min-height:44px;padding:0 10px;border:none;background:transparent;color:var(--accent-text);font-family:inherit;font-size:14px;
   font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .acct-form[aria-busy="true"] .acct-submit,.acct-form button[disabled]{opacity:.6;cursor:progress}
+/* The Levels side of New game: the level to play over the account's points and difficulty. */
+.acct-lvl{margin:0;font-family:var(--display);font-weight:700;font-size:22px;line-height:1.2;color:var(--text-strong)}
+.acct-lvl-line{margin:2px 0 0;font-size:14.5px;color:var(--muted)}
 /* End account */
+/* Levels */
+/* main.js's wiring of the above. The Account section heads Settings, across both columns where there are two;
+   a .panegroup sets display, which would beat the hidden attribute. */
+#settings-account[hidden]{display:none}
+@media (min-width:820px), (min-width:600px) and (max-height:420px){
+  #settings-body{grid-template-areas:"account account" "look game" "feedback game"}
+  #settings-account{grid-area:account;padding-bottom:12px;border-bottom:1px solid var(--border)}
+  #settings-look{padding-top:0;border-top:none}
+}
+#picker-mode{margin:0 0 18px}
+#picker-level{margin:0 0 20px}
+#picker-level .acct-who{text-align:left}
+/* While the win card is a level's, the score card replaces the plain card's shape, message and buttons. */
+#wincard[data-level] #solved,#wincard[data-level] #winmsg,#wincard[data-level] #winstats,
+#wincard[data-level] #winnext,#wincard[data-level] #winbtn{display:none}
+/* End levels */
