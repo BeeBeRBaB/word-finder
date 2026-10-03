@@ -171,6 +171,33 @@ test('a level in progress survives a reload with its finds, then scores as the s
   expect(saved.points).toBeGreaterThan(420);
 });
 
+// Saves from before boards were stored hold only the seed, and a level's board is not the
+// random deal's: it is rebuilt at the level's own difficulty, or its finds miss the words.
+test('a level saved without its board is rebuilt as the level, at its difficulty', async ({ page }) => {
+  const fb = makeFirebase();
+  const uid = fb.add('ana_reads', 'hunter22');
+  fb.put(uid, PROGRESS);
+  await fb.install(page);
+  await signedInAs(page, uid, 'ana_reads');
+  await page.addInitScript(() => {
+    if (!localStorage.getItem('wordfinder-settings-v1')) localStorage.setItem('wordfinder-settings-v1', JSON.stringify({ difficulty: 'hard' }));
+  });
+  await page.goto('/?subject=nature/birds');
+  await levelsSide(page);
+  await page.click('#picker-start');
+  await expect(page.locator('#category')).toHaveText('Level 3');
+  await findAndDrag(page, (await page.locator('#list .w').first().textContent() ?? '').trim().toUpperCase());
+  const before = await page.locator('#letters').textContent();
+  await page.evaluate(() => {
+    const { cells, placements, ...rest } = JSON.parse(localStorage.getItem('wordfinder-save-v1') ?? '{}');
+    localStorage.setItem('wordfinder-save-v1', JSON.stringify(rest));
+  });
+  await page.goto('/');
+  await expect(page.locator('#category')).toHaveText('Level 3');
+  await expect(page.locator('#letters')).toHaveText(before ?? '');
+  await expect(page.locator('#list .w.done')).toHaveCount(1);
+});
+
 test('a one-click New game leaves a level with its finds kept, and Undo or Levels brings it back', async ({ page }) => {
   const fb = makeFirebase();
   const uid = fb.add('ana_reads', 'hunter22');
@@ -428,6 +455,31 @@ test('a session refused mid-level says so when the player is back, and signing i
   await expect(page.locator('#category')).toHaveText('Level 3');
   await setHidden(page, true);
   await expect.poll(() => fb.progress(uid)?.current?.events?.map((/** @type {any} */ e) => e.word)).toEqual(words.slice(0, 2));
+});
+
+// Level 3 of seed 4242 is in Space, a category this page has not loaded, so its deal waits on
+// the network while the session is refused.
+test('a session that lapses while New game deals a level asks to sign in, not about the network', async ({ page }) => {
+  const fb = makeFirebase();
+  const uid = fb.add('ana_reads', 'hunter22');
+  fb.put(uid, PROGRESS);
+  await fb.install(page);
+  await signedInAs(page, uid, 'ana_reads');
+  await page.goto('/?subject=nature/birds');
+  await levelsSide(page);
+  /** @type {() => void} */
+  let release = () => {};
+  const held = new Promise((r) => { release = () => r(undefined); });
+  await page.route(/\/src\/subjects\/space\.js/, async (route) => { await held; await route.continue(); });
+  await page.click('#picker-start');
+  await refuseSession(page);
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));   // its sync is refused
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('wordfinder-session-v1'))).toBeNull();
+  release();
+  await expect(page.locator('#picker-level').getByRole('button', { name: 'Sign in' })).toBeVisible();
+  await expect(page.locator('#picker-error')).toBeHidden();
+  await expect(page.locator('#picker-title')).toBeFocused();
+  await expect(page.locator('#category')).not.toHaveText(/^Level/);
 });
 
 test('a session that lapses while a score card shows makes Next level deal a random game', async ({ page }) => {

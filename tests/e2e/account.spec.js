@@ -253,7 +253,7 @@ test('the score card footnote is the new total, or why it did not change', async
     return [m.levelFootnote({ banked: true, progress: { points: 5644 } }), m.levelFootnote({ banked: true, progress: { points: 1 } }),
       m.levelFootnote({ banked: false, progress: { points: 5644 } })];
   });
-  expect(lines).toEqual(['5,644 points in all', '1 point in all', 'Already finished on another device, so these points were not added.']);
+  expect(lines).toEqual(['5,644 points in all', '1 point in all', "These points couldn't be added to your total."]);
 });
 
 /** The real win card, showing, with a level's score card in it.
@@ -339,7 +339,7 @@ test('showing a second level replaces the first score card rather than stacking 
   const card = page.locator('#wincard');
   await expect(card.locator('.sc-host')).toHaveCount(1);
   await expect(card.locator('h2')).toHaveText('Level 13 complete');
-  await expect(card.locator('.sc-all')).toHaveText('Already finished on another device, so these points were not added.');
+  await expect(card.locator('.sc-all')).toHaveText("These points couldn't be added to your total.");
   await skipAhead(page, 2000);
   expect(await calls(page)).toEqual([]);   // the first card's countdown was stopped
   await page.evaluate(() => { const w = /** @type {any} */ (window); w.m.clearLevelWin(w.card, w.title); });

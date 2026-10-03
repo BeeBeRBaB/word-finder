@@ -4,6 +4,7 @@
 // Rows are 16 chars: '.' empty, 'a' main tone, 'b' shade, 'c' highlight. tests/unit/art.test.js
 // holds every category in the catalog to having a well-formed sprite here.
 import { stringHash } from './rng.js';
+import { categoryOf } from './catalog.js';
 
 /** @type {Record<string, string[]>} */
 export const SPRITES = {
@@ -533,7 +534,7 @@ export const CORNERS = [['-10%', '-10%'], ['32%', '-10%'], ['-10%', '32%'], ['32
  * @returns {{motif:string, rows:string[], hue:number, flip:boolean, corner:number}|null}
  */
 export function artFor(subjectId) {
-  const motif = subjectId.split('/')[0];
+  const motif = categoryOf(subjectId);
   const rows = SPRITES[motif];
   if (!rows) return null;
   const h = stringHash(subjectId);

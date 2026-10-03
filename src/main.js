@@ -521,10 +521,12 @@ async function newGame(categoryId, stillWanted = () => true) {
 }
 /** Deal the account's level: the one in progress, else the next. No coverage bag, so every
  * device deals one level the same board at one size. Rejects as newGame does.
- * @param {() => boolean} [stillWanted] @returns {Promise<boolean>} whether it dealt */
+ * @param {() => boolean} [stillWanted]
+ * @returns {Promise<boolean|null>} whether it dealt; null when there is no level to deal, as when
+ *   the session lapsed before or during the deal */
 async function dealLevel(stillWanted = () => true) {
   const deal = await play.deal(CATEGORIES.map(c => c.id), fetchCategory, cfg.get().difficulty);
-  if (!deal) throw new Error('no level to deal: signed out, or the account changed');
+  if (!deal) return null;
   const subject = await loadSubject(deal.subject);
   if (!stillWanted()) return false;
   const shape = shapeFor();
@@ -562,7 +564,7 @@ const picker = makePicker({
       onSignIn: () => openSignIn(true),
       onRetry: () => { void play.sync().then(afterSync); },
     }),
-    onLevel: async () => { await dealLevel(); },
+    onLevel: async () => { if (await dealLevel() === null) throw new Error('signed out'); },
   },
 });
 // Where Settings is a full-screen page rather than a card. Must match styles.css.
@@ -585,7 +587,6 @@ function openPicker() {
   quickGen++;    // nor a one-click deal still loading land over it
   cancelAutoNext();
   dealGen++;
-  closeSettings();
   anchorPane(els.picker);
   // A level keeps its finds when left, so only an ordinary board in progress is lost.
   const inProgress = !levelBoard && !!state.puzzle && state.foundOrder.length > 0
@@ -635,10 +636,14 @@ function advance(level = false) {
   const card = levelCard;
   // Dropped because a pane opened over the card while it loaded: its Next works again.
   const rearm = () => { if (card && card === levelCard && shown(els.win)) card.rearm(); };
-  // Signed out since the level was won, as when the session lapsed: an ordinary game instead.
-  const asLevel = level && !!play.account();
-  (asLevel ? dealLevel(wanted) : newGame(null, wanted)).then((dealt) => {
-    if (dealt && level && !asLevel) showToast("You're signed out, so this is a random game.", false);
+  (async () => {
+    const dealt = level ? await dealLevel(wanted) : null;
+    if (dealt !== null) return dealt;
+    // Signed out since the level was won, as when the session lapsed: an ordinary game instead.
+    const random = await newGame(null, wanted);
+    if (random && level && !play.account()) showToast("You're signed out, so this is a random game.", false);
+    return random;
+  })().then((dealt) => {
     if (!dealt) rearm();
   }).catch((err) => {
     // The player has moved on, so this failure is not news; a card still up can try again.
@@ -758,8 +763,6 @@ function quickDeal() {
   const carried = undoSnap;
   hideToast();
   cancelAutoNext();
-  closeSettings();
-  picker.close();
   quickDealing = true;
   const gen = ++quickGen;
   /** @type {Snapshot|null} */
@@ -1097,8 +1100,10 @@ window.addEventListener('resize', onResize);
 /** Explicit `?seed=` / `?subject=` / `?category=` always wins, even over a saved game —
  * that is the point of pinning a puzzle by URL. Otherwise prefer the save, and only deal
  * fresh when there is nothing to restore.
+ * @param {() => boolean} [stillWanted] checked before dealing: a launch tried again once back
+ *   online must not replace a board the player has since dealt, or deal behind an open pane
  * @returns {Promise<void>} */
-async function boot() {
+async function boot(stillWanted = () => true) {
   const params = new URLSearchParams(location.search);
   // WebKit can run this module before any stylesheet applies: styles.css is parsed but held
   // back while the cross-origin font sheet loads, so the first layout read #app's padding as
@@ -1127,23 +1132,24 @@ async function boot() {
       // ?subject= or ?category= on their own are seeded by the clock and are therefore
       // ordinary play of that subject — bypassing them too would mean anyone who
       // bookmarks a subject link never accrues coverage at all.
-      newPuzzle(seed, await loadSubject(id), shapeFor(), !params.has('seed'));
+      const subject = await loadSubject(id);
+      if (stillWanted()) newPuzzle(seed, subject, shapeFor(), !params.has('seed'));
       return;
     }
     const saved = store.load();
     try {
-      if (saved) { await restore(saved); return; }
+      if (saved) { await restore(saved, stillWanted); return; }
     } catch (err) {
       // A save that cannot be put back (a subject the catalog no longer has, a board that
       // cannot be rebuilt) fails the same way on every launch, so it gives way to a new deal.
       // Offline is not that: the save waits for the network.
       if (err instanceof SubjectLoadError && err.reason === 'unavailable') throw err;
     }
-    await newGame();
+    await newGame(null, stillWanted);
   } catch (err) {
     // A blank grid with no explanation is the worst outcome available, so say what
     // happened and leave the board empty rather than half-built.
-    reportLoadFailure(err);
+    if (stillWanted()) reportLoadFailure(err);
   } finally {
     // Reveal whatever we ended up with — a board, or the failure text. Runs after the
     // DOM writes above and before the next paint, so the first frame is the final one.
@@ -1156,17 +1162,19 @@ async function boot() {
  * only for a deal the bag did not steer. The saved shape wins over this device's preset —
  * a board is not something a resize gets to discard. A word the restored puzzle doesn't
  * contain, or one already replayed, is skipped rather than crashing.
- * @param {import('./storage.js').SaveData} saved @returns {Promise<void>} */
-async function restore(saved) {
+ * @param {import('./storage.js').SaveData} saved @param {() => boolean} stillWanted
+ * @returns {Promise<void>} */
+async function restore(saved, stillWanted) {
   const shape = saved.size === PRESETS.compact.size ? PRESETS.compact : PRESETS.full;
   const subject = await loadSubject(saved.subjectId);
-  const { cells, placements } = saved;
-  const dealt = cells && placements
-    ? { name: subject.name, cells: [...cells], words: placements.map(p => p.word), placements }
-    : undefined;
+  if (!stillWanted()) return;
   // The level in progress, when that is what this board is: the save does not say, the
   // account's progress does.
   const level = play.resumable(saved.subjectId, saved.seed);
+  const { cells, placements } = saved;
+  const dealt = cells && placements
+    ? { name: subject.name, cells: [...cells], words: placements.map(p => p.word), placements }
+    : level ? levelPuzzle(level, subject, shape) : undefined;
   // useBag=false: this board was already dealt and its draw already recorded. Recording
   // it again would advance the bag twice for one puzzle, silently, on every reload.
   newPuzzle(saved.seed, subject, {
@@ -1184,22 +1192,30 @@ window.addEventListener('online', () => {
   // launch that could not put its board back (offline) tries again rather than wait for a tap.
   unavailableCategories.clear();
   picker.refresh();
-  if (!state.puzzle) void boot();
+  // One launch at a time, and only while nothing else is putting a board up.
+  if (!state.puzzle) launched = launched.then(() => {
+    const gen = dealGen;
+    if (!state.puzzle && !paneOpen() && !quickDealing) return boot(() => gen === dealGen);
+  });
   catchUp();
 });
 // boot() never rejects — it reports any failure into the DOM itself.
-const launched = boot();
+let launched = boot();
 // './sw.js' resolves against the DOCUMENT, not this module. Writing '../sw.js' because
 // the script lives in src/ would resolve to the domain root and break the project-path
 // deploy on GitHub Pages, where the app is served from /word-finder/.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(() => {}); });
-  // A first visit deals before the worker controls the page, so that board's word pool never
-  // passed through the worker's cache, and the save could not be put back offline. Fetch it
-  // again through the worker once it takes over (a later update re-caching it costs nothing).
+  // A first visit loads its word pool and background before the worker controls the page, so
+  // neither passed through the worker's caches: the next launch offline said "Offline", or came
+  // back without its background. An update's sweep drops the backgrounds with the old cache too.
+  // Once a worker takes over, fetch every lazily loaded module this page has used through it.
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     void launched.then(() => {
-      if (subjectId) return fetch(new URL(`./subjects/${categoryOf(subjectId)}.js`, import.meta.url));
-    }).catch(() => {});
+      const src = new URL('./', import.meta.url).href;
+      const lazy = performance.getEntriesByType('resource').map(e => e.name.split('?')[0])
+        .filter(u => u.startsWith(`${src}subjects/`) || u.startsWith(`${src}backgrounds/`));
+      for (const u of new Set(lazy)) void fetch(u).catch(() => {});
+    });
   });
 }

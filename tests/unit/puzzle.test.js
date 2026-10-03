@@ -97,6 +97,33 @@ test('buildPuzzle never silently returns a short board', () => {
   for (let seed = 1; seed <= 60; seed++) assert.equal(build(seed).words.length, 12);
 });
 
+// Outside the content contract, where the strict rules cannot hold. On a 4x4 board no two
+// three-letter words on one diagonal line can keep a cell apart, yet a strict layout of eight
+// words needs both directions of every line; with no spares to swap in, only the relaxed
+// layout, which lets words touch, can deal. It may still find no spot for a word: then it
+// throws, and never deals a board short.
+test('a pool no strict layout can hold is dealt in full by the relaxed one, or throws', () => {
+  const tight = ['AAA', 'AAB', 'ABA', 'ABB', 'BAA', 'BAB', 'BBA', 'BBB'];
+  const mix = [{ min: 3, max: 3, take: 8 }];
+  let dealt = 0;
+  for (let seed = 1; seed <= 40; seed++) {
+    let p;
+    try { p = buildPuzzle({ name: 'Tight', pool: tight, rng: makeRng(seed), size: 4, count: 8, mix }); } catch (err) {
+      assert.match(String(err), /could not place \w+ in a 4x4 grid for "Tight"/);
+      continue;
+    }
+    dealt++;
+    assert.deepEqual(p.words.slice().sort(), tight, `seed ${seed}`);
+    for (const pl of p.placements) {
+      const read = [...pl.word].map((_, j) => p.cells[(pl.y0 + pl.dy * j) * 4 + pl.x0 + pl.dx * j]).join('');
+      assert.equal(read, pl.word, `seed ${seed}: ${pl.word} is not where its placement says`);
+    }
+  }
+  assert.ok(dealt >= 30, `only ${dealt} of 40 seeds dealt`);
+  const apart = ['ABC', 'DEF', 'GHI', 'JKL', 'MNO', 'PQR', 'STU', 'VWX'];   // 24 letters, 16 cells
+  assert.throws(() => buildPuzzle({ name: 'Apart', pool: apart, rng: makeRng(1), size: 4, count: 8, mix }), /could not place/);
+});
+
 test('buildPuzzle respects the maximum word length for its grid size', () => {
   const p = build(5, { size: 10, count: 8, mix: [
     { min: 3, max: 4, take: 2 }, { min: 5, max: 6, take: 3 }, { min: 7, max: 9, take: 3 },

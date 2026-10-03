@@ -84,13 +84,13 @@ export async function findWordInGrid(page, word) {
  *
  * A word can read at several runs but is placed at exactly one, so a single drag at the
  * first match is a coin flip on any board where the word's letters recur.
- * @param {Page} page @param {string} word
+ * @param {Page} page @param {string} word @param {typeof dragCells} [drag] how to drag a run
  * @returns {Promise<{word:string, x0:number, y0:number, x1:number, y1:number}>}
  */
-export async function findAndDrag(page, word) {
+export async function findAndDrag(page, word, drag = dragCells) {
   const runs = await findRunsInGrid(page, word);
   for (const run of runs) {
-    await dragCells(page, run);
+    await drag(page, run);
     const done = await page.locator('.w.done, .w.glow').allTextContents();
     if (done.some(t => t.trim().toUpperCase() === word.toUpperCase())) return run;
   }
@@ -129,6 +129,20 @@ export async function dragCells(page, sel) {
   await page.mouse.down();
   await page.mouse.move(b.x, b.y, { steps: 12 });
   await page.mouse.up();
+}
+
+/** dragCells with a finger: touch input through Chromium's DevTools protocol, which the page
+ * receives as touch pointers. page.mouse stays a mouse, hasTouch or not.
+ * @param {Page} page @param {Selection} sel @returns {Promise<void>} */
+export async function touchDrag(page, sel) {
+  const a = await cellCentre(page, sel.x0, sel.y0), b = await cellCentre(page, sel.x1, sel.y1);
+  const cdp = await page.context().newCDPSession(page);
+  /** @param {number} f @returns {{x:number, y:number}[]} */
+  const at = (f) => [{ x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f }];
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: at(0) });
+  for (let i = 1; i <= 12; i++) await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: at(i / 12) });
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await cdp.detach();
 }
 
 /** Open a page and wait for its board. The deal lands after `load`, from a lazily imported

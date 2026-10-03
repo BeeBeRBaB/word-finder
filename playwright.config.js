@@ -37,8 +37,8 @@ export default defineConfig({
       use: { ...devices['Desktop Safari'], viewport: { width: device('Desktop').w, height: device('Desktop').h } },
     },
     // Only the specs whose behaviour actually depends on the viewport or on touch.
-    // `gameplay` is the real reason this project exists — `hasTouch` routes drags
-    // through touch pointer events rather than mouse ones. `smoke` is a cheap
+    // `gameplay` is the real reason this project exists: its finger-drag test sends touch
+    // pointers, which needs `hasTouch` (page.mouse stays a mouse even then). `smoke` is a cheap
     // "does it render at all on a phone" check. Everything else (service worker,
     // themes, dialogs) is viewport-independent, and running it twice only bought
     // a slower suite. `layout.spec.js` sets its own viewports, so listing it here

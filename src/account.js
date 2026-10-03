@@ -195,10 +195,10 @@ export function renderLevelChoice(host, play, on) {
   return { ready: false, start: 'Play level' };
 }
 
-/** The line under a level's total: the account's new total, or why it did not change.
+/** The line under a level's total: the account's new total, or that it did not change.
  * @param {Finish} f @returns {string} */
 export function levelFootnote(f) {
-  return f.banked ? `${points(f.progress.points)} in all` : 'Already finished on another device, so these points were not added.';
+  return f.banked ? `${points(f.progress.points)} in all` : "These points couldn't be added to your total.";
 }
 
 /** @type {WeakMap<HTMLElement, Playback>} */

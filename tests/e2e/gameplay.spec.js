@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { findDiagonalWord, findAndDrag, findRunsInGrid, dragCells, cellCentre, openBoard } from './helpers.js';
+import { findDiagonalWord, findAndDrag, findRunsInGrid, dragCells, touchDrag, cellCentre, openBoard } from './helpers.js';
 
 // Every unseeded goto() below is pinned to ?subject=nature/birds: none of these tests care
 // which subject loads, and one subject keeps a failure easy to reproduce.
@@ -13,6 +13,20 @@ test('dragging across a word finds it', async ({ page }) => {
   await findAndDrag(page, first.toUpperCase());
   const total = await page.locator('.w').count();
   await expect(page.locator('#count')).toContainText(`1 of ${total} found`);
+  await expect(page.locator('#pills .pill')).toHaveCount(1);
+});
+
+// The phone's own path: a finger, which the page sees as touch pointers, not a mouse.
+test('a finger dragging across a word finds it', async ({ page, hasTouch }) => {
+  test.skip(!hasTouch, 'touch input needs a touch device');
+  await openBoard(page, '/?subject=nature/birds');
+  await page.evaluate(() => {
+    for (const t of ['pointerdown', 'pointerup']) document.addEventListener(t, (e) => { document.body.dataset[t] = /** @type {PointerEvent} */ (e).pointerType; }, true);
+  });
+  const first = /** @type {string} */ (await page.locator('.w').first().textContent());
+  await findAndDrag(page, first.toUpperCase(), touchDrag);
+  await expect(page.locator('body')).toHaveAttribute('data-pointerdown', 'touch');
+  await expect(page.locator('body')).toHaveAttribute('data-pointerup', 'touch');
   await expect(page.locator('#pills .pill')).toHaveCount(1);
 });
 

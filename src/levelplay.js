@@ -26,7 +26,7 @@ export const OWNER_KEY = 'wordfinder-levels-owner-v1';
  *   seed: the puzzle seed. Build the board from it with the difficulty's mix and no coverage bag.
  * @typedef {{subjectIds:string[]}} CategoryLike
  * @typedef {{breakdown:import('./scoring.js').Breakdown, banked:boolean, progress:LevelProgress}} Finish
- *   banked: false when the cloud had already moved this account past the level.
+ *   banked: false when the progress record refused the result, which a valid finish never meets.
  * @typedef {{signedIn:boolean, username:string|null, level:number, points:number,
  *   pending:boolean, error:CloudCode|null}} Status
  */
@@ -136,8 +136,9 @@ export function makeLevelPlay(deps) {
   function take(remote) {
     const r = normalizeProgress(remote);
     const merged = mergeProgress(prog, r) ?? newProgress((random() * 0x100000000) >>> 0);
-    // The level being played is the cloud's no longer: deal whatever level it says.
-    if (live && merged.level !== live.deal.level) live = null;
+    // The level being played is the cloud's no longer (it moved on, or another device's record
+    // with its own seed won): deal whatever level it says.
+    if (live && (merged.level !== live.deal.level || levelSeed(merged.seed, merged.level) !== live.deal.seed)) live = null;
     keep(merged);
     const c = live && r && r.seed === merged.seed && r.level === live.deal.level ? r.current : null;
     if (live && c && c.subject === live.deal.subject && c.difficulty === live.deal.difficulty) {
@@ -252,8 +253,8 @@ export function makeLevelPlay(deps) {
     sync,
 
     /** What to deal next. Resumes an unfinished level by its saved subject, since a device on
-     * an older catalog would compute a different one. Null when signed out, or when the
-     * account changed while the category loaded.
+     * an older catalog would compute a different one. Null when signed out, before or while the
+     * category loads, or when the account changed meanwhile.
      * @param {string[]} categoryIds @param {(id:string) => Promise<CategoryLike>} loadCategory
      * @param {Difficulty} difficulty for a level not yet started @returns {Promise<Deal|null>} */
     async deal(categoryIds, loadCategory, difficulty) {
@@ -265,7 +266,7 @@ export function makeLevelPlay(deps) {
         if (p.current) return { level: p.level, subject: p.current.subject, seed, difficulty: p.current.difficulty };
         const category = levelCategory(p.seed, p.level, categoryIds);
         const cat = await loadCategory(category);
-        if (g !== gen) return null;
+        if (g !== gen || !cloud.session()) return null;
         if (prog && prog.seed === p.seed && prog.level === p.level && !prog.current) {
           return { level: p.level, subject: levelSubject(p.seed, p.level, category, cat.subjectIds, categoryIds.length), seed, difficulty };
         }

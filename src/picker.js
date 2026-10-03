@@ -161,8 +161,10 @@ export function makePicker({ root, heading, select, warning, error, start, cance
       close();
     } catch {
       // Offline with an uncached category or level. Stay open and say so: closing would leave
-      // a half-built board with nothing explaining it.
-      error.hidden = false;
+      // a half-built board with nothing explaining it. A session that lapsed meanwhile is no
+      // network failure: the Levels side is drawn again, and asks the player to sign in.
+      if (lv) showSide();
+      error.hidden = lv && !levelReady;
       error.textContent = lv ? "This level isn't available offline yet. Try again once you're back online."
         : `${label} isn't available offline yet. Try another category.`;
       if (!lv) select.value = '';

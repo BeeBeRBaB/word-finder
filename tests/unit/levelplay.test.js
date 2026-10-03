@@ -201,6 +201,16 @@ test('a deal overtaken by a change of account is dropped', async () => {
   assert.equal(await dealing, null);
 });
 
+test('a session that lapses while the category loads deals nothing', async () => {
+  const { play, cloud } = setup();
+  await play.signUp('ana', 'secret1');
+  const gate = deferred();
+  const dealing = play.deal(IDS, async (id) => { await gate.promise; return loadCategory(id); }, 'normal');
+  cloud.signOut();   // what cloud.js does when Auth refuses the refresh token
+  gate.resolve();
+  assert.equal(await dealing, null);
+});
+
 test('a level is timed in active play only, and its score is the scorer\'s', async () => {
   const { play, clock, cloud } = setup();
   await play.signUp('ana', 'secret1');
@@ -289,7 +299,7 @@ test('a saved level of another subject or difficulty is not resumed into this on
   assert.equal(play.note('OWL', false), false);
 });
 
-test('when the cloud has moved past the level being played, it is neither banked nor kept', async () => {
+test('when the cloud has moved past the level being played, the sync drops it, so it is never banked', async () => {
   const { play, cloud } = setup();
   await play.signUp('ana', 'secret1');
   const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
@@ -298,16 +308,25 @@ test('when the cloud has moved past the level being played, it is neither banked
   // Another device banked level 1 meanwhile and the merge took its record.
   cloud.docs.set('uid-ana', { ...newProgress(0x40000000), level: 2, points: 50 });
   await play.sync();
-  assert.equal(play.finish(), null, 'the level was dropped with the sync');
-  // The same race without a sync in between: the result is refused and nothing moves.
-  const deal2 = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
-  play.start(deal2, WORDS);
-  for (const w of WORDS) play.note(w, false);
-  const moved = { ...newProgress(0x40000000), level: 3, points: 80 };
-  cloud.docs.set('uid-ana', moved);
-  const syncing = play.sync();
-  await syncing;
-  assert.equal(play.progress()?.level, 3);
+  assert.equal(play.playing(), null);
+  assert.equal(play.finish(), null);
+  assert.deepEqual([play.progress()?.level, play.progress()?.points], [2, 50]);
+});
+
+// Two devices that each made a record before either reached the cloud: the cloud's seed wins, and
+// with it a different level 1. This device's board is not that level, at the same number or not.
+test('when another device\'s record with its own seed wins, the level being played is dropped, not saved into it', async () => {
+  const { play, cloud } = setup();
+  await play.signUp('ana', 'secret1');
+  const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
+  play.start(deal, WORDS);
+  play.note('OWL', false);
+  cloud.docs.set('uid-ana', newProgress(0x12345678));
+  await play.sync();
+  assert.equal(play.playing(), null);
+  assert.equal(play.progress()?.seed, 0x12345678);
+  assert.equal(play.progress()?.current, null, 'this device\'s finds are not the cloud seed\'s level 1');
+  assert.equal(play.note('WREN', false), false);
 });
 
 test('finds carried onto a level are noted at one instant, skipping words already noted', async () => {

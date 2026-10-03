@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { findAndDrag, dragCells, openBoard, skipAhead } from './helpers.js';
+import { findAndDrag, dragCells, openBoard, skipAhead, blockServiceWorker } from './helpers.js';
 import { buildPuzzle, runKey } from '../../src/puzzle.js';
 import { makeRng } from '../../src/rng.js';
 import { PRESETS } from '../../src/layout.js';
@@ -120,21 +120,49 @@ test('the service worker only falls back to index.html for navigations', async (
 });
 
 // A first visit deals before the worker controls the page, so nothing cached that board's word
-// pool, and the save it wrote could not be put back offline: the next launch said "Offline".
-test('the board from a first visit comes back offline', async ({ page, context }) => {
+// pool or its background, and the next launch offline said "Offline", or lost the background.
+test('the board and background from a first visit come back offline', async ({ page, context }) => {
+  await page.addInitScript(() => {
+    if (!localStorage.getItem('wordfinder-settings-v1')) localStorage.setItem('wordfinder-settings-v1', JSON.stringify({ art: 'drift' }));
+  });
   await openBoard(page, '/');
   const letters = await page.locator('#letters').textContent();
+  const drawn = page.locator('#bg canvas, #bgside canvas');
+  await expect(drawn).not.toHaveCount(0);
   expect(await page.evaluate(controlled)).toBe(true);
-  await expect.poll(() => page.evaluate(async () =>
-    (await (await caches.open('wordfinder-subjects')).keys()).length)).toBeGreaterThan(0);
-  await context.setOffline(true);
-  try {
-    await page.reload();
-    await page.locator('.cell').first().waitFor();
-    expect(await page.locator('#letters').textContent()).toBe(letters);
-  } finally {
-    await context.setOffline(false);
-  }
+  await expect.poll(() => page.evaluate(async () => {
+    const paths = new Set();
+    for (const k of await caches.keys()) for (const r of await (await caches.open(k)).keys()) paths.add(new URL(r.url).pathname);
+    return ['/src/backgrounds/drifting-icons.js', '/src/backgrounds/icons.js'].every(p => paths.has(p))
+      && [...paths].some(p => p.startsWith('/src/subjects/'));
+  })).toBe(true);
+  // Offline for the worker as well: context.setOffline stops holding back the worker's own
+  // requests once the page reloads, so the board came back without anything having been cached.
+  await context.route('**/*', (route) => route.abort());
+  await page.reload();
+  await page.locator('.cell').first().waitFor();
+  expect(await page.locator('#letters').textContent()).toBe(letters);
+  await expect(drawn).not.toHaveCount(0);
+});
+
+// A launch that could not put its save back offline tries again once the network returns,
+// but never deals behind New game, where the player may be choosing a board of their own.
+test('a launch that failed offline is tried again online, but not behind an open pane', async ({ page }) => {
+  await blockServiceWorker(page);
+  await openBoard(page, '/?seed=3&subject=nature/birds');
+  const letters = await page.locator('#letters').textContent();
+  const pool = /\/src\/subjects\/nature\.js/;
+  await page.route(pool, (route) => route.abort());
+  await page.goto('/');
+  await expect(page.locator('#subject')).toHaveText('Offline');
+  await page.locator('#catbtn').click();
+  await page.unroute(pool);
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
+  await page.waitForTimeout(500);
+  await expect(page.locator('#letters .cell')).toHaveCount(0);
+  await page.locator('#picker-cancel').click();
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
+  await expect.poll(() => page.locator('#letters').textContent()).toBe(letters);
 });
 
 // Regression for 121de94 + 60b5099. Code is stale-while-revalidate: a changed asset
@@ -354,17 +382,18 @@ for (const height of [568, 400]) test(`the win card and the score card in it fit
     expect(b && b.x + b.width).toBeLessThanOrEqual(320);
   };
   await inside();
-  // The score card, mounted under the title where account.js's showLevelWin puts it.
+  // The level's score card, as the app shows it: card[data-level] restyles the whole card.
   await page.evaluate(async () => {
-    const card = '/src/scorecard.js', scoring = '/src/scoring.js';
-    const { playBreakdown } = await import(card);
+    const account = '/src/account.js', scoring = '/src/scoring.js';
+    const { showLevelWin } = await import(account);
     const { scoreLevel } = await import(scoring);
     const W = ['SPARROW', 'ROBIN', 'EAGLE', 'HERON', 'FINCH', 'OWL', 'PELICAN', 'WREN', 'CRANE', 'SWALLOW', 'MAGPIE', 'KESTREL'];
     const bd = scoreLevel({ events: W.map((w, i) => ({ word: w, at: 9000 * (i + 1), revealed: i === 7 })), elapsedMs: 118000, difficulty: 'normal', wordCount: 12 });
-    const host = document.createElement('div');
-    document.querySelector('#wincard h2')?.after(host);
-    playBreakdown(host, bd, { onNext() {}, onStay() {} }).skip();
+    const card = /** @type {HTMLElement} */ (document.getElementById('wincard'));
+    showLevelWin(card, card.querySelector('h2'), 12, { breakdown: bd, banked: true, progress: { points: 5644 } },
+      { reduceMotion: true, countdownMs: 0, onNext() {}, onStay() {} }).skip();
   });
+  await expect(page.locator('#wincard')).toHaveAttribute('data-level', '12');
   await inside();
   const sc = await page.locator('.sc').boundingBox();
   expect(sc && sc.width).toBeGreaterThanOrEqual(240);

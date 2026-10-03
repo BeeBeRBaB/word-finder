@@ -6,6 +6,7 @@
 
 import { fnv1a } from '../rng.js';
 import { TONE } from '../art.js';
+import { categoryOf } from '../catalog.js';
 import { ICONS } from './icons.js';
 import { CATEGORY_ICONS, SUBJECT_ICONS } from './subject-icons.js';
 
@@ -18,7 +19,7 @@ export const VARIANTS = 6;
 /** The subject's own icons, else its category's, hero first.
  * @param {string} subject e.g. 'animals/frogs' @returns {string[]} */
 export function iconsFor(subject) {
-  const list = SUBJECT_ICONS[subject] ?? CATEGORY_ICONS[subject.split('/')[0]] ?? CATEGORY_ICONS.nature;
+  const list = SUBJECT_ICONS[subject] ?? CATEGORY_ICONS[categoryOf(subject)] ?? CATEGORY_ICONS.nature;
   return list.split(' ').filter(id => id in ICONS);
 }
 

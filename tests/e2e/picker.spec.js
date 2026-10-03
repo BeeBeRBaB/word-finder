@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { findWordInGrid, dragCells, blockServiceWorker, openBoard } from './helpers.js';
+import { findWordInGrid, findAndDrag, dragCells, blockServiceWorker, openBoard, skipAhead } from './helpers.js';
 import { CATEGORIES } from '../../src/catalog.js';
 
 test('New game opens the picker, and Cancel leaves the board alone', async ({ page }) => {
@@ -98,14 +98,27 @@ test('a one-click deal over a board in progress offers Undo, which brings it bac
   await expect(page.locator('#subject')).toHaveText('Birds');
 });
 
-test('the Undo offer goes away on its own, and on the first move on the new board', async ({ page }) => {
-  await page.goto('/?seed=1&subject=nature/birds');
-  const first = /** @type {string} */ (await page.locator('.w').first().textContent()).toUpperCase();
-  await dragCells(page, await findWordInGrid(page, first));
-  await page.locator('#newbtn').click();
-  await expect(page.locator('#toast')).toBeVisible();
+test('the Undo offer goes away on its own, waits while the pointer is on it, and goes on the first move', async ({ page }) => {
+  await page.clock.install();
+  await openBoard(page, '/?seed=1&subject=nature/birds');
+  const toast = page.locator('#toast');
+  const dealOverAFind = async () => {
+    await findAndDrag(page, /** @type {string} */ (await page.locator('.w').first().textContent()).toUpperCase());
+    await page.locator('#newbtn').click();
+    await expect(toast).toBeVisible();
+  };
+  await dealOverAFind();
+  // On Undo itself: the rest of the toast lets the pointer through to the board.
+  const box = /** @type {{x:number, y:number, width:number, height:number}} */ (await page.locator('#toast-undo').boundingBox());
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await skipAhead(page, 7000);
+  await expect(toast).toBeVisible();
+  await page.mouse.move(5, 5);
+  await skipAhead(page, 7000);
+  await expect(toast).toBeHidden();
+  await dealOverAFind();
   await page.locator('#gridbox').click({ position: { x: 30, y: 30 } });
-  await expect(page.locator('#toast')).toBeHidden();
+  await expect(toast).toBeHidden();
 });
 
 test('the category chevron opens the pane and reports it', async ({ page }) => {
