@@ -17,7 +17,7 @@
  *   start:HTMLElement, cancel:HTMLElement, categories:Category[],
  *   isUnavailable:(categoryId:string)=>boolean,
  *   isComplete:(categoryId:string)=>boolean,
- *   onStart:(categoryId:string|null)=>Promise<void>,
+ *   onStart:(categoryId:string)=>Promise<void>,
  *   opener?:HTMLElement, levels?:LevelSide, behind?:HTMLElement[],
  * }} deps `behind` is the page under the dialog, inert while it is open.
  */
@@ -149,7 +149,8 @@ export function makePicker({ root, heading, select, warning, error, start, cance
     heading.focus();
   }
 
-  /** @param {string|null} chosen @param {string} label @returns {Promise<void>} */
+  /** @param {string} chosen the category; unused on the Levels side @param {string} label
+   * @returns {Promise<void>} */
   async function deal(chosen, label) {
     if (pending) return;
     const lv = onLevels();
@@ -159,15 +160,16 @@ export function makePicker({ root, heading, select, warning, error, start, cance
       setBusy(false);
       close();
     } catch {
-      // Offline with an uncached category, or a random draw that lost the race with the
-      // network. Stay open and say so: closing would leave a half-built board with
-      // nothing explaining it.
+      // Offline with an uncached category or level. Stay open and say so: closing would leave
+      // a half-built board with nothing explaining it.
       error.hidden = false;
       error.textContent = lv ? "This level isn't available offline yet. Try again once you're back online."
-        : chosen ? `${label} isn't available offline yet. Try another category.`
-          : "No category is available offline yet. Try again once you're back online.";
-      if (chosen && !lv) select.value = '';
+        : `${label} isn't available offline yet. Try another category.`;
+      if (!lv) select.value = '';
       setBusy(false);
+      // Disabling Start for the deal dropped focus out of the dialog. Back on Start to try the
+      // level again, else on the heading: focusing the select opens it on an iPhone.
+      /** @type {HTMLElement} */ (start.hasAttribute('disabled') ? heading : start).focus({ preventScroll: true });
       // A short screen scrolls the card: keep the message and the buttons under it in view.
       start.scrollIntoView({ block: 'nearest' });
     }
@@ -187,8 +189,8 @@ export function makePicker({ root, heading, select, warning, error, start, cance
   // appended "(done)" to that, which would then read back in the failure message as
   // "Nature (done) isn't available offline yet."
   start.addEventListener('click', () => {
-    const id = select.value || null;
-    void deal(id, (id && categories.find(c => c.id === id)?.name) || '');
+    const id = select.value;
+    void deal(id, categories.find(c => c.id === id)?.name ?? '');
   });
   cancel.addEventListener('click', close);
   root.addEventListener('click', (e) => { if (e.target === root) close(); });
@@ -198,6 +200,7 @@ export function makePicker({ root, heading, select, warning, error, start, cance
    * heading, never to the page. @returns {void} */
   function refresh() {
     if (root.style.display !== 'flex' || pending) return;
+    error.hidden = true;   // about the state that just changed
     const had = pane.contains(doc.activeElement);
     showSide();
     syncDisabled();

@@ -74,7 +74,7 @@ test('choosing a category deals a subject from it', async ({ page }) => {
 test('New game deals a random game in one click, without opening the picker', async ({ page }) => {
   // Truly random: content.test.js guarantees all 25 categories have a module, so the
   // draw can be what it says it is rather than a pinned Math.random.
-  await page.goto('/?seed=1&subject=nature/birds');
+  await openBoard(page, '/?seed=1&subject=nature/birds');
   const before = await page.locator('#letters').textContent();
   await page.locator('#newbtn').click();
   await expect(page.locator('#picker')).toBeHidden();
@@ -147,7 +147,7 @@ test('Escape closes the picker', async ({ page }) => {
 // The win card deliberately bypasses the dialog: a winning streak should not be
 // interrupted by a form.
 test('the win card deals a game without opening the picker', async ({ page }) => {
-  await page.goto('/?seed=1&subject=nature/birds');
+  await openBoard(page, '/?seed=1&subject=nature/birds');
   for (const el of await page.locator('.w').all()) {
     const w = /** @type {string} */ (await el.textContent()).toUpperCase();
     await dragCells(page, await findWordInGrid(page, w));
@@ -176,6 +176,8 @@ test('a category that fails to load stays open, reports the failure inline, and 
   // Reset to the placeholder rather than left pointing at the option that just failed.
   await expect(page.locator('#picker-select')).toHaveValue('');
   await expect(page.locator('#picker-select option[value="food"]')).toBeDisabled();
+  // Focus stays in the dialog, not on the page the dialog covers.
+  await expect(page.locator('#picker-title')).toBeFocused();
 
   // The dialog is still usable: a different, working category still deals, closing it.
   await page.locator('#picker-select').selectOption('nature');
@@ -224,7 +226,7 @@ test('Escape does not cancel a one-click deal that is still loading', async ({ p
     if (!route.request().url().endsWith('/nature.js')) await new Promise(r => setTimeout(r, 1200));
     await route.continue();
   });
-  await page.goto('/?seed=1&subject=nature/birds');
+  await openBoard(page, '/?seed=1&subject=nature/birds');
   const board = await page.locator('#letters').textContent();
   await page.evaluate(() => { Math.random = () => 0.99; });   // draw a category other than nature
   await page.locator('#newbtn').click();
@@ -337,6 +339,7 @@ test('a level that cannot load keeps the dialog open and says so', async ({ page
   await expect(page.locator('#picker-error')).toHaveText("This level isn't available offline yet. Try again once you're back online.");
   await expect(page.locator('#picker')).toBeVisible();
   await expect(page.locator('#picker-start')).toBeEnabled();
+  await expect(page.locator('#picker-start')).toBeFocused();   // to try again
   // Switching side clears the message.
   await page.locator('#picker-mode').getByRole('button', { name: 'Random' }).click();
   await expect(page.locator('#picker-error')).toBeHidden();

@@ -28,13 +28,6 @@ export default defineConfig({
       name: 'desktop',
       use: { ...devices['Desktop Chrome'], viewport: { width: device('Desktop').w, height: device('Desktop').h } },
     },
-    // Only the specs whose behaviour actually depends on the viewport or on touch.
-    // `gameplay` is the real reason this project exists — `hasTouch` routes drags
-    // through touch pointer events rather than mouse ones. `smoke` is a cheap
-    // "does it render at all on a phone" check. Everything else (service worker,
-    // themes, dialogs) is viewport-independent, and running it twice only bought
-    // a slower suite. `layout.spec.js` sets its own viewports and skips outside
-    // `desktop`, so it must not be listed here.
     // Layout again in WebKit: Safari applied no stylesheet until the cross-origin font sheet
     // arrived, so the first layout sized the board without #app's padding and overflowed.
     // Chromium cannot show that, so only this engine catches it.
@@ -43,6 +36,13 @@ export default defineConfig({
       testMatch: /layout\.spec\.js/,
       use: { ...devices['Desktop Safari'], viewport: { width: device('Desktop').w, height: device('Desktop').h } },
     },
+    // Only the specs whose behaviour actually depends on the viewport or on touch.
+    // `gameplay` is the real reason this project exists — `hasTouch` routes drags
+    // through touch pointer events rather than mouse ones. `smoke` is a cheap
+    // "does it render at all on a phone" check. Everything else (service worker,
+    // themes, dialogs) is viewport-independent, and running it twice only bought
+    // a slower suite. `layout.spec.js` sets its own viewports, so listing it here
+    // would only run the same shapes again.
     {
       name: 'mobile',
       testMatch: /(gameplay|smoke)\.spec\.js/,

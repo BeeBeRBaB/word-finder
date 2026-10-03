@@ -3,11 +3,16 @@
  * @typedef {import('../../src/puzzle.js').Selection} Selection
  */
 
+/** Waits for the board: the deal lands after `load`, so a navigation alone does not mean one.
+ * @param {Page} page @returns {Promise<void>} */
+const dealt = (page) => page.locator('.cell').first().waitFor();
+
 /** Grid origin, cell size and board size, read from the live DOM. The board is 13x13
  * or 10x10 depending on the device, so nothing here may assume a size — `.cell` count
  * is the source of truth, and it is a perfect square by construction.
  * @param {Page} page @returns {Promise<{left:number, top:number, cell:number, pad:number, n:number}>} */
 async function gridGeometry(page) {
+  await dealt(page);
   return page.evaluate(() => {
     const gb = document.getElementById('gridbox');
     if (!gb) throw new Error('missing #gridbox');
@@ -32,6 +37,7 @@ async function gridGeometry(page) {
  * @returns {Promise<{word:string, x0:number, y0:number, x1:number, y1:number}[]>}
  */
 export async function findRunsInGrid(page, word) {
+  await dealt(page);
   const runs = await page.evaluate((target) => {
     const letters = [...document.querySelectorAll('.cell')].map(e => e.textContent);
     const N = Math.round(Math.sqrt(letters.length));
@@ -96,6 +102,7 @@ export async function findAndDrag(page, word) {
  * @returns {Promise<{word:string, x0:number, y0:number, x1:number, y1:number}>}
  */
 export async function findDiagonalWord(page) {
+  await dealt(page);
   const all = await page.locator('.w').allTextContents();
   for (const w of all) {
     // Every run, not just the first: the first match can be a straight ghost of a word
@@ -130,7 +137,7 @@ export async function dragCells(page, sel) {
  * @param {Page} page @param {string} url @returns {Promise<void>} */
 export async function openBoard(page, url) {
   await page.goto(url);
-  await page.locator('.cell').first().waitFor();
+  await dealt(page);
 }
 
 /** Move the page's clock `ms` ahead at once, firing every timer due in that time, then give

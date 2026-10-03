@@ -63,20 +63,22 @@ test('an animated background runs behind the word list, then the whole page, and
   await expect(page.locator('#bg canvas, #bgside canvas')).toHaveCount(0);
 });
 
-// The ring is 24 shadows on every glyph, painted for nothing when nothing can be behind the text.
-test('text keeps its ground-colour ring over a background, and drops it with None', async ({ page }) => {
+// The ring is 24 shadows on every glyph, painted for nothing when nothing is behind the text.
+test('text keeps its ground-colour ring only where something is drawn behind it', async ({ page }) => {
   await page.goto('/?seed=1&subject=space/jupiter');
   /** @param {string} sel */
   const ring = (sel) => page.locator(sel).first().evaluate(el => getComputedStyle(el).textShadow !== 'none');
-  expect(await ring('#list .w')).toBe(true);   // the default still art can sit behind the rail
-  await openPage(page);
-  await page.locator('#settings-bgpage [data-setting="area"] [data-value="full"]').click();
-  await page.locator('.bgtile[data-bg="none"]').click();
-  await page.keyboard.press('Escape');
-  expect(await ring('#list .w')).toBe(false);
-  expect(await ring('#subject')).toBe(false);
+  await page.locator('#list .w').first().waitFor();
+  expect(await ring('#list .w')).toBe(false);   // still art keeps to the board corner or below the list
   await openPage(page);
   await page.locator('.bgtile[data-bg="aurora"]').click();
+  expect(await ring('#list .w')).toBe(true);
+  expect(await ring('#subject')).toBe(false);   // Word list: nothing behind the header
+  await page.locator('#settings-bgpage [data-setting="area"] [data-value="full"]').click();
+  await page.locator('.bgtile[data-bg="none"]').click();
+  expect(await ring('#list .w')).toBe(false);
+  expect(await ring('#subject')).toBe(false);
+  await page.locator('.bgtile[data-bg="illustrated"]').click();   // large, behind everything
   expect(await ring('#list .w')).toBe(true);
   expect(await ring('#subject')).toBe(true);
 });

@@ -4,7 +4,7 @@
 // or subject, re-deals every account's unplayed levels.
 import { makeRng, fnv1a } from './rng.js';
 import { defaultStore } from './storage.js';
-import { CHOICES } from './settings.js';
+import { DIFFICULTY_NAMES } from './scoring.js';
 
 export const LEVELS_KEY = 'wordfinder-levels-v1';
 export const HISTORY_MAX = 50;
@@ -53,7 +53,7 @@ const isLevel = (n) => isInt(n) && n >= 1;
 /** @param {unknown} s @returns {s is string} */
 const isText = (s) => typeof s === 'string' && s.length > 0;
 /** @param {unknown} d @returns {d is Difficulty} */
-const isDifficulty = (d) => CHOICES.difficulty.some(v => v === d);
+const isDifficulty = (d) => typeof d === 'string' && Object.keys(DIFFICULTY_NAMES).includes(d);
 /** @param {unknown} o @returns {o is Record<string, unknown>} */
 const isRecord = (o) => !!o && typeof o === 'object' && !Array.isArray(o);
 

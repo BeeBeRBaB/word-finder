@@ -13,7 +13,7 @@ import { makeProgress, chooseSubject } from './progress.js';
 import { makeAppearance } from './appearance.js';
 import { makeSettings } from './settings.js';
 import { makePicker } from './picker.js';
-import { makeBackdrop } from './backgrounds.js';
+import { makeBackdrop, findBackground } from './backgrounds.js';
 import { tilesMarkup, summaryMarkup } from './bgpicker.js';
 import { makeSubpage } from './subpage.js';
 import { tilesMarkup as lookTilesMarkup, summaryMarkup as lookSummaryMarkup, readLooks, varsOf, lookId } from './lookpicker.js';
@@ -238,16 +238,16 @@ function startLevel(deal) {
   // A page loaded or dealt in the background starts the clock when it is shown, not before.
   const events = play.start(deal, puzzle.words, document.hidden);
   if (!play.playing()) { levelBoard = null; showCategory(); return; }
-  const added = addFinds(events);
+  addFinds(events);
   play.carry(state.foundOrder.map(w => ({ word: w, revealed: !!state.found[w].revealed })));
-  if (added) { renderFoundCells(els, state, state.size); pills(); list(); persist(); }
   // Complete without a win, as when the last find reached this device but not the account:
   // bank it quietly, the way a restored board never pops the win card.
   if (state.foundOrder.length === puzzle.words.length) play.finish();
 }
 
 /** Put recorded finds (a level's, or a save's) on the board where the board places them,
- * reveals as reveals, skipping words already there.
+ * reveals as reveals, skipping words already there, then redraw and save. Never raises the
+ * win card: a board that comes back complete is shown as it was left.
  * @param {{word:string, revealed?:boolean}[]} events @returns {boolean} whether any were added */
 function addFinds(events) {
   const puzzle = state.puzzle;
@@ -260,6 +260,7 @@ function addFinds(events) {
     state.foundOrder.push(word);
     added = true;
   }
+  if (added) { renderFoundCells(els, state, state.size); pills(); list(); persist(); }
   return added;
 }
 
@@ -846,10 +847,12 @@ function confettiColors() {
 function showBackdrop() {
   const s = cfg.get();
   els.app.dataset.bgarea = s.area;
-  els.app.dataset.bg = s.art;
-  if (!subjectId) return;   // nothing dealt yet; the deal calls again
   // With the list under the board, the still scene keeps the board corner as the category art does.
   const corner = s.art === 'scene' && s.area !== 'full' && !state.dims.landscape;
+  // Whether anything is drawn behind the word list, and on Full screen the header: still art
+  // with Word list keeps to the board corner or below the list. The stylesheet rings text if so.
+  els.app.toggleAttribute('data-behind', s.area === 'full' ? s.art !== 'none' : !!findBackground(s.art).file && !corner);
+  if (!subjectId) return;   // nothing dealt yet; the deal calls again
   void backdrop.show(s.art, corner ? els.art : s.area === 'full' ? bgFull : bgList, {
     colors: confettiColors(),
     dark: document.documentElement.dataset.appearance !== 'light', reducedMotion: prefersReducedMotion(),
@@ -955,10 +958,6 @@ function reconcileLevel() {
   }
   // Finds another device made on this level, which the sync folded into it.
   if (!addFinds(play.events())) return;
-  renderFoundCells(els, state, state.size);
-  pills();
-  list();
-  persist();
   if (state.foundOrder.length < puzzle.words.length) return;
   // The two devices' finds together complete it, and this one is being looked at: its score card.
   const level = levelBoard;
@@ -1045,7 +1044,6 @@ function applySetting(key) {
   if (key === 'letters') { state.rendered = { puzzle: null, cell: 0 }; layout(); }
   if (key === 'reveal') els.app.dataset.reveal = now.reveal ? 'on' : 'off';
   if (key === 'motion') document.documentElement.dataset.motion = now.motion;
-  if (key === 'autoNext' && !now.autoNext) cancelAutoNext();
 }
 /** @param {string} key @param {unknown} value @returns {void} */
 function changeSetting(key, value) {
@@ -1136,9 +1134,10 @@ async function boot() {
     try {
       if (saved) { await restore(saved); return; }
     } catch (err) {
-      // A save naming a subject the catalog no longer has fails the same way on every launch,
-      // so it gives way to a new deal. Offline is not that: the save waits for the network.
-      if (!(err instanceof SubjectLoadError && err.reason === 'unknown')) throw err;
+      // A save that cannot be put back (a subject the catalog no longer has, a board that
+      // cannot be rebuilt) fails the same way on every launch, so it gives way to a new deal.
+      // Offline is not that: the save waits for the network.
+      if (err instanceof SubjectLoadError && err.reason === 'unavailable') throw err;
     }
     await newGame();
   } catch (err) {
@@ -1174,12 +1173,6 @@ async function restore(saved) {
     size: saved.size, count: saved.count, mix: shape.mix, minCell: shape.minCell,
   }, false, dealt, level);
   addFinds(saved.found);
-  renderFoundCells(els, state, state.size);
-  pills();
-  list(); // redraw pills + cross out; deliberately does NOT pop the win overlay
-  // newPuzzle above already saved an empty `found`, so without this the replayed
-  // progress would only live in memory and a second reload would lose it.
-  persist();
   if (level) startLevel(level);
 }
 
@@ -1187,14 +1180,26 @@ renderAccountSection();
 // The account's progress, once the cloud has answered; and again whenever the device is back online.
 void booted.then(afterSync);
 window.addEventListener('online', () => {
-  // What failed to load may load now, so New game and the random draw offer it again.
+  // What failed to load may load now, so New game and the random draw offer it again, and a
+  // launch that could not put its board back (offline) tries again rather than wait for a tap.
   unavailableCategories.clear();
   picker.refresh();
+  if (!state.puzzle) void boot();
   catchUp();
 });
 // boot() never rejects — it reports any failure into the DOM itself.
-void boot();
+const launched = boot();
 // './sw.js' resolves against the DOCUMENT, not this module. Writing '../sw.js' because
 // the script lives in src/ would resolve to the domain root and break the project-path
 // deploy on GitHub Pages, where the app is served from /word-finder/.
-if ('serviceWorker' in navigator) window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(() => {}); });
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(() => {}); });
+  // A first visit deals before the worker controls the page, so that board's word pool never
+  // passed through the worker's cache, and the save could not be put back offline. Fetch it
+  // again through the worker once it takes over (a later update re-caching it costs nothing).
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    void launched.then(() => {
+      if (subjectId) return fetch(new URL(`./subjects/${categoryOf(subjectId)}.js`, import.meta.url));
+    }).catch(() => {});
+  });
+}

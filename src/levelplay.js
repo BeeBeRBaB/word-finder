@@ -56,8 +56,9 @@ export function replaySelections(puzzle, events) {
   return out;
 }
 
-/** @param {unknown} e @returns {CloudCode} */
-const codeOf = (e) => {
+/** What went wrong, from a thrown cloud error; 'server' for anything else.
+ * @param {unknown} e @returns {CloudCode} */
+export const codeOf = (e) => {
   const c = e && typeof e === 'object' && 'code' in e ? e.code : null;
   return typeof c === 'string' ? /** @type {CloudCode} */ (c) : 'server';
 };

@@ -99,11 +99,20 @@ export function start(host, opts) {
     const w = host.clientWidth || innerWidth, h = host.clientHeight || innerHeight;
     const d = Math.min(3, devicePixelRatio || 1);
     if (w === W && h === H && d === dpr && n) return;
+    const sx = w / W, sy = h / H, repaint = d !== dpr, was = n;
     W = w; H = h; dpr = d;
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     n = Math.max(12, Math.min(46, Math.round(W * H / 32000)));
     while (parts.length < n) parts.push(bubble());
-    for (let i = 0; i < n; i++) spawn(parts[i], true);
+    // The field carries on across a resize, stretched to the new box: re-rolling it made every
+    // rotation or window drag jump. Only bubbles it gains are new.
+    for (let i = 0; i < n; i++) {
+      const p = parts[i];
+      if (i >= was) { spawn(p, true); continue; }
+      const dy = p.y * (sy - 1);
+      p.x0 *= sx; p.y += dy; p.y0 += dy; p.popY *= sy;
+      if (repaint) paint(p);
+    }
     draw();
   }
 

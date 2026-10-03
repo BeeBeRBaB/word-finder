@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   PREFS, PREF_KEY, THEMES, THEME_KEY, normalizePref, normalizeTheme, themeName, prefName, makeAppearance,
 } from '../../src/appearance.js';
@@ -96,4 +97,16 @@ test('a null store is accepted and simply does not persist', () => {
   assert.equal(a.get(), 'light');
   assert.equal(a.getTheme(), 'sticker');
   assert.deepEqual(root.dataset, { appearance: 'light', theme: 'sticker' });
+});
+
+// index.html resolves the stored look before any module runs, so it carries its own copy of
+// the theme list. A theme missing there paints the default at first paint, then switches.
+test('the inline first-paint resolver knows every theme appearance.js does', () => {
+  const html = readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
+  const m = /if\((\[[^\]]*\])\.indexOf\(t\)<0\)t='phosphor'/.exec(html);
+  assert.ok(m, 'could not find the theme list in the inline resolver');
+  const inline = JSON.parse(m[1].replace(/'/g, '"'));
+  // The default theme rides on the base palette blocks, so the resolver need not name it.
+  assert.deepEqual(inline, THEMES.slice(1));
+  assert.equal(THEMES[0], 'phosphor', 'the resolver falls back to phosphor by name');
 });

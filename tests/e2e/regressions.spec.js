@@ -31,10 +31,13 @@ test('starting a new game during the win delay leaves the board playable', async
   await expect(page.locator('#count')).toContainText(`1 of ${total} found`);
 });
 
-// A save naming a subject the catalog no longer has booted to "Unavailable" on every launch.
-test('a save naming a retired subject gives way to a new deal', async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('wordfinder-save-v1',
-    JSON.stringify({ seed: 1, subjectId: 'nature/retired-subject', size: 10, count: 8, found: [] })));
+// A save naming a subject the catalog no longer has, or a board no size can rebuild, booted to
+// "Unavailable" on every launch.
+for (const [what, save] of /** @type {[string, object][]} */ ([
+  ['a retired subject', { seed: 1, subjectId: 'nature/retired-subject', size: 10, count: 8, found: [] }],
+  ['an impossible board', { seed: 1, subjectId: 'nature/birds', size: 0, count: 12, found: [] }],
+])) test(`a save naming ${what} gives way to a new deal`, async ({ page }) => {
+  await page.addInitScript((s) => localStorage.setItem('wordfinder-save-v1', JSON.stringify(s)), save);
   await page.goto('/');
   await expect(page.locator('.cell').first()).toBeVisible();
   await expect(page.locator('#subject')).not.toHaveText(/^(Offline|Unavailable|Loading…)$/);
@@ -71,6 +74,15 @@ test('a diagonal drag selects exactly the cells under the pointer', async ({ pag
   expect(len).toBe(4);   // (0,0)..(3,3) inclusive. Pre-fix this measured 5 or 6.
 });
 
+/** Waits for the page's own service worker to take control; whether it did.
+ * Run in the page. @returns {Promise<boolean>} */
+async function controlled() {
+  await navigator.serviceWorker.register('./sw.js');
+  await navigator.serviceWorker.ready;
+  for (let i = 0; i < 40 && !navigator.serviceWorker.controller; i++) await new Promise(r => setTimeout(r, 250));
+  return !!navigator.serviceWorker.controller;
+}
+
 // Regression for d468bd7. The service worker used to fall back to index.html for any
 // FAILED request (a rejected fetch(), e.g. offline), so a missing .js asset came back
 // as HTML and produced a baffling "Unexpected token '<'" instead of a clean network
@@ -80,12 +92,8 @@ test('a diagonal drag selects exactly the cells under the pointer', async ({ pag
 // that with context.setOffline(true) rather than requesting a merely-missing URL.
 test('the service worker only falls back to index.html for navigations', async ({ page, context }) => {
   await page.goto('/');
-  await page.evaluate(async () => {
-    await navigator.serviceWorker.register('./sw.js');
-    await navigator.serviceWorker.ready;
-    for (let i = 0; i < 40 && !navigator.serviceWorker.controller; i++)
-      await new Promise(r => setTimeout(r, 250));
-  });
+  // Without control the offline fetch below rejects natively, which is what the fix expects too.
+  expect(await page.evaluate(controlled)).toBe(true);
 
   await context.setOffline(true);
   /** @type {{rejected:false, text:string} | {rejected:true, message:string}} */
@@ -109,6 +117,24 @@ test('the service worker only falls back to index.html for navigations', async (
   // missing .js resolves with the precached index.html document.
   const cameBackAsIndexHtml = !result.rejected && result.text.includes('<!DOCTYPE html>');
   expect(cameBackAsIndexHtml).toBe(false);
+});
+
+// A first visit deals before the worker controls the page, so nothing cached that board's word
+// pool, and the save it wrote could not be put back offline: the next launch said "Offline".
+test('the board from a first visit comes back offline', async ({ page, context }) => {
+  await openBoard(page, '/');
+  const letters = await page.locator('#letters').textContent();
+  expect(await page.evaluate(controlled)).toBe(true);
+  await expect.poll(() => page.evaluate(async () =>
+    (await (await caches.open('wordfinder-subjects')).keys()).length)).toBeGreaterThan(0);
+  await context.setOffline(true);
+  try {
+    await page.reload();
+    await page.locator('.cell').first().waitFor();
+    expect(await page.locator('#letters').textContent()).toBe(letters);
+  } finally {
+    await context.setOffline(false);
+  }
 });
 
 // Regression for 121de94 + 60b5099. Code is stale-while-revalidate: a changed asset

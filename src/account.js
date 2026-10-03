@@ -2,6 +2,8 @@
 // Levels side of New game and a level's score card. Each renders into a host main.js gives it,
 // and talks to the account only through levelplay.js; how dialogs and pages open is main.js's.
 import { playBreakdown, make, grouped } from './scorecard.js';
+import { codeOf } from './levelplay.js';
+import { DIFFICULTY_NAMES } from './scoring.js';
 
 /**
  * @typedef {import('./levelplay.js').Status} Status
@@ -158,7 +160,7 @@ export function renderSignIn(host, play, on) {
       on.onDone(a);
     } catch (x) {
       setBusy(false);
-      const code = x && typeof x === 'object' && 'code' in x ? x.code : '';
+      const code = codeOf(x);
       err.textContent = x instanceof Error && x.message ? x.message : 'Something went wrong. Try again later.';
       err.hidden = false;
       (code === 'invalid' || code === 'taken' ? user : pass).focus();
@@ -179,7 +181,7 @@ export function renderLevelChoice(host, play, on) {
   if (p) {
     const d = p.current ? p.current.difficulty : on.difficulty;
     host.replaceChildren(make(doc, 'p', 'acct-lvl', `Level ${p.level}`),
-      make(doc, 'p', 'acct-lvl-line', `${points(p.points)} · ${d.charAt(0).toUpperCase()}${d.slice(1)}`));
+      make(doc, 'p', 'acct-lvl-line', `${points(p.points)} · ${DIFFICULTY_NAMES[d]}`));
     return { ready: true, start: `Play level ${p.level}` };
   }
   // Signed in with nothing to deal from: this device has no copy and the cloud has not answered.

@@ -442,8 +442,9 @@ body{position:fixed;inset:0;width:100%;height:100%}
 #app[data-bgarea="full"] #railart{display:none}
 /* Text over a background keeps a 2.5px ring of the ground colour, so a star or a glow passing
    behind a letter never takes it under AA; tools/sims/backgrounds/contrast.mjs measures it.
-   With None there is nothing behind it, so nothing to paint 24 shadows per glyph for. */
-#app:not([data-bg="none"]) :is(#side,#side button),#app[data-bgarea="full"]:not([data-bg="none"]) :is(#titles,#newbtn){text-shadow:
+   Only where main.js says something is drawn behind: otherwise it is 24 shadows per glyph
+   painted for nothing. */
+#app[data-behind] :is(#side,#side button),#app[data-behind][data-bgarea="full"] :is(#titles,#newbtn){text-shadow:
   1.25px 0 var(--bg),0.88px 0.88px var(--bg),0 1.25px var(--bg),-0.88px 0.88px var(--bg),-1.25px 0 var(--bg),-0.88px -0.88px var(--bg),0 -1.25px var(--bg),0.88px -0.88px var(--bg),
   2.5px 0 var(--bg),2.31px 0.96px var(--bg),1.77px 1.77px var(--bg),0.96px 2.31px var(--bg),0 2.5px var(--bg),-0.96px 2.31px var(--bg),-1.77px 1.77px var(--bg),-2.31px 0.96px var(--bg),
   -2.5px 0 var(--bg),-2.31px -0.96px var(--bg),-1.77px -1.77px var(--bg),-0.96px -2.31px var(--bg),0 -2.5px var(--bg),0.96px -2.31px var(--bg),1.77px -1.77px var(--bg),2.31px -0.96px var(--bg)}

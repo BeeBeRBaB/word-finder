@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { findAndDrag, skipAhead } from './helpers.js';
+import { findAndDrag, skipAhead, openBoard } from './helpers.js';
 
 /** @typedef {import('@playwright/test').Page} Page */
 
@@ -22,6 +22,7 @@ async function pickLook(page, theme, mode = 'dark') {
 
 /** @param {Page} page @returns {Promise<void>} */
 async function solve(page) {
+  await page.locator('.cell').first().waitFor();   // the deal lands after load
   for (const w of await page.locator('.w').allTextContents()) await findAndDrag(page, w.toUpperCase());
   await expect(page.locator('#win')).toBeVisible();
 }
@@ -92,7 +93,7 @@ test('an unknown stored theme falls back to the default at first paint', async (
 });
 
 test('a win counts down and deals the next puzzle on its own', async ({ page }) => {
-  await page.goto('/?seed=1&subject=nature/birds');
+  await openBoard(page, '/?seed=1&subject=nature/birds');
   const before = await page.locator('#letters').textContent();
   await solve(page);
   await expect(page.locator('#winnext')).toBeVisible();
@@ -135,15 +136,15 @@ test('with auto-start turned off, a win waits for the player', async ({ page }) 
   await expect(page.locator('#win')).toBeVisible();
 });
 
-test('turning auto-start off mid-countdown stops it', async ({ page }) => {
+test('opening Settings mid-countdown stops it, and closing Settings does not restart it', async ({ page }) => {
   await page.clock.install();
   await page.goto('/?seed=1&subject=nature/birds');
   await solve(page);
   const letters = await page.locator('#letters').textContent();
   // Keyboard reaches the header behind the card; this is that path, driven directly.
   await page.evaluate(() => /** @type {HTMLElement} */ (document.getElementById('appearance')).click());
-  await expect(page.locator('#winnext')).toBeHidden();   // opening Settings already cancels it
-  await page.locator('#settings-auto-box').uncheck();
+  await expect(page.locator('#winnext')).toBeHidden();
+  await page.locator('#settings-close').click();
   await skipAhead(page, 6000);
   expect(await page.locator('#letters').textContent()).toBe(letters);
 });

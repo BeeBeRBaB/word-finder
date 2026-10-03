@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { findWordInGrid, findAndDrag, dragCells, blockServiceWorker } from './helpers.js';
+import { findWordInGrid, findAndDrag, dragCells, blockServiceWorker, openBoard } from './helpers.js';
 import { CATEGORIES } from '../../src/catalog.js';
 import { buildPuzzle } from '../../src/puzzle.js';
 import { makeRng } from '../../src/rng.js';
@@ -7,7 +7,7 @@ import { PRESETS } from '../../src/layout.js';
 import { WORDS as NATURE } from '../../src/subjects/nature.js';
 
 test('the win overlay can be dismissed, leaving the solved board', async ({ page }) => {
-  await page.goto('/?seed=1&subject=nature/birds');
+  await openBoard(page, '/?seed=1&subject=nature/birds');
   for (const el of await page.locator('.w').all()) {
     const w = /** @type {string} */ (await el.textContent()).toUpperCase();
     await dragCells(page, await findWordInGrid(page, w));
@@ -38,7 +38,7 @@ test('a failed deal from the win card tells the player, rather than leaving a st
   }, CATEGORIES.length);
   await page.route(`**/src/subjects/${target}.js`, route => route.abort());
 
-  await page.goto('/?seed=1&subject=nature/birds');
+  await openBoard(page, '/?seed=1&subject=nature/birds');
   for (const el of await page.locator('.w').all()) {
     const w = /** @type {string} */ (await el.textContent()).toUpperCase();
     await dragCells(page, await findWordInGrid(page, w));
