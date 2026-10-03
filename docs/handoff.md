@@ -43,6 +43,15 @@ current default marked), and don't build on an assumption.
   - `wishlist.json` ranks the icons once missing; all are drawn now (`round2-10.json` became `part10.json`). `node tools/art-src/iconmap/merge.mjs` folds drawn wishlist icons into the maps, and `node tools/art-src/iconmap/emit.mjs` rewrites the two modules (`--check` exits 1 when they are stale; a unit test runs it).
 - **Theme colours:** each theme's light and dark blocks in `styles.css` are the source; `node tools/palettes/check.mjs` checks them for AA and that every look is distinct.
 
+## Cloud environment for Project threads
+`docs/environment.sh` installs what `npm test` needs on a fresh thread: Node 22.5 or newer, plus Playwright's Chromium and WebKit with their system libraries, pinned to package-lock's Playwright (bump them together). Owner steps, on claude.ai/code:
+1. Click the cloud icon, then Cloud, then Add cloud environment. Name it `word-finder` and paste the script.
+2. Set the environment variable `PLAYWRIGHT_BROWSERS_PATH=/opt/ms-playwright`. Without it, threads still work but download the browsers again.
+3. Network: Full, or Custom allowing npm, GitHub, the Ubuntu apt mirrors, deb.nodesource.com, cdn.playwright.dev and playwright.download.prss.microsoft.com.
+4. In Project settings, under Environment, pick `word-finder`.
+
+The result is cached only if the script finishes in about 5 minutes.
+
 ## Old scratch archive
 `archive/wip-2026-09-27.tar.gz` (32 MB, 642 files) is the whole local `.wip/` folder: about 400 preview images, early drafts and the original HANDOFF. Everything future work needs is already under `tools/` and in this file, so open it only to look at an old preview: `tar -xzf archive/wip-2026-09-27.tar.gz`.
 
