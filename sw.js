@@ -54,17 +54,20 @@ async function carryOver(){
   const have=new Set(ASSETS.map(u=>new URL(u,sw.location.href).href));
   // A request that never settles would hold the update back for good.
   const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),20000);
-  /** @param {string} url same-origin by path, or a font's whole URL @returns {Promise<unknown>} */
+  /** Never rejects: one that fails must not end the carry while others are still on the way.
+   * @param {string} url same-origin by path, or a font's whole URL @returns {Promise<unknown>} */
   const take=async url=>{
     if(have.has(url))return;
     have.add(url);
-    // By URL, so in cors mode, never the stored request's: cache.keys() hands every request back
-    // as no-cors, and an opaque copy of a font file is one the page's cors request cannot use.
-    const res=await fetch(url,{cache:'no-cache',signal:ctl.signal}).catch(()=>null);
-    if(!res?.ok)return;
-    await cache.put(url,res.clone());
-    // Static relative imports only: a dynamic one loads what the page picks next, online.
-    if(url.endsWith('.js'))return Promise.all([...(await res.text()).matchAll(/(?:from|import)\s*['"](\.\.?\/[^'"]+)['"]/g)].map(m=>take(new URL(m[1],url).href)));
+    try{
+      // By URL, so in cors mode, never the stored request's: cache.keys() hands every request back
+      // as no-cors, and an opaque copy of a font file is one the page's cors request cannot use.
+      const res=await fetch(url,{cache:'no-cache',signal:ctl.signal});
+      if(!res.ok)return;
+      await cache.put(url,res.clone());
+      // Static relative imports only: a dynamic one loads what the page picks next, online.
+      if(url.endsWith('.js'))await Promise.all([...(await res.text()).matchAll(/(?:from|import)\s*['"](\.\.?\/[^'"]+)['"]/g)].map(m=>take(new URL(m[1],url).href)));
+    }catch{}
   };
   try{
     const old=(await Promise.all((await caches.keys()).filter(isStale).map(async k=>(await caches.open(k)).keys())))
@@ -78,7 +81,7 @@ async function carryOver(){
       await Promise.all(sheets.map(take));
       return (await Promise.all(sheets.map(async u=>(await cache.match(u))?.text()))).join('');
     })();
-    await Promise.all(old.map(async u=>{
+    await Promise.allSettled(old.map(async u=>{
       if(u.origin===sw.location.origin)return isSubject(u)?null:take(u.origin+u.pathname);
       if(css&&isFontFile(u)&&(await css).includes(u.href))return take(u.href);
     }));

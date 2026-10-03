@@ -300,6 +300,24 @@ test('a level finished on another device lets go of this board when the account 
   await expect(page.locator('#picker-start')).toHaveText('Play level 4');
 });
 
+// Two devices that each began the account's progress, as when its first save never reached the
+// cloud: the cloud's copy wins, and this level number is another board there.
+test('a level replaced by another device\'s progress says so, not that it was finished', async ({ page }) => {
+  const fb = makeFirebase();
+  const uid = fb.add('ana_reads', 'hunter22');
+  fb.put(uid, PROGRESS);
+  await fb.install(page);
+  await signedInAs(page, uid, 'ana_reads');
+  await page.goto('/?subject=nature/birds');
+  await levelsSide(page);
+  await page.click('#picker-start');
+  await expect(page.locator('#category')).toHaveText('Level 3');
+  fb.put(uid, { ...PROGRESS, seed: 777 });
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
+  await expect(page.locator('#toast-msg')).toHaveText('Your progress from another device replaced this level.');
+  await expect(page.locator('#category')).not.toHaveText('Level 3');
+});
+
 test('a tab coming back reads the cloud before it saves, so it never writes over a level finished elsewhere', async ({ page }) => {
   const fb = makeFirebase();
   const uid = fb.add('ana_reads', 'hunter22');
@@ -505,6 +523,26 @@ test('a sync between the last find and the score card leaves the level in the he
   await skipAhead(page, 1000);
   await expect(page.locator('#wincard h2')).toHaveText('Level 3 complete');
   await expect(page.locator('#category')).toHaveText('Level 3');
+});
+
+test('signing out between the last find and the score card shows the plain win card', async ({ page }) => {
+  const fb = makeFirebase();
+  const uid = fb.add('ana_reads', 'hunter22');
+  fb.put(uid, PROGRESS);
+  await fb.install(page);
+  await signedInAs(page, uid, 'ana_reads');
+  await page.clock.install();   // the card waits on the clock
+  await page.goto('/?subject=nature/birds');
+  await levelsSide(page);
+  await page.click('#picker-start');
+  await expect(page.locator('#category')).toHaveText('Level 3');
+  for (const w of await page.locator('#list .w').allTextContents()) await findAndDrag(page, w.trim().toUpperCase());
+  await page.click('#appearance');
+  await page.locator('#settings-account').getByRole('button', { name: 'Sign out' }).click();
+  await page.click('#settings-close');
+  await skipAhead(page, 1000);
+  await expect(page.locator('#wincard h2')).toHaveText('Puzzle solved!');
+  await expect(page.locator('#wincard')).not.toHaveAttribute('data-level');
 });
 
 // A level won here was banked at its last find, so a session that lapses afterwards takes nothing.

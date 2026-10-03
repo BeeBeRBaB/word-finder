@@ -3,8 +3,8 @@
 
 /**
  * @typedef {import('./scoring.js').Breakdown} Breakdown
- * @typedef {{reduceMotion?:boolean, countdownMs?:number, nextLabel?:string, footnote?:string,
- *   onNext:() => void, onStay?:() => void, scope?:HTMLElement}} PlayOptions
+ * @typedef {{reduceMotion?:boolean, countdownMs?:number, footnote?:string, onNext:() => void,
+ *   scope?:HTMLElement}} PlayOptions
  *   countdownMs: 0, negative or Infinity means no countdown — the Next button only.
  *   footnote: a quiet line under the total, shown and read out with it.
  *   scope: the dialog the card sits in, the host by default. Next takes focus once the card is
@@ -23,6 +23,7 @@ const STEP_MS = COUNT_DELAY_MS + COUNT_MS + GAP_MS;
 // Late enough that the live region is in the accessibility tree before it changes.
 const ANNOUNCE_MS = 250;
 const DEFAULT_COUNTDOWN_MS = 10000;
+const NEXT = 'Next level';
 const MINUS = '\u2212';
 
 /** @type {WeakMap<Element, Playback>} */
@@ -98,7 +99,6 @@ export function playBreakdown(host, breakdown, opts) {
   const win = /** @type {Window} */ (doc.defaultView);
   const clock = makeClock(() => win.performance.now());
   const still = !!opts.reduceMotion;
-  const label = opts.nextLabel || 'Next level';
   const limit = opts.countdownMs === undefined ? DEFAULT_COUNTDOWN_MS : opts.countdownMs;
   const auto = Number.isFinite(limit) && limit > 0;
   const { lines, total } = breakdown;
@@ -123,7 +123,7 @@ export function playBreakdown(host, breakdown, opts) {
   const next = make(doc, 'div', 'sc-next');
   next.hidden = true;
   const line = make(doc, 'div', 'sc-line');
-  const count = make(doc, 'span', 'sc-count', `${label} in `);
+  const count = make(doc, 'span', 'sc-count', `${NEXT} in `);
   const secs = make(doc, 'b', 'sc-secs');
   count.append(secs);
   count.setAttribute('aria-hidden', 'true');   // the live region says it once
@@ -134,7 +134,7 @@ export function playBreakdown(host, breakdown, opts) {
   const fill = make(doc, 'i', '');
   bar.append(fill);
   line.hidden = bar.hidden = !auto;
-  const go = button(doc, 'sc-go', `${label} `);
+  const go = button(doc, 'sc-go', `${NEXT} `);
   const arrow = make(doc, 'span', '', '\u2192');
   arrow.setAttribute('aria-hidden', 'true');
   go.append(arrow);
@@ -183,7 +183,7 @@ export function playBreakdown(host, breakdown, opts) {
     const msg = `Total ${formatPoints(total)} points.` + (after ? ` ${after}` : '');
     speak = win.setTimeout(() => {
       live.textContent = msg;
-      if (auto && !held) { tail.textContent = ` ${label} in ${Math.ceil(limit / 1000)} seconds.`; live.append(tail); }
+      if (auto && !held) { tail.textContent = ` ${NEXT} in ${Math.ceil(limit / 1000)} seconds.`; live.append(tail); }
     }, ANNOUNCE_MS);
   }
 
@@ -260,7 +260,6 @@ export function playBreakdown(host, breakdown, opts) {
     quiet();
     line.hidden = bar.hidden = true;
     go.focus({ preventScroll: true });   // Stay is gone; keep focus in the card
-    opts.onStay?.();
   }
 
   // Only a finished card that Next itself stopped: cancel() is final.

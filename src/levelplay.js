@@ -107,12 +107,17 @@ export function makeLevelPlay(deps) {
   /** @returns {number} */
   const elapsed = () => (live ? live.base + (live.since === null ? 0 : clock() - live.since) : 0);
 
-  /** Record a find or a reveal. False for a word not on the board or already recorded.
-   * @param {string} word @param {boolean} revealed @param {number} [at] active ms, now by default
-   * @returns {boolean} */
-  function note(word, revealed, at = Math.round(elapsed())) {
-    if (!live || !live.words.has(word) || live.events.some(e => e.word === word)) return false;
-    live.events.push({ word, at, revealed });
+  /** Record finds and reveals at one instant of active play, skipping a word not on the board or
+   * already recorded, and save once. @param {{word:string, revealed:boolean}[]} finds
+   * @returns {boolean} whether any was recorded */
+  function record(finds) {
+    const l = live;
+    if (!l) return false;
+    const at = Math.round(elapsed()), n = l.events.length;
+    for (const { word, revealed } of finds) {
+      if (l.words.has(word) && !l.events.some(e => e.word === word)) l.events.push({ word, at, revealed });
+    }
+    if (l.events.length === n) return false;
     remember();
     // Not online until the next save: Sign out warns, and opening Settings tries again.
     if (cloud.session()) dirty = true;
@@ -315,15 +320,14 @@ export function makeLevelPlay(deps) {
     /** @returns {void} */
     resume() { if (live && live.since === null) live.since = clock(); },
 
-    note,
+    /** Record a find or a reveal. False for a word not on the board or already recorded.
+     * @param {string} word @param {boolean} revealed @returns {boolean} */
+    note: (word, revealed) => record([{ word, revealed }]),
 
     /** Record the finds a board already had when its level started, all at one instant: when
      * they were found is not known, and scoreLevel never chains finds at one instant.
      * @param {{word:string, revealed:boolean}[]} finds @returns {void} */
-    carry(finds) {
-      const at = Math.round(elapsed());
-      for (const f of finds) note(f.word, f.revealed, at);
-    },
+    carry(finds) { record(finds); },
 
     /** Score and bank the level once every word is found or revealed; null before that.
      * @returns {Finish|null} */

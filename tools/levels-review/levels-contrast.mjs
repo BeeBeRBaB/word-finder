@@ -20,7 +20,7 @@ await page.evaluate(async () => {
     host.id = sign > 0 ? 'sc-pos' : 'sc-neg';
     card.append(host);
     playBreakdown(host, { lines: [{ key: 'words', label: 'Words', detail: '3 words', points: 90 * sign }], total: 90 * sign, complete: true,
-      stats: { found: 3, revealed: 0, elapsedMs: 0, parMs: 0, bestStreak: 1 } }, { countdownMs: 60000, onNext() {}, onStay() {} });
+      stats: { found: 3, revealed: 0, elapsedMs: 0, parMs: 0, bestStreak: 1 } }, { countdownMs: 60000, onNext() {} });
     // Text colour only depends on the classes, so the finished card can be forced without waiting.
     host.querySelector('.sc')?.classList.add('sc-done');
   }

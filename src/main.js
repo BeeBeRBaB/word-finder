@@ -405,7 +405,8 @@ function claim(hit, s, revealed = false) {
   if (won) state.winTimer = setTimeout(() => {
     state.winTimer = null;
     const covered = paneOpen();
-    if (finished && level) { showLevelCard(finished, level.level, covered); return; }
+    // Unless signed out since the find: the score card went with the account.
+    if (finished && level && levelBoard === level) { showLevelCard(finished, level.level, covered); return; }
     els.winmsg.textContent = 'You found every ' + cap(puzzle.name) + ' word.';
     // Written here rather than in the markup so the live region is empty until there is
     // something to announce. The count is the only number shown anywhere — no
@@ -968,7 +969,10 @@ function reconcileLevel() {
   if (levelBoard && (!play.account() || !play.playing())) {
     // A level won here was banked at its last find, so letting it go then is no news.
     const solved = state.foundOrder.length === puzzle.words.length;
-    letLevelGo(solved ? '' : play.account() ? 'This level was finished on another device.' : SIGNED_OUT);
+    // Past it, or the cloud's copy started on another device with its own seed and won.
+    const past = (play.progress()?.level ?? 0) > levelBoard.level;
+    letLevelGo(solved ? '' : !play.account() ? SIGNED_OUT
+      : past ? 'This level was finished on another device.' : 'Your progress from another device replaced this level.');
     return;
   }
   if (!levelBoard) {

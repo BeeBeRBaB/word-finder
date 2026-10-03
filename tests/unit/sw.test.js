@@ -165,6 +165,14 @@ function answers(handler, url) {
   return took;
 }
 
+/** @returns {{promise: Promise<void>, resolve: () => void}} */
+function deferred() {
+  /** @type {() => void} */
+  let resolve = () => {};
+  const promise = new Promise((r) => { resolve = () => r(undefined); });
+  return { promise, resolve };
+}
+
 const BASE = 'https://beeberbab.github.io/word-finder/';
 const CACHE = /const CACHE='([^']+)'/.exec(sw)?.[1] ?? '';
 const PAGE = readFileSync(new URL('index.html', ROOT), 'utf8');
@@ -173,9 +181,11 @@ const SHEET = /href="(https:\/\/fonts\.googleapis\.com\/css[^"]+)"/.exec(PAGE)?.
 /** Runs sw.js's install against an in-memory CacheStorage.
  * @param {Record<string, Record<string, string>>} caches name -> url -> body, before install
  * @param {(url: string, opts: {cache?: string, signal?: AbortSignal}) => Promise<Response>} fetch
+ * @param {(op: 'put'|'match', url: string) => boolean} [fails] which cache calls reject, as a put over
+ *   the storage quota does
  * @returns {{store: Map<string, Map<string, Response>>, installed: Promise<unknown>, budget: () => void}}
  *   budget runs carryOver's time limit now */
-function install(caches, fetch) {
+function install(caches, fetch, fails = () => false) {
   const store = new Map(Object.entries(caches).map(([n, m]) => [n, new Map(Object.entries(m).map(([u, b]) => [u, new Response(b)]))]));
   /** @param {unknown} k @returns {string} */
   const keyOf = (k) => (typeof k === 'string' ? k : /** @type {{url:string}} */ (k).url);
@@ -186,8 +196,14 @@ function install(caches, fetch) {
       store.set(name, m);
       return {
         keys: async () => [...m.keys()].map(url => ({ url })),
-        match: async (/** @type {unknown} */ k) => m.get(keyOf(k))?.clone(),
-        put: async (/** @type {unknown} */ k, /** @type {Response} */ r) => { m.set(keyOf(k), r); },
+        match: async (/** @type {unknown} */ k) => {
+          if (fails('match', keyOf(k))) throw new Error('UnknownError');
+          return m.get(keyOf(k))?.clone();
+        },
+        put: async (/** @type {unknown} */ k, /** @type {Response} */ r) => {
+          if (fails('put', keyOf(k))) throw new Error('QuotaExceededError');
+          m.set(keyOf(k), r);
+        },
         // The page as it is, since the fonts carried are the ones its stylesheet names.
         addAll: async (/** @type {{url:string}[]} */ reqs) => {
           for (const r of reqs) m.set(r.url, new Response(r.url === `${BASE}index.html` ? PAGE : 'precached'));
@@ -304,6 +320,46 @@ test('a font stylesheet that stalls holds back only the fonts', async () => {
   budget();
   await installed;
   assert.ok(!store.get(CACHE)?.has(font), 'a font goes by the sheet, which never came');
+});
+
+/** Whether `installed` waits for `late`, the one request still out, and carries `url` once it is in.
+ * @param {ReturnType<typeof install>} run @param {{resolve: () => void}} late @param {string} url */
+async function waitsFor({ store, installed }, late, url) {
+  let done = false;
+  void installed.then(() => { done = true; });
+  for (let i = 0; i < 20; i++) await new Promise((r) => setImmediate(r));
+  assert.equal(done, false, 'still waiting on the request that is out');
+  late.resolve();
+  await installed;
+  assert.ok(store.get(CACHE)?.has(url));
+}
+
+// A failure that ended the carry early ended its 20s budget too, and the rest of it ran on after
+// install, where the browser may stop it halfway.
+test('one file that cannot be stored does not cut the carry short', async () => {
+  const late = deferred();
+  const silk = `${BASE}src/backgrounds/silk-bokeh.js`;
+  await waitsFor(install({ 'wordfinder-v1': { [`${BASE}src/backgrounds/aurora-drift.js`]: 'old', [silk]: 'old' } },
+    async (url) => { if (url === silk) await late.promise; return new Response(`new ${url}`); },
+    (op, url) => op === 'put' && url.endsWith('aurora-drift.js')), late, silk);
+});
+
+test('nor does one import that cannot be stored while another is on the way', async () => {
+  const late = deferred();
+  const b = `${BASE}src/backgrounds/b.js`;
+  await waitsFor(install({ 'wordfinder-v1': { [`${BASE}src/backgrounds/drifting-icons.js`]: 'old' } }, async (url) => {
+    if (url.endsWith('drifting-icons.js')) return new Response("import './a.js';\nimport './b.js';");
+    if (url === b) await late.promise;
+    return new Response('');
+  }, (op, url) => op === 'put' && url.endsWith('/a.js')), late, b);
+});
+
+test('nor does a font stylesheet that cannot be read back', async () => {
+  const late = deferred();
+  const drift = `${BASE}src/backgrounds/drifting-icons.js`;
+  await waitsFor(install({ 'wordfinder-v1': { [drift]: 'old', 'https://fonts.gstatic.com/s/x.woff2': 'font' } },
+    async (url) => { if (url === drift) await late.promise; return new Response(''); },
+    (op, url) => op === 'match' && url.endsWith('index.html')), late, drift);
 });
 
 test('an install with no fonts to carry asks Google Fonts nothing', async () => {

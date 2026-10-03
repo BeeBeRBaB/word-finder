@@ -4,7 +4,7 @@
 
 import { makeRng } from '../rng.js';
 import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
-import { iconSvg, iconsFor, variantOf, withHero } from './icon-scene.js';
+import { iconSvg, iconsFor, sceneColors, variantOf, withHero } from './icon-scene.js';
 
 /**
  * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number}} BackgroundOptions
@@ -23,9 +23,7 @@ const MAX = 30;      // icons made; a small host draws an even spread of them ov
  */
 export function start(host, opts) {
   const subject = opts.subject;
-  // A colour is empty while the stylesheet has not applied, which boot stops waiting for after 2s.
-  const given = opts.colors.filter(Boolean);
-  const colors = given.length ? given : [opts.dark === false ? '#555' : '#bbb'];
+  const colors = sceneColors(opts.colors, opts.dark === false ? '#555' : '#bbb');
   const reduced = !!opts.reducedMotion;
   const { layout, hero, seed } = variantOf(subject, opts.seed ?? 0);
   const ids = withHero(iconsFor(subject), hero);

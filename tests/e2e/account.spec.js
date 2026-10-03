@@ -275,7 +275,7 @@ async function levelWin(page, opts = {}) {
     w.title = w.card.querySelector('h2');
     /** @type {HTMLElement} */ (document.getElementById('win')).style.display = 'flex';
     w.pb = m.showLevelWin(w.card, w.title, 12, { breakdown, banked: true, progress: { points: 5644 } },
-      { onNext: () => w.calls.push('next'), onStay: () => w.calls.push('stay'), ...opts });
+      { onNext: () => w.calls.push('next'), ...opts });
   }, opts);
 }
 
@@ -334,7 +334,7 @@ test('showing a second level replaces the first score card rather than stacking 
   await page.evaluate(() => {
     const w = /** @type {any} */ (window);
     w.m.showLevelWin(w.card, w.title, 13, { breakdown: { lines: [], total: 0 }, banked: false, progress: { points: 1 } },
-      { reduceMotion: true, countdownMs: 0, onNext: () => w.calls.push('next2'), onStay() {} });
+      { reduceMotion: true, countdownMs: 0, onNext: () => w.calls.push('next2') });
   });
   const card = page.locator('#wincard');
   await expect(card.locator('.sc-host')).toHaveCount(1);

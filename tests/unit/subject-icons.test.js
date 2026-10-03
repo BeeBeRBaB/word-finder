@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { CATEGORIES } from '../../src/catalog.js';
 import { ICONS } from '../../src/backgrounds/icons.js';
 import { CATEGORY_ICONS, SUBJECT_ICONS } from '../../src/backgrounds/subject-icons.js';
-import { VARIANTS, iconMarkup, iconsFor, layoutScene, variantOf, withHero } from '../../src/backgrounds/icon-scene.js';
+import { VARIANTS, iconMarkup, iconsFor, layoutScene, sceneColors, variantOf, withHero } from '../../src/backgrounds/icon-scene.js';
 import { makeRng } from '../../src/rng.js';
 
 test('every subject and category maps 4-6 distinct drawn icons, and every icon is used', async () => {
@@ -90,4 +90,9 @@ test('every layout covers the host without leaving it, and a hero keeps its spac
     }
   }
   assert.deepEqual(layoutScene(0, [], 100, 100, makeRng(1)), []);
+});
+
+test('a scene takes the theme\'s colours, or its fallback while they are empty', () => {
+  assert.deepEqual(sceneColors(['#a', '', '#b'], 'currentColor'), ['#a', '#b']);
+  assert.deepEqual(sceneColors(['', ''], 'currentColor'), ['currentColor']);
 });

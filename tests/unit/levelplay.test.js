@@ -1,4 +1,4 @@
-import test from 'node:test';
+import test, { beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { makeLevelPlay, levelPuzzle, replaySelections, OWNER_KEY } from '../../src/levelplay.js';
 import { PRESETS, mixFor } from '../../src/layout.js';
@@ -12,8 +12,15 @@ import { memStore } from './helpers.js';
 
 const IDS = ['animals', 'food', 'nature'];
 const SUBJECTS = { animals: ['animals/cats', 'animals/dogs'], food: ['food/fruit', 'food/bread'], nature: ['nature/birds', 'nature/trees'] };
+// A deal() that loads again and again without settling runs on microtasks alone, which starves
+// every timer, within()'s too. Past any count a test needs, the loader throws instead.
+let loads = 0;
+beforeEach(() => { loads = 0; });
 /** @param {string} id */
-const loadCategory = async (id) => ({ subjectIds: SUBJECTS[/** @type {keyof typeof SUBJECTS} */ (id)] });
+const loadCategory = async (id) => {
+  if (++loads > 100) throw new Error('deal() kept loading categories and never settled');
+  return { subjectIds: SUBJECTS[/** @type {keyof typeof SUBJECTS} */ (id)] };
+};
 const WORDS = ['ROBIN', 'WREN', 'OWL'];
 
 /** A promise and the functions that settle it. */
@@ -243,6 +250,22 @@ test('a level is timed in active play only, and its score is the scorer\'s', asy
   assert.equal(play.finish(), null, 'a level banks once');
 });
 
+// Above, the save pause() started is still in flight when the level is banked and carries the
+// result up. Here nothing is: finish() has to save it itself.
+test('a banked level is saved to the cloud by finish(), with no save under way to carry it', async () => {
+  const { play, cloud } = setup();
+  await play.signUp('ana', 'secret1');
+  const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
+  play.start(deal, WORDS);
+  for (const w of WORDS) play.note(w, false);
+  await play.sync();
+  assert.equal(play.status().pending, false, 'the finds are online and nothing is in flight');
+  assert.equal(play.finish()?.banked, true);
+  await settle();
+  assert.equal(/** @type {any} */ (cloud.docs.get('uid-ana')).level, 2);
+  assert.deepEqual(cloud.docs.get('uid-ana'), play.progress());
+});
+
 test('only a word on the board, once, is recorded', async () => {
   const { play } = setup();
   await play.signUp('ana', 'secret1');
@@ -329,15 +352,20 @@ test('when another device\'s record with its own seed wins, the level being play
   assert.equal(play.note('WREN', false), false);
 });
 
-test('finds carried onto a level are noted at one instant, skipping words already noted', async () => {
-  const { play, clock } = setup();
+test('finds carried onto a level are noted at one instant, skipping words already noted, and saved once', async () => {
+  const { play, clock, store } = setup();
   await play.signUp('ana', 'secret1');
   const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
   play.start(deal, WORDS);
   clock.tick(1000);
   play.note('ROBIN', false);
   clock.tick(1500);
+  let saves = 0;
+  const set = store.setItem;
+  store.setItem = (k, v) => { saves++; set(k, v); };
   play.carry([{ word: 'ROBIN', revealed: false }, { word: 'OWL', revealed: false }, { word: 'WREN', revealed: false }, { word: 'EAGLE', revealed: false }]);
+  store.setItem = set;
+  assert.equal(saves, 1);
   const done = play.finish();
   assert.equal(done?.breakdown.stats.found, 3, 'ROBIN once, EAGLE not on the board');
   assert.equal(done?.breakdown.stats.bestStreak, 1.2, 'OWL chains from ROBIN; WREN, at the same instant, does not');

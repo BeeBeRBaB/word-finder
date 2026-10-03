@@ -15,7 +15,7 @@ import { DIFFICULTY_NAMES } from './scoring.js';
  *   signUp(u:string, p:string):Promise<Account>, signOut():void}} AccountPlay
  * @typedef {{status():Status, progress():LevelProgress|null}} ChoicePlay
  * @typedef {import('./scorecard.js').Playback} Playback
- * @typedef {Omit<import('./scorecard.js').PlayOptions, 'footnote'|'nextLabel'> & {focus?:boolean}} LevelWinOptions
+ * @typedef {Omit<import('./scorecard.js').PlayOptions, 'footnote'> & {focus?:boolean}} LevelWinOptions
  *   focus: move focus into the card, as when no pane is open over it.
  */
 
@@ -217,7 +217,7 @@ export function showLevelWin(card, title, level, f, opts) {
   const host = make(doc, 'div', 'sc-host');
   title.after(host);
   const { focus, ...rest } = opts;
-  const pb = playBreakdown(host, f.breakdown, { ...rest, nextLabel: 'Next level', footnote: levelFootnote(f), scope: card });
+  const pb = playBreakdown(host, f.breakdown, { ...rest, footnote: levelFootnote(f), scope: card });
   levelWins.set(card, pb);
   if (focus) {
     const skip = /** @type {HTMLElement|null} */ (host.querySelector('.sc-skip'));

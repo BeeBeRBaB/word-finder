@@ -4,7 +4,7 @@
 
 import { makeRng } from '../rng.js';
 import { CORNERS } from '../art.js';
-import { iconMarkup, iconsFor, layoutScene, variantOf, withHero } from './icon-scene.js';
+import { iconMarkup, iconsFor, layoutScene, sceneColors, variantOf, withHero } from './icon-scene.js';
 import { hostSize } from './frame-loop.js';
 
 /** @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number, corner?:boolean}} BackgroundOptions */
@@ -18,9 +18,7 @@ const NS = 'http://www.w3.org/2000/svg';
  */
 export function start(host, opts) {
   const subject = opts.subject;
-  // A colour is empty while the stylesheet has not applied, which boot stops waiting for after 2s.
-  const given = opts.colors.filter(Boolean);
-  const colors = given.length ? given : ['currentColor'];
+  const colors = sceneColors(opts.colors, 'currentColor');
   const { layout, hero, seed } = variantOf(subject, opts.seed ?? 0);
   const ids = withHero(iconsFor(subject), hero);
   /** @type {Map<string, string>} */

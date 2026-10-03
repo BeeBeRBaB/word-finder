@@ -16,6 +16,14 @@ import { CATEGORY_ICONS, SUBJECT_ICONS } from './subject-icons.js';
 /** Seeds give each subject this many fixed scenes: three layouts, each with two heroes. */
 export const VARIANTS = 6;
 
+/** The theme's colours, or `fallback` alone while they are empty: the stylesheet has not applied,
+ * which boot stops waiting for after 2s. @param {string[]} colors @param {string} fallback
+ * @returns {string[]} */
+export function sceneColors(colors, fallback) {
+  const given = colors.filter(Boolean);
+  return given.length ? given : [fallback];
+}
+
 /** The subject's own icons, else its category's, hero first.
  * @param {string} subject e.g. 'animals/frogs' @returns {string[]} */
 export function iconsFor(subject) {
