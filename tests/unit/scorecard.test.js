@@ -573,21 +573,6 @@ test('cancel() stops everything and nothing fires afterwards', () => {
   }
 });
 
-test('a second call on the same host cancels the first', () => {
-  const env = makeEnv();
-  const first = play(env);
-  env.advance(REVEAL + 16);
-  const second = play(env, NEGATIVE, { countdownMs: 20000 });
-  assert.ok(env.host.one('sc').classes.has('sc-neg'));
-  assert.equal(env.host.all('sc').length, 1);
-  env.advance(15000);
-  assert.deepEqual(first.calls, { next: 0 }, 'the first countdown went with its card');
-  first.pb.cancel();   // a stale handle must not stop the new run
-  env.advance(10000);
-  assert.deepEqual(first.calls, { next: 0 });
-  assert.equal(second.calls.next, 1);
-});
-
 test('focus moves to Next only from inside the card or from nowhere', () => {
   // From <body>.
   let env = makeEnv();

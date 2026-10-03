@@ -58,6 +58,7 @@ async function mount(page, sign, opts = {}) {
     if (!host) { host = document.createElement('div'); host.id = 'schost'; card.querySelector('h2').after(host); }
     window.__calls = { next: 0 };
     win.style.display = 'flex';
+    window.__pb?.cancel();   // the last card mounted here, which replacing it does not stop
     window.__pb = playBreakdown(host, bd, { ...opts, onNext: () => window.__calls.next++ });
   }, { sign, opts, W });
 }

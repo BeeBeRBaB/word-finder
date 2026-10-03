@@ -237,7 +237,7 @@ test('a level is timed in active play only, and its score is the scorer\'s', asy
   assert.equal(play.note('OWL', false), true);
   assert.equal(play.elapsed(), 9000);
   const events = [{ word: 'ROBIN', at: 4000, revealed: false }, { word: 'WREN', at: 7000, revealed: true }, { word: 'OWL', at: 9000, revealed: false }];
-  const done = play.finish();
+  const { saved, ...done } = /** @type {import('../../src/levelplay.js').Finish} */ (play.finish());
   const breakdown = scoreLevel({ events, elapsedMs: 9000, difficulty: 'hard', wordCount: 3 });
   assert.deepEqual(done, { breakdown, banked: true, progress: play.progress() });
   const p = /** @type {import('../../src/levels.js').LevelProgress} */ (play.progress());
@@ -245,7 +245,7 @@ test('a level is timed in active play only, and its score is the scorer\'s', asy
   assert.equal(p.points, Math.max(0, breakdown.total));
   assert.deepEqual(p.history.at(-1), { level: 1, subject: deal.subject, difficulty: 'hard', score: breakdown.total, ms: 9000, reveals: 1, at: 1700000000000 });
   assert.equal(p.current, null);
-  await settle();
+  await saved;
   assert.deepEqual(cloud.docs.get('uid-ana'), p);
   assert.equal(play.finish(), null, 'a level banks once');
 });
@@ -260,8 +260,11 @@ test('a banked level is saved to the cloud by finish(), with no save under way t
   for (const w of WORDS) play.note(w, false);
   await play.sync();
   assert.equal(play.status().pending, false, 'the finds are online and nothing is in flight');
-  assert.equal(play.finish()?.banked, true);
-  await settle();
+  const done = play.finish();
+  assert.equal(done?.banked, true);
+  assert.equal(play.status().pending, true);
+  await done?.saved;
+  assert.equal(play.status().pending, false, 'saved has waited for the save');
   assert.equal(/** @type {any} */ (cloud.docs.get('uid-ana')).level, 2);
   assert.deepEqual(cloud.docs.get('uid-ana'), play.progress());
 });
@@ -320,6 +323,9 @@ test('a saved level of another subject or difficulty is not resumed into this on
   assert.deepEqual(fresh.start(deal, WORDS), []);
   assert.deepEqual(play.start({ ...deal, level: 9 }, WORDS), [], 'not this account\'s level');
   assert.equal(play.note('OWL', false), false);
+  // Its number, on a run another device began: dealt before a sync took that run.
+  assert.deepEqual(play.start({ ...deal, seed: deal.seed + 1 }, WORDS), []);
+  assert.equal(play.playing(), null);
 });
 
 test('when the cloud has moved past the level being played, the sync drops it, so it is never banked', async () => {
@@ -328,12 +334,16 @@ test('when the cloud has moved past the level being played, the sync drops it, s
   const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
   play.start(deal, WORDS);
   for (const w of WORDS) play.note(w, false);
+  assert.equal(play.passed(deal), false);
   // Another device banked level 1 meanwhile and the merge took its record.
   cloud.docs.set('uid-ana', { ...newProgress(0x40000000), level: 2, points: 50 });
   await play.sync();
   assert.equal(play.playing(), null);
   assert.equal(play.finish(), null);
   assert.deepEqual([play.progress()?.level, play.progress()?.points], [2, 50]);
+  assert.equal(play.passed(deal), true);
+  cloud.signOut();   // the session lapsed
+  assert.equal(play.passed(deal), false);
 });
 
 // Two devices that each made a record before either reached the cloud: the cloud's seed wins, and
@@ -350,6 +360,9 @@ test('when another device\'s record with its own seed wins, the level being play
   assert.equal(play.progress()?.seed, 0x12345678);
   assert.equal(play.progress()?.current, null, 'this device\'s finds are not the cloud seed\'s level 1');
   assert.equal(play.note('WREN', false), false);
+  cloud.docs.set('uid-ana', { ...newProgress(0x12345678), level: 3 });
+  await play.sync();
+  assert.equal(play.passed(deal), false, 'replaced, though that run is further on');
 });
 
 test('finds carried onto a level are noted at one instant, skipping words already noted, and saved once', async () => {

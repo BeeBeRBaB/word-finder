@@ -91,6 +91,12 @@ async function levelsSide(page) {
   await page.locator('#picker-mode').getByRole('button', { name: 'Levels' }).click();
 }
 
+/** Hide or show the page, as switching tabs does. @param {Page} page @param {boolean} hidden */
+const setHidden = (page, hidden) => page.evaluate((h) => {
+  Object.defineProperty(document, 'hidden', { value: h, configurable: true });
+  document.dispatchEvent(new Event('visibilitychange'));
+}, hidden);
+
 const PROGRESS = { v: 1, seed: 4242, level: 3, points: 420, history: [], current: null };
 
 test('signing up from New game comes back to it, and a level plays through to its score card and is saved online', async ({ page }) => {
@@ -246,13 +252,8 @@ test('leaving the page holds a level score card\'s countdown, as it cancels the 
   const card = page.locator('#wincard');
   await card.getByRole('button', { name: 'Skip' }).click();
   await expect(card.locator('.sc-line')).toBeVisible();
-  /** @param {boolean} hidden */
-  const setHidden = (hidden) => page.evaluate((h) => {
-    Object.defineProperty(document, 'hidden', { value: h, configurable: true });
-    document.dispatchEvent(new Event('visibilitychange'));
-  }, hidden);
-  await setHidden(true);
-  await setHidden(false);
+  await setHidden(page, true);
+  await setHidden(page, false);
   await expect(card.locator('.sc-line')).toBeHidden();
   await skipAhead(page, 11000);   // past the countdown it no longer has
   await expect(page.locator('#category')).toHaveText('Level 3');
@@ -302,7 +303,25 @@ test('a level finished on another device lets go of this board when the account 
 
 // Two devices that each began the account's progress, as when its first save never reached the
 // cloud: the cloud's copy wins, and this level number is another board there.
-test('a level replaced by another device\'s progress says so, not that it was finished', async ({ page }) => {
+for (const [where, level] of [['at this level', 3], ['further on', 5]]) {
+  test(`a level replaced by another device's progress ${where} says so, not that it was finished`, async ({ page }) => {
+    const fb = makeFirebase();
+    const uid = fb.add('ana_reads', 'hunter22');
+    fb.put(uid, PROGRESS);
+    await fb.install(page);
+    await signedInAs(page, uid, 'ana_reads');
+    await page.goto('/?subject=nature/birds');
+    await levelsSide(page);
+    await page.click('#picker-start');
+    await expect(page.locator('#category')).toHaveText('Level 3');
+    fb.put(uid, { ...PROGRESS, seed: 777, level });
+    await page.evaluate(() => window.dispatchEvent(new Event('online')));
+    await expect(page.locator('#toast-msg')).toHaveText('Your progress from another device replaced this level.');
+    await expect(page.locator('#category')).not.toHaveText('Level 3');
+  });
+}
+
+test('Undo brings a level back as an ordinary board once another device\'s progress replaced it', async ({ page }) => {
   const fb = makeFirebase();
   const uid = fb.add('ana_reads', 'hunter22');
   fb.put(uid, PROGRESS);
@@ -312,10 +331,20 @@ test('a level replaced by another device\'s progress says so, not that it was fi
   await levelsSide(page);
   await page.click('#picker-start');
   await expect(page.locator('#category')).toHaveText('Level 3');
+  const subject = await page.locator('#subject').textContent();
+  await findAndDrag(page, ((await page.locator('#list .w').first().textContent()) ?? '').trim().toUpperCase());
+  await page.click('#newbtn');
+  await expect(page.locator('#toast-undo')).toBeVisible();
+  await expect.poll(() => fb.progress(uid)?.current?.events?.length).toBe(1);
   fb.put(uid, { ...PROGRESS, seed: 777 });
   await page.evaluate(() => window.dispatchEvent(new Event('online')));
-  await expect(page.locator('#toast-msg')).toHaveText('Your progress from another device replaced this level.');
+  await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('wordfinder-levels-v1') ?? 'null')?.seed)).toBe(777);
+  await page.click('#toast-undo');
+  await expect(page.locator('#subject')).toHaveText(subject ?? '');
   await expect(page.locator('#category')).not.toHaveText('Level 3');
+  await findTheRest(page);
+  await expect(page.locator('#wincard h2')).toHaveText('Puzzle solved!');
+  expect(fb.progress(uid)).toEqual({ ...PROGRESS, seed: 777 });
 });
 
 test('a tab coming back reads the cloud before it saves, so it never writes over a level finished elsewhere', async ({ page }) => {
@@ -330,19 +359,14 @@ test('a tab coming back reads the cloud before it saves, so it never writes over
   await expect(page.locator('#category')).toHaveText('Level 3');
   const first = (await page.locator('#list .w').first().textContent())?.trim() ?? '';
   await findAndDrag(page, first.toUpperCase());
-  /** @param {boolean} hidden */
-  const setHidden = (hidden) => page.evaluate((h) => {
-    Object.defineProperty(document, 'hidden', { value: h, configurable: true });
-    document.dispatchEvent(new Event('visibilitychange'));
-  }, hidden);
-  await setHidden(true);
+  await setHidden(page, true);
   await expect.poll(() => fb.progress(uid)?.current?.events?.length).toBe(1);
   // Meanwhile another device finishes levels 3 and 4.
   const ahead = { ...PROGRESS, level: 5, points: 1500, history: [3, 4].map(level => ({ level, subject: 'x/y', difficulty: 'normal', score: 540, ms: 60000, reveals: 0, at: 1 })) };
   fb.put(uid, ahead);
-  await setHidden(false);
+  await setHidden(page, false);
   await expect(page.locator('#toast-msg')).toHaveText('This level was finished on another device.');
-  await setHidden(true);
+  await setHidden(page, true);
   await page.waitForTimeout(300);
   expect(fb.progress(uid)).toEqual(ahead);
 });
@@ -436,12 +460,6 @@ async function refuseSession(page) {
       body: JSON.stringify({ error: expired ? { message: 'TOKEN_EXPIRED' } : { status: 'UNAUTHENTICATED' } }) });
   });
 }
-
-/** @param {Page} page @param {boolean} hidden */
-const setHidden = (page, hidden) => page.evaluate((h) => {
-  Object.defineProperty(document, 'hidden', { value: h, configurable: true });
-  document.dispatchEvent(new Event('visibilitychange'));
-}, hidden);
 
 test('a session refused mid-level says so when the player is back, and signing in again picks the level up', async ({ page }) => {
   const fb = makeFirebase();
@@ -610,6 +628,32 @@ test('when the finds of two devices together complete a level, the one being loo
   await setHidden(page, false);
   await expect(page.locator('#wincard h2')).toHaveText('Level 3 complete');
   await expect.poll(() => fb.progress(uid)?.level).toBe(4);
+});
+
+test('a level a sync completes while Settings is open ends with the Account line saying it is saved', async ({ page }) => {
+  const fb = makeFirebase();
+  const uid = fb.add('ana_reads', 'hunter22');
+  fb.put(uid, PROGRESS);
+  await fb.install(page);
+  await signedInAs(page, uid, 'ana_reads');
+  await page.goto('/?subject=nature/birds');
+  await levelsSide(page);
+  await page.click('#picker-start');
+  await expect(page.locator('#category')).toHaveText('Level 3');
+  const words = (await page.locator('#list .w').allTextContents()).map(w => w.trim().toUpperCase());
+  for (const w of words.slice(0, -1)) await findAndDrag(page, w);
+  await setHidden(page, true);
+  await expect.poll(() => fb.progress(uid)?.current?.events?.length).toBe(words.length - 1);
+  await setHidden(page, false);
+  await page.click('#appearance');
+  const line = page.locator('#settings-account .acct-line');
+  await expect(line).toHaveText(/^Level 3 .* saved$/);
+  // Another device finds the last word, and this one hears of it with Settings open.
+  const p = fb.progress(uid);
+  fb.put(uid, { ...p, current: { ...p.current, events: [...p.current.events, { word: words[words.length - 1], at: p.current.elapsedMs + 1, revealed: false }] } });
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
+  await expect.poll(() => fb.progress(uid)?.level).toBe(4);
+  await expect(line).toHaveText(/^Level 4 .* saved$/);
 });
 
 /** The puzzles this device has solved. @param {Page} page */

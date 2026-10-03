@@ -26,9 +26,6 @@ const DEFAULT_COUNTDOWN_MS = 10000;
 const NEXT = 'Next level';
 const MINUS = '\u2212';
 
-/** @type {WeakMap<Element, Playback>} */
-const running = new WeakMap();
-
 /** @param {unknown} n @returns {number} rounded; anything non-finite is 0 */
 const whole = (n) => (typeof n === 'number' && Number.isFinite(n) ? Math.round(n) : 0);
 
@@ -90,11 +87,11 @@ function makeClock(now) {
   };
 }
 
-/** Render `breakdown` into `host` and play it. A second call on the same host cancels the first.
+/** Render `breakdown` into `host` and play it. Cancel it before replacing it: a host it was
+ * taken out of does not stop it.
  * @param {HTMLElement} host @param {Breakdown} breakdown @param {PlayOptions} opts
  * @returns {Playback} */
 export function playBreakdown(host, breakdown, opts) {
-  running.get(host)?.cancel();
   const doc = host.ownerDocument;
   const win = /** @type {Window} */ (doc.defaultView);
   const clock = makeClock(() => win.performance.now());
@@ -148,9 +145,6 @@ export function playBreakdown(host, breakdown, opts) {
 
   let alive = true, done = false, ticking = false, announced = false, held = false, nexted = false;
   let raf = 0, timer = 0, speak = 0;
-  /** @type {Playback} */
-  const api = { skip, cancel: stop, hold, rearm };
-  running.set(host, api);
 
   /** @param {Row} r @param {number} v */
   function show(r, v) {
@@ -270,7 +264,6 @@ export function playBreakdown(host, breakdown, opts) {
     line.hidden = bar.hidden = true;
     tail.textContent = '';
     nexted = false;
-    running.set(host, api);
   }
 
   function stop() {
@@ -278,7 +271,6 @@ export function playBreakdown(host, breakdown, opts) {
     quiet();
     win.clearTimeout(speak);
     doc.removeEventListener('visibilitychange', onVisibility);
-    if (running.get(host) === api) running.delete(host);
   }
 
   // Pauses the reveal, and picks it up where it stopped.
@@ -301,5 +293,5 @@ export function playBreakdown(host, breakdown, opts) {
     clock.reset(!doc.hidden);
     if (!doc.hidden) raf = win.requestAnimationFrame(frame);
   }
-  return api;
+  return { skip, cancel: stop, hold, rearm };
 }

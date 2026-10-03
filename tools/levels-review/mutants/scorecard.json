@@ -11,8 +11,6 @@
     ["cancel leaves timers running","src/scorecard.js","    alive = ticking = false;\n    quiet();","    alive = ticking = false;"],
     ["cancel keeps the visibility listener","src/scorecard.js","    win.clearTimeout(speak);\n    doc.removeEventListener('visibilitychange', onVisibility);","    win.clearTimeout(speak);"],
     ["Stay does not stop the countdown","src/scorecard.js","    ticking = false;\n    quiet();\n    line.hidden","    line.hidden"],
-    ["second call does not cancel the first","src/scorecard.js","running.get(host)?.cancel();",""],
-    ["stale handle cancels the new run","src/scorecard.js","if (running.get(host) === api) running.delete(host);","running.get(host)?.cancel(); running.delete(host);"],
     ["skip restarts a finished countdown","src/scorecard.js","  function finish() {\n    if (done) return;","  function finish() {"],
     ["announce twice","src/scorecard.js","    if (announced) return;\n",""],
     ["announce at mount","src/scorecard.js","  if (still) finish();","  announce();\n  if (still) finish();"],
@@ -43,7 +41,7 @@
     ["a held reveal still announces the countdown","src/scorecard.js","if (auto && !held) { tail.textContent","if (auto) { tail.textContent"],
     ["hold leaves focus on the hidden Stay","src/scorecard.js","    if (line.contains(doc.activeElement)) go.focus({ preventScroll: true });\n","\n"],
     ["rearm does nothing","src/scorecard.js","    alive = true;\n    held = true;\n","    held = true;\n"],
-    ["rearm brings the countdown back","src/scorecard.js","    nexted = false;\n    running.set(host, api);","    nexted = false;\n    line.hidden = bar.hidden = false;\n    running.set(host, api);"],
+    ["rearm brings the countdown back","src/scorecard.js","    tail.textContent = '';\n    nexted = false;","    tail.textContent = '';\n    nexted = false;\n    line.hidden = bar.hidden = false;"],
     ["rearm revives a cancelled card","src/scorecard.js","if (alive || !done || !nexted) return;","if (alive || !done) return;"],
     ["Next stays live after one deal","src/scorecard.js","    stop();\n    nexted = true;\n    opts.onNext();","    nexted = true;\n    opts.onNext();"]
   ]

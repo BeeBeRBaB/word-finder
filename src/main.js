@@ -251,6 +251,8 @@ function startLevel(deal) {
  * solve to count and a score card to show. @param {Deal} deal @param {boolean} won @returns {void} */
 function completeLevel(deal, won) {
   const finished = play.finish();
+  // A sync can complete it with Settings open, whose Account line then waits on this save.
+  if (finished) void finished.saved.then(renderAccountSection);
   if (won) return;
   progress.addSolve();
   if (finished) showLevelCard(finished, deal.level, paneOpen());
@@ -969,10 +971,9 @@ function reconcileLevel() {
   if (levelBoard && (!play.account() || !play.playing())) {
     // A level won here was banked at its last find, so letting it go then is no news.
     const solved = state.foundOrder.length === puzzle.words.length;
-    // Past it, or the cloud's copy started on another device with its own seed and won.
-    const past = (play.progress()?.level ?? 0) > levelBoard.level;
+    // Finished on this run elsewhere, or replaced: the cloud's copy is a run another device began.
     letLevelGo(solved ? '' : !play.account() ? SIGNED_OUT
-      : past ? 'This level was finished on another device.' : 'Your progress from another device replaced this level.');
+      : play.passed(levelBoard) ? 'This level was finished on another device.' : 'Your progress from another device replaced this level.');
     return;
   }
   if (!levelBoard) {

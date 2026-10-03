@@ -25,8 +25,9 @@ export const OWNER_KEY = 'wordfinder-levels-owner-v1';
  * @typedef {{level:number, subject:string, seed:number, difficulty:Difficulty}} Deal
  *   seed: the puzzle seed. Build the board from it with the difficulty's mix and no coverage bag.
  * @typedef {{subjectIds:string[]}} CategoryLike
- * @typedef {{breakdown:import('./scoring.js').Breakdown, banked:boolean, progress:LevelProgress}} Finish
+ * @typedef {{breakdown:import('./scoring.js').Breakdown, banked:boolean, progress:LevelProgress, saved:Promise<void>}} Finish
  *   banked: false when the progress record refused the result, which a valid finish never meets.
+ *   saved: settles when the save it starts has landed or failed, which status() then tells.
  * @typedef {{signedIn:boolean, username:string|null, level:number, points:number,
  *   pending:boolean, error:CloudCode|null}} Status
  */
@@ -54,6 +55,10 @@ export function replaySelections(puzzle, events) {
   }
   return out;
 }
+
+/** Whether `deal` is a level of `p`'s run: a run another device began, with its own seed, can
+ * replace it. @param {LevelProgress} p @param {Deal} deal @returns {boolean} */
+const ofRun = (p, deal) => levelSeed(p.seed, deal.level) === deal.seed;
 
 /** What went wrong, from a thrown cloud error; 'server' for anything else.
  * @param {unknown} e @returns {CloudCode} */
@@ -139,7 +144,7 @@ export function makeLevelPlay(deps) {
     const merged = mergeProgress(prog, r) ?? newProgress((random() * 0x100000000) >>> 0);
     // The level being played is the cloud's no longer (it moved on, or another device's record
     // with its own seed won): deal whatever level it says.
-    if (live && (merged.level !== live.deal.level || levelSeed(merged.seed, merged.level) !== live.deal.seed)) live = null;
+    if (live && (merged.level !== live.deal.level || !ofRun(merged, live.deal))) live = null;
     keep(merged);
     const c = live && r && r.seed === merged.seed && r.level === live.deal.level ? r.current : null;
     if (live && c && c.subject === live.deal.subject && c.difficulty === live.deal.difficulty) {
@@ -287,15 +292,23 @@ export function makeLevelPlay(deps) {
     /** The deal being played and timed, or null. @returns {Deal|null} */
     playing: () => (live ? live.deal : null),
 
+    /** The account is past `deal`'s level on the run it was dealt from, not on another device's.
+     * @param {Deal} deal @returns {boolean} */
+    passed(deal) {
+      const p = cloud.session() ? prog : null;
+      return !!p && p.level > deal.level && ofRun(p, deal);
+    },
+
     /** The level's finds so far, in order, including any another device added. @returns {LevelEvent[]} */
     events: () => (live ? live.events.map(e => ({ ...e })) : []),
 
-    /** Start timing a dealt level. Returns the finds to put back when it resumes one, in order;
-     * a saved level whose words are not all on this board (another device's board size) starts over.
+    /** Start timing a dealt level, unless the account has moved on from it since it was dealt.
+     * Returns the finds to put back when it resumes one, in order; a saved level whose words are not
+     * all on this board (another device's board size) starts over.
      * @param {Deal} deal @param {string[]} words the board's words
      * @param {boolean} [paused] the page is hidden: the clock waits for resume() @returns {LevelEvent[]} */
     start(deal, words, paused = false) {
-      if (!prog || deal.level !== prog.level) { live = null; return []; }
+      if (!prog || deal.level !== prog.level || !ofRun(prog, deal)) { live = null; return []; }
       const set = new Set(words);
       const c = prog.current;
       const resume = !!c && c.subject === deal.subject && c.difficulty === deal.difficulty
@@ -339,10 +352,9 @@ export function makeLevelPlay(deps) {
       const next = recordLevel(prog, { level: deal.level, subject: deal.subject, difficulty: deal.difficulty,
         score: breakdown.total, ms, reveals: breakdown.stats.revealed, at: now() });
       live = null;
-      if (next === prog) return { breakdown, banked: false, progress: prog };
+      if (next === prog) return { breakdown, banked: false, progress: prog, saved: Promise.resolve() };
       keep(next);
-      void push();
-      return { breakdown, banked: true, progress: next };
+      return { breakdown, banked: true, progress: next, saved: push() };
     },
   };
 }
