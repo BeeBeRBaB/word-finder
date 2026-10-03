@@ -456,3 +456,105 @@ test('a resumed level puts each recorded word back where the board holds it, onc
   ]);
   assert.deepEqual(replaySelections(puzzle, []), []);
 });
+
+test('a sync that lands while the category loads does not drop the deal, and one that moves the account deals where it is now', async () => {
+  const { play, cloud } = setup();
+  cloud.docs.set('uid-ana', { ...newProgress(9), level: 3 });
+  await play.signIn('ana', 'secret1');
+  const cat = levelCategory(9, 3, IDS);
+  const gate = deferred();
+  const dealing = play.deal(IDS, async (id) => { await gate.promise; return loadCategory(id); }, 'normal');
+  await play.sync();   // nothing changed, but the record is a fresh object
+  gate.resolve();
+  assert.deepEqual(await dealing, { level: 3, subject: levelSubject(9, 3, cat, SUBJECTS[/** @type {keyof typeof SUBJECTS} */ (cat)], IDS.length), seed: levelSeed(9, 3), difficulty: 'normal' });
+  // Another device finished level 3 meanwhile: level 4 is dealt instead, from its own category.
+  const gate2 = deferred();
+  /** @type {string[]} */
+  const asked = [];
+  const dealing2 = play.deal(IDS, async (id) => { asked.push(id); if (asked.length === 1) await gate2.promise; return loadCategory(id); }, 'normal');
+  cloud.docs.set('uid-ana', { ...newProgress(9), level: 4, points: 90 });
+  await play.sync();
+  gate2.resolve();
+  const d = await dealing2;
+  assert.equal(d?.level, 4);
+  assert.deepEqual(asked, [cat, levelCategory(9, 4, IDS)]);
+  // And one that started level 4 elsewhere resumes it by its saved subject.
+  const gate3 = deferred();
+  const dealing3 = play.deal(IDS, async (id) => { await gate3.promise; return loadCategory(id); }, 'normal');
+  cloud.docs.set('uid-ana', { ...newProgress(9), level: 5, points: 99, current: { level: 5, subject: 'food/bread', difficulty: 'easy', events: [], elapsedMs: 0 } });
+  await play.sync();
+  gate3.resolve();
+  assert.deepEqual(await dealing3, { level: 5, subject: 'food/bread', seed: levelSeed(9, 5), difficulty: 'easy' });
+});
+
+test('a level started while the page is hidden waits for resume() to start its clock', async () => {
+  const { play, clock } = setup();
+  await play.signUp('ana', 'secret1');
+  const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
+  play.start(deal, WORDS, true);
+  clock.tick(5000);
+  assert.equal(play.elapsed(), 0);
+  play.resume();
+  clock.tick(700);
+  assert.equal(play.elapsed(), 700);
+});
+
+test('a find is pending until it is saved online, so Sign out can warn about it', async () => {
+  const { play, cloud } = setup();
+  await play.signUp('ana', 'secret1');
+  const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
+  play.start(deal, WORDS);
+  assert.equal(play.status().pending, false, 'starting a level is not news');
+  play.note('OWL', false);
+  assert.equal(play.status().pending, true);
+  await play.sync();
+  assert.equal(play.status().pending, false);
+  assert.deepEqual(/** @type {any} */ (cloud.docs.get('uid-ana')).current.events.map((/** @type {any} */ e) => e.word), ['OWL']);
+});
+
+test('a device coming back with an old copy reads the cloud before it saves, and never writes over newer progress', async () => {
+  const { play, cloud, clock } = setup();
+  await play.signUp('ana', 'secret1');
+  const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
+  play.start(deal, WORDS);
+  play.note('OWL', false);
+  play.pause();
+  await settle();
+  // Another device finished this level and the next while this one was away.
+  const ahead = { ...newProgress(0x40000000), level: 3, points: 700, history: [] };
+  cloud.docs.set('uid-ana', ahead);
+  play.resume();
+  clock.tick(100);
+  play.pause();   // the old device's next save
+  await settle(); await settle();
+  assert.equal(/** @type {any} */ (cloud.docs.get('uid-ana')).level, 3, 'the cloud kept the newer record');
+  assert.equal(play.progress()?.level, 3);
+  assert.equal(play.playing(), null, 'and the stale level was let go');
+  assert.equal(play.finish(), null);
+});
+
+test('another device\'s finds on the level being played join this one\'s, with the longer clock', async () => {
+  const { play, cloud, clock } = setup();
+  await play.signUp('ana', 'secret1');
+  const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
+  play.start(deal, WORDS);
+  clock.tick(1000);
+  play.note('OWL', true);
+  // The other device found WREN (and a word this board lacks) and played longer.
+  cloud.docs.set('uid-ana', { ...newProgress(0x40000000), current: { level: 1, subject: deal.subject, difficulty: 'normal', elapsedMs: 9000,
+    events: [{ word: 'WREN', at: 500, revealed: false }, { word: 'HAWK', at: 800, revealed: false }, { word: 'OWL', at: 2000, revealed: false }] } });
+  await play.sync();
+  assert.deepEqual(play.events(), [{ word: 'WREN', at: 500, revealed: false }, { word: 'OWL', at: 1000, revealed: true }]);
+  assert.equal(play.elapsed(), 9000);
+  assert.deepEqual(/** @type {any} */ (cloud.docs.get('uid-ana')).current.events.map((/** @type {any} */ e) => e.word), ['WREN', 'OWL'],
+    'the union is saved back, so neither device loses a find');
+  clock.tick(500);
+  assert.equal(play.elapsed(), 9500, 'still running from there');
+  // A copy of another subject is not mixed in.
+  cloud.docs.set('uid-ana', { ...newProgress(0x40000000), current: { level: 1, subject: 'food/bread', difficulty: 'normal', elapsedMs: 99999,
+    events: [{ word: 'ROBIN', at: 1, revealed: false }, { word: 'WREN', at: 2, revealed: false }, { word: 'OWL', at: 3, revealed: false }] } });
+  await play.sync();
+  assert.deepEqual(play.events().map(e => e.word), ['WREN', 'OWL']);
+  assert.ok(play.elapsed() < 99999);
+  assert.deepEqual(makeLevelPlay({ cloud: fakeCloud(), store: memStore() }).events(), []);
+});

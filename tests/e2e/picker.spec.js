@@ -256,7 +256,11 @@ async function levelsPicker(page, o = {}) {
       levels: {
         enabled: () => w.enabled, getMode: () => w.mode,
         setMode: (/** @type {string} */ m) => { w.log.push(['setMode', m]); w.mode = m; },
-        render: (/** @type {HTMLElement} */ host) => { host.textContent = 'Level 12'; return { ready: w.ready, start: w.ready ? 'Play level 12' : 'Play level' }; },
+        render: (/** @type {HTMLElement} */ host) => {
+          host.textContent = 'Level 12';
+          if (!w.ready && !w.noButton) { const b = document.createElement('button'); b.type = 'button'; b.textContent = 'Try again'; host.append(b); }
+          return { ready: w.ready, start: w.ready ? 'Play level 12' : 'Play level' };
+        },
         onLevel: async () => { w.log.push(['level']); if (w.fail) throw new Error('offline'); },
       } });
     w.p2.open(false);
@@ -298,6 +302,25 @@ test('a Levels side that cannot start yet keeps Start off until it is redrawn re
   await page.evaluate(() => { const w = /** @type {any} */ (window); w.ready = true; w.p2.refresh(); });
   await expect(page.locator('#picker-start')).toBeEnabled();
   await expect(page.locator('#picker-start')).toHaveText('Play level 12');
+});
+
+test('focus inside the Levels pane survives a redraw: to its new button, else to Start, else to the heading', async ({ page }) => {
+  await levelsPicker(page, { ready: false });
+  const retry = page.locator('#picker-level').getByRole('button', { name: 'Try again' });
+  await retry.focus();
+  await page.evaluate(() => /** @type {any} */ (window).p2.refresh());
+  await expect(retry).toBeFocused();   // the new one
+  await page.evaluate(() => { const w = /** @type {any} */ (window); w.ready = true; w.p2.refresh(); });
+  await expect(page.locator('#picker-start')).toBeFocused();
+  // Focus outside the pane is left where it is.
+  await page.locator('#picker-cancel').focus();
+  await page.evaluate(() => /** @type {any} */ (window).p2.refresh());
+  await expect(page.locator('#picker-cancel')).toBeFocused();
+  // No button and no Start to go to: the heading.
+  await page.evaluate(() => { const w = /** @type {any} */ (window); w.ready = false; w.p2.refresh(); });
+  await retry.focus();
+  await page.evaluate(() => { const w = /** @type {any} */ (window); w.noButton = true; w.p2.refresh(); });
+  await expect(page.locator('#picker-title')).toBeFocused();
 });
 
 test('without accounts there is no Levels side, whatever was chosen before', async ({ page }) => {

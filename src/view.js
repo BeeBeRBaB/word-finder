@@ -7,7 +7,8 @@ import { artFor, spriteRects, ILLUSTRATIONS } from './art.js';
  * @typedef {import('./puzzle.js').Puzzle} Puzzle
  * @typedef {import('./puzzle.js').Selection} Selection
  * @typedef {import('./layout.js').LayoutDims} LayoutDims
- * @typedef {{sel:Selection}} FoundEntry
+ * @typedef {{sel:Selection, revealed?:boolean}} FoundEntry
+ *   revealed: put there by Reveal, which a level scores differently.
  * @typedef {{found:Record<string, FoundEntry>, foundOrder:string[], sel:Selection|null, miss:Selection|null}} GameState
  * @typedef {{
  *   app:HTMLElement, gridbox:HTMLElement, pills:HTMLElement, letters:HTMLElement, fx:HTMLElement,

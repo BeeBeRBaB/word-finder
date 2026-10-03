@@ -48,7 +48,6 @@ function accountRow(doc, name, line, label) {
   const seg = make(doc, 'div', 'seg acct-seg');
   const btn = /** @type {HTMLButtonElement} */ (make(doc, 'button', '', label));
   btn.type = 'button';
-  btn.setAttribute('aria-pressed', 'false');
   seg.append(btn);
   who.append(name, make(doc, 'small', 'acct-line', line));
   row.append(who, seg);
@@ -64,10 +63,13 @@ const PITCH = 'Numbered puzzles that keep your points on any device.';
 export function renderAccount(host, play, on) {
   const doc = host.ownerDocument;
   const s = play.status();
+  // Signed in at level 0: no copy here, and the cloud has not answered.
+  const line = s.level ? accountLine(s) : "Your levels haven't loaded yet.";
   const { row, btn } = s.signedIn
-    ? accountRow(doc, make(doc, 'b', 'acct-name', s.username ?? ''), accountLine(s), 'Sign out')
+    ? accountRow(doc, make(doc, 'b', 'acct-name', s.username ?? ''), line, 'Sign out')
     : accountRow(doc, make(doc, 'span', 'acct-name', 'Levels'), PITCH, 'Sign in');
   const warn = make(doc, 'p', 'panenote acct-warn', "Your latest progress isn't saved online yet. Signing out here loses it.");
+  warn.setAttribute('role', 'alert');   // shown in place of an action, so it is read out as it appears
   warn.hidden = true;
   host.replaceChildren(make(doc, 'h3', 'panesection', 'Account'), row, warn);
   btn.addEventListener('click', () => {
@@ -133,14 +135,17 @@ export function renderSignIn(host, play, on) {
   }
   label();
 
-  /** @param {boolean} on */
+  /** Not `disabled`: that would take focus off the field or button the player submitted from.
+   * `busy` refuses a second submit or a switch instead. @param {boolean} on */
   function setBusy(on) {
     busy = on;
-    for (const el of [user, pass, submit, toggle]) el.disabled = on;
+    for (const el of [user, pass]) el.readOnly = on;
+    for (const el of [submit, toggle]) el.setAttribute('aria-disabled', String(on));
     form.setAttribute('aria-busy', String(on));
   }
 
   toggle.addEventListener('click', () => {
+    if (busy) return;
     creating = !creating;
     err.hidden = true;
     label();

@@ -446,6 +446,53 @@ test('hold() stops the countdown, or keeps it from starting, without Stay or a m
   assert.equal(gone.timers.size + gone.frames.size, 0);
 });
 
+test('hold() hands focus from Stay to Next, which stays on screen', () => {
+  const env = makeEnv();
+  const { pb } = play(env);
+  env.advance(REVEAL + 16);
+  env.host.one('sc-stay').focus();
+  pb.hold();
+  assert.equal(env.doc.activeElement, env.host.one('sc-go'));
+  // Focus elsewhere is left alone.
+  const other = makeEnv();
+  const o = play(other);
+  other.advance(REVEAL + 16);
+  o.pb.hold();
+  assert.equal(other.doc.activeElement, other.host.one('sc-go'), 'finish() had already focused Next');
+});
+
+test('rearm() lets Next fire once more after its deal was dropped, with no countdown; cancel() stays final', () => {
+  const env = makeEnv();
+  const { pb, calls } = play(env, BREAKDOWN, { countdownMs: 3000 });
+  env.advance(REVEAL + 16);
+  pb.rearm();
+  assert.equal(calls.next, 0, 'not while it is still live');
+  press(env.host.one('sc-go'));
+  assert.equal(calls.next, 1);
+  press(env.host.one('sc-go'));
+  assert.equal(calls.next, 1, 'Next is spent');
+  pb.rearm();
+  assert.ok(!env.host.one('sc-line').rendered && !env.host.one('sc-bar').rendered);
+  env.advance(10000);
+  assert.equal(calls.next, 1, 'no countdown comes back');
+  press(env.host.one('sc-go'));
+  assert.equal(calls.next, 2);
+  // Before the reveal ends, or after cancel(), there is nothing to rearm.
+  const early = makeEnv();
+  const e = play(early);
+  e.pb.cancel();
+  e.pb.rearm();
+  early.advance(REVEAL + 16);
+  assert.ok(!early.host.one('sc').classes.has('sc-done'));
+  const gone = makeEnv();
+  const g = play(gone);
+  gone.advance(REVEAL + 16);
+  g.pb.cancel();
+  g.pb.rearm();
+  press(gone.host.one('sc-go'));
+  assert.equal(g.calls.next, 0);
+});
+
 test('the bar and the colour follow the sign of the total', () => {
   const env = makeEnv();
   play(env, NEGATIVE);

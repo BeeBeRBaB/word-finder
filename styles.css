@@ -1111,13 +1111,10 @@ body{position:fixed;inset:0;width:100%;height:100%}
   max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 32px)}
 /* Short landscape has no room for the full spacing once the card must also fit buttons.
    Everything here is margin and padding; the 48px checkbox row and the 44px buttons are
-   touch targets and are deliberately not shrunk. */
+   touch targets and are deliberately not shrunk. The rest of it follows the base rules below,
+   which it has to come after to win. */
 @media (max-height:420px){
   #pickercard{padding:16px 24px}
-  #pickercard h2{font-size:19px;margin-bottom:8px}
-  #picker-warning{margin-bottom:8px}
-  #picker-field{margin-bottom:8px}
-  #picker-error{margin:-4px 0 8px}
 }
 #pickercard h2{font-family:var(--display);font-weight:700;font-size:22px;color:var(--text-strong);margin:0 0 14px}
 #picker-warning{font-size:14.5px;color:var(--muted);margin:0 0 18px;max-width:260px}
@@ -1136,6 +1133,15 @@ label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12
   background:var(--bg);color:var(--text);border:1.5px solid var(--muted);border-radius:12px;
   padding:11px 40px 11px 14px;font-family:inherit;font-size:15px;min-height:44px;cursor:pointer}
 #picker-error{font-size:13px;color:var(--pill-miss);margin:-12px 0 16px;max-width:260px}
+/* Before, these sat above the base rules at equal specificity and never applied. */
+@media (max-height:420px){
+  #pickercard h2{font-size:19px;margin-bottom:8px}
+  #picker-warning{margin-bottom:8px}
+  #picker-field{margin-bottom:8px}
+  #picker-error{margin:-4px 0 8px}
+  /* One line each across the card, rather than two at 260px. */
+  #picker-warning,#picker-error{max-width:none}
+}
 /* Wraps rather than shrinking below the 44px touch target; Start sits last so it keeps
    the primary position on either layout. */
 #picker-actions{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
@@ -1317,6 +1323,25 @@ label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12
 /* A level's footnote under the total: the account's new total, or why it is unchanged. Shown with the total. */
 .sc-all{margin:8px 0 0;text-align:center;font-size:14px;line-height:1.35;color:var(--muted);visibility:hidden}
 .sc-all.sc-in{visibility:visible}
+/* In the game the card has a title and that footnote too, so on a short landscape phone it tightens
+   further and the bar runs under the countdown in the same row. After the rules above, to win. */
+@media (max-height:420px){
+  .sc-row{padding:2px}
+  .sc-total{padding-top:4px}
+  .sc-all{margin-top:0}
+  .sc-foot{margin-top:4px}
+  .sc-next,.sc-foot > .sc-next[hidden]{row-gap:0}
+  .sc-bar{grid-area:1/1;align-self:end;margin-bottom:4px}
+}
+/* Wide enough to keep the longer footnote on one line. Not at 320px, which has its own width. */
+@media (min-width:600px) and (max-height:420px){
+  .sc{width:min(480px,100vw - 120px)}
+}
+/* 320px and short: Next level goes under the countdown, which one row cut to "Nex…". */
+@media (max-width:359px) and (max-height:420px){
+  .sc-next,.sc-foot > .sc-next[hidden]{grid-template-columns:minmax(0,1fr) auto;row-gap:6px}
+  .sc-go{grid-area:2/1/3/3;justify-self:center}
+}
 /* End level score card */
 /* Account */
 /* account.js's Account section in Settings and its sign-in form. Unused until levels mode is wired in. */
@@ -1341,7 +1366,7 @@ b.acct-name{color:var(--text-strong)}
 .acct-swap{text-align:center}
 .acct-toggle{min-height:44px;padding:0 10px;border:none;background:transparent;color:var(--accent-text);font-family:inherit;font-size:14px;
   font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
-.acct-form[aria-busy="true"] .acct-submit,.acct-form button[disabled]{opacity:.6;cursor:progress}
+.acct-form[aria-busy="true"] .acct-submit,.acct-form button[aria-disabled="true"]{opacity:.6;cursor:progress}
 /* The Levels side of New game: the level to play over the account's points and difficulty. */
 .acct-lvl{margin:0;font-family:var(--display);font-weight:700;font-size:22px;line-height:1.2;color:var(--text-strong)}
 .acct-lvl-line{margin:2px 0 0;font-size:14.5px;color:var(--muted)}
@@ -1350,6 +1375,8 @@ b.acct-name{color:var(--text-strong)}
 /* main.js's wiring of the above. The Account section heads Settings, across both columns where there are two;
    a .panegroup sets display, which would beat the hidden attribute. */
 #settings-account[hidden]{display:none}
+/* Hidden, it is still Look's previous sibling: no rule over Look under the header. */
+#settings-account[hidden] + .panegroup{padding-top:0;border-top:none}
 @media (min-width:820px), (min-width:600px) and (max-height:420px){
   #settings-body{grid-template-areas:"account account" "look game" "feedback game"}
   #settings-account{grid-area:account;padding-bottom:12px;border-bottom:1px solid var(--border)}
@@ -1358,7 +1385,16 @@ b.acct-name{color:var(--text-strong)}
 #picker-mode{margin:0 0 18px}
 #picker-level{margin:0 0 20px}
 #picker-level .acct-who{text-align:left}
+/* Room for Random | Levels on a short landscape phone, with Cancel and Start still in the card. */
+@media (max-height:420px){
+  #picker-mode,#picker-level{margin-bottom:8px}
+}
 /* While the win card is a level's, the score card replaces the plain card's shape, message and buttons. */
 #wincard[data-level] #solved,#wincard[data-level] #winmsg,#wincard[data-level] #winstats,
 #wincard[data-level] #winnext,#wincard[data-level] #winbtn{display:none}
+/* A short landscape phone: a title and six lines over the total have to fit about 300px. */
+@media (max-height:420px){
+  #wincard[data-level]{padding:8px 24px}
+  #wincard[data-level] h2{font-size:21px;margin:0 0 2px}
+}
 /* End levels */

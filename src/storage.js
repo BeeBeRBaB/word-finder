@@ -7,7 +7,7 @@ const KEY = 'wordfinder-save-v1';
 
 /**
  * @typedef {import('./puzzle.js').Placement} Placement
- * @typedef {{word:string,x0:number,y0:number,x1:number,y1:number}} FoundWord
+ * @typedef {{word:string,x0:number,y0:number,x1:number,y1:number,revealed?:boolean}} FoundWord
  * @typedef {{seed:number, subjectId:string, size:number, count:number, found:FoundWord[],
  *            cells?:string, placements?:Placement[]}} SaveData
  *   `cells` and `placements` are the board as dealt. Optional: a save written before they

@@ -7,8 +7,9 @@
  *   onNext:() => void, onStay:() => void}} PlayOptions
  *   countdownMs: 0, negative or Infinity means no countdown — the Next button only.
  *   footnote: a quiet line under the total, shown and read out with it.
- * @typedef {{skip():void, cancel():void, hold():void}} Playback
+ * @typedef {{skip():void, cancel():void, hold():void, rearm():void}} Playback
  *   hold: no countdown from now on, as when the player has opened something over the card.
+ *   rearm: Next works once more, with no countdown, after the deal it asked for was dropped.
  * @typedef {{el:HTMLElement, num:HTMLElement, points:number, shown:boolean}} Row
  */
 
@@ -142,10 +143,10 @@ export function playBreakdown(host, breakdown, opts) {
   // The countdown's part of the announcement, emptied if it is held: a removal is not read out.
   const tail = make(doc, 'span', '');
 
-  let alive = true, done = false, ticking = false, announced = false, held = false;
+  let alive = true, done = false, ticking = false, announced = false, held = false, nexted = false;
   let raf = 0, timer = 0, speak = 0;
   /** @type {Playback} */
-  const api = { skip, cancel: stop, hold };
+  const api = { skip, cancel: stop, hold, rearm };
   running.set(host, api);
 
   /** @param {Row} r @param {number} v */
@@ -233,6 +234,8 @@ export function playBreakdown(host, breakdown, opts) {
   function hold() {
     if (!alive || held) return;
     held = true;
+    // Stay is going: keep focus on a control that stays, as stay() does.
+    if (line.contains(doc.activeElement)) go.focus({ preventScroll: true });
     line.hidden = bar.hidden = true;
     tail.textContent = '';
     if (ticking) { ticking = false; quiet(); }
@@ -241,6 +244,7 @@ export function playBreakdown(host, breakdown, opts) {
   function advance() {
     if (!alive) return;
     stop();
+    nexted = true;
     opts.onNext();
   }
 
@@ -251,6 +255,17 @@ export function playBreakdown(host, breakdown, opts) {
     line.hidden = bar.hidden = true;
     go.focus({ preventScroll: true });   // Stay is gone; keep focus in the card
     opts.onStay();
+  }
+
+  // Only a finished card that Next itself stopped: cancel() is final.
+  function rearm() {
+    if (alive || !done || !nexted) return;
+    alive = true;
+    held = true;
+    line.hidden = bar.hidden = true;
+    tail.textContent = '';
+    nexted = false;
+    running.set(host, api);
   }
 
   function stop() {

@@ -38,10 +38,15 @@
     ["footnote stop doubled","src/scorecard.js","footnote && !/[.!?]$/.test(footnote) ? `${footnote}.` : footnote","footnote ? `${footnote}.` : footnote"],
     ["footnote not trimmed","src/scorecard.js","opts.footnote.trim()","opts.footnote"],
     ["non-string footnote kept","src/scorecard.js","typeof opts.footnote === 'string' ? opts.footnote.trim() : ''","opts.footnote ? String(opts.footnote).trim() : ''"],
-    ["hold does not mark the card held","src/scorecard.js","    held = true;\n","\n"],
-    ["hold keeps the countdown sentence","src/scorecard.js","    tail.textContent = '';\n","\n"],
+    ["hold does not mark the card held","src/scorecard.js","    if (!alive || held) return;\n    held = true;\n","    if (!alive || held) return;\n"],
+    ["hold keeps the countdown sentence","src/scorecard.js","    tail.textContent = '';\n    if (ticking)","    if (ticking)"],
     ["hold leaves the countdown ticking","src/scorecard.js","    if (ticking) { ticking = false; quiet(); }\n","\n"],
     ["a held reveal still counts down","src/scorecard.js","    if (auto && !held) {\n      ticking = true;","    if (auto) {\n      ticking = true;"],
-    ["a held reveal still announces the countdown","src/scorecard.js","if (auto && !held) { tail.textContent","if (auto) { tail.textContent"]
+    ["a held reveal still announces the countdown","src/scorecard.js","if (auto && !held) { tail.textContent","if (auto) { tail.textContent"],
+    ["hold leaves focus on the hidden Stay","src/scorecard.js","    if (line.contains(doc.activeElement)) go.focus({ preventScroll: true });\n","\n"],
+    ["rearm does nothing","src/scorecard.js","    alive = true;\n    held = true;\n","    held = true;\n"],
+    ["rearm brings the countdown back","src/scorecard.js","    nexted = false;\n    running.set(host, api);","    nexted = false;\n    line.hidden = bar.hidden = false;\n    running.set(host, api);"],
+    ["rearm revives a cancelled card","src/scorecard.js","if (alive || !done || !nexted) return;","if (alive || !done) return;"],
+    ["Next stays live after one deal","src/scorecard.js","    stop();\n    nexted = true;\n    opts.onNext();","    nexted = true;\n    opts.onNext();"]
   ]
 }

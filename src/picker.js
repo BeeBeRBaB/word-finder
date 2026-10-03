@@ -189,11 +189,16 @@ export function makePicker({ root, heading, select, warning, error, start, cance
   cancel.addEventListener('click', close);
   root.addEventListener('click', (e) => { if (e.target === root) close(); });
 
-  /** Redraw the Levels pane, as when the account it shows has changed. @returns {void} */
+  /** Redraw the Levels pane, as when the account it shows has changed. Focus inside it moves to
+   * its new button, else to Start, else to the heading, never to the page. @returns {void} */
   function refresh() {
     if (root.style.display !== 'flex' || pending) return;
+    const had = pane.contains(doc.activeElement);
     showSide();
     syncDisabled();
+    if (!had) return;
+    const next = pane.querySelector('button') ?? (start.hasAttribute('disabled') ? heading : start);
+    /** @type {HTMLElement} */ (next).focus();
   }
 
   return { open, close, refresh };

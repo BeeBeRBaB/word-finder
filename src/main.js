@@ -217,7 +217,7 @@ function persist() {
     count: state.puzzle.words.length,
     cells: state.puzzle.cells.join(''),
     placements: state.puzzle.placements,
-    found: state.foundOrder.map(w => ({ word: w, ...state.found[w].sel })),
+    found: state.foundOrder.map(w => ({ word: w, ...state.found[w].sel, ...(state.found[w].revealed ? { revealed: true } : {}) })),
   });
 }
 
@@ -233,23 +233,31 @@ function showCategory() {
 function startLevel(deal) {
   const puzzle = state.puzzle;
   if (!puzzle) return;
-  let added = false;
-  for (const { word, sel } of replaySelections(puzzle, play.start(deal, puzzle.words))) {
-    if (state.found[word]) continue;
-    state.found[word] = { sel };
-    state.foundOrder.push(word);
-    added = true;
-  }
+  // A page loaded or dealt in the background starts the clock when it is shown, not before.
+  const events = play.start(deal, puzzle.words, document.hidden);
   if (!play.playing()) { levelBoard = null; showCategory(); return; }
-  for (const w of state.foundOrder) play.note(w, false);
+  const added = addFinds(events);
+  for (const w of state.foundOrder) play.note(w, !!state.found[w].revealed);
+  if (added) { renderFoundCells(els, state, state.size); pills(); list(); persist(); }
   // Complete without a win, as when the last find reached this device but not the account:
   // bank it quietly, the way a restored board never pops the win card.
   if (state.foundOrder.length === puzzle.words.length) play.finish();
-  if (!added) return;
-  renderFoundCells(els, state, state.size);
-  pills();
-  list();
-  persist();
+}
+
+/** Put a level's recorded finds on the board, reveals as reveals, skipping words already
+ * there. @param {import('./levels.js').LevelEvent[]} events @returns {boolean} whether any were added */
+function addFinds(events) {
+  const puzzle = state.puzzle;
+  if (!puzzle) return false;
+  const revealed = new Set(events.filter(e => e.revealed).map(e => e.word));
+  let added = false;
+  for (const { word, sel } of replaySelections(puzzle, events)) {
+    if (state.found[word]) continue;
+    state.found[word] = revealed.has(word) ? { sel, revealed: true } : { sel };
+    state.foundOrder.push(word);
+    added = true;
+  }
+  return added;
 }
 
 /** @returns {void} */
@@ -343,9 +351,10 @@ function claim(hit, s, revealed = false) {
   // A local, so the narrowing survives into the win timer's closure, the same reason
   // effects.js aliases `ac`.
   const puzzle = /** @type {Puzzle} */ (state.puzzle);
-  state.found[hit] = { sel: s };
+  state.found[hit] = revealed ? { sel: s, revealed } : { sel: s };
   state.foundOrder.push(hit);
-  const level = levelBoard;
+  // A session that lapsed mid-level leaves an ordinary board; the next sync says so.
+  const level = play.account() ? levelBoard : null;
   if (level) play.note(hit, revealed);
   renderFoundCells(els, state, state.size);
   const won = state.foundOrder.length === puzzle.words.length;
@@ -610,7 +619,14 @@ function advance(level = false) {
   const gen = ++dealGen;
   /** @returns {boolean} */
   const wanted = () => gen === dealGen;
-  (level ? dealLevel(wanted) : newGame(null, wanted)).catch((err) => {
+  const card = levelCard;
+  // Signed out since the level was won, as when the session lapsed: an ordinary game instead.
+  const asLevel = level && !!play.account();
+  (asLevel ? dealLevel(wanted) : newGame(null, wanted)).then((dealt) => {
+    if (dealt && level && !asLevel) showToast("You're signed out, so this is a random game.", false);
+    // Dropped because a pane opened over the card while it loaded: its Next works again.
+    if (!dealt && card && card === levelCard && els.win.style.display === 'flex') card.rearm();
+  }).catch((err) => {
     if (gen !== dealGen) return;   // the player has moved on; this failure is not news
     // newGame rejects before newPuzzle runs, so the solved board and win card are still
     // up with nothing saying the tap did nothing. Hide the overlay so the header's
@@ -786,8 +802,10 @@ els.win.addEventListener('click', (e) => { if (e.target === els.win) hideWin(); 
 // left, not one dealt behind their back. Play is still there. A level's clock stops while
 // the page is hidden, and saving it then lets another device carry on.
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) { cancelAutoNext(); if (levelBoard) play.pause(); }
-  else if (levelBoard) play.resume();
+  if (document.hidden) { cancelAutoNext(); if (levelBoard) play.pause(); return; }
+  if (levelBoard) play.resume();
+  // Another device may have played on meanwhile: read before this one saves over it.
+  if (play.account()) void play.sync().then(afterSync);
 });
 
 // appearance.js owns the preference and resolves it onto <html>; this callback is the
@@ -918,20 +936,27 @@ function signedOut() {
 function reconcileLevel() {
   const puzzle = state.puzzle;
   if (!puzzle || els.win.style.display === 'flex') return;
+  // The session ended here without Sign out (it lapsed, or was refused): an ordinary board now.
+  if (levelBoard && !play.account()) { levelBoard = null; showCategory(); return; }
   if (!levelBoard) {
     const deal = subjectId ? play.resumable(subjectId, currentSeed) : null;
     if (deal) { levelBoard = deal; showCategory(); startLevel(deal); }
     return;
   }
-  const c = play.progress()?.current;
   if (!play.playing()) {
     const solved = state.foundOrder.length === puzzle.words.length;
     levelBoard = null;
     showCategory();
     if (!solved) showToast('This level was finished on another device.', false);
-  } else if (c && c.events.length > state.foundOrder.length && c.events.every(e => puzzle.words.includes(e.word))) {
-    startLevel(levelBoard);
+    return;
   }
+  // Finds another device made on this level, which the sync folded into it.
+  if (!addFinds(play.events())) return;
+  renderFoundCells(els, state, state.size);
+  pills();
+  list();
+  persist();
+  if (state.foundOrder.length === puzzle.words.length) play.finish();
 }
 /** @returns {void} */
 function afterSync() {
@@ -965,6 +990,8 @@ function closeSettings() {
   bgPage.close(false);
   lookPage.close(false);
   signInPage.close(false);
+  // A sign-in still in flight lands in Settings, not by reopening New game.
+  signInFromPicker = false;
   settings.style.display = 'none';
   els.appearance.setAttribute('aria-expanded', 'false');
   els.appearance.focus();
@@ -1033,6 +1060,8 @@ must('settings-close').addEventListener('click', closeSettings);
 must('bg-close').addEventListener('click', closeSettings);
 must('theme-close').addEventListener('click', closeSettings);
 must('signin-close').addEventListener('click', closeSettings);
+// Back to the Account section: signing in from there stays in Settings.
+must('signin-back').addEventListener('click', () => { signInFromPicker = false; });
 must('settings-back').addEventListener('click', closeSettings);
 settings.addEventListener('click', (e) => { if (e.target === settings) closeSettings(); });
 document.addEventListener('keydown', (e) => {
@@ -1129,7 +1158,8 @@ async function restore(saved) {
   }, false, dealt, level);
   for (const f of saved.found) {
     if (!state.puzzle || !state.puzzle.words.includes(f.word) || state.found[f.word]) continue;
-    state.found[f.word] = { sel: { x0: f.x0, y0: f.y0, x1: f.x1, y1: f.y1 } };
+    const sel = { x0: f.x0, y0: f.y0, x1: f.x1, y1: f.y1 };
+    state.found[f.word] = f.revealed === true ? { sel, revealed: true } : { sel };
     state.foundOrder.push(f.word);
   }
   renderFoundCells(els, state, state.size);
@@ -1144,7 +1174,7 @@ async function restore(saved) {
 renderAccountSection();
 // The account's progress, once the cloud has answered; and again whenever the device is back online.
 void booted.then(afterSync);
-window.addEventListener('online', () => { void play.sync().then(afterSync); });
+window.addEventListener('online', () => { if (play.account()) void play.sync().then(afterSync); });
 // boot() never rejects — it reports any failure into the DOM itself.
 void boot();
 // './sw.js' resolves against the DOCUMENT, not this module. Writing '../sw.js' because

@@ -17,6 +17,7 @@ function makeFirebase() {
   /** @type {Map<string, Record<string, any>>} */
   const docs = new Map();
   let next = 1;
+  /** @type {unknown[]} */
   const saves = [];
   const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization,content-type',
     'Access-Control-Allow-Methods': 'GET,POST,PATCH,OPTIONS' };
@@ -269,3 +270,154 @@ test('a level finished on another device lets go of this board when the account 
   await levelsSide(page);
   await expect(page.locator('#picker-start')).toHaveText('Play level 4');
 });
+
+test('a tab coming back reads the cloud before it saves, so it never writes over a level finished elsewhere', async ({ page }) => {
+  const fb = makeFirebase();
+  const uid = fb.add('ana_reads', 'hunter22');
+  fb.put(uid, PROGRESS);
+  await fb.install(page);
+  await signedInAs(page, uid, 'ana_reads');
+  await page.goto('/?subject=nature/birds');
+  await levelsSide(page);
+  await page.click('#picker-start');
+  const first = (await page.locator('#list .w').first().textContent())?.trim() ?? '';
+  await findAndDrag(page, first.toUpperCase());
+  /** @param {boolean} hidden */
+  const setHidden = (hidden) => page.evaluate((h) => {
+    Object.defineProperty(document, 'hidden', { value: h, configurable: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+  }, hidden);
+  await setHidden(true);
+  await expect.poll(() => fb.progress(uid)?.current?.events?.length).toBe(1);
+  // Meanwhile another device finishes levels 3 and 4.
+  const ahead = { ...PROGRESS, level: 5, points: 1500, history: [3, 4].map(level => ({ level, subject: 'x/y', difficulty: 'normal', score: 540, ms: 60000, reveals: 0, at: 1 })) };
+  fb.put(uid, ahead);
+  await setHidden(false);
+  await expect(page.locator('#toast-msg')).toHaveText('This level was finished on another device.');
+  await setHidden(true);
+  await page.waitForTimeout(300);
+  expect(fb.progress(uid)).toEqual(ahead);
+});
+
+test('a reveal stays a reveal across a reload, and the level scores it as one', async ({ page }) => {
+  const fb = makeFirebase();
+  const uid = fb.add('ana_reads', 'hunter22');
+  fb.put(uid, PROGRESS);
+  await fb.install(page);
+  await signedInAs(page, uid, 'ana_reads');
+  await page.goto('/?subject=nature/birds');
+  await levelsSide(page);
+  await page.click('#picker-start');
+  await page.click('#reveal');
+  await expect(page.locator('#list .w.done, #list .w.glow')).toHaveCount(1);
+  await page.goto('/');
+  await expect(page.locator('#category')).toHaveText('Level 3');
+  // Signing out and in again re-links the board from its own save, reveal and all.
+  await page.click('#appearance');
+  await expect(page.locator('#settings-account')).toContainText('420 points · saved');   // the reload's sync saved the reveal
+  await page.locator('#settings-account').getByRole('button', { name: 'Sign out' }).click();
+  await page.locator('#settings-account').getByRole('button', { name: 'Sign in' }).click();
+  await page.getByLabel('Username').fill('ana_reads');
+  await page.getByLabel('Password').fill('hunter22');
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await expect(page.locator('#settings-account .acct-name')).toHaveText('ana_reads');
+  await page.click('#settings-close');
+  await levelsSide(page);
+  await page.click('#picker-start');
+  await expect(page.locator('#category')).toHaveText('Level 3');
+  await findTheRest(page);
+  await expect(page.locator('#wincard h2')).toHaveText('Level 3 complete');
+  await expect.poll(() => fb.progress(uid)?.level).toBe(4);
+  expect(fb.progress(uid).history[0].reveals).toBe(1);
+});
+
+test('a sign-in from New game that lands after Settings was closed stays out of the way', async ({ page }) => {
+  const fb = makeFirebase();
+  await fb.install(page);
+  // Hold Auth's answer until Settings is closed.
+  /** @type {() => void} */
+  let release = () => {};
+  const held = new Promise(r => { release = () => r(undefined); });
+  await page.route(/identitytoolkit/, async (route) => { await held; await route.fallback(); });
+  await page.goto('/?subject=nature/birds');
+  await levelsSide(page);
+  await page.locator('#picker-level').getByRole('button', { name: 'Sign in' }).click();
+  await page.getByRole('button', { name: 'Create an account' }).click();
+  await page.getByLabel('Username').fill('ana_reads');
+  await page.getByLabel('Password').fill('hunter22');
+  await page.getByRole('button', { name: 'Create account', exact: true }).click();
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#settings')).toBeHidden();
+  release();
+  await expect.poll(() => fb.users.size).toBe(1);
+  await page.waitForTimeout(300);
+  await expect(page.locator('#picker')).toBeHidden();
+});
+
+test('a session that lapses leaves an ordinary board, and Next level then deals a random game', async ({ page }) => {
+  const fb = makeFirebase();
+  const uid = fb.add('ana_reads', 'hunter22');
+  fb.put(uid, PROGRESS);
+  await fb.install(page);
+  await signedInAs(page, uid, 'ana_reads');
+  await page.goto('/?subject=nature/birds');
+  await levelsSide(page);
+  await page.click('#picker-start');
+  await expect(page.locator('#category')).toHaveText('Level 3');
+  // The refresh token is refused from here on, and the stored session has run out.
+  await page.route(/securetoken/, (route) => route.fulfill({ status: 400, headers: { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ error: { message: 'TOKEN_EXPIRED' } }) }));
+  await page.evaluate(() => {
+    const s = JSON.parse(localStorage.getItem('wordfinder-session-v1') || '{}');
+    localStorage.setItem('wordfinder-session-v1', JSON.stringify({ ...s, expiresAt: 0 }));
+  });
+  await page.goto('/');
+  await expect(page.locator('#category')).not.toHaveText('Level 3');
+  await expect(page.locator('#letters .cell')).not.toHaveCount(0);
+});
+
+// Short landscape phones: Random | Levels and the level's score card both have to fit about 300px.
+for (const [w, h] of [[844, 300], [568, 320], [320, 400]]) {
+  test(`New game and a level's score card fit ${w}x${h} without scrolling`, async ({ page }) => {
+    await page.setViewportSize({ width: w, height: h });
+    const fb = makeFirebase();
+    const uid = fb.add('ana_reads', 'hunter22');
+    fb.put(uid, PROGRESS);
+    await fb.install(page);
+    await signedInAs(page, uid, 'ana_reads');
+    await page.goto('/?subject=nature/birds');
+    const first = (await page.locator('#list .w').first().textContent())?.trim() ?? '';
+    await findAndDrag(page, first.toUpperCase());
+    // A game in progress, so the warning shows too.
+    await page.click('#catbtn');
+    await expect(page.locator('#picker-warning')).toBeVisible();
+    /** @param {string} card */
+    const fits = (card) => page.evaluate((sel) => {
+      const c = /** @type {HTMLElement} */ (document.querySelector(sel));
+      return { scroll: c.scrollHeight - c.clientHeight, bottom: c.getBoundingClientRect().bottom, vh: innerHeight };
+    }, card);
+    let f = await fits('#pickercard');
+    expect(f.scroll, 'Random side').toBeLessThanOrEqual(0);
+    await page.locator('#picker-mode').getByRole('button', { name: 'Levels' }).click();
+    f = await fits('#pickercard');
+    expect(f.scroll, 'Levels side').toBeLessThanOrEqual(0);
+    expect(f.bottom).toBeLessThanOrEqual(f.vh);
+    await page.click('#picker-start');
+    await expect(page.locator('#category')).toHaveText('Level 3');
+    await findTheRest(page);
+    const card = page.locator('#wincard');
+    await expect(card.locator('h2')).toHaveText('Level 3 complete');
+    await card.getByRole('button', { name: 'Skip' }).click();
+    await expect(card.locator('.sc-line')).toBeVisible();
+    const m = await page.evaluate(() => {
+      const win = /** @type {HTMLElement} */ (document.getElementById('win'));
+      const count = /** @type {HTMLElement} */ (document.querySelector('.sc-count'));
+      const go = /** @type {HTMLElement} */ (document.querySelector('.sc-go'));
+      return { scroll: win.scrollHeight - win.clientHeight, goBottom: go.getBoundingClientRect().bottom, vh: innerHeight,
+        clipped: count.scrollWidth > count.clientWidth };
+    });
+    expect(m.scroll, 'the win card scrolls').toBeLessThanOrEqual(0);
+    expect(m.goBottom).toBeLessThanOrEqual(m.vh);
+    expect(m.clipped, 'the countdown is cut short').toBe(false);
+  });
+}

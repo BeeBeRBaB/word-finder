@@ -1,7 +1,7 @@
 // Levels mode's bookkeeping: which level to deal, what happened while it was played, and
 // banking the result on this device and in the cloud. No DOM; main.js renders what it returns.
 import {
-  newProgress, levelSeed, levelCategory, levelSubject, recordLevel, saveCurrent, mergeProgress, makeLevelStore,
+  newProgress, normalizeProgress, levelSeed, levelCategory, levelSubject, recordLevel, saveCurrent, mergeProgress, makeLevelStore,
 } from './levels.js';
 import { scoreLevel } from './scoring.js';
 import { buildPuzzle } from './puzzle.js';
@@ -117,22 +117,51 @@ export function makeLevelPlay(deps) {
     keep(saveCurrent(prog, { level, subject, difficulty, events: live.events.map(e => ({ ...e })), elapsedMs: Math.round(elapsed()) }));
   }
 
-  /** Save to the cloud, one request at a time; a save asked for meanwhile runs after it.
-   * @returns {Promise<void>} */
-  function push() {
-    if (!cloud.session() || !prog) return Promise.resolve();
-    dirty = true;
+  /** Fold the cloud's copy into this device's: whichever is further on wins, and while a level
+   * is being played, another device's finds on that same level join this one's, with the longer
+   * of the two clocks. @param {unknown} remote @returns {boolean} whether the cloud needs the result */
+  function take(remote) {
+    const r = normalizeProgress(remote);
+    const merged = mergeProgress(prog, r) ?? newProgress((random() * 0x100000000) >>> 0);
+    // The level being played is the cloud's no longer: deal whatever level it says.
+    if (live && merged.level !== live.deal.level) live = null;
+    keep(merged);
+    const c = live && r && r.seed === merged.seed && r.level === live.deal.level ? r.current : null;
+    if (live && c && c.subject === live.deal.subject && c.difficulty === live.deal.difficulty) {
+      const have = new Set(live.events.map(e => e.word));
+      for (const e of c.events) if (live.words.has(e.word) && !have.has(e.word)) { live.events.push({ ...e }); have.add(e.word); }
+      live.events.sort((a, b) => a.at - b.at);
+      if (c.elapsedMs > elapsed()) { live.base = c.elapsedMs; if (live.since !== null) live.since = clock(); }
+    }
+    remember();
+    return JSON.stringify(normalizeProgress(prog)) !== JSON.stringify(r);
+  }
+
+  /** Bring this device's copy and the cloud's together: read the cloud's, fold it in, and save the
+   * result when the cloud lacks it. Reading first is what stops a device coming back with an old
+   * copy from writing over a newer one. One round at a time; one asked for meanwhile runs after it.
+   * @param {boolean} news this device has progress the cloud may not @returns {Promise<void>} */
+  function exchange(news) {
+    if (!cloud.session()) return Promise.resolve();
+    if (news) dirty = true;
     if (saving) { again = true; return saving; }
     const g = gen;
     saving = (async () => {
       do {
         again = false;
+        let remote;
+        try { remote = await cloud.load(); } catch (e) {
+          if (g === gen) error = codeOf(e);
+          return;
+        }
+        if (g !== gen) return;
+        error = null;
+        if (!take(remote)) { if (!again) dirty = false; continue; }
         /** @type {LevelProgress|null} */
         const sent = prog;
         try {
           await cloud.save(sent);
           if (g !== gen) return;
-          error = null;
           if (prog === sent && !again) dirty = false;
         } catch (e) {
           if (g !== gen) return;
@@ -143,25 +172,9 @@ export function makeLevelPlay(deps) {
     })().finally(() => { if (g === gen) saving = null; });
     return saving;
   }
-
-  /** Bring the local copy and the cloud's together, keeping whichever is further on.
-   * @returns {Promise<void>} */
-  async function sync() {
-    if (!cloud.session()) return;
-    const g = gen;
-    let remote;
-    try { remote = await cloud.load(); } catch (e) {
-      if (g === gen) error = codeOf(e);
-      return;
-    }
-    if (g !== gen) return;
-    error = null;
-    const merged = mergeProgress(prog, remote) ?? newProgress((random() * 0x100000000) >>> 0);
-    // The level being played is the cloud's no longer: deal whatever level it says.
-    if (live && merged.level !== live.deal.level) live = null;
-    keep(merged);
-    if (JSON.stringify(merged) !== JSON.stringify(mergeProgress(null, remote))) await push();
-  }
+  const push = () => exchange(true);
+  /** @returns {Promise<void>} */
+  const sync = () => exchange(false);
 
   return {
     enabled: cloud.enabled,
@@ -223,14 +236,19 @@ export function makeLevelPlay(deps) {
      * @param {string[]} categoryIds @param {(id:string) => Promise<CategoryLike>} loadCategory
      * @param {Difficulty} difficulty for a level not yet started @returns {Promise<Deal|null>} */
     async deal(categoryIds, loadCategory, difficulty) {
-      if (!cloud.session() || !prog) return null;
-      const p = prog, g = gen;
-      const seed = levelSeed(p.seed, p.level);
-      if (p.current) return { level: p.level, subject: p.current.subject, seed, difficulty: p.current.difficulty };
-      const category = levelCategory(p.seed, p.level, categoryIds);
-      const cat = await loadCategory(category);
-      if (g !== gen || prog !== p) return null;
-      return { level: p.level, subject: levelSubject(p.seed, p.level, category, cat.subjectIds, categoryIds.length), seed, difficulty };
+      // Again from the top when a sync moves the account on while the category loads.
+      for (;;) {
+        if (!cloud.session() || !prog) return null;
+        const p = prog, g = gen;
+        const seed = levelSeed(p.seed, p.level);
+        if (p.current) return { level: p.level, subject: p.current.subject, seed, difficulty: p.current.difficulty };
+        const category = levelCategory(p.seed, p.level, categoryIds);
+        const cat = await loadCategory(category);
+        if (g !== gen) return null;
+        if (prog && prog.seed === p.seed && prog.level === p.level && !prog.current) {
+          return { level: p.level, subject: levelSubject(p.seed, p.level, category, cat.subjectIds, categoryIds.length), seed, difficulty };
+        }
+      }
     },
 
     /** The saved board is the level in progress when its subject and seed are that level's:
@@ -245,16 +263,20 @@ export function makeLevelPlay(deps) {
     /** The deal being played and timed, or null. @returns {Deal|null} */
     playing: () => (live ? live.deal : null),
 
+    /** The level's finds so far, in order, including any another device added. @returns {LevelEvent[]} */
+    events: () => (live ? live.events.map(e => ({ ...e })) : []),
+
     /** Start timing a dealt level. Returns the finds to put back when it resumes one, in order;
      * a saved level whose words are not all on this board (another device's board size) starts over.
-     * @param {Deal} deal @param {string[]} words the board's words @returns {LevelEvent[]} */
-    start(deal, words) {
+     * @param {Deal} deal @param {string[]} words the board's words
+     * @param {boolean} [paused] the page is hidden: the clock waits for resume() @returns {LevelEvent[]} */
+    start(deal, words, paused = false) {
       if (!prog || deal.level !== prog.level) { live = null; return []; }
       const set = new Set(words);
       const c = prog.current;
       const resume = !!c && c.subject === deal.subject && c.difficulty === deal.difficulty
         && c.events.every(e => set.has(e.word)) && new Set(c.events.map(e => e.word)).size === c.events.length;
-      live = { deal, words: set, events: resume && c ? c.events.map(e => ({ ...e })) : [], base: resume && c ? c.elapsedMs : 0, since: clock() };
+      live = { deal, words: set, events: resume && c ? c.events.map(e => ({ ...e })) : [], base: resume && c ? c.elapsedMs : 0, since: paused ? null : clock() };
       remember();
       return live.events.map(e => ({ ...e }));
     },
@@ -280,6 +302,8 @@ export function makeLevelPlay(deps) {
       if (!live || !live.words.has(word) || live.events.some(e => e.word === word)) return false;
       live.events.push({ word, at: Math.round(elapsed()), revealed });
       remember();
+      // Not online until the next save: Sign out warns, and opening Settings tries again.
+      if (cloud.session()) dirty = true;
       return true;
     },
 
