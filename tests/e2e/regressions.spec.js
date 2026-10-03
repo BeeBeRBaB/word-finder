@@ -180,6 +180,24 @@ test('a launch that failed offline is tried again online, and gives way to a boa
   await expect(page.locator('#category')).toHaveText('Food & Drink');
 });
 
+// A save the launch could not put back offline is a game in progress too. New game warns before a
+// deal replaces it, and the one-click button, with no board to keep for Undo, asks the same way.
+test('a save waiting for the network is warned about before a new deal replaces it', async ({ page }) => {
+  await blockServiceWorker(page);
+  await openBoard(page, '/?seed=3&subject=nature/birds');
+  await findAndDrag(page, String(await page.locator('.w').first().textContent()).toUpperCase());
+  await page.route(/\/src\/subjects\/nature\.js/, (route) => route.abort());
+  await page.goto('/');
+  await expect(page.locator('#subject')).toHaveText('Offline');
+  for (const button of ['#catbtn', '#newbtn']) {
+    await page.locator(button).click();
+    await expect(page.locator('#picker')).toBeVisible();
+    await expect(page.locator('#picker-warning')).toBeVisible();
+    await page.locator('#picker-cancel').click();
+  }
+  await expect(page.locator('#subject')).toHaveText('Offline');
+});
+
 // Regression for 121de94 + 60b5099. Code is stale-while-revalidate: a changed asset
 // must reach the user with no CACHE bump. Icons stay cache-first and must not
 // generate revalidation traffic.
@@ -219,33 +237,11 @@ test('code revalidates in the background, icons stay cache-first', async ({ page
   expect(after['/icon-192.png'] || 0).toBe(before['/icon-192.png'] || 0);
 });
 
-// Guard for the src/ split. A path typo in the precache list breaks offline support
-// SILENTLY — install rejects, the old worker keeps serving, and nothing surfaces an
-// error. Parse the shipped list and prove every entry actually resolves.
-test('every asset in the service worker precache list actually resolves', async ({ page, baseURL }) => {
-  await page.goto('/');
-  const sw = await (await fetch(`${baseURL}/sw.js`)).text();
-  const assetsMatch = sw.match(/const ASSETS=(\[[^\]]*\])/);
-  if (!assetsMatch) throw new Error('could not find ASSETS list in sw.js');
-  /** @type {string[]} */
-  const list = JSON.parse(assetsMatch[1].replace(/'/g, '"'));
-  expect(list.length, 'ASSETS list failed to parse').toBeGreaterThan(5);
-  const results = await page.evaluate(async (paths) => {
-    /** @type {Record<string, number>} */
-    const out = {};
-    for (const p of paths) out[p] = (await fetch(p, { cache: 'reload' })).status;
-    return out;
-  }, list);
-  for (const [path, status] of Object.entries(results)) {
-    expect(status, `${path} did not resolve`).toBe(200);
-  }
-});
-
-// The other half of the guard above. "Every ASSETS entry resolves" says nothing
-// about the reverse: an asset the app actually loads that ISN'T in ASSETS. Add
-// src/input.js, import it from main.js, forget to add it to sw.js — install still
-// succeeds, every existing ASSETS entry still resolves, both precache tests stay
-// green, and offline silently 404s on the forgotten module with no error anywhere.
+// The other half of sw.test.js's "every precached path exists", which says nothing about
+// the reverse: an asset the app actually loads that ISN'T in ASSETS. Add src/input.js,
+// import it from main.js, forget to add it to sw.js — install still succeeds, every
+// existing ASSETS entry still resolves, and offline silently 404s on the forgotten
+// module with no error anywhere.
 // Collect the same-origin resources the page really loaded and prove each one is
 // covered by the parsed ASSETS list, so a forgotten entry fails loudly by name.
 test('every same-origin asset the app loads is covered by the precache list', async ({ page, baseURL }) => {
@@ -287,11 +283,10 @@ test('every same-origin asset the app loads is covered by the precache list', as
   // should ask for it, but that is not this test's to pin.
   const EXCLUDED = new Set(['__probe.js', '__stats', '__reset', 'sw.js', 'favicon.ico']);
   // A per-category word pool, e.g. src/subjects/nature.js, is the one thing this app
-  // loads that must NOT be in ASSETS -- see the "loaded lazily" comment atop
-  // src/subjects.js. Precaching it would pull every category's words into the
-  // installed shell, defeating the whole point of fetching only the one a player
-  // actually deals. src/subjects.js (the loader) is a different, always-precached
-  // file and is not matched by this.
+  // loads here that must NOT be in ASSETS: precaching it would pull every category's
+  // words into the installed shell, defeating the whole point of fetching only the one
+  // a player actually deals. src/subjects.js (the loader) is a different,
+  // always-precached file and is not matched by this.
   const LAZY_SUBJECT = /^src\/subjects\/[^/]+\.js$/;
 
   /** @type {string[]} */

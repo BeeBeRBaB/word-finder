@@ -38,7 +38,7 @@ function boardHolds({ size, count, cells, placements }) {
  * which once broke app boot — so the access itself has to be guarded, not just the
  * calls on it, which safeStore guards.
  * @returns {Storage|null} */
-export function defaultStore() {
+function defaultStore() {
   try { return globalThis.localStorage; } catch { return null; }
 }
 

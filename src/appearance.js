@@ -7,8 +7,8 @@
 import { safeStore } from './storage.js';
 
 export const PREF_KEY = 'wordfinder-appearance';
-/** A theme's two flavours, in the order its Theme page tiles show them. */
-/** @type {readonly ['light','dark']} */
+/** A theme's two flavours, in the order its Theme page tiles show them.
+ * @type {readonly ['light','dark']} */
 export const PREFS = ['light', 'dark'];
 
 export const THEME_KEY = 'wordfinder-theme';
@@ -28,8 +28,8 @@ export const THEMES = ['phosphor', 'graphite', 'broadsheet', 'drafting', 'sticke
 const title = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
 /** Anything unrecognised (a null read, a hand-edited value, or the `system` setting this app
- * once had) falls back to `dark`, matching styles.css's bare `:root` and index.html's inline
- * resolver. That fallback is the migration: the allowlist rejects what it cannot honour.
+ * once had) falls back to `dark`, matching styles.css (its default palette block is also the
+ * dark one) and index.html's inline resolver. That fallback is the migration: the allowlist rejects what it cannot honour.
  * @param {string|null|undefined} pref @returns {Pref} */
 export function normalizePref(pref) {
   return PREFS.some(p => p === pref) ? /** @type {Pref} */ (pref) : 'dark';

@@ -490,14 +490,19 @@ test('a sync between the last find and the score card leaves the level in the he
   fb.put(uid, PROGRESS);
   await fb.install(page);
   await signedInAs(page, uid, 'ana_reads');
+  await page.clock.install();   // the card waits on the clock, so the sync is sure to land first
   await page.goto('/?subject=nature/birds');
   await levelsSide(page);
   await page.click('#picker-start');
   await expect(page.locator('#category')).toHaveText('Level 3');
   const words = (await page.locator('#list .w').allTextContents()).map(w => w.trim().toUpperCase());
-  for (const w of words.slice(0, -1)) await findAndDrag(page, w);
-  await findAndDrag(page, words[words.length - 1]);
+  for (const w of words) await findAndDrag(page, w);
+  const synced = page.waitForResponse((r) => r.url().startsWith('https://firestore.') && r.request().method() === 'GET');
   await page.evaluate(() => window.dispatchEvent(new Event('online')));
+  await synced;
+  await page.waitForTimeout(300);
+  await expect(page.locator('#category')).toHaveText('Level 3');
+  await skipAhead(page, 1000);
   await expect(page.locator('#wincard h2')).toHaveText('Level 3 complete');
   await expect(page.locator('#category')).toHaveText('Level 3');
 });

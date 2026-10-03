@@ -7,7 +7,7 @@ import { scoreLevel } from './scoring.js';
 import { buildPuzzle } from './puzzle.js';
 import { makeRng } from './rng.js';
 import { mixFor } from './layout.js';
-import { defaultStore, safeStore } from './storage.js';
+import { safeStore } from './storage.js';
 
 // Whose progress the local copy is, so a second account on this device never inherits it.
 export const OWNER_KEY = 'wordfinder-levels-owner-v1';
@@ -67,12 +67,11 @@ export const codeOf = (e) => {
  *   random?:() => number}} deps  clock: a monotonic ms clock for play time. */
 export function makeLevelPlay(deps) {
   const { cloud } = deps;
-  const store = deps.store === undefined ? defaultStore() : deps.store;
-  const kv = safeStore(store);
+  const kv = safeStore(deps.store);
   const now = deps.now ?? Date.now;
   const clock = deps.clock ?? (() => performance.now());
   const random = deps.random ?? Math.random;
-  const local = makeLevelStore({ store });
+  const local = makeLevelStore({ store: deps.store });
 
   /** @type {LevelProgress|null} */
   let prog = null;
@@ -86,7 +85,6 @@ export function makeLevelPlay(deps) {
   /** @type {Promise<void>|null} */
   let saving = null;
   let again = false;
-
 
   /** @param {string} uid @returns {void} */
   function adopt(uid) {

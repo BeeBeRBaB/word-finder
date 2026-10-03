@@ -31,6 +31,7 @@ have no DOM access at all, which is what makes them cheap to unit-test:
 | `src/effects.js` | Confetti and the WebAudio chime. | DOM |
 | `src/picker.js` | The category dialog. Reports a category id; owns no game state. | DOM |
 | `src/subpage.js` | A page inside the Settings card, opened from a row on the main page (Theme, Background): it takes the card's place until Back. Owns no setting. | DOM |
+| `src/pane.js` | A modal pane over the page (New game, Settings): the page under it inert, its opener expanded, focus on its heading and back to the opener. | DOM |
 | `src/lookpicker.js` | The Theme page: a group per theme with a Light and a Dark tile, each previewed in its own colours, read off the live stylesheet on the first open. | DOM |
 | `src/bgpicker.js` | The Background page's markup: a tile per entry in the backgrounds registry, badged Animated or Still, and the row's summary. | pure |
 | `src/backgrounds.js` | The backgrounds registry (id, name, tile glyph, module) and `makeBackdrop()`, which runs one background at a time in its host. The modules in `src/backgrounds/` load on first use. | pure-ish |

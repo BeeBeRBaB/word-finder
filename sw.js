@@ -9,7 +9,7 @@ const CACHE='wordfinder-v18';
 // Unversioned on purpose: versioning it would make the activate sweep throw away every
 // downloaded category on every deploy.
 const SUBJECT_CACHE='wordfinder-subjects';
-const ASSETS=['./','./index.html','./styles.css','./src/main.js','./src/rng.js','./src/puzzle.js','./src/layout.js','./src/view.js','./src/effects.js','./src/catalog.js','./src/subjects.js','./src/storage.js','./src/progress.js','./src/appearance.js','./src/picker.js','./src/art.js','./src/settings.js','./src/subpage.js','./src/bgpicker.js','./src/lookpicker.js','./src/backgrounds.js','./src/scoring.js','./src/levels.js','./src/cloud.js','./src/scorecard.js','./src/levelplay.js','./src/account.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
+const ASSETS=['./','./index.html','./styles.css','./src/main.js','./src/rng.js','./src/puzzle.js','./src/layout.js','./src/view.js','./src/effects.js','./src/catalog.js','./src/subjects.js','./src/storage.js','./src/progress.js','./src/appearance.js','./src/picker.js','./src/art.js','./src/settings.js','./src/subpage.js','./src/pane.js','./src/bgpicker.js','./src/lookpicker.js','./src/backgrounds.js','./src/scoring.js','./src/levels.js','./src/cloud.js','./src/scorecard.js','./src/levelplay.js','./src/account.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 
 /** A lazily-imported word pool. Matched by directory so the catalog can grow without
  * sw.js growing with it. @param {URL} u @returns {boolean} */
@@ -32,44 +32,51 @@ function revalidate(req){
   return fetch(req);
 }
 
+/** An older build's cache, which activate deletes. Only this app's: an origin like
+ * user.github.io is shared by every Pages site the account hosts.
+ * @param {string} k @returns {boolean} */
+const isStale=k=>k.startsWith('wordfinder-')&&k!==CACHE&&k!==SUBJECT_CACHE;
+
 // A bump starts an empty cache, and activate's sweep deletes the old one with everything pages
 // loaded on demand: a background and what it imports, and the fonts. The first launch after an
 // update, if offline, then came back without them. So the new cache takes them over at install,
-// while the old one still serves: code fetched again for this build, along with any module it
-// now imports that the old build did not, and fonts copied (they never change). One that fails
-// is left for the next online visit.
+// while the old one still serves: each fetched again (code for this build, along with any module
+// it now imports that the old build did not; a font so a bad copy is not kept past a bump). One
+// that fails is left for the next online visit.
 /** @returns {Promise<void>} */
 async function carryOver(){
   const cache=await caches.open(CACHE);
-  const have=new Set((await cache.keys()).map(r=>r.url));
-  /** @param {string} url same-origin, path only @returns {Promise<unknown>} */
-  const take=async url=>{
-    if(have.has(url)||isSubject(new URL(url)))return;
+  // The precache alone, not whatever the cache holds: an install cut short leaves files it
+  // carried there, and their imports still need following.
+  const have=new Set(ASSETS.map(u=>new URL(u,sw.location.href).href));
+  // A request that never settles would hold the update back for good.
+  const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),20000);
+  /** @param {string|Request} req a same-origin path, or a font's request as stored
+   * @returns {Promise<unknown>} */
+  const take=async req=>{
+    const url=typeof req==='string'?req:req.url;
+    if(have.has(url))return;
     have.add(url);
-    const res=await fetch(url,{cache:'no-cache'}).catch(()=>null);
-    if(!res?.ok)return;
-    await cache.put(url,res.clone());
+    const res=await fetch(req,{cache:'no-cache',signal:ctl.signal}).catch(()=>null);
+    if(!res||!(res.ok||res.type==='opaque'))return;
+    await cache.put(req,res.clone());
     // Static relative imports only: a dynamic one loads what the page picks next, online.
     if(url.endsWith('.js'))return Promise.all([...(await res.text()).matchAll(/(?:from|import)\s*['"](\.\.?\/[^'"]+)['"]/g)].map(m=>take(new URL(m[1],url).href)));
   };
-  const old=(await caches.keys()).filter(k=>k!==CACHE&&k!==SUBJECT_CACHE);
-  await Promise.all(old.map(async name=>{
-    const from=await caches.open(name);
-    await Promise.all((await from.keys()).map(async req=>{
+  try{
+    const old=await Promise.all((await caches.keys()).filter(isStale).map(async k=>(await caches.open(k)).keys()));
+    await Promise.all(old.flat().map(req=>{
       const u=new URL(req.url);
-      if(u.origin===sw.location.origin)return take(u.origin+u.pathname);
-      if(have.has(req.url))return;
-      have.add(req.url);
-      const res=await from.match(req);
-      if(res)await cache.put(req,res);
+      if(u.origin===sw.location.origin)return isSubject(u)?null:take(u.origin+u.pathname);
+      return isFont(u)?take(req):null;
     }));
-  }));
+  }finally{clearTimeout(timer)}
 }
 
 // {cache:'reload'} per asset, not a bare addAll: the same max-age=600 trap, which turns
 // fatal the first time a deploy deletes a file a stale main.js still imports.
 sw.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS.map(u=>new Request(u,{cache:'reload'})))).then(()=>carryOver().catch(()=>{})).then(()=>sw.skipWaiting()))});
-sw.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE&&k!==SUBJECT_CACHE).map(k=>caches.delete(k)))).then(()=>sw.clients.claim()))});
+sw.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(isStale).map(k=>caches.delete(k)))).then(()=>sw.clients.claim()))});
 
 sw.addEventListener('fetch',e=>{
   if(e.request.method!=='GET')return;

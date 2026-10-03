@@ -95,8 +95,7 @@ export function start(host, opts = {}) {
     }
   }
 
-  size();
-  draw();
+  size();   // which paints the first frame
   const stop = frameLoop(host, size, (dt) => { t += dt * 1000; draw(); }, reduced);
   return () => { stop(); cv.remove(); };
 }

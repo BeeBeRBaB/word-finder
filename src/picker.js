@@ -1,5 +1,6 @@
 // The category dialog. Owns no game state: it reports a chosen category id and lets
 // main.js decide what that means.
+import { makePane } from './pane.js';
 
 /**
  * @typedef {import('./catalog.js').Category} Category
@@ -11,7 +12,6 @@
  */
 
 /**
- * `heading` takes focus on open: focusing the select instead opened it at once on an iPhone.
  * @param {{
  *   root:HTMLElement, heading:HTMLElement, select:HTMLSelectElement, warning:HTMLElement, error:HTMLElement,
  *   start:HTMLElement, cancel:HTMLElement, categories:Category[],
@@ -95,14 +95,8 @@ export function makePicker({ root, heading, select, warning, error, start, cance
     if (!on) syncDisabled();
   }
 
-  // Focus goes back to the button that opened the pane, or it is left on a hidden element.
-  const close = () => {
-    if (pending || root.style.display !== 'flex') return;
-    root.style.display = 'none';
-    for (const el of behind) el.inert = false;
-    opener?.setAttribute('aria-expanded', 'false');
-    opener?.focus();
-  };
+  const modal = makePane({ root, heading, opener, behind });
+  const close = () => { if (!pending) modal.close(); };
 
   // Derived from main.js's shared failure record on every call, never tracked here, so
   // a category the random draw found dead is disabled even though this dialog never
@@ -144,10 +138,7 @@ export function makePicker({ root, heading, select, warning, error, start, cance
     syncDisabled();
     warning.style.display = inProgress ? '' : 'none';
     error.hidden = true;
-    root.style.display = 'flex';
-    for (const el of behind) el.inert = true;
-    opener?.setAttribute('aria-expanded', 'true');
-    heading.focus();
+    modal.open();
   }
 
   /** @param {string} chosen the category; unused on the Levels side @param {string} label
@@ -202,7 +193,7 @@ export function makePicker({ root, heading, select, warning, error, start, cance
    * has changed. Focus inside the pane moves to its new button, else to Start, else to the
    * heading, never to the page. @returns {void} */
   function refresh() {
-    if (root.style.display !== 'flex' || pending) return;
+    if (!modal.isOpen() || pending) return;
     error.hidden = true;   // about the state that just changed
     const had = pane.contains(doc.activeElement);
     showSide();

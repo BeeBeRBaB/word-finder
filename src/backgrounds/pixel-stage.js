@@ -1,6 +1,6 @@
 // Shared by the pixel backgrounds, and not a background itself: one canvas of 4-8px cells
 // scaled up with pixelated rendering, run by the 30fps loop in frame-loop.js.
-import { frameLoop } from './frame-loop.js';
+import { frameLoop, hostCanvas } from './frame-loop.js';
 
 /**
  * @typedef {{resize:(W:number, H:number) => void, step:(dt:number) => void, draw:() => void}} Scene
@@ -17,10 +17,10 @@ import { frameLoop } from './frame-loop.js';
 export function pixelStage(host) {
   const wrap = document.createElement('div');
   wrap.style.cssText = 'position:absolute;inset:0;overflow:hidden;pointer-events:none';
-  const cv = wrap.appendChild(document.createElement('canvas'));
-  cv.style.cssText = 'position:absolute;left:0;top:0;image-rendering:pixelated';
-  const ctx = cv.getContext('2d');
-  if (!ctx) return null;
+  // In a wrap that clips it: the canvas is whole cells, so up to one cell larger than the host.
+  const layer = hostCanvas(wrap, true);
+  if (!layer) return null;
+  const { cv, ctx } = layer;
 
   /** @param {Scene} scene @param {boolean} still @returns {() => void} stop */
   function run(scene, still) {

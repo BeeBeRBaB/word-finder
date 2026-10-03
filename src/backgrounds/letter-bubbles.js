@@ -144,9 +144,8 @@ export function start(host, opts) {
     ctx.globalAlpha = 1;
   }
 
-  resize();
   if (!reduced) t = rnd(0, 20);
-  draw();
+  resize();   // which paints the first frame
   const stop = frameLoop(host, resize, (dt) => {
     step(dt);
     draw();

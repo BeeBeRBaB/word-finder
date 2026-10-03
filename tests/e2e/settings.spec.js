@@ -181,6 +181,29 @@ test('a slow win-card deal the player walked away from never replaces their next
   await expect(page.locator('#category')).toHaveText('Nature');
 });
 
+// The header stays in reach of the keyboard behind the win card. New game pressed there while the
+// card's own deal loads is the deal the player asked for: the card's gives way, not lands first.
+test('New game pressed behind the win card while its deal loads deals once', async ({ page }) => {
+  /** @type {Record<string, () => void>} */
+  const release = {};
+  for (const id of ['garden', 'food']) {
+    const held = new Promise((r) => { release[id] = () => r(undefined); });
+    await page.route(`**/src/subjects/${id}.js`, async (route) => { await held; await route.continue(); });
+  }
+  await page.goto('/?seed=1&subject=nature/birds');
+  await solve(page);
+  await page.evaluate(() => { Math.random = () => 0.99; });   // the last category: Garden
+  await page.locator('#winbtn').click();
+  await page.evaluate(() => { Math.random = () => 0.04; });   // the second: Food & Drink
+  await page.evaluate(() => /** @type {HTMLElement} */ (document.getElementById('newbtn')).click());
+  release.garden();
+  await page.waitForTimeout(500);
+  await expect(page.locator('#category')).toHaveText('Nature');
+  release.food();
+  await expect(page.locator('#category')).toHaveText('Food & Drink');
+  await expect(page.locator('#win')).toBeHidden();
+});
+
 // A themed dropdown's list is part of the page, so Escape reaches the app's own handler.
 // It must close the list and leave the pane around it open.
 test('Escape in an open themed dropdown closes the list, not the pane', async ({ page }) => {

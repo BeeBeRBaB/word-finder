@@ -16,6 +16,7 @@ import { makePicker } from './picker.js';
 import { makeBackdrop, findBackground } from './backgrounds.js';
 import { tilesMarkup, summaryMarkup } from './bgpicker.js';
 import { makeSubpage } from './subpage.js';
+import { makePane } from './pane.js';
 import { tilesMarkup as lookTilesMarkup, summaryMarkup as lookSummaryMarkup, readLooks, varsOf, lookId } from './lookpicker.js';
 import { makeCloud } from './cloud.js';
 import { makeLevelPlay, levelPuzzle, replaySelections } from './levelplay.js';
@@ -88,8 +89,9 @@ const els = {
   solved: must('solved'),
 };
 
-// The single home of every mutable value. `dims` is a placeholder newPuzzle() replaces
-// before any event can fire.
+// The board, its finds, the drag on it and its layout. Everything else main.js tracks (the deal
+// counters, the board's subject and seed, the level it is) is a module-level let beside the code
+// that uses it. `dims` is a placeholder newPuzzle() replaces before any event can fire.
 /** @type {State} */
 const state = {
   puzzle: null,
@@ -537,8 +539,6 @@ async function dealLevel(stillWanted = () => true) {
 // What New game and Settings cover: inert while either is open, as their aria-modal says, so
 // Tab and a screen reader stay inside the pane.
 const behindPanes = [els.app, els.win, must('toast')];
-/** @param {boolean} on @returns {void} */
-const coverBehind = (on) => { for (const el of behindPanes) el.inert = on; };
 // newGame rejects when a category cannot be fetched; the picker catches that to keep
 // itself open, so the rejection must survive rather than being swallowed here.
 const picker = makePicker({
@@ -588,10 +588,17 @@ function openPicker() {
   cancelAutoNext();
   dealGen++;
   anchorPane(els.picker);
-  // A level keeps its finds when left, so only an ordinary board in progress is lost.
-  const inProgress = !levelBoard && !!state.puzzle && state.foundOrder.length > 0
-    && state.foundOrder.length < state.puzzle.words.length;
-  picker.open(inProgress);
+  picker.open(progressAtStake());
+}
+/** Whether a new deal would throw finds away: those on the board showing or, with none showing,
+ * those in a save still waiting for the network. A level keeps its finds when left.
+ * @returns {boolean} */
+function progressAtStake() {
+  const p = state.puzzle;
+  if (p) return !levelBoard && state.foundOrder.length > 0 && state.foundOrder.length < p.words.length;
+  const saved = store.load();
+  return !!saved && saved.found.length > 0 && saved.found.length < saved.count
+    && !play.resumable(saved.subjectId, saved.seed);
 }
 must('catbtn').addEventListener('click', openPicker);
 // ---- The win card's countdown ----
@@ -758,11 +765,14 @@ function hideToast() {
  * @returns {void} */
 function quickDeal() {
   if (quickDealing) return;
+  // A save still waiting for the network has no board to keep for Undo, so New game asks first.
+  if (!state.puzzle && progressAtStake()) { openPicker(); return; }
   // A second press on a board still untouched keeps the first offer, rather than losing
   // the board that one was protecting.
   const carried = undoSnap;
   hideToast();
   cancelAutoNext();
+  dealGen++;   // a deal the win card started gives way to this one
   quickDealing = true;
   const gen = ++quickGen;
   /** @type {Snapshot|null} */
@@ -820,6 +830,7 @@ function catchUp() {
 // duplicated here, so a colour edit has exactly one home.
 const themeColorMeta = document.querySelector('meta[name="theme-color"]');
 const settings = must('settings');
+const settingsPane = makePane({ root: settings, heading: must('settings-title'), opener: els.appearance, behind: behindPanes });
 const leastBox = /** @type {HTMLInputElement} */ (must('settings-least-box'));
 // Vibration is a no-op where unsupported (iOS Safari, most desktops); do not offer it there.
 if (!('vibrate' in navigator)) must('settings-vibrate').hidden = true;
@@ -996,11 +1007,7 @@ function openSettings() {
   const st = play.status();
   if (st.signedIn && (st.pending || st.error)) void play.sync().then(afterSync);
   anchorPane(settings);
-  settings.style.display = 'flex';
-  coverBehind(true);
-  els.appearance.setAttribute('aria-expanded', 'true');
-  // The title, not the first control: focusing a select from a tap opens it on an iPhone.
-  must('settings-title').focus({ preventScroll: true });
+  settingsPane.open();
 }
 /** @returns {void} */
 function closeSettings() {
@@ -1010,12 +1017,8 @@ function closeSettings() {
   signInPage.close(false);
   // A sign-in still in flight lands in Settings, not by reopening New game.
   signInFromPicker = false;
-  settings.style.display = 'none';
-  coverBehind(false);
-  els.appearance.setAttribute('aria-expanded', 'false');
-  els.appearance.focus();
+  settingsPane.close();
 }
-els.appearance.setAttribute('aria-expanded', 'false');
 els.appearance.addEventListener('click', () => {
   if (shown(settings)) closeSettings(); else openSettings();
 });
@@ -1208,17 +1211,19 @@ if ('serviceWorker' in navigator) {
   // back without its background. Each such load, including one still arriving when the worker
   // takes over, is fetched again through the worker once it controls the page.
   const src = new URL('./', import.meta.url).href;
+  // Once each: the re-fetch is a resource load too, and an engine that reports it with no
+  // workerStart would otherwise send it round again for as long as the page is open.
   /** @type {Set<string>} */
-  const missed = new Set();
+  const missed = new Set(), sent = new Set();
   const refetch = () => {
     if (!navigator.serviceWorker.controller) return;
-    for (const u of missed) void fetch(u).catch(() => {});
+    for (const u of missed) { sent.add(u); void fetch(u).catch(() => {}); }
     missed.clear();
   };
   new PerformanceObserver((list) => {
     for (const e of /** @type {PerformanceResourceTiming[]} */ (list.getEntries())) {
       const u = e.name.split('?')[0];
-      if (!e.workerStart && (u.startsWith(`${src}subjects/`) || u.startsWith(`${src}backgrounds/`))) missed.add(u);
+      if (!e.workerStart && !sent.has(u) && (u.startsWith(`${src}subjects/`) || u.startsWith(`${src}backgrounds/`))) missed.add(u);
     }
     refetch();
   }).observe({ type: 'resource', buffered: true });

@@ -82,14 +82,24 @@ test('every src module is precached and every precached path exists', () => {
 // The cost of getting this wrong is invisible until a deploy: the shell sweep would
 // delete every downloaded category, so a one-line CSS fix would cost every player a
 // full re-download and would strand an offline one with nothing to play.
-test('word pools live in their own cache, which the activate sweep spares', () => {
+test('activate sweeps only older builds: word pools and other sites\' caches stay', async () => {
   assert.match(sw, /const SUBJECT_CACHE='wordfinder-subjects'/, 'subjects need an unversioned cache');
-  const line = sw.split('\n').find((l) => l.includes("addEventListener('activate'"));
-  assert.ok(line, 'could not find the activate handler in sw.js');
-  assert.ok(
-    line.includes('k!==SUBJECT_CACHE'),
-    'the activate sweep deletes every cache that is not CACHE; it must spare SUBJECT_CACHE',
-  );
+  const cache = /const CACHE='([^']+)'/.exec(sw)?.[1] ?? '';
+  /** @type {string[]} */
+  const deleted = [];
+  const caches = { keys: async () => [cache, 'wordfinder-subjects', 'wordfinder-v1', 'otherproj-v1'],
+    delete: async (/** @type {string} */ k) => { deleted.push(k); return true; } };
+  /** @type {Record<string, (e: object) => void>} */
+  const on = {};
+  const self = { clients: { claim: async () => {} }, location: new URL('https://beeberbab.github.io/word-finder/sw.js'),
+    addEventListener: (/** @type {string} */ t, /** @type {(e: object) => void} */ f) => { on[t] = f; } };
+  vm.runInNewContext(sw, { self, caches, URL });
+  /** @type {Promise<unknown>|undefined} */
+  let done;
+  on.activate({ waitUntil: (/** @type {Promise<unknown>} */ p) => { done = p; } });
+  await done;
+  // user.github.io is one origin for every Pages site the account hosts.
+  assert.deepEqual(deleted, ['wordfinder-v1']);
 });
 
 // A pool changes whenever a subject is added to it, so it takes the code path, which
@@ -155,65 +165,107 @@ function answers(handler, url) {
   return took;
 }
 
-// A bump used to throw away, with the old cache, everything pages had loaded on demand: the first
-// launch after an update, if offline, came back without its background or its fonts.
-test('install carries on-demand entries into a bumped cache: code fetched fresh, fonts copied', async () => {
-  const base = 'https://beeberbab.github.io/word-finder/';
-  const font = 'https://fonts.gstatic.com/s/x.woff2';
-  /** @type {Map<string, Map<string, Response>>} */
-  const store = new Map([['wordfinder-v1', new Map([
-    [`${base}src/main.js`, new Response('old main')],
-    [`${base}src/backgrounds/drifting-icons.js`, new Response('old drift')],
-    [`${base}src/backgrounds/gone.js`, new Response('old gone')],
-    [`${base}index.html?subject=nature/birds`, new Response('old page')],
-    [`${base}src/subjects/nature.js`, new Response('old pool')],
-    [font, new Response('font bytes')],
-  ])], ['wordfinder-subjects', new Map([[`${base}src/subjects/food.js`, new Response('pool')]])]]);
+const BASE = 'https://beeberbab.github.io/word-finder/';
+const CACHE = /const CACHE='([^']+)'/.exec(sw)?.[1] ?? '';
+
+/** Runs sw.js's install against an in-memory CacheStorage.
+ * @param {Record<string, Record<string, string>>} caches name -> url -> body, before install
+ * @param {(url: string, opts: {cache?: string, signal?: AbortSignal}) => Promise<Response>} fetch
+ * @returns {{store: Map<string, Map<string, Response>>, installed: Promise<unknown>, budget: () => void}}
+ *   budget runs carryOver's time limit now */
+function install(caches, fetch) {
+  const store = new Map(Object.entries(caches).map(([n, m]) => [n, new Map(Object.entries(m).map(([u, b]) => [u, new Response(b)]))]));
   /** @param {unknown} k @returns {string} */
   const keyOf = (k) => (typeof k === 'string' ? k : /** @type {{url:string}} */ (k).url);
-  const caches = {
+  const cacheStorage = {
     keys: async () => [...store.keys()],
     open: async (/** @type {string} */ name) => {
       const m = store.get(name) ?? new Map();
       store.set(name, m);
       return {
         keys: async () => [...m.keys()].map(url => ({ url })),
-        match: async (/** @type {unknown} */ k) => m.get(keyOf(k)),
         put: async (/** @type {unknown} */ k, /** @type {Response} */ r) => { m.set(keyOf(k), r); },
         addAll: async (/** @type {{url:string}[]} */ reqs) => { for (const r of reqs) m.set(r.url, new Response('precached')); },
       };
     },
   };
+  /** @type {Record<string, (e: object) => void>} */
+  const on = {};
+  const self = { location: new URL(`${BASE}sw.js`), skipWaiting: () => {},
+    addEventListener: (/** @type {string} */ t, /** @type {(e: object) => void} */ f) => { on[t] = f; } };
+  const Request = class { constructor(/** @type {string} */ u, /** @type {{cache?:string}} */ o = {}) { this.url = new URL(u, self.location).href; this.cache = o.cache; } };
+  let budget = () => {};
+  vm.runInNewContext(sw, {
+    self, caches: cacheStorage, URL, Request, Response, AbortController,
+    fetch: (/** @type {unknown} */ req, /** @type {{cache?:string, signal?:AbortSignal}} */ opts) => fetch(keyOf(req), opts),
+    setTimeout: (/** @type {() => void} */ f) => { budget = f; return 0; }, clearTimeout: () => {},
+  });
+  /** @type {Promise<unknown>} */
+  let installed = Promise.resolve();
+  on.install({ waitUntil: (/** @type {Promise<unknown>} */ p) => { installed = p; } });
+  return { store, installed, budget: () => budget() };
+}
+
+// A bump used to throw away, with the old cache, everything pages had loaded on demand: the first
+// launch after an update, if offline, came back without its background or its fonts.
+test('install carries on-demand entries into a bumped cache, each fetched again for this build', async () => {
+  const font = 'https://fonts.gstatic.com/s/x.woff2';
   /** @type {string[]} */
   const fetched = [];
-  const fetch = async (/** @type {string} */ url, /** @type {{cache?:string}} */ opts) => {
-    fetched.push(`${url} ${opts?.cache}`);
+  const { store, installed } = install({
+    'wordfinder-v1': {
+      [`${BASE}src/main.js`]: 'old main',
+      [`${BASE}src/backgrounds/drifting-icons.js`]: 'old drift',
+      [`${BASE}src/backgrounds/gone.js`]: 'old gone',
+      [`${BASE}index.html?subject=nature/birds`]: 'old page',
+      [`${BASE}src/subjects/nature.js`]: 'old pool',
+      [font]: 'old font',
+      'https://firestore.googleapis.com/v1/doc': 'a document',
+    },
+    'wordfinder-subjects': { [`${BASE}src/subjects/food.js`]: 'pool' },
+    // Another Pages site on the same origin.
+    'otherproj-v1': { 'https://beeberbab.github.io/otherproj/app.js': 'theirs' },
+  }, async (url, opts) => {
+    fetched.push(`${url} ${opts.cache}`);
     if (url.endsWith('gone.js')) return new Response('', { status: 404 });
     // This build's drift imports a module the old one never loaded, and one the shell precaches.
     if (url.endsWith('drifting-icons.js')) return new Response("import { frameLoop } from './frame-loop.js';\nimport { makeRng } from '../rng.js';");
-    return new Response(`new ${url.slice(base.length)}`);
-  };
-  /** @type {Record<string, (e: object) => void>} */
-  const on = {};
-  const self = { location: new URL(`${base}sw.js`), skipWaiting: () => {},
-    addEventListener: (/** @type {string} */ t, /** @type {(e: object) => void} */ f) => { on[t] = f; } };
-  const Request = class { constructor(/** @type {string} */ u, /** @type {{cache?:string}} */ o = {}) { this.url = new URL(u, self.location).href; this.cache = o.cache; } };
-  vm.runInNewContext(sw, { self, caches, fetch, URL, Request, Response });
-  /** @type {Promise<unknown>|undefined} */
-  let installed;
-  on.install({ waitUntil: (/** @type {Promise<unknown>} */ p) => { installed = p; } });
+    return new Response(`new ${url}`);
+  });
   await installed;
-  const now = /** @type {Map<string, Response>} */ (store.get(/const CACHE='([^']+)'/.exec(sw)?.[1] ?? ''));
-  assert.match(await now.get(`${base}src/backgrounds/drifting-icons.js`)?.text() ?? '', /frame-loop/);
-  assert.equal(await now.get(`${base}src/backgrounds/frame-loop.js`)?.text(), 'new src/backgrounds/frame-loop.js',
+  const now = /** @type {Map<string, Response>} */ (store.get(CACHE));
+  assert.match(await now.get(`${BASE}src/backgrounds/drifting-icons.js`)?.text() ?? '', /frame-loop/);
+  assert.equal(await now.get(`${BASE}src/backgrounds/frame-loop.js`)?.text(), `new ${BASE}src/backgrounds/frame-loop.js`,
     'a module this build newly imports comes too, or the carried background cannot load offline');
-  assert.equal(await now.get(font)?.text(), 'font bytes');
-  assert.equal(await now.get(`${base}src/main.js`)?.text(), 'precached', 'what the build precaches is not fetched twice');
-  assert.ok(!now.has(`${base}src/backgrounds/gone.js`), 'a file this build no longer has is dropped');
-  assert.ok(!now.has(`${base}index.html?subject=nature/birds`), 'kept by path, the key the fetch handler reads');
+  assert.equal(await now.get(font)?.text(), `new ${font}`, 'a font is fetched again, so a bad copy does not outlive the bump');
+  assert.equal(await now.get(`${BASE}src/main.js`)?.text(), 'precached', 'what the build precaches is not fetched twice');
+  assert.ok(!now.has(`${BASE}src/backgrounds/gone.js`), 'a file this build no longer has is dropped');
+  assert.ok(!now.has(`${BASE}index.html?subject=nature/birds`), 'kept by path, the key the fetch handler reads');
   assert.ok(![...now.keys()].some(k => k.includes('/subjects/')), 'word pools live in their own cache');
-  assert.deepEqual(fetched.sort(), [`${base}src/backgrounds/drifting-icons.js no-cache`,
-    `${base}src/backgrounds/frame-loop.js no-cache`, `${base}src/backgrounds/gone.js no-cache`]);
+  assert.deepEqual(fetched.sort(), [`${BASE}src/backgrounds/drifting-icons.js no-cache`, `${BASE}src/backgrounds/frame-loop.js no-cache`,
+    `${BASE}src/backgrounds/gone.js no-cache`, `${font} no-cache`], "only this app's own caches, and of other origins only fonts");
+});
+
+// An install cut short (the browser killed mid-way) leaves what it carried in the new cache. Taking
+// that as done skipped its imports on the retry, and the background could not load offline.
+test('a retried install still follows the imports of what an earlier attempt carried', async () => {
+  const { store, installed } = install({
+    'wordfinder-v1': { [`${BASE}src/backgrounds/drifting-icons.js`]: 'old drift' },
+    [CACHE]: { [`${BASE}src/backgrounds/drifting-icons.js`]: "import { frameLoop } from './frame-loop.js';" },
+  }, async (url) => new Response(url.endsWith('drifting-icons.js') ? "import { frameLoop } from './frame-loop.js';" : 'loop'));
+  await installed;
+  assert.ok(store.get(CACHE)?.has(`${BASE}src/backgrounds/frame-loop.js`));
+});
+
+test('a request that never settles cannot hold the update back', async () => {
+  const { installed, budget } = install({ 'wordfinder-v1': { [`${BASE}src/backgrounds/drifting-icons.js`]: 'old drift' } },
+    (_url, opts) => new Promise((_, fail) => opts.signal?.addEventListener('abort', () => fail(new Error('aborted')))));
+  let done = false;
+  void installed.then(() => { done = true; });
+  await new Promise((r) => setImmediate(r));
+  assert.equal(done, false, 'still waiting on the stalled request');
+  budget();
+  await installed;
 });
 
 // Firestore document URLs have no extension, so cache-first would hand cloud.load() a
