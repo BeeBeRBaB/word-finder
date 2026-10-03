@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { makeStorage } from '../../src/storage.js';
+import { makeStorage, safeStore } from '../../src/storage.js';
 import { memStore } from './helpers.js';
 import { buildPuzzle } from '../../src/puzzle.js';
 import { makeRng } from '../../src/rng.js';
@@ -50,6 +50,22 @@ test('default store resolution survives a throwing localStorage getter (Safari p
 // board was dealt by taking twelve words from a twelve-word list, and that list no
 // longer exists. Absence of `size` is the whole detection rule, so there is no
 // migration code and no frozen legacy pool to carry forever.
+test('safeStore reads a missing or throwing store as empty, and never throws into the caller', () => {
+  const boom = () => { throw new Error('denied'); };
+  for (const store of [null, { getItem: boom, setItem: boom, removeItem: boom }, { getItem: () => null, setItem: boom }]) {
+    const kv = safeStore(store);
+    assert.equal(kv.get('k'), null);
+    kv.set('k', 'v');
+    kv.remove('k');
+  }
+  const mem = memStore();
+  const kv = safeStore(mem);
+  kv.set('k', 'v');
+  assert.equal(kv.get('k'), 'v');
+  kv.remove('k');
+  assert.equal(mem.getItem('k'), null);
+});
+
 test('a legacy save with no size field is discarded, not half-read', () => {
   const store = memStore();
   store.setItem('wordfinder-save-v1', JSON.stringify({ seed: 7, topicIdx: 5, found: [] }));

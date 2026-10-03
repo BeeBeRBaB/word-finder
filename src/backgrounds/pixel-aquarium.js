@@ -45,8 +45,8 @@ export function start(host, opts = {}) {
   const ctx = stage.ctx;
 
   let W = 0, H = 0, t = 0, sd = 1;
-  /** @type {{k:number, x:number, y:number, v:number, p:number}[]} */ let fish = [];
-  /** @type {Bubble[]} */ let bubbles = [];
+  /** @type {{k:number, x:number, y:number, v:number, p:number}[]} */ const fish = [];
+  /** @type {Bubble[]} */ const bubbles = [];
   /** @type {[number, number, number, string, number][]} x, base, height, colour, phase */ let weeds = [];
   /** @type {number[]} */ let sandY = [];
   /** @returns {number} */
@@ -70,8 +70,12 @@ export function start(host, opts = {}) {
     return c;
   })));
 
-  /** @returns {void} */
-  function paint() {
+  /** The tank for this size. Each part of the scenery draws from its own seed, so it keeps its
+   * look; fish and bubbles carry on across a resize, moved with it: starting them over made every
+   * rotation or window drag jump. @param {number} w @param {number} h @returns {void} */
+  function paint(w, h) {
+    for (const o of [...fish, ...bubbles]) { o.x *= w / W; o.y *= h / H; }
+    W = w; H = h;
     sd = 4242; bg.width = rays.width = W; bg.height = rays.height = H;
     const n = T.water.length, bh = H / n;
     for (let i = 0; i < n; i++) {
@@ -91,6 +95,7 @@ export function start(host, opts = {}) {
         if ((x + y) % 2 === 0 && rand() > y / len) r.fillRect(round(x0 + x + y * 0.35), y, 1, 1);
     }
     sandY = [];
+    sd = 4243;
     for (let x = 0; x < W; x++) {
       const y = round(H * 0.88 + sin(x * 0.07) * 2 + sin(x * 0.19));
       sandY.push(y);
@@ -102,6 +107,7 @@ export function start(host, opts = {}) {
     }
     /** @param {number} x @returns {number} */
     const at = x => sandY[min(W - 1, max(0, x))];
+    sd = 4244;
     for (let k = 0; k < 3; k++) {
       const cx = round(W * (0.1 + k * 0.38 + rand() * 0.1)), rw = 5 + ri(5), rh = 3 + ri(3), by = at(cx) + 1;
       for (let y = -rh; y <= 0; y++) for (let x = -rw; x <= rw; x++) {
@@ -124,14 +130,16 @@ export function start(host, opts = {}) {
       }
     }
     weeds = [];
+    sd = 4245;
     for (let x = 3; x < W; x += 5 + ri(9)) weeds.push([x, at(x) + 1, 8 + ri(H * 0.18), T.weed[ri(3)], rand() * 6]);
-    fish = [];
-    for (let i = 0, nf = min(9, 4 + (W * H / 6000 | 0)); i < nf; i++) {
+    const nf = min(9, 4 + (W * H / 6000 | 0));
+    fish.length = min(fish.length, nf);
+    for (let i = fish.length; i < nf; i++) {
       fish.push({
         k: i % KINDS.length, x: rand() * W, y: fy(), v: (rand() < 0.5 ? -1 : 1) * (3 + rand() * 4), p: rand() * 6,
       });
     }
-    bubbles = Array.from({ length: 14 }, () => bubble(/** @type {Bubble} */ ({}), true));
+    while (bubbles.length < 14) bubbles.push(bubble(/** @type {Bubble} */ ({}), true));
   }
 
   /** @param {Bubble} b @param {boolean} any at a random height, not the weed base @returns {Bubble} */
@@ -181,5 +189,5 @@ export function start(host, opts = {}) {
     for (const b of bubbles) if ((b.y -= b.v * dt) < -2) bubble(b, false);
   }
 
-  return stage.run({ resize(w, h) { W = w; H = h; paint(); }, step, draw }, !!opts.reducedMotion);
+  return stage.run({ resize: paint, step, draw }, !!opts.reducedMotion);
 }

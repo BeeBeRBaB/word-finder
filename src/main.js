@@ -942,10 +942,10 @@ function signedOut() {
 }
 /** After the account's progress changed under the board: link the board to the level it is,
  * pick up finds another device made on it, or let it go once the account is past it.
- * Not while the win card shows: that board is done. @returns {void} */
+ * Not while the win card shows, or waits to: that board is done. @returns {void} */
 function reconcileLevel() {
   const puzzle = state.puzzle;
-  if (!puzzle || shown(els.win)) return;
+  if (!puzzle || shown(els.win) || state.winTimer) return;
   if (levelBoard && !play.account()) { letLevelGo(); return; }
   if (!levelBoard) {
     const deal = subjectId ? play.resumable(subjectId, currentSeed) : null;
@@ -1099,11 +1099,11 @@ window.addEventListener('resize', onResize);
 
 /** Explicit `?seed=` / `?subject=` / `?category=` always wins, even over a saved game —
  * that is the point of pinning a puzzle by URL. Otherwise prefer the save, and only deal
- * fresh when there is nothing to restore.
- * @param {() => boolean} [stillWanted] checked before dealing: a launch tried again once back
- *   online must not replace a board the player has since dealt, or deal behind an open pane
+ * fresh when there is nothing to restore. A board the player deals from New game while this
+ * loads (a slow launch, or one tried again once back online) is theirs, and stays.
  * @returns {Promise<void>} */
-async function boot(stillWanted = () => true) {
+async function boot() {
+  const stillWanted = () => !state.puzzle;
   const params = new URLSearchParams(location.search);
   // WebKit can run this module before any stylesheet applies: styles.css is parsed but held
   // back while the cross-origin font sheet loads, so the first layout read #app's padding as
@@ -1192,11 +1192,8 @@ window.addEventListener('online', () => {
   // launch that could not put its board back (offline) tries again rather than wait for a tap.
   unavailableCategories.clear();
   picker.refresh();
-  // One launch at a time, and only while nothing else is putting a board up.
-  if (!state.puzzle) launched = launched.then(() => {
-    const gen = dealGen;
-    if (!state.puzzle && !paneOpen() && !quickDealing) return boot(() => gen === dealGen);
-  });
+  // One launch at a time.
+  if (!state.puzzle) launched = launched.then(() => { if (!state.puzzle) return boot(); });
   catchUp();
 });
 // boot() never rejects — it reports any failure into the DOM itself.
@@ -1208,14 +1205,22 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').catch(() => {}); });
   // A first visit loads its word pool and background before the worker controls the page, so
   // neither passed through the worker's caches: the next launch offline said "Offline", or came
-  // back without its background. An update's sweep drops the backgrounds with the old cache too.
-  // Once a worker takes over, fetch every lazily loaded module this page has used through it.
-  navigator.serviceWorker.addEventListener('controllerchange', () => {
-    void launched.then(() => {
-      const src = new URL('./', import.meta.url).href;
-      const lazy = performance.getEntriesByType('resource').map(e => e.name.split('?')[0])
-        .filter(u => u.startsWith(`${src}subjects/`) || u.startsWith(`${src}backgrounds/`));
-      for (const u of new Set(lazy)) void fetch(u).catch(() => {});
-    });
-  });
+  // back without its background. Each such load, including one still arriving when the worker
+  // takes over, is fetched again through the worker once it controls the page.
+  const src = new URL('./', import.meta.url).href;
+  /** @type {Set<string>} */
+  const missed = new Set();
+  const refetch = () => {
+    if (!navigator.serviceWorker.controller) return;
+    for (const u of missed) void fetch(u).catch(() => {});
+    missed.clear();
+  };
+  new PerformanceObserver((list) => {
+    for (const e of /** @type {PerformanceResourceTiming[]} */ (list.getEntries())) {
+      const u = e.name.split('?')[0];
+      if (!e.workerStart && (u.startsWith(`${src}subjects/`) || u.startsWith(`${src}backgrounds/`))) missed.add(u);
+    }
+    refetch();
+  }).observe({ type: 'resource', buffered: true });
+  navigator.serviceWorker.addEventListener('controllerchange', refetch);
 }

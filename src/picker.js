@@ -106,11 +106,12 @@ export function makePicker({ root, heading, select, warning, error, start, cance
 
   // Derived from main.js's shared failure record on every call, never tracked here, so
   // a category the random draw found dead is disabled even though this dialog never
-  // showed it failing. Start follows the select: nothing chosen, nothing to start.
+  // showed it failing. Start follows the select: nothing chosen, nothing to start; and nothing
+  // while a deal is in flight, whatever is chosen meanwhile.
   /** @returns {void} */
   function syncDisabled() {
     for (const o of select.options) if (o.value) o.disabled = isUnavailable(o.value);
-    start.toggleAttribute('disabled', onLevels() ? !levelReady : !select.value);
+    start.toggleAttribute('disabled', pending || (onLevels() ? !levelReady : !select.value));
   }
 
   /** Rewrite the option labels, marking categories the player has fully covered.
@@ -167,7 +168,7 @@ export function makePicker({ root, heading, select, warning, error, start, cance
       error.hidden = lv && !levelReady;
       error.textContent = lv ? "This level isn't available offline yet. Try again once you're back online."
         : `${label} isn't available offline yet. Try another category.`;
-      if (!lv) select.value = '';
+      if (!lv && select.value === chosen) select.value = '';   // not a choice made while it loaded
       setBusy(false);
       // Disabling Start for the deal dropped focus out of the dialog. Back on Start to try the
       // level again, else on the heading: focusing the select opens it on an iPhone.

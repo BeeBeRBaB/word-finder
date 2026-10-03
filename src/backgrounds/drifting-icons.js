@@ -3,11 +3,11 @@
 // Each icon is rasterised once into a sprite canvas in its own colour.
 
 import { makeRng } from '../rng.js';
-import { frameLoop } from './frame-loop.js';
+import { frameLoop, hostCanvas } from './frame-loop.js';
 import { iconSvg, iconsFor, variantOf, withHero } from './icon-scene.js';
 
 /**
- * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject?:string, seed?:number}} BackgroundOptions
+ * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number}} BackgroundOptions
  * @typedef {{k:number, d:number, size:number, speed:number, along:number, across:number,
  *   sway:number, swayF:number, tilt:number, tiltF:number, ph:number, alpha:number}} Drifter
  * along is the distance travelled from the entry edge, across the position on the other axis.
@@ -22,8 +22,10 @@ const MAX = 30;      // icons made; a small host draws an even spread of them ov
  * @returns {() => void} stop: undoes everything start did
  */
 export function start(host, opts) {
-  const subject = opts.subject ?? 'nature/trees';
-  const colors = opts.colors.length ? opts.colors : [opts.dark === false ? '#555' : '#bbb'];
+  const subject = opts.subject;
+  // A colour is empty while the stylesheet has not applied, which boot stops waiting for after 2s.
+  const given = opts.colors.filter(Boolean);
+  const colors = given.length ? given : [opts.dark === false ? '#555' : '#bbb'];
   const reduced = !!opts.reducedMotion;
   const { layout, hero, seed } = variantOf(subject, opts.seed ?? 0);
   const ids = withHero(iconsFor(subject), hero);
@@ -32,13 +34,9 @@ export function start(host, opts) {
   // 0 rises, 1 falls, 2 blows sideways (left to right or back, by seed).
   const dir = layout, back = dir === 2 && rng.random() < 0.5;
 
-  const cv = document.createElement('canvas');
-  cv.setAttribute('aria-hidden', 'true');
-  cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none';
-  host.appendChild(cv);
-  const c2d = cv.getContext('2d');
-  if (!c2d) return () => cv.remove();
-  const ctx = c2d;
+  const layer = hostCanvas(host);
+  if (!layer) return () => {};
+  const { cv, ctx } = layer;
   /** @type {(HTMLCanvasElement|null)[]} */
   const sprites = ids.map(() => null);
   /** @type {Drifter[]} */

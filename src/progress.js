@@ -9,7 +9,7 @@
 // words not yet drawn this cycle; drawing the last one refills it and counts a cycle. That
 // is also why there is no "max word usage" threshold to tune: no word can be drawn twice
 // until every word has been drawn once.
-import { defaultStore } from './storage.js';
+import { safeStore } from './storage.js';
 
 export const KEY = 'wordfinder-progress-v1';
 
@@ -129,18 +129,11 @@ export function chooseSubject(subjectIds, seen, current, favourLeastSeen, rand) 
 
 /** @param {ProgressStore|null} [store] */
 export function makeProgress(store) {
-  if (store === undefined) store = defaultStore();
-
-  let data = empty();
-  // Merely reading localStorage throws on Safari with "Block All Cookies" — see
-  // storage.js's defaultStore — so the read is guarded, not just the parse.
-  try { data = parseProgress(store ? store.getItem(KEY) : null); } catch { data = empty(); }
+  const kv = safeStore(store);
+  let data = parseProgress(kv.get(KEY));
 
   /** @returns {void} */
-  const flush = () => {
-    if (!store) return;
-    try { store.setItem(KEY, JSON.stringify(data)); } catch { /* not remembered */ }
-  };
+  const flush = () => kv.set(KEY, JSON.stringify(data));
 
   /** The bag for a subject, discarding it when the pool length has changed since it was
    * written. That guard catches an inserted or deleted word; a same-length substitution

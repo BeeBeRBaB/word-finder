@@ -6,7 +6,7 @@ import { makeRng } from '../rng.js';
 import { CORNERS } from '../art.js';
 import { iconMarkup, iconsFor, layoutScene, variantOf, withHero } from './icon-scene.js';
 
-/** @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject?:string, seed?:number, corner?:boolean}} BackgroundOptions */
+/** @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number, corner?:boolean}} BackgroundOptions */
 
 const NS = 'http://www.w3.org/2000/svg';
 
@@ -16,8 +16,10 @@ const NS = 'http://www.w3.org/2000/svg';
  * @returns {() => void} stop: undoes everything start did
  */
 export function start(host, opts) {
-  const subject = opts.subject ?? 'nature/trees';
-  const colors = opts.colors.length ? opts.colors : ['currentColor'];
+  const subject = opts.subject;
+  // A colour is empty while the stylesheet has not applied, which boot stops waiting for after 2s.
+  const given = opts.colors.filter(Boolean);
+  const colors = given.length ? given : ['currentColor'];
   const { layout, hero, seed } = variantOf(subject, opts.seed ?? 0);
   const ids = withHero(iconsFor(subject), hero);
   /** @type {Map<string, string>} */

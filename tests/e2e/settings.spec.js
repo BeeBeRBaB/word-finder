@@ -164,7 +164,10 @@ test('a slow win-card deal the player walked away from never replaces their next
   });
   await page.goto('/?seed=1&subject=nature/birds');
   await solve(page);
+  // The draw must not land on Nature, whose pool is loaded already: that deal would not be slow.
+  await page.evaluate(() => { Math.random = () => 0.99; });
   await page.locator('#winbtn').click();          // starts the slow random deal
+  await expect.poll(() => late.length).toBe(1);
   await page.keyboard.press('Escape');            // ...and walks away from it
   await page.locator('#catbtn').click();
   await page.locator('#picker-select').selectOption('nature');

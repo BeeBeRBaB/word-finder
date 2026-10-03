@@ -1,6 +1,6 @@
 // Accounts and a cloud copy of progress, over the Firebase Auth and Firestore REST APIs.
 // Pure: the network is an injected fetch and the session an injected store. No Firebase SDK.
-import { defaultStore } from './storage.js';
+import { safeStore } from './storage.js';
 
 /** The web config of the word-finder-10f77 project. Public by design: firestore.rules guards the
  * data. While either is empty, accounts are hidden. */
@@ -118,7 +118,7 @@ export function makeCloud(deps = {}) {
   // Wrapped, not stored bare: calling the real fetch as a method of another object throws.
   /** @type {FetchLike} */
   const fetcher = deps.fetch ?? ((url, init) => globalThis.fetch(url, init));
-  const store = deps.store === undefined ? defaultStore() : deps.store;
+  const kv = safeStore(deps.store);
   const now = deps.now ?? Date.now;
   const enabled = isText(config.apiKey) && isText(config.projectId);
   const key = encodeURIComponent(config.apiKey);
@@ -129,21 +129,16 @@ export function makeCloud(deps = {}) {
   let refreshing = null;
 
   /** @returns {void} */
-  const persist = () => {
-    try { if (store) store.setItem(SESSION_KEY, JSON.stringify(session)); } catch { /* not remembered */ }
-  };
+  const persist = () => kv.set(SESSION_KEY, JSON.stringify(session));
   /** @returns {void} */
   const forget = () => {
     session = null;
-    try { if (store) store.removeItem(SESSION_KEY); } catch { /* nothing to forget */ }
+    kv.remove(SESSION_KEY);
   };
 
   if (enabled) {
-    // Reading localStorage can itself throw (see storage.js), so the read is guarded too.
-    try {
-      const raw = store ? store.getItem(SESSION_KEY) : null;
-      if (raw) { session = parseSession(raw); if (!session) forget(); }
-    } catch { session = null; }
+    const raw = kv.get(SESSION_KEY);
+    if (raw) { session = parseSession(raw); if (!session) forget(); }
   }
 
   /** @param {string} url @param {{method:string, headers:Record<string,string>, body?:string, cache?:RequestCache}} init

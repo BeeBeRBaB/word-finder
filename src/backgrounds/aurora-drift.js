@@ -1,7 +1,7 @@
 // Aurora Drift: large soft colour blobs on slow Lissajous paths, stretched and turning.
 // Drawn at 1/6 resolution so the browser's upscale does the blurring.
 import { makeRng } from '../rng.js';
-import { frameLoop } from './frame-loop.js';
+import { frameLoop, hostCanvas } from './frame-loop.js';
 
 /** @typedef {{colors:string[], dark:boolean, reducedMotion:boolean}} BackgroundOptions */
 
@@ -44,20 +44,9 @@ export function start(host, opts = {}) {
   /** @param {number} a @param {number} b @returns {number} */
   const span = (a, b) => a + (b - a) * rand();
 
-  const cv = document.createElement('canvas');
-  cv.setAttribute('aria-hidden', 'true');
-  const st = cv.style;
-  st.position = 'absolute';
-  st.inset = '0';
-  st.width = '100%';
-  st.height = '100%';
-  st.display = 'block';
-  st.pointerEvents = 'none';
-  host.appendChild(cv);
-  const c2d = cv.getContext('2d');
-  if (!c2d) return () => cv.remove();
-  // Aliased: narrowing does not reach the hoisted functions below.
-  const ctx = c2d;
+  const layer = hostCanvas(host);
+  if (!layer) return () => {};
+  const { cv, ctx } = layer;
 
   const blobs = (dark ? DARK : LIGHT).map((c, i) => ({
     img: sprite(c),

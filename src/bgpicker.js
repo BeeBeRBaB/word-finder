@@ -11,7 +11,7 @@ const ICONS = {
 };
 
 /** @param {Background} bg @returns {string} */
-export function glyphMarkup(bg) {
+function glyphMarkup(bg) {
   return `<svg class="bgglyph" viewBox="0 0 48 32" aria-hidden="true">${bg.glyph}</svg>`;
 }
 

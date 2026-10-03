@@ -3,7 +3,7 @@
 // catalog, so every device deals the same level. Changing a hash here, or adding a category
 // or subject, re-deals every account's unplayed levels.
 import { makeRng, fnv1a } from './rng.js';
-import { defaultStore } from './storage.js';
+import { safeStore } from './storage.js';
 import { DIFFICULTY_NAMES } from './scoring.js';
 
 export const LEVELS_KEY = 'wordfinder-levels-v1';
@@ -211,24 +211,19 @@ export function mergeProgress(local, remote) {
  * degrades to null and never throws into the game.
  * @param {{store?:LevelStore|null}} [deps] */
 export function makeLevelStore(deps = {}) {
-  const store = deps.store === undefined ? defaultStore() : deps.store;
+  const kv = safeStore(deps.store);
   return {
     /** @returns {LevelProgress|null} */
     load() {
-      try {
-        const raw = store ? store.getItem(LEVELS_KEY) : null;
-        return raw ? normalizeProgress(JSON.parse(raw)) : null;
-      } catch { return null; }
+      const raw = kv.get(LEVELS_KEY);
+      try { return raw ? normalizeProgress(JSON.parse(raw)) : null; } catch { return null; }
     },
     /** An invalid record is not written. @param {LevelProgress} p @returns {void} */
     save(p) {
       const n = normalizeProgress(p);
-      if (!store || !n) return;
-      try { store.setItem(LEVELS_KEY, JSON.stringify(n)); } catch { /* not remembered */ }
+      if (n) kv.set(LEVELS_KEY, JSON.stringify(n));
     },
     /** @returns {void} */
-    clear() {
-      try { if (store) store.removeItem(LEVELS_KEY); } catch { /* nothing to forget */ }
-    },
+    clear() { kv.remove(LEVELS_KEY); },
   };
 }

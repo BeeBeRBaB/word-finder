@@ -482,6 +482,26 @@ test('a session that lapses while New game deals a level asks to sign in, not ab
   await expect(page.locator('#category')).not.toHaveText(/^Level/);
 });
 
+// The score card comes up a moment after the last find. A sync landing in that moment used to let
+// go of the level, so the card read "Level 3 complete" over a header that no longer said Level 3.
+test('a sync between the last find and the score card leaves the level in the header', async ({ page }) => {
+  const fb = makeFirebase();
+  const uid = fb.add('ana_reads', 'hunter22');
+  fb.put(uid, PROGRESS);
+  await fb.install(page);
+  await signedInAs(page, uid, 'ana_reads');
+  await page.goto('/?subject=nature/birds');
+  await levelsSide(page);
+  await page.click('#picker-start');
+  await expect(page.locator('#category')).toHaveText('Level 3');
+  const words = (await page.locator('#list .w').allTextContents()).map(w => w.trim().toUpperCase());
+  for (const w of words.slice(0, -1)) await findAndDrag(page, w);
+  await findAndDrag(page, words[words.length - 1]);
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
+  await expect(page.locator('#wincard h2')).toHaveText('Level 3 complete');
+  await expect(page.locator('#category')).toHaveText('Level 3');
+});
+
 test('a session that lapses while a score card shows makes Next level deal a random game', async ({ page }) => {
   const fb = makeFirebase();
   const uid = fb.add('ana_reads', 'hunter22');

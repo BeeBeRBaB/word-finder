@@ -1,10 +1,29 @@
-// Shared by the animated backgrounds, and not a background itself: the 30fps frame loop,
-// paused while the page is hidden, and a re-measure whenever the host's box changes.
+// Shared by the animated backgrounds, and not a background itself: the canvas they draw on,
+// and the 30fps frame loop, paused while the page is hidden, with a re-measure whenever the
+// host's box changes.
 
 // Nothing here is precached, so changing an export needs a CACHE bump in sw.js: else an
 // importer cached last week can meet this file's new copy.
 
 const STEP = 1000 / 30;
+
+/**
+ * A canvas laid over `host`, out of the way of pointers and assistive tech, with its 2d context.
+ * Null, having added nothing, where the browser has no 2d canvas.
+ * @param {HTMLElement} host positioned element the canvas covers
+ * @param {boolean} [pixelated] square pixels scaled up, at the size the caller sets; else it fills the host
+ * @returns {{cv:HTMLCanvasElement, ctx:CanvasRenderingContext2D}|null}
+ */
+export function hostCanvas(host, pixelated = false) {
+  const cv = document.createElement('canvas');
+  const ctx = cv.getContext('2d');
+  if (!ctx) return null;
+  cv.setAttribute('aria-hidden', 'true');
+  cv.style.cssText = 'position:absolute;left:0;top:0;display:block;pointer-events:none;'
+    + (pixelated ? 'image-rendering:crisp-edges;image-rendering:pixelated' : 'width:100%;height:100%');
+  host.appendChild(cv);
+  return { cv, ctx };
+}
 
 /**
  * Calls `tick` at exactly 30fps unless `still`, never while the page is hidden, and `resize`

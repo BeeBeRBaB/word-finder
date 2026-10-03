@@ -1,6 +1,6 @@
 // Constellation: coloured stars drifting slowly, linked by fading lines when close,
 // with the faintest low-poly fill wherever three of them form a triangle.
-import { frameLoop } from './frame-loop.js';
+import { frameLoop, hostCanvas } from './frame-loop.js';
 
 /** @typedef {{colors:string[], dark:boolean, reducedMotion:boolean}} BackgroundOptions */
 
@@ -17,13 +17,9 @@ export function start(host, opts) {
   const pal = opts.dark === false ? LIGHT : DARK;
   const still = !!opts.reducedMotion;
 
-  const cv = document.createElement('canvas');
-  cv.setAttribute('aria-hidden', 'true');
-  cv.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;display:block;pointer-events:none';
-  host.appendChild(cv);
-  const c2d = cv.getContext('2d');
-  if (!c2d) return () => cv.remove();
-  const ctx = c2d;
+  const layer = hostCanvas(host);
+  if (!layer) return () => {};
+  const { cv, ctx } = layer;
 
   // Flat typed arrays, allocated once: position, velocity, radius, colour, twinkle.
   const X = new Float32Array(MAX), Y = new Float32Array(MAX);

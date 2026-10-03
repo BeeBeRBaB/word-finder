@@ -32,9 +32,43 @@ function revalidate(req){
   return fetch(req);
 }
 
+// A bump starts an empty cache, and activate's sweep deletes the old one with everything pages
+// loaded on demand: a background and what it imports, and the fonts. The first launch after an
+// update, if offline, then came back without them. So the new cache takes them over at install,
+// while the old one still serves: code fetched again for this build, along with any module it
+// now imports that the old build did not, and fonts copied (they never change). One that fails
+// is left for the next online visit.
+/** @returns {Promise<void>} */
+async function carryOver(){
+  const cache=await caches.open(CACHE);
+  const have=new Set((await cache.keys()).map(r=>r.url));
+  /** @param {string} url same-origin, path only @returns {Promise<unknown>} */
+  const take=async url=>{
+    if(have.has(url)||isSubject(new URL(url)))return;
+    have.add(url);
+    const res=await fetch(url,{cache:'no-cache'}).catch(()=>null);
+    if(!res?.ok)return;
+    await cache.put(url,res.clone());
+    // Static relative imports only: a dynamic one loads what the page picks next, online.
+    if(url.endsWith('.js'))return Promise.all([...(await res.text()).matchAll(/(?:from|import)\s*['"](\.\.?\/[^'"]+)['"]/g)].map(m=>take(new URL(m[1],url).href)));
+  };
+  const old=(await caches.keys()).filter(k=>k!==CACHE&&k!==SUBJECT_CACHE);
+  await Promise.all(old.map(async name=>{
+    const from=await caches.open(name);
+    await Promise.all((await from.keys()).map(async req=>{
+      const u=new URL(req.url);
+      if(u.origin===sw.location.origin)return take(u.origin+u.pathname);
+      if(have.has(req.url))return;
+      have.add(req.url);
+      const res=await from.match(req);
+      if(res)await cache.put(req,res);
+    }));
+  }));
+}
+
 // {cache:'reload'} per asset, not a bare addAll: the same max-age=600 trap, which turns
 // fatal the first time a deploy deletes a file a stale main.js still imports.
-sw.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS.map(u=>new Request(u,{cache:'reload'})))).then(()=>sw.skipWaiting()))});
+sw.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS.map(u=>new Request(u,{cache:'reload'})))).then(()=>carryOver().catch(()=>{})).then(()=>sw.skipWaiting()))});
 sw.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE&&k!==SUBJECT_CACHE).map(k=>caches.delete(k)))).then(()=>sw.clients.claim()))});
 
 sw.addEventListener('fetch',e=>{
@@ -54,7 +88,7 @@ sw.addEventListener('fetch',e=>{
   e.respondWith(caches.open(name).then(async cache=>{
     const cached=await cache.match(key);
     // Icons and fonts only change when renamed, so never revalidate them.
-    if(cached&&!isCode(new URL(req.url)))return cached;
+    if(cached&&!isCode(url))return cached;
     const fresh=revalidate(req).then(res=>{
       // Never cache a deploy-time 404/500. Opaque (cross-origin font) responses report
       // status 0 but are cacheable.

@@ -4,7 +4,7 @@
 //
 // This module knows nothing about the Theme page or the theme-color meta tag; those are
 // page shape, and reach it through the `onApply` callback.
-import { defaultStore } from './storage.js';
+import { safeStore } from './storage.js';
 
 export const PREF_KEY = 'wordfinder-appearance';
 /** A theme's two flavours, in the order its Theme page tiles show them. */
@@ -52,16 +52,12 @@ export const prefName = (pref) => title(normalizePref(pref));
  * @param {{store?:PrefStore|null, root?:Root, onApply?:(mode:Pref, theme:string)=>void}} [deps]
  */
 export function makeAppearance(deps = {}) {
-  const store = deps.store === undefined ? defaultStore() : deps.store;
+  const kv = safeStore(deps.store);
   const root = deps.root || document.documentElement;
   const onApply = deps.onApply || (() => {});
 
-  // A disabled, full or throwing store must degrade to "appearance not remembered",
-  // never into the game: same contract as makeStorage.
-  /** @param {string} key @returns {string|null} */
-  const read = (key) => { try { return store ? store.getItem(key) : null; } catch { return null; } };
-  let pref = normalizePref(read(PREF_KEY));
-  let theme = normalizeTheme(read(THEME_KEY));
+  let pref = normalizePref(kv.get(PREF_KEY));
+  let theme = normalizeTheme(kv.get(THEME_KEY));
 
   /** @returns {void} */
   function apply() {
@@ -82,7 +78,8 @@ export function makeAppearance(deps = {}) {
     setLook(t, p) {
       theme = normalizeTheme(t);
       pref = normalizePref(p);
-      try { if (store) { store.setItem(THEME_KEY, theme); store.setItem(PREF_KEY, pref); } } catch { /* not remembered */ }
+      kv.set(THEME_KEY, theme);
+      kv.set(PREF_KEY, pref);
       apply();
     },
     /** @returns {void} */

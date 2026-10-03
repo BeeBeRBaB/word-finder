@@ -145,24 +145,39 @@ test('the board and background from a first visit come back offline', async ({ p
   await expect(drawn).not.toHaveCount(0);
 });
 
-// A launch that could not put its save back offline tries again once the network returns,
-// but never deals behind New game, where the player may be choosing a board of their own.
-test('a launch that failed offline is tried again online, but not behind an open pane', async ({ page }) => {
+// A launch that could not put its save back offline tries again once the network returns, even
+// with New game open; but a board the player deals while it loads is theirs, and stays.
+test('a launch that failed offline is tried again online, and gives way to a board the player deals', async ({ page }) => {
   await blockServiceWorker(page);
   await openBoard(page, '/?seed=3&subject=nature/birds');
   const letters = await page.locator('#letters').textContent();
   const pool = /\/src\/subjects\/nature\.js/;
   await page.route(pool, (route) => route.abort());
-  await page.goto('/');
-  await expect(page.locator('#subject')).toHaveText('Offline');
-  await page.locator('#catbtn').click();
+  const offlineLaunch = async () => {
+    await page.goto('/');
+    await expect(page.locator('#subject')).toHaveText('Offline');
+    await page.locator('#catbtn').click();
+  };
+  await offlineLaunch();
   await page.unroute(pool);
   await page.evaluate(() => window.dispatchEvent(new Event('online')));
-  await page.waitForTimeout(500);
-  await expect(page.locator('#letters .cell')).toHaveCount(0);
   await page.locator('#picker-cancel').click();
-  await page.evaluate(() => window.dispatchEvent(new Event('online')));
   await expect.poll(() => page.locator('#letters').textContent()).toBe(letters);
+  // Again, with the save's pool slow this time, and Food dealt from New game meanwhile.
+  await page.route(pool, (route) => route.abort());
+  await offlineLaunch();
+  await page.unroute(pool);
+  /** @type {() => void} */
+  let release = () => {};
+  const held = new Promise((r) => { release = () => r(undefined); });
+  await page.route(pool, async (route) => { await held; await route.continue(); });
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
+  await page.locator('#picker-select').selectOption('food');
+  await page.locator('#picker-start').click();
+  await expect(page.locator('#category')).toHaveText('Food & Drink');
+  release();
+  await page.waitForTimeout(500);
+  await expect(page.locator('#category')).toHaveText('Food & Drink');
 });
 
 // Regression for 121de94 + 60b5099. Code is stale-while-revalidate: a changed asset

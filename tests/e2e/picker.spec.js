@@ -39,6 +39,9 @@ test('Cancel during a slow deal leaves the board alone, and Start cannot deal tw
   await page.locator('#picker-cancel').click({ force: true });
   await expect(page.locator('#picker')).toBeVisible();
   expect((await page.locator('.cell').allTextContents()).join('')).toBe(before);
+  // Choosing again meanwhile does not bring Start back for a click the dialog would ignore.
+  await page.locator('#picker-select').selectOption('sports');
+  await expect(page.locator('#picker-start')).toBeDisabled();
 
   // Once it lands the dialog closes itself, having dealt exactly one puzzle.
   release();
@@ -197,6 +200,24 @@ test('a category that fails to load stays open, reports the failure inline, and 
   await page.locator('#picker-start').click();
   await expect(page.locator('#picker')).toBeHidden();
   await expect(page.locator('#category')).toHaveText('Nature');
+});
+
+// A failed deal clears the category that failed, not one chosen while it was loading.
+test('a category chosen while a failing deal loads is kept, ready to start', async ({ page }) => {
+  await blockServiceWorker(page);
+  await openBoard(page, '/?seed=1&subject=nature/birds');
+  /** @type {() => void} */
+  let fail = () => {};
+  const held = new Promise((r) => { fail = () => r(undefined); });
+  await page.route('**/src/subjects/food.js', async (route) => { await held; await route.abort(); });
+  await page.locator('#catbtn').click();
+  await page.locator('#picker-select').selectOption('food');
+  await page.locator('#picker-start').click();
+  await page.locator('#picker-select').selectOption('sports');
+  fail();
+  await expect(page.locator('#picker-error')).toBeVisible();
+  await expect(page.locator('#picker-select')).toHaveValue('sports');
+  await expect(page.locator('#picker-start')).toBeEnabled();
 });
 
 // Undo used to regenerate the old board from its save. A deal steered by the coverage bag

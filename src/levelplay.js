@@ -7,7 +7,7 @@ import { scoreLevel } from './scoring.js';
 import { buildPuzzle } from './puzzle.js';
 import { makeRng } from './rng.js';
 import { mixFor } from './layout.js';
-import { defaultStore } from './storage.js';
+import { defaultStore, safeStore } from './storage.js';
 
 // Whose progress the local copy is, so a second account on this device never inherits it.
 export const OWNER_KEY = 'wordfinder-levels-owner-v1';
@@ -68,6 +68,7 @@ export const codeOf = (e) => {
 export function makeLevelPlay(deps) {
   const { cloud } = deps;
   const store = deps.store === undefined ? defaultStore() : deps.store;
+  const kv = safeStore(store);
   const now = deps.now ?? Date.now;
   const clock = deps.clock ?? (() => performance.now());
   const random = deps.random ?? Math.random;
@@ -86,8 +87,6 @@ export function makeLevelPlay(deps) {
   let saving = null;
   let again = false;
 
-  /** @returns {string|null} */
-  const owner = () => { try { return store ? store.getItem(OWNER_KEY) : null; } catch { return null; } };
 
   /** @param {string} uid @returns {void} */
   function adopt(uid) {
@@ -97,8 +96,8 @@ export function makeLevelPlay(deps) {
     saving = null;
     dirty = again = false;
     error = null;
-    if (owner() !== uid) local.clear();
-    try { if (store) store.setItem(OWNER_KEY, uid); } catch { /* not remembered */ }
+    if (kv.get(OWNER_KEY) !== uid) local.clear();
+    kv.set(OWNER_KEY, uid);
     prog = local.load();
   }
 
@@ -243,7 +242,7 @@ export function makeLevelPlay(deps) {
       gen++;
       cloud.signOut();
       local.clear();
-      try { if (store) store.removeItem(OWNER_KEY); } catch { /* nothing to forget */ }
+      kv.remove(OWNER_KEY);
       prog = live = null;
       dirty = again = false;
       saving = null;

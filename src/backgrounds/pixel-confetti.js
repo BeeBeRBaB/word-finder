@@ -1,6 +1,6 @@
 // Pixel Confetti: pixel-art strips, squares, rings and squiggles falling and tumbling.
 // Rasterised by hand into one reused buffer, so edges stay crisp.
-import { frameLoop } from './frame-loop.js';
+import { frameLoop, hostCanvas } from './frame-loop.js';
 
 /** @typedef {{colors:string[], dark:boolean, reducedMotion:boolean}} BackgroundOptions */
 
@@ -36,15 +36,9 @@ export function start(host, opts = {}) {
   const pal = light ? LIGHT : DARK;
   const still = !!opts.reducedMotion;
 
-  const cv = document.createElement('canvas');
-  cv.setAttribute('aria-hidden', 'true');
-  cv.style.cssText = 'position:absolute;left:0;top:0;display:block;pointer-events:none;' +
-    'image-rendering:crisp-edges;image-rendering:pixelated';
-  host.appendChild(cv);
-  const c2d = cv.getContext('2d');
-  if (!c2d) return () => cv.remove();
-  // Aliased: narrowing does not reach the hoisted functions below.
-  const ctx = c2d;
+  const layer = hostCanvas(host, true);
+  if (!layer) return () => {};
+  const { cv, ctx } = layer;
 
   // Colour table: [layer near/far][face front/back][palette index].
   const col = new Uint32Array(4 * pal.length);

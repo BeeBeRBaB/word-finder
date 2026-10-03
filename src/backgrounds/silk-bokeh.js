@@ -1,7 +1,7 @@
 // Silk Bokeh: three ribbons of fine flowing strands that pinch and fan as they wave,
 // with a few soft out-of-focus circles rising slowly past them.
 import { makeRng } from '../rng.js';
-import { frameLoop } from './frame-loop.js';
+import { frameLoop, hostCanvas } from './frame-loop.js';
 
 /**
  * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean}} BackgroundOptions
@@ -70,13 +70,9 @@ export function start(host, opts) {
   // Seeded, so the dot field is the same every time.
   const rand = makeRng(7331).random;
 
-  const cv = document.createElement('canvas');
-  cv.setAttribute('aria-hidden', 'true');
-  cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none';
-  host.appendChild(cv);
-  const c2d = cv.getContext('2d');
-  if (!c2d) return () => cv.remove();
-  const ctx = c2d;
+  const layer = hostCanvas(host);
+  if (!layer) return () => {};
+  const { cv, ctx } = layer;
 
   const sprites = P.dot.map(sprite);
   /** @type {Dot[]} */

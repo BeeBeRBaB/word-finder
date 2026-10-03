@@ -1,6 +1,6 @@
 // Letter bubbles: soap bubbles with a letter inside drift up, wobble, and pop.
 // Each bubble owns one small sprite canvas, repainted only when it respawns.
-import { frameLoop } from './frame-loop.js';
+import { frameLoop, hostCanvas } from './frame-loop.js';
 
 /**
  * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean}} BackgroundOptions
@@ -32,13 +32,9 @@ export function start(host, opts) {
   const dark = opts.dark !== false;
   const pal = dark ? DARK : LIGHT;
   const reduced = !!opts.reducedMotion;
-  const cv = document.createElement('canvas');
-  cv.setAttribute('aria-hidden', 'true');
-  cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none';
-  host.appendChild(cv);
-  const c2d = cv.getContext('2d');
-  if (!c2d) return () => cv.remove();
-  const ctx = c2d;
+  const layer = hostCanvas(host);
+  if (!layer) return () => {};
+  const { cv, ctx } = layer;
   /** @type {Bubble[]} */
   const parts = [];
   let W = 0, H = 0, dpr = 1, n = 0, t = 0;

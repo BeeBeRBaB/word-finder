@@ -34,7 +34,7 @@ export function start(host, opts = {}) {
   const ctx = stage.ctx;
 
   let W = 0, H = 0, t = 0, sd = 1;
-  /** @type {Cloud[]} */ let clouds = [];
+  /** @type {Cloud[]} */ const clouds = [];
   /** @type {{x:number, y:number, c:string, on:boolean, n:number}[]} */ let wins = [];
   /** @type {number[][]} */ let blink = [];
   /** @type {number[][]} */ let stars = [];
@@ -96,8 +96,10 @@ export function start(host, opts = {}) {
     }
   }
 
-  /** @param {boolean} near @returns {void} */
+  /** Each row of buildings draws from its own seed, left to right, so a wider screen shows more of
+   * the same city rather than another one. @param {boolean} near @returns {void} */
   function layer(near) {
+    sd = near ? 7919 : 104729;
     let x = -(rand() * 6 | 0), i = 0;
     const lo = near ? 0.1 : 0.2, hi = near ? 0.3 : 0.42;
     while (x < W) {
@@ -133,8 +135,12 @@ export function start(host, opts = {}) {
     }
   }
 
-  /** @returns {void} */
-  function paint() {
+  /** The city for this size. Clouds carry on across a resize, moved with it: redrawing them from
+   * the start made every rotation or window drag jump. @param {number} w @param {number} h
+   * @returns {void} */
+  function paint(w, h) {
+    for (const c of clouds) { c.x *= w / W; c.y = round(c.y * h / H); }
+    W = w; H = h;
     sd = 20240926; wins = []; blink = []; stars = [];
     bg.width = city.width = W; bg.height = city.height = H;
     sky();
@@ -147,8 +153,7 @@ export function start(host, opts = {}) {
       b.globalAlpha = 1;
     }
     layer(false); layer(true);
-    clouds = [];
-    for (let i = 0; i < 7; i++) {
+    for (let i = clouds.length; i < 7; i++) {
       const near = i % 2 === 0;
       const c = { near, s: sprite(near ? 22 + (rand() * 16 | 0) : 12 + (rand() * 10 | 0)), x: 0, y: 0, v: 0 };
       newCloud(c, true);
@@ -185,5 +190,5 @@ export function start(host, opts = {}) {
     for (const w of wins) if ((w.n -= dt) <= 0) { w.on = !w.on; w.n = 2 + rand() * 12; }
   }
 
-  return stage.run({ resize(w, h) { W = w; H = h; paint(); }, step, draw }, !!opts.reducedMotion);
+  return stage.run({ resize: paint, step, draw }, !!opts.reducedMotion);
 }

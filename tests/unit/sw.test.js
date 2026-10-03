@@ -155,6 +155,67 @@ function answers(handler, url) {
   return took;
 }
 
+// A bump used to throw away, with the old cache, everything pages had loaded on demand: the first
+// launch after an update, if offline, came back without its background or its fonts.
+test('install carries on-demand entries into a bumped cache: code fetched fresh, fonts copied', async () => {
+  const base = 'https://beeberbab.github.io/word-finder/';
+  const font = 'https://fonts.gstatic.com/s/x.woff2';
+  /** @type {Map<string, Map<string, Response>>} */
+  const store = new Map([['wordfinder-v1', new Map([
+    [`${base}src/main.js`, new Response('old main')],
+    [`${base}src/backgrounds/drifting-icons.js`, new Response('old drift')],
+    [`${base}src/backgrounds/gone.js`, new Response('old gone')],
+    [`${base}index.html?subject=nature/birds`, new Response('old page')],
+    [`${base}src/subjects/nature.js`, new Response('old pool')],
+    [font, new Response('font bytes')],
+  ])], ['wordfinder-subjects', new Map([[`${base}src/subjects/food.js`, new Response('pool')]])]]);
+  /** @param {unknown} k @returns {string} */
+  const keyOf = (k) => (typeof k === 'string' ? k : /** @type {{url:string}} */ (k).url);
+  const caches = {
+    keys: async () => [...store.keys()],
+    open: async (/** @type {string} */ name) => {
+      const m = store.get(name) ?? new Map();
+      store.set(name, m);
+      return {
+        keys: async () => [...m.keys()].map(url => ({ url })),
+        match: async (/** @type {unknown} */ k) => m.get(keyOf(k)),
+        put: async (/** @type {unknown} */ k, /** @type {Response} */ r) => { m.set(keyOf(k), r); },
+        addAll: async (/** @type {{url:string}[]} */ reqs) => { for (const r of reqs) m.set(r.url, new Response('precached')); },
+      };
+    },
+  };
+  /** @type {string[]} */
+  const fetched = [];
+  const fetch = async (/** @type {string} */ url, /** @type {{cache?:string}} */ opts) => {
+    fetched.push(`${url} ${opts?.cache}`);
+    if (url.endsWith('gone.js')) return new Response('', { status: 404 });
+    // This build's drift imports a module the old one never loaded, and one the shell precaches.
+    if (url.endsWith('drifting-icons.js')) return new Response("import { frameLoop } from './frame-loop.js';\nimport { makeRng } from '../rng.js';");
+    return new Response(`new ${url.slice(base.length)}`);
+  };
+  /** @type {Record<string, (e: object) => void>} */
+  const on = {};
+  const self = { location: new URL(`${base}sw.js`), skipWaiting: () => {},
+    addEventListener: (/** @type {string} */ t, /** @type {(e: object) => void} */ f) => { on[t] = f; } };
+  const Request = class { constructor(/** @type {string} */ u, /** @type {{cache?:string}} */ o = {}) { this.url = new URL(u, self.location).href; this.cache = o.cache; } };
+  vm.runInNewContext(sw, { self, caches, fetch, URL, Request, Response });
+  /** @type {Promise<unknown>|undefined} */
+  let installed;
+  on.install({ waitUntil: (/** @type {Promise<unknown>} */ p) => { installed = p; } });
+  await installed;
+  const now = /** @type {Map<string, Response>} */ (store.get(/const CACHE='([^']+)'/.exec(sw)?.[1] ?? ''));
+  assert.match(await now.get(`${base}src/backgrounds/drifting-icons.js`)?.text() ?? '', /frame-loop/);
+  assert.equal(await now.get(`${base}src/backgrounds/frame-loop.js`)?.text(), 'new src/backgrounds/frame-loop.js',
+    'a module this build newly imports comes too, or the carried background cannot load offline');
+  assert.equal(await now.get(font)?.text(), 'font bytes');
+  assert.equal(await now.get(`${base}src/main.js`)?.text(), 'precached', 'what the build precaches is not fetched twice');
+  assert.ok(!now.has(`${base}src/backgrounds/gone.js`), 'a file this build no longer has is dropped');
+  assert.ok(!now.has(`${base}index.html?subject=nature/birds`), 'kept by path, the key the fetch handler reads');
+  assert.ok(![...now.keys()].some(k => k.includes('/subjects/')), 'word pools live in their own cache');
+  assert.deepEqual(fetched.sort(), [`${base}src/backgrounds/drifting-icons.js no-cache`,
+    `${base}src/backgrounds/frame-loop.js no-cache`, `${base}src/backgrounds/gone.js no-cache`]);
+});
+
 // Firestore document URLs have no extension, so cache-first would hand cloud.load() a
 // device's first copy forever, to every account. Only Google Fonts is worth caching.
 test('cross-origin GETs other than Google Fonts are left to the network', () => {

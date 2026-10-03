@@ -23,7 +23,7 @@ import { DIFFICULTY_NAMES } from './scoring.js';
 const points = (n) => `${grouped(Math.max(0, Math.round(n)))} ${n === 1 ? 'point' : 'points'}`;
 
 /** One line on where the account stands. @param {Status} s @returns {string} */
-export function accountLine(s) {
+function accountLine(s) {
   const saved = s.error === 'offline' ? 'offline, saved here'
     : s.error || s.pending ? 'not saved online yet' : 'saved';
   return `Level ${s.level} · ${points(s.points)} · ${saved}`;
