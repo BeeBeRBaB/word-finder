@@ -46,6 +46,7 @@ have no DOM access at all, which is what makes them cheap to unit-test:
 | `src/catalog.js` | The 25 category names. No subjects, no words — loads on every visit. | data |
 | `src/subjects/*.js` | One category's word pools, 40+ words per subject. Lazily imported. | data |
 | `src/subjects.js` | Resolves a subject id to its pool, memoising each category module. | pure-ish |
+| `src/importer.js` | A dynamic import that can be tried again after it fails, used for the word pools and backgrounds: each retry asks for a fresh `?retry=N` URL, since a page never retries one it has failed on. | pure |
 | `src/appearance.js` | The look, a theme in its light or dark flavour: resolve onto `<html>` and persist. | DOM |
 
 ### Reproducible puzzles

@@ -240,11 +240,15 @@ function startLevel(deal) {
   // A page loaded or dealt in the background starts the clock when it is shown, not before.
   const events = play.start(deal, puzzle.words, document.hidden);
   if (!play.playing()) { levelBoard = null; showCategory(); return; }
+  const before = state.foundOrder.length;
   addFinds(events);
   play.carry(state.foundOrder.map(w => ({ word: w, revealed: !!state.found[w].revealed })));
+  if (state.foundOrder.length < puzzle.words.length) return;
   // Complete without a win, as when the last find reached this device but not the account:
-  // bank it quietly, the way a restored board never pops the win card.
-  if (state.foundOrder.length === puzzle.words.length) play.finish();
+  // bank it quietly, the way a restored board never pops the win card. A board the account's
+  // finds completed is a solve here too; one already complete was counted at its last find.
+  play.finish();
+  if (before < puzzle.words.length) progress.addSolve();
 }
 
 /** Put recorded finds (a level's, or a save's) on the board where the board places them,
@@ -1189,10 +1193,12 @@ renderAccountSection();
 // The account's progress, once the cloud has answered; and again whenever the device is back online.
 void booted.then(afterSync);
 window.addEventListener('online', () => {
-  // What failed to load may load now, so New game and the random draw offer it again, and a
-  // launch that could not put its board back (offline) tries again rather than wait for a tap.
+  // What failed to load may load now, so New game and the random draw offer it again, a
+  // background that could not load draws, and a launch that could not put its board back
+  // (offline) tries again rather than wait for a tap.
   unavailableCategories.clear();
   picker.refresh();
+  showBackdrop();   // a running one is left as it is
   // One launch at a time.
   if (!state.puzzle) launched = launched.then(() => { if (!state.puzzle) return boot(); });
   catchUp();

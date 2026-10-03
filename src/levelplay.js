@@ -174,6 +174,7 @@ export function makeLevelPlay(deps) {
         // A copy written by a newer build is not this one's to replace: leave it for that build.
         if (Number(/** @type {{v?:unknown}|null} */ (remote)?.v) > 1) { error = 'server'; return; }
         error = null;
+        // Nothing to write: the cloud already holds this copy, unsent finds and all.
         if (!take(remote)) { if (!again) dirty = false; continue; }
         /** @type {LevelProgress|null} */
         const sent = prog;

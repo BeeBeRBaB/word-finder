@@ -1,6 +1,7 @@
 // Background choices: the still category art (art.js) and the animated modules in
 // src/backgrounds/, which load only when picked. Pure: the import is injected, and the
 // host a background draws into is passed in.
+import { retryingImport } from './importer.js';
 
 /**
  * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed:number, corner?:boolean}} BackgroundOptions
@@ -53,9 +54,10 @@ export function findBackground(id, list = BACKGROUNDS) {
   return list.find(b => b.id === id) ?? list[0];
 }
 
-/** A background's module, by its registry `file`. Relative to this file, not the page.
- * @param {string} file @returns {Promise<BackgroundModule>} */
-export const importBackground = (file) => import(`./backgrounds/${file}.js`);
+/** A background's module, by its registry `file`, tried again under a new URL after a failure
+ * (importer.js says why). Relative to this file, not the page.
+ * @type {(file:string) => Promise<BackgroundModule>} */
+export const importBackground = retryingImport((file, query) => import(`./backgrounds/${file}.js${query}`));
 
 /**
  * Runs at most one animated background at a time. show() resolves once the new one is

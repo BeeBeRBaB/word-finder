@@ -83,12 +83,6 @@ class FakeEl {
     return false;
   }
   /** Only `#id`, which is all scorecard.js asks for. @param {string} sel @returns {FakeEl|null} */
-  closest(sel) {
-    /** @type {FakeEl|null} */
-    let n = this;
-    for (; n; n = n.parentNode) if (`#${n.id}` === sel) return n;
-    return null;
-  }
   /** In the document and not under anything hidden: what a player could see. */
   get rendered() {
     /** @type {FakeEl|null} */
@@ -171,7 +165,6 @@ function makeEnv({ late = 2 } = {}) {
   };
   const doc = new FakeDoc(win);
   const card = doc.createElement('div');
-  card.id = 'wincard';
   const host = doc.createElement('div');
   card.append(host);
   doc.body.append(card);
@@ -217,7 +210,7 @@ const STEP = 570, REVEAL = (BREAKDOWN.lines.length) * STEP + 450;
 function play(env, breakdown = BREAKDOWN, opts = {}) {
   const calls = { next: 0, stay: 0 };
   const pb = playBreakdown(/** @type {any} */ (env.host), /** @type {any} */ (breakdown), {
-    onNext: () => { calls.next++; }, onStay: () => { calls.stay++; }, ...opts,
+    onNext: () => { calls.next++; }, onStay: () => { calls.stay++; }, scope: /** @type {any} */ (env.card), ...opts,
   });
   return { pb, calls };
 }
@@ -640,7 +633,7 @@ test('focus moves to Next only from inside the card or from nowhere', () => {
   field.focus();
   play(env, BREAKDOWN, { reduceMotion: true });
   assert.equal(env.doc.activeElement, field);
-  // A host outside any #wincard judges by the host alone.
+  // With no scope given, the host alone is the card.
   env = makeEnv();
   const loose = env.doc.createElement('div');
   env.doc.body.append(loose);

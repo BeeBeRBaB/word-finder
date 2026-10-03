@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { findAndDrag, dragCells, openBoard, skipAhead, blockServiceWorker } from './helpers.js';
-import { buildPuzzle, runKey } from '../../src/puzzle.js';
+import { buildPuzzle, runKey, spanOf } from '../../src/puzzle.js';
 import { makeRng } from '../../src/rng.js';
 import { PRESETS } from '../../src/layout.js';
 import { WORDS } from '../../src/subjects/home.js';
@@ -327,10 +327,7 @@ test('a run that only spells a word does not find it', async ({ page }) => {
   // The board the page rendered must be the board we just rebuilt, or the rest is fiction.
   expect((await page.locator('.cell').allTextContents()).join('')).toBe(puzzle.cells.join(''));
 
-  const placed = new Set(puzzle.placements.map((p) => {
-    const last = p.word.length - 1;
-    return runKey(shape.size, { x0: p.x0, y0: p.y0, x1: p.x0 + p.dx * last, y1: p.y0 + p.dy * last });
-  }));
+  const placed = new Set(puzzle.placements.map((p) => runKey(shape.size, spanOf(p))));
   const ghost = findGhostRun(puzzle, shape.size, placed);
   if (!ghost) {
     // The compact 10x10 board draws 8 shorter words, so a pinned seed that ghosts on the

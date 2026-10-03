@@ -574,6 +574,64 @@ test('when the finds of two devices together complete a level, the one being loo
   await expect.poll(() => fb.progress(uid)?.level).toBe(4);
 });
 
+/** The puzzles this device has solved. @param {Page} page */
+const solves = (page) => page.evaluate(() => JSON.parse(localStorage.getItem('wordfinder-progress-v1') ?? '{}').puzzles ?? 0);
+
+test('a level the account\'s finds complete when the page reloads is banked quietly, as one solve', async ({ page }) => {
+  const fb = makeFirebase();
+  const uid = fb.add('ana_reads', 'hunter22');
+  fb.put(uid, PROGRESS);
+  await fb.install(page);
+  await signedInAs(page, uid, 'ana_reads');
+  await page.goto('/?subject=nature/birds');
+  await levelsSide(page);
+  await page.click('#picker-start');
+  await expect(page.locator('#category')).toHaveText('Level 3');
+  const words = (await page.locator('#list .w').allTextContents()).map(w => w.trim().toUpperCase());
+  for (const w of words.slice(0, -1)) await findAndDrag(page, w);
+  await setHidden(page, true);
+  await expect.poll(() => fb.progress(uid)?.current?.events?.length).toBe(words.length - 1);
+  // Another device found the last word, and this one comes back by a reload.
+  const p = fb.progress(uid);
+  fb.put(uid, { ...p, current: { ...p.current, events: [...p.current.events, { word: words[words.length - 1], at: p.current.elapsedMs + 1, revealed: false }] } });
+  await page.goto('/');
+  await expect(page.locator('#list .w.done')).toHaveCount(words.length);
+  await expect.poll(() => fb.progress(uid)?.level).toBe(4);
+  await expect(page.locator('#win')).toBeHidden();
+  expect(await solves(page)).toBe(1);
+});
+
+test('a level finished while signed out is banked on signing in again, and not counted twice', async ({ page }) => {
+  const fb = makeFirebase();
+  const uid = fb.add('ana_reads', 'hunter22');
+  fb.put(uid, PROGRESS);
+  await fb.install(page);
+  await signedInAs(page, uid, 'ana_reads');
+  await page.goto('/?subject=nature/birds');
+  await levelsSide(page);
+  await page.click('#picker-start');
+  await expect(page.locator('#category')).toHaveText('Level 3');
+  const words = (await page.locator('#list .w').allTextContents()).map(w => w.trim().toUpperCase());
+  await findAndDrag(page, words[0]);
+  await refuseSession(page);
+  await setHidden(page, true);    // the save on the way out is refused, which signs this device out
+  await setHidden(page, false);
+  await expect(page.locator('#category')).not.toHaveText('Level 3');
+  for (const w of words.slice(1)) await findAndDrag(page, w);
+  await expect(page.locator('#win')).toBeVisible();
+  expect(await solves(page)).toBe(1);
+  await page.click('#winclose');   // the finished board stays, rather than the next game coming
+  await page.unroute(/^https:\/\/(securetoken|firestore)\.googleapis\.com\//);
+  await fb.install(page);
+  await page.click('#appearance');
+  await page.locator('#settings-account').getByRole('button', { name: 'Sign in' }).click();
+  await page.getByLabel('Username').fill('ana_reads');
+  await page.getByLabel('Password').fill('hunter22');
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await expect.poll(() => fb.progress(uid)?.level).toBe(4);
+  expect(await solves(page)).toBe(1);
+});
+
 // Short landscape phones: Random | Levels and the level's score card both have to fit about 300px.
 for (const [w, h] of [[844, 300], [568, 320], [320, 400]]) {
   test(`New game and a level's score card fit ${w}x${h} without scrolling`, async ({ page }) => {

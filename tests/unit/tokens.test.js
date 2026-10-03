@@ -162,3 +162,15 @@ test('no bare colour literal survives outside the palette blocks', () => {
   assert.deepEqual(body.match(/#[0-9a-fA-F]{3,8}\b/g) ?? [], [], 'hex');
   assert.deepEqual(body.match(/\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch)\([^)]*\)/g) ?? [], [], 'colour functions');
 });
+
+// An installed app opens in the manifest's colours, then the page's meta tag takes over: any
+// difference flips the title bar on every launch.
+test('the manifest and the first-paint meta tag use the default look\'s --bg', () => {
+  const at = css.indexOf(DEFAULT_DARK), open = css.indexOf('{', at), close = css.indexOf('}', open);
+  const bg = /--bg:\s*([^;]+);/.exec(css.slice(open, close))?.[1].trim();
+  const manifest = JSON.parse(readFileSync(new URL('../../manifest.webmanifest', import.meta.url), 'utf8'));
+  const html = readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
+  assert.equal(manifest.theme_color, bg);
+  assert.equal(manifest.background_color, bg);
+  assert.equal(/<meta name="theme-color" content="([^"]+)">/.exec(html)?.[1], bg);
+});

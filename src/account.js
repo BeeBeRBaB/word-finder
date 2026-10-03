@@ -217,7 +217,7 @@ export function showLevelWin(card, title, level, f, opts) {
   const host = make(doc, 'div', 'sc-host');
   title.after(host);
   const { focus, ...rest } = opts;
-  const pb = playBreakdown(host, f.breakdown, { ...rest, nextLabel: 'Next level', footnote: levelFootnote(f) });
+  const pb = playBreakdown(host, f.breakdown, { ...rest, nextLabel: 'Next level', footnote: levelFootnote(f), scope: card });
   levelWins.set(card, pb);
   if (focus) {
     const skip = /** @type {HTMLElement|null} */ (host.querySelector('.sc-skip'));

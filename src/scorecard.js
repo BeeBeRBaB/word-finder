@@ -4,9 +4,11 @@
 /**
  * @typedef {import('./scoring.js').Breakdown} Breakdown
  * @typedef {{reduceMotion?:boolean, countdownMs?:number, nextLabel?:string, footnote?:string,
- *   onNext:() => void, onStay?:() => void}} PlayOptions
+ *   onNext:() => void, onStay?:() => void, scope?:HTMLElement}} PlayOptions
  *   countdownMs: 0, negative or Infinity means no countdown — the Next button only.
  *   footnote: a quiet line under the total, shown and read out with it.
+ *   scope: the dialog the card sits in, the host by default. Next takes focus once the card is
+ *   done only from inside it, or from nowhere.
  * @typedef {{skip():void, cancel():void, hold():void, rearm():void}} Playback
  *   hold: no countdown from now on, as when the player has opened something over the card.
  *   rearm: Next works once more, with no countdown, after the deal it asked for was dropped.
@@ -202,7 +204,7 @@ export function playBreakdown(host, breakdown, opts) {
     }
     // Only from inside the card or from nowhere: never out of a field the player is using.
     const a = doc.activeElement;
-    if (!a || a === doc.body || (host.closest('#wincard') ?? host).contains(a)) go.focus({ preventScroll: true });
+    if (!a || a === doc.body || (opts.scope ?? host).contains(a)) go.focus({ preventScroll: true });
   }
 
   function run() {
