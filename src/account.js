@@ -1,7 +1,7 @@
 // The levels screens outside the board: the Account section of Settings, the sign-in form, the
 // Levels side of New game and a level's score card. Each renders into a host main.js gives it,
 // and talks to the account only through levelplay.js; how dialogs and pages open is main.js's.
-import { playBreakdown } from './scorecard.js';
+import { playBreakdown, make, grouped } from './scorecard.js';
 
 /**
  * @typedef {import('./levelplay.js').Status} Status
@@ -17,20 +17,8 @@ import { playBreakdown } from './scorecard.js';
  *   focus: move focus into the card, as when no pane is open over it.
  */
 
-/** @param {Document} doc @param {string} tag @param {string} [cls] @param {string} [text]
- * @returns {HTMLElement} */
-function make(doc, tag, cls, text) {
-  const el = doc.createElement(tag);
-  if (cls) el.className = cls;
-  if (text) el.textContent = text;
-  return el;
-}
-
-/** @param {number} n @returns {string} */
-const grouped = (n) => String(Math.max(0, Math.round(n))).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-
 /** @param {number} n @returns {string} "1 point", "4,210 points" */
-const points = (n) => `${grouped(n)} ${n === 1 ? 'point' : 'points'}`;
+const points = (n) => `${grouped(Math.max(0, Math.round(n)))} ${n === 1 ? 'point' : 'points'}`;
 
 /** One line on where the account stands. @param {Status} s @returns {string} */
 export function accountLine(s) {
@@ -77,6 +65,7 @@ export function renderAccount(host, play, on) {
   const warn = make(doc, 'p', 'panenote acct-warn', "Your latest progress isn't saved online yet. Signing out here loses it.");
   warn.setAttribute('role', 'alert');   // shown in place of an action, so it is read out as it appears
   warn.hidden = true;
+  if (!s.signedIn) btn.setAttribute('aria-expanded', 'false');   // it opens the sign-in page
   host.replaceChildren(make(doc, 'h3', 'panesection', 'Account'), row, warn);
   btn.addEventListener('click', () => {
     if (!s.signedIn) { on.onSignIn(); return; }

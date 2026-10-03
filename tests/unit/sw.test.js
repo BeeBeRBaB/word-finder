@@ -97,7 +97,7 @@ test('word pools live in their own cache, which the activate sweep spares', () =
 test('a subject module is kept in the subject cache, on the same path as code', () => {
   /** @type {string[]} */
   const opened = [];
-  const handler = swFetchHandler((name) => opened.push(name));
+  const handler = swFetchHandler({ open: (name) => opened.push(name) });
   answers(handler, 'https://beeberbab.github.io/word-finder/src/subjects/animals.js?retry=1');
   answers(handler, 'https://beeberbab.github.io/word-finder/src/main.js');
   assert.deepEqual(opened, ['wordfinder-subjects', /const CACHE='([^']+)'/.exec(sw)?.[1]]);
@@ -105,23 +105,46 @@ test('a subject module is kept in the subject cache, on the same path as code', 
 
 // Matching with ignoreSearch while storing under the full URL let a ?subject= visit pin an
 // index.html that later refreshes never replaced; a coupled deploy then broke every launch.
-test('same-origin code is read and refreshed under one path-only key', () => {
+// subjects.js's `?retry=N` loads are the same file too, and must land on the one entry.
+test('same-origin code is read and refreshed under one path-only key', async () => {
   assert.ok(!/ignoreSearch\s*:/.test(sw), 'a search-blind match reads entries that refreshes never write');
-  assert.match(sw, /const key=url\.origin===sw\.location\.origin\?url\.origin\+url\.pathname:req;/);
-  assert.match(sw, /cache\.match\(key\)/);
-  assert.match(sw, /cache\.put\(key,res\.clone\(\)\)/);
+  /** @param {unknown} k @returns {string} */
+  const keyOf = (k) => (typeof k === 'string' ? k : /** @type {Request} */ (k).url);
+  /** @type {string[]} */
+  const read = [], wrote = [];
+  const cache = {
+    match: async (/** @type {unknown} */ k) => { read.push(keyOf(k)); },
+    put: async (/** @type {unknown} */ k) => { wrote.push(keyOf(k)); },
+  };
+  const handler = swFetchHandler({ cache, fetch: async () => new Response('ok') });
+  const base = 'https://beeberbab.github.io/word-finder/';
+  for (const url of [`${base}index.html?subject=nature/birds`, `${base}src/subjects/nature.js?retry=2`]) {
+    /** @type {Promise<unknown>|undefined} */
+    let answer;
+    handler({ request: new Request(url), respondWith(/** @type {Promise<unknown>} */ p) { answer = p; }, waitUntil() {} });
+    await answer;
+  }
+  const keys = [`${base}index.html`, `${base}src/subjects/nature.js`];
+  assert.deepEqual(read, keys, 'looked up under the full URL');
+  assert.deepEqual(wrote, keys, 'stored under the full URL');
 });
 
-/** Runs sw.js against stub globals and returns the fetch listener.
- * @param {(name: string) => void} [onOpen] told each cache the handler opens @returns {(e: object) => void} */
-function swFetchHandler(onOpen = () => {}) {
+/** Runs sw.js against stub globals and returns the fetch listener. By default every cache
+ * and fetch stays pending, which is enough to see what the handler answers and opens.
+ * @param {{open?: (name: string) => void, cache?: object, fetch?: () => Promise<Response>}} [stubs]
+ *   open: told each cache the handler opens; cache: what every open resolves to
+ * @returns {(e: object) => void} */
+function swFetchHandler({ open = () => {}, cache, fetch = () => new Promise(() => {}) } = {}) {
   /** @type {Record<string, (e: object) => void>} */
   const on = {};
   const self = {
     location: new URL('https://beeberbab.github.io/word-finder/sw.js'),
     addEventListener: (/** @type {string} */ t, /** @type {(e: object) => void} */ f) => { on[t] = f; },
   };
-  vm.runInNewContext(sw, { self, caches: { open: (/** @type {string} */ n) => { onOpen(n); return new Promise(() => {}); } }, fetch: () => new Promise(() => {}), URL, Request, Response });
+  const caches = {
+    open: (/** @type {string} */ n) => { open(n); return cache ? Promise.resolve(cache) : new Promise(() => {}); },
+  };
+  vm.runInNewContext(sw, { self, caches, fetch, URL, Request, Response });
   return on.fetch;
 }
 

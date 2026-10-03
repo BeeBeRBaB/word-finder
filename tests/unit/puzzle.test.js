@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildPuzzle, pickWords, snap, readLine, matchWord, runKey, cap } from '../../src/puzzle.js';
+import { buildPuzzle, pickWords, snap, lineIndices, matchWord, runKey, cap } from '../../src/puzzle.js';
 import { makeRng } from '../../src/rng.js';
 
 const FULL_MIX = [
@@ -143,9 +143,10 @@ test('a tap with no movement selects a single cell', () => {
   assert.deepEqual(snap(4, 4, 4.1, 4.1, 13), { x1: 4, y1: 4 });
 });
 
-test('readLine reads a selection in order', () => {
-  const cells = Array.from({ length: 169 }, (_, i) => 'ABCDEFGHIJKLM'[i % 13]);
-  assert.equal(readLine(cells, 13, { x0: 0, y0: 0, x1: 3, y1: 0 }), 'ABCD');
+test('lineIndices walks a selection from its start, in any direction', () => {
+  assert.deepEqual(lineIndices(13, { x0: 0, y0: 0, x1: 3, y1: 0 }), [0, 1, 2, 3]);
+  assert.deepEqual(lineIndices(13, { x0: 2, y0: 2, x1: 0, y1: 0 }), [28, 14, 0]);
+  assert.deepEqual(lineIndices(13, { x0: 4, y0: 4, x1: 4, y1: 4 }), [56]);
 });
 
 test('matchWord matches a placement, and nothing for an empty run', () => {

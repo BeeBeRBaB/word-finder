@@ -30,17 +30,20 @@ const running = new WeakMap();
 /** @param {unknown} n @returns {number} rounded; anything non-finite is 0 */
 const whole = (n) => (typeof n === 'number' && Number.isFinite(n) ? Math.round(n) : 0);
 
+/** Digits in threes: "4,210". @param {number} n whole and not negative @returns {string} */
+export const grouped = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
 /** Signed and grouped, with a real minus sign: "+1,240", "−60", "0".
  * @param {number} n @returns {string} */
 export function formatPoints(n) {
   const v = whole(n);
-  const digits = String(Math.abs(v)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const digits = grouped(Math.abs(v));
   return v > 0 ? `+${digits}` : v < 0 ? MINUS + digits : digits;
 }
 
-/** @param {Document} doc @param {string} tag @param {string} cls @param {string} [text]
+/** @param {Document} doc @param {string} tag @param {string} [cls] @param {string} [text]
  * @returns {HTMLElement} */
-function make(doc, tag, cls, text) {
+export function make(doc, tag, cls, text) {
   const el = doc.createElement(tag);
   if (cls) el.className = cls;
   if (text) el.textContent = text;

@@ -60,7 +60,9 @@ export function makeSettings(deps = {}) {
     /** Set one field; an invalid value is ignored rather than stored.
      * @template {keyof Settings} K @param {K} key @param {Settings[K]} value @returns {Settings} */
     set(key, value) {
-      data = normalizeSettings({ ...data, [key]: value });
+      const next = normalizeSettings({ ...data, [key]: value });
+      if (next[key] !== value) return { ...data };
+      data = next;
       try { if (store) store.setItem(SETTINGS_KEY, JSON.stringify(data)); } catch { /* not remembered */ }
       return { ...data };
     },

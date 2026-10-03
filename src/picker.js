@@ -18,10 +18,10 @@
  *   isUnavailable:(categoryId:string)=>boolean,
  *   isComplete:(categoryId:string)=>boolean,
  *   onStart:(categoryId:string|null)=>Promise<void>,
- *   opener?:HTMLElement, levels?:LevelSide,
- * }} deps
+ *   opener?:HTMLElement, levels?:LevelSide, behind?:HTMLElement[],
+ * }} deps `behind` is the page under the dialog, inert while it is open.
  */
-export function makePicker({ root, heading, select, warning, error, start, cancel, categories, isUnavailable, isComplete, onStart, opener, levels }) {
+export function makePicker({ root, heading, select, warning, error, start, cancel, categories, isUnavailable, isComplete, onStart, opener, levels, behind = [] }) {
   // A disabled placeholder, then the real categories. Random is the header's one-click New
   // game, so the list holds only things you can choose — no action hiding among the values.
   select.innerHTML = '';
@@ -99,6 +99,7 @@ export function makePicker({ root, heading, select, warning, error, start, cance
   const close = () => {
     if (pending || root.style.display !== 'flex') return;
     root.style.display = 'none';
+    for (const el of behind) el.inert = false;
     opener?.setAttribute('aria-expanded', 'false');
     opener?.focus();
   };
@@ -143,6 +144,7 @@ export function makePicker({ root, heading, select, warning, error, start, cance
     warning.style.display = inProgress ? '' : 'none';
     error.hidden = true;
     root.style.display = 'flex';
+    for (const el of behind) el.inert = true;
     opener?.setAttribute('aria-expanded', 'true');
     heading.focus();
   }

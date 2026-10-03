@@ -12,9 +12,10 @@ test('one radio tile per registry entry, in order, each a setting of art', () =>
 });
 
 test('a new registry entry gets a tile with no other change', () => {
-  const extra = { id: 'scene', name: 'Subject scene', animated: false, file: 'scene', glyph: '<circle class="g1" r="4"/>' };
+  const extra = { id: 'test-bg', name: 'Test ground', animated: false, file: 'test-bg', glyph: '<circle class="g9" r="4"/>' };
+  assert.ok(!tilesMarkup().includes('test-bg'), 'the stand-in entry must not already exist');
   const html = tilesMarkup([...BACKGROUNDS, extra]);
-  assert.ok(html.includes('value="scene"') && html.includes('Subject scene') && html.includes(extra.glyph));
+  assert.ok(html.includes('value="test-bg"') && html.includes('<span class="bgname">Test ground</span>') && html.includes(extra.glyph));
 });
 
 test('the badge says Animated or Still, with its own icon', () => {

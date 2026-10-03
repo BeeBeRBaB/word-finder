@@ -8,9 +8,8 @@ import { WORDS } from '../../src/subjects/home.js';
 // Regression for 43c8402. Winning schedules the overlay on a 700ms timer. Starting
 // a new puzzle inside that window used to let the stale timer drop the overlay over
 // a fresh grid, where it swallowed every pointer event and made the game unplayable.
-// #newbtn now opens the picker rather than dealing directly, so "starting a new game"
-// goes through it: pick a category explicitly (nature, the same one already on
-// screen).
+// The new game goes through the category picker, picking the category already on
+// screen (nature).
 test('starting a new game during the win delay leaves the board playable', async ({ page }) => {
   await page.goto('/?seed=1&subject=nature/birds');
   const words = await page.locator('.w').allTextContents();
@@ -213,9 +212,9 @@ test('every same-origin asset the app loads is covered by the precache list', as
   ]);
 
   // Legitimately not app assets and not expected in ASSETS: the test harness's own
-  // endpoints, and sw.js itself (a service worker doesn't precache itself). Chromium
-  // did not request favicon.ico in practice here (no <link rel="icon">, headless),
-  // but it's excluded on principle rather than by accident of what one browser does.
+  // endpoints, and sw.js itself (a service worker doesn't precache itself). favicon.ico
+  // is excluded on principle: index.html links icon-192.png as the icon, so no browser
+  // should ask for it, but that is not this test's to pin.
   const EXCLUDED = new Set(['__probe.js', '__stats', '__reset', 'sw.js', 'favicon.ico']);
   // A per-category word pool, e.g. src/subjects/nature.js, is the one thing this app
   // loads that must NOT be in ASSETS -- see the "loaded lazily" comment atop
@@ -328,7 +327,7 @@ for (const height of [568, 400]) test(`the win card and the score card in it fit
     expect(b && b.x + b.width).toBeLessThanOrEqual(320);
   };
   await inside();
-  // The score card, mounted under the title where the levels wiring will put it.
+  // The score card, mounted under the title where account.js's showLevelWin puts it.
   await page.evaluate(async () => {
     const card = '/src/scorecard.js', scoring = '/src/scoring.js';
     const { playBreakdown } = await import(card);

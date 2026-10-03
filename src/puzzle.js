@@ -252,8 +252,8 @@ export function snap(sx, sy, fx, fy, size) {
   return { x1: sx + ux * L, y1: sy + uy * L };
 }
 
-/** Flat `cells` indices under a selection. Shared so reading letters and colouring
- * found ones cannot walk a selection differently.
+/** Flat `cells` indices under a selection, start to end inclusive: the cells a found
+ * word colours.
  * @param {number} size @param {Selection} sel @returns {number[]} */
 export function lineIndices(size, sel) {
   const dx = Math.sign(sel.x1 - sel.x0), dy = Math.sign(sel.y1 - sel.y0);
@@ -262,12 +262,6 @@ export function lineIndices(size, sel) {
   const out = [];
   for (let i = 0; i < len; i++) out.push((sel.y0 + dy * i) * size + (sel.x0 + dx * i));
   return out;
-}
-
-/** Read the letters under a selection, start to end inclusive.
- * @param {string[]} cells @param {number} size @param {Selection} sel @returns {string} */
-export function readLine(cells, size, sel) {
-  return lineIndices(size, sel).map(i => cells[i]).join('');
 }
 
 /** A cell run's identity: its two endpoints, unordered. Two points determine exactly one

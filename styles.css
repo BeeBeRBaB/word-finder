@@ -334,8 +334,6 @@ body{position:fixed;inset:0;width:100%;height:100%}
    collapse freely rendered #subject at zero width, invisible rather than truncated. */
 #category{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #subject{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1 1 auto;min-width:5ch}
-/* A phone has ~190px beside the buttons. The app's own name is the one thing there the
-   player does not need, so the label line becomes just the category. */
 /* A 320px phone has 300px for two content-sized columns of 19px words, which peak at 316px
    (tests/viewport.js "iPhone SE portrait" clipped 26px). Smaller type and padding there only. */
 @media (max-width:359px){
@@ -343,6 +341,10 @@ body{position:fixed;inset:0;width:100%;height:100%}
   #list .w.done::after{left:8px;right:8px}
   #list{column-gap:8px;margin-left:-8px}
 }
+/* A phone has ~190px beside the buttons. The app's own name is the one thing there the
+   player does not need, so the label line becomes just the category. The container rule
+   above already does this wherever the title block is that narrow; this is the same by
+   viewport, for a browser without container queries (iOS 15). */
 @media (max-width:479px){
   #kicker{display:none}
   /* #kickerline in front: the base '/ ' rule sits later in the file at equal specificity. */
@@ -677,8 +679,8 @@ body{position:fixed;inset:0;width:100%;height:100%}
 .bgglyph .g3{fill:var(--confetti-3)}
 .bgglyph .g4{fill:var(--confetti-4)}
 .bgglyph .ln{fill:none;stroke:var(--text);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-/* Capped, and genuinely scrollable. The card gained a checkbox row, and a short landscape
-   phone leaves ~300px of usable height. box-sizing matters: without it the cap applies to
+/* Capped, and genuinely scrollable. The card holds a mode switch, a field and two buttons,
+   and a short landscape phone leaves ~300px of usable height. box-sizing matters: without it the cap applies to
    the CONTENT box, so 60px of padding and 2px of border sat outside it and the card ended
    up taller than the viewport with Start unreachable. overflow-y matters for the same
    reason — a max-height with no scroll container clips rather than scrolls. The 100vh line
@@ -689,17 +691,17 @@ body{position:fixed;inset:0;width:100%;height:100%}
   max-height:calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 32px);
   max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 32px)}
 /* Short landscape has no room for the full spacing once the card must also fit buttons.
-   Everything here is margin and padding; the 48px checkbox row and the 44px buttons are
-   touch targets and are deliberately not shrunk. The rest of it follows the base rules below,
+   Everything here is margin and padding; the 44px control and buttons are touch targets
+   and are deliberately not shrunk. The rest of it follows the base rules below,
    which it has to come after to win. */
 @media (max-height:420px){
   #pickercard{padding:16px 24px}
 }
 #pickercard h2{font-family:var(--display);font-weight:700;font-size:22px;color:var(--text-strong);margin:0 0 14px}
 #picker-warning{font-size:14.5px;color:var(--muted);margin:0 0 18px;max-width:260px}
-/* Scoped to the Category label by its `for`, NOT `#pickercard label`: that was (1,0,1)
-   and silently beat #picker-least's (1,0,0), rendering the checkbox row as a second
-   uppercase field label. Specificity, not source order — reordering would not have fixed it. */
+/* Scoped to the Category label by its `for`, NOT `#pickercard label`: at (1,0,1) that beats
+   an id rule on any other label in the card, and once turned a checkbox row into a second
+   uppercase field label. Specificity, not source order — reordering would not fix it. */
 label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--label);margin-bottom:6px;text-align:left}
 /* appearance:none so the control takes the card's colours rather than the platform's
    white; 44px is the touch target the rest of the dialogs keep. It also strips the
@@ -727,7 +729,7 @@ label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12
 #picker-cancel,#picker-start{border:none;border-radius:var(--radius-ctl);padding:12px 22px;font-family:inherit;font-weight:700;font-size:15px;cursor:pointer;min-height:44px}
 #picker-cancel{background:transparent;border:1.5px solid var(--accent);color:var(--accent-text)}
 #picker-start{background:var(--accent);color:var(--accent-ink)}
-/* All three go disabled together while a deal is in flight, so all three have to look it. */
+/* Start until there is something to start, and both while a deal is in flight. */
 #picker-actions button[disabled]{opacity:.45;cursor:not-allowed}
 /* Edges: --border is a divider tone and is under 3:1 against the card in most themes, so
    the closed control takes --muted and the open list --accent (both 4:1+ in all 14).
@@ -765,7 +767,6 @@ label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12
       font-size:15px;color:var(--text);background:transparent;cursor:pointer}
     #picker-select option:hover,#picker-select option:focus-visible{background:var(--accent-wash);outline:none}
     #picker-select option:checked{color:var(--accent-text);font-weight:700}
-    #picker-select option::checkmark{color:var(--accent-text)}
     /* Accent text on the wash is 4.33:1 in Phosphor light; the strongest text colour is not. */
     #picker-select option:checked:is(:hover,:focus-visible){color:var(--text-strong)}
     #picker-select option:disabled{color:var(--muted);cursor:default;background:transparent}
@@ -826,7 +827,6 @@ label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12
   #wincard{animation:none}
   #pickercard,#settingscard{animation:none}
   #winbar{display:none}
-  .pill{transition:none}
   .w.glow{animation:none}
   /* main.js already skips sweep() under reduced motion; this is the belt to that braces. */
   #gridbox.sweep::after{animation:none}
@@ -836,7 +836,6 @@ label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12
 :root[data-motion="reduce"] #settingscard,:root[data-motion="reduce"] .w.glow,
 :root[data-motion="reduce"] #gridbox.sweep::after{animation:none}
 :root[data-motion="reduce"] #winbar{display:none}
-:root[data-motion="reduce"] .pill{transition:none}
 /* Level score card */
 /* scorecard.js's end-of-level breakdown, mounted in #wincard. Rows wipe in left to right (the
    duration matches WIPE_MS); the countdown bar is scaled from JS, so it pauses with the page. */

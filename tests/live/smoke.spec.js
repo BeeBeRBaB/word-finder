@@ -93,8 +93,8 @@ test('every same-origin asset the app loads on the live origin is covered by the
     ];
 
     // Legitimately not app assets and not expected in ASSETS: sw.js itself (a
-    // service worker doesn't precache itself), and favicon.ico on principle even
-    // though no browser has been observed requesting it here (no <link rel="icon">).
+    // service worker doesn't precache itself), and favicon.ico on principle:
+    // index.html links icon-192.png as the icon, so no browser should ask for it.
     const EXCLUDED = new Set(['sw.js', 'favicon.ico']);
     // A per-category word pool, e.g. src/subjects/nature.js, is the one thing this app
     // loads that must NOT be in ASSETS: precaching it would pull all 25 categories'

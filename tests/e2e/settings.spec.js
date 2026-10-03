@@ -26,6 +26,21 @@ async function solve(page) {
   await expect(page.locator('#win')).toBeVisible();
 }
 
+// Both panes say aria-modal; Tab used to walk out of them onto the board's controls behind.
+test('Tab stays inside Settings and New game while they are open', async ({ page }) => {
+  await page.goto('/?seed=1&subject=nature/birds');
+  for (const opener of ['#appearance', '#catbtn']) {
+    await page.locator(opener).click();
+    for (let i = 0; i < 30; i++) {
+      await page.keyboard.press('Tab');
+      expect(await page.evaluate(() => !!document.activeElement?.closest('#app, #win, #toast')), `${opener} tab ${i}`).toBe(false);
+    }
+    await page.keyboard.press('Escape');
+    await expect(page.locator(opener)).toBeFocused();
+  }
+  await expect(page.locator('#pickercard')).toHaveAttribute('role', 'dialog');
+});
+
 test('the header button opens Settings, and Escape closes it with focus returned', async ({ page }) => {
   await page.goto('/?seed=1&subject=nature/birds');
   const btn = page.locator('#appearance');

@@ -79,18 +79,20 @@ test('all six confetti slots exist in both palettes', () => {
   }
 });
 
-// Three numbers are written in both a module and the stylesheet, and each is commented
-// "must match" with nothing checking. A drift renders wrong rather than throwing: the
-// grid overlaps the rail, the solved mark is cropped, or a word strikes out mid-glow.
+// Numbers written in both a module and the stylesheet, each commented "must match". A drift
+// renders wrong rather than throwing: the grid overlaps the rail, the solved mark is cropped,
+// a word strikes out mid-glow, the next-puzzle bar drains at a different pace than the deal,
+// or a pane is placed for a card on a screen that shows it as a page.
+/** @param {string} p @returns {string} */
+const read = (p) => readFileSync(new URL(p, import.meta.url), 'utf8');
+/** @param {string} src @param {RegExp} re @param {string} what @returns {number} */
+const num = (src, re, what) => {
+  const m = src.match(re);
+  assert.ok(m, `could not find ${what} — did it get renamed?`);
+  return Number(m[1]);
+};
+
 test('the numbers shared between a module and the stylesheet agree', () => {
-  /** @param {string} p @returns {string} */
-  const read = (p) => readFileSync(new URL(p, import.meta.url), 'utf8');
-  /** @param {string} src @param {RegExp} re @param {string} what @returns {number} */
-  const num = (src, re, what) => {
-    const m = src.match(re);
-    assert.ok(m, `could not find ${what} — did it get renamed?`);
-    return Number(m[1]);
-  };
   assert.equal(
     num(read('../../src/layout.js'), /const GAP = (\d+)/, 'GAP in layout.js'),
     num(css, /#app\[data-landscape\]\{[^}]*column-gap:(\d+)px/, "#app[data-landscape]'s column-gap"),
@@ -103,6 +105,26 @@ test('the numbers shared between a module and the stylesheet agree', () => {
     num(read('../../src/main.js'), /const GLOW_MS = (\d+)/, 'GLOW_MS in main.js'),
     num(css, /\.w\.glow\{[^}]*animation:foundGlow ([\d.]+)s/, "the foundGlow duration") * 1000,
     'main.js strikes a word through at a different moment than the glow ends');
+  const main = read('../../src/main.js');
+  assert.equal(
+    num(main, /const AUTO_NEXT_MS = (\d+)/, 'AUTO_NEXT_MS in main.js'),
+    num(css, /#winnext\.run #winbar i\{animation:drain ([\d.]+)s/, 'the drain duration') * 1000,
+    'the next-puzzle bar empties at a different moment than the deal');
+});
+
+test('main.js places panes at the same breakpoints the stylesheet lays them out at', () => {
+  const main = read('../../src/main.js');
+  const page = /** @type {RegExpMatchArray} */ (main.match(/const SETTINGS_PAGE = '([^']+)'/));
+  assert.ok(page, 'could not find SETTINGS_PAGE in main.js');
+  assert.ok(css.includes(`@media ${page[1]}{\n  #settings{`), `no \`@media ${page[1]}\` block styles #settings as a page`);
+  assert.equal(
+    num(main, /innerWidth < (\d+)/, "anchorPane's width cut-off"),
+    num(css, /@media \(min-width:(\d+)px\)\{\s*#picker,#settings\{/, 'the pane card breakpoint'),
+    'anchorPane anchors a card the stylesheet draws as a full-width sheet, or the reverse');
+  assert.equal(
+    num(main, /innerHeight > (\d+)/, "anchorPane's height cut-off"),
+    num(css, /@media \(min-width:\d+px\) and \(max-height:(\d+)px\)\{\s*#picker,#settings\{padding-top/, 'the short-screen pane breakpoint'),
+    'anchorPane drops a pane under the header on a screen the stylesheet pins it to the top');
 });
 
 // The category list is laid out as a fixed number of rows so it fills by column. Adding a
@@ -121,7 +143,7 @@ test('the category list rows match the catalog', async () => {
 // block ends last, rather than assuming DEFAULT_DARK is second — hard-coding one
 // block's position silently scans an empty (or wrong) string the moment the file
 // order changes again.
-test('no bare hex literal survives outside the palette blocks', () => {
+test('no bare colour literal survives outside the palette blocks', () => {
   const closeOf = (selector) => {
     const at = css.indexOf(selector);
     const open = css.indexOf('{', at);
@@ -130,5 +152,6 @@ test('no bare hex literal survives outside the palette blocks', () => {
   const lastClose = Math.max(closeOf(DEFAULT_DARK), closeOf(LIGHT_ONLY), ...THEME_BLOCKS.map(closeOf));
   const body = css.slice(lastClose + 1);
   assert.ok(body.length > 100, 'suspiciously little CSS left after the palette blocks — did the slice point go wrong?');
-  assert.deepEqual(body.match(/#[0-9a-fA-F]{3,8}\b/g) ?? [], []);
+  assert.deepEqual(body.match(/#[0-9a-fA-F]{3,8}\b/g) ?? [], [], 'hex');
+  assert.deepEqual(body.match(/\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch)\([^)]*\)/g) ?? [], [], 'colour functions');
 });

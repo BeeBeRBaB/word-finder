@@ -165,19 +165,8 @@ function sweep() {
  * @param {Deal|null} [level] the level this board is; start timing it once its finds are back
  * @returns {void} */
 function newPuzzle(seed, subject, shape, useBag = true, dealt, level = null) {
-  // Leaving a level saves where it stood, so New game's Levels side picks it up again.
-  if (levelBoard) play.pause();
-  levelBoard = level;
-  categoryName = subject.categoryName;
-  currentSeed = seed;
-  subjectId = subject.id;
-  state.size = shape.size;
-  state.minCell = shape.minCell;
-  const rng = makeRng(seed);
-  justFound = null;
-  state.found = {}; state.foundOrder = []; state.sel = null; state.miss = null; state.drag = null;
-  state.puzzle = dealt ?? buildPuzzle({
-    name: subject.name, pool: subject.words, rng,
+  const puzzle = dealt ?? buildPuzzle({
+    name: subject.name, pool: subject.words, rng: makeRng(seed),
     size: shape.size, count: shape.count,
     // Difficulty only for an ordinary deal: a pinned ?seed= must deal every player the same board.
     mix: useBag ? mixFor(shape, cfg.get().difficulty) : shape.mix,
@@ -186,18 +175,31 @@ function newPuzzle(seed, subject, shape, useBag = true, dealt, level = null) {
   // At deal time, not at the win: the bag records what you were SHOWN. Solving is a
   // separate fact, counted by addSolve, so an abandoned puzzle still advances coverage —
   // you saw those words either way.
-  if (useBag) progress.noteDraw(subject.id, subject.words, state.puzzle.words);
-  els.subject.textContent = cap(state.puzzle.name);
-  els.subject.dataset.accent = String(accentSlot(state.puzzle.name));
+  if (useBag) progress.noteDraw(subject.id, subject.words, puzzle.words);
+  showBoard({ puzzle, found: {}, foundOrder: [], seed, subjectId: subject.id, size: shape.size,
+    minCell: shape.minCell, category: subject.categoryName, level });
+  sweep();
+}
+
+/** Put a board on screen as the live one: a new deal's, or Undo's snapshot. Saves it too.
+ * @param {Snapshot} b @returns {void} */
+function showBoard(b) {
+  // Leaving a level saves where it stood, so New game's Levels side picks it up again.
+  if (levelBoard) play.pause();
+  levelBoard = b.level; categoryName = b.category; currentSeed = b.seed; subjectId = b.subjectId;
+  state.size = b.size; state.minCell = b.minCell;
+  state.puzzle = b.puzzle; state.found = b.found; state.foundOrder = b.foundOrder;
+  state.sel = null; state.miss = null; state.drag = null; justFound = null;
+  els.subject.textContent = cap(b.puzzle.name);
+  els.subject.dataset.accent = String(accentSlot(b.puzzle.name));
   showCategory();
-  renderArt(els, subject.id, cfg.get().art);
+  renderArt(els, b.subjectId, cfg.get().art);
   showBackdrop();
   // Or a stale timer drops the win overlay over the fresh grid, swallowing every tap.
   if (state.winTimer) { clearTimeout(state.winTimer); state.winTimer = null; }
   hideWin();
-  layout();
+  layout();   // a new puzzle object, so this rebuilds the cells, found ones and pills
   list();
-  sweep();
   persist();
 }
 
@@ -242,8 +244,9 @@ function startLevel(deal) {
   if (state.foundOrder.length === puzzle.words.length) play.finish();
 }
 
-/** Put a level's recorded finds on the board, reveals as reveals, skipping words already
- * there. @param {import('./levels.js').LevelEvent[]} events @returns {boolean} whether any were added */
+/** Put recorded finds (a level's, or a save's) on the board where the board places them,
+ * reveals as reveals, skipping words already there.
+ * @param {{word:string, revealed?:boolean}[]} events @returns {boolean} whether any were added */
 function addFinds(events) {
   const puzzle = state.puzzle;
   if (!puzzle) return false;
@@ -454,9 +457,9 @@ els.gridbox.addEventListener('pointercancel', (e) => {
  * @param {unknown} err @returns {void} */
 function reportLoadFailure(err) {
   const offline = err instanceof SubjectLoadError && err.reason === 'unavailable';
-  // Recorded here, not just in newGame: boot()'s ?subject=/?category= path and restore()
-  // call the loader directly, and a failure on either used to be shown and then
-  // forgotten. Only 'unavailable' — 'unknown' means an id nothing offers anyway.
+  // Recorded here as well as in fetchCategory: restore() and every loadSubject call reach
+  // the loader without it, and a failure there used to be shown and then forgotten.
+  // Only 'unavailable' — 'unknown' means an id nothing offers anyway.
   if (offline) unavailableCategories.add(categoryOf(err.id));
   els.subject.textContent = offline ? 'Offline' : 'Unavailable';
   els.category.textContent = '';
@@ -468,13 +471,24 @@ function reportLoadFailure(err) {
 /** @type {Set<string>} */
 const unavailableCategories = new Set();
 
-// A category's size is only knowable once its module is imported, and importing all 25 to
-// label a dropdown would defeat the lazy load sw.js routes a whole separate cache to
-// protect. Learning it on load is enough, and it persists: a category can only be
-// completed by playing it, and playing it loads it.
-/** @param {import('./subjects.js').CategoryData} cat @returns {void} */
-function noteCategory(cat) {
-  progress.noteSize(cat.id, cat.subjectIds.length);
+/** loadCategory, recorded: a failure marks the category unavailable, and a success clears
+ * that (cache warmed, network back; the loader retries on a fresh URL so this can happen)
+ * and notes its size. Every deal goes through here: boot's, newGame's and a level's.
+ * @param {string} id @returns {Promise<import('./subjects.js').CategoryData>} */
+async function fetchCategory(id) {
+  try {
+    const cat = await loadCategory(id);
+    unavailableCategories.delete(id);
+    // A category's size is only knowable once its module is imported, and importing all 25
+    // to label a dropdown would defeat the lazy load sw.js routes a whole separate cache to
+    // protect. Learning it on load is enough, and it persists: a category can only be
+    // completed by playing it, and playing it loads it.
+    progress.noteSize(cat.id, cat.subjectIds.length);
+    return cat;
+  } catch (err) {
+    unavailableCategories.add(id);
+    throw err;
+  }
 }
 
 /** A fresh subject is a player-facing surprise, so it stays on Math.random() rather than
@@ -490,18 +504,7 @@ async function newGame(categoryId, stillWanted = () => true) {
   const candidates = CATEGORIES.filter(c => !unavailableCategories.has(c.id));
   const drawPool = candidates.length ? candidates : CATEGORIES;
   const id = categoryId ?? drawPool[Math.floor(Math.random() * drawPool.length)].id;
-  /** @type {import('./subjects.js').CategoryData} */
-  let cat;
-  try {
-    cat = await loadCategory(id);
-  } catch (err) {
-    unavailableCategories.add(id);
-    throw err;
-  }
-  // A category that failed before but loads now (cache warmed, network back) is no longer
-  // a reason to skip it. The loader retries on a fresh URL precisely so this can succeed.
-  unavailableCategories.delete(id);
-  noteCategory(cat);
+  const cat = await fetchCategory(id);
   // Least-seen first, still avoiding the subject already on screen. This generalises the
   // filter that used to live here: chooseSubject drops `current` last and only when
   // something else remains, so it can never empty the pool and dead-end.
@@ -513,24 +516,11 @@ async function newGame(categoryId, stillWanted = () => true) {
   newPuzzle(Date.now() >>> 0, subject, shapeFor());
   return true;
 }
-/** A category for a level, recorded like newGame's: a level is dealt from the same catalog.
- * @param {string} id @returns {Promise<import('./subjects.js').CategoryData>} */
-async function levelCategory(id) {
-  try {
-    const cat = await loadCategory(id);
-    unavailableCategories.delete(id);
-    noteCategory(cat);
-    return cat;
-  } catch (err) {
-    unavailableCategories.add(id);
-    throw err;
-  }
-}
 /** Deal the account's level: the one in progress, else the next. No coverage bag, so every
  * device deals one level the same board at one size. Rejects as newGame does.
  * @param {() => boolean} [stillWanted] @returns {Promise<boolean>} whether it dealt */
 async function dealLevel(stillWanted = () => true) {
-  const deal = await play.deal(CATEGORIES.map(c => c.id), levelCategory, cfg.get().difficulty);
+  const deal = await play.deal(CATEGORIES.map(c => c.id), fetchCategory, cfg.get().difficulty);
   if (!deal) throw new Error('no level to deal: signed out, or the account changed');
   const subject = await loadSubject(deal.subject);
   if (!stillWanted()) return false;
@@ -539,9 +529,15 @@ async function dealLevel(stillWanted = () => true) {
   startLevel(deal);
   return true;
 }
+// What New game and Settings cover: inert while either is open, as their aria-modal says, so
+// Tab and a screen reader stay inside the pane.
+const behindPanes = [els.app, els.win, must('toast')];
+/** @param {boolean} on @returns {void} */
+const coverBehind = (on) => { for (const el of behindPanes) el.inert = on; };
 // newGame rejects when a category cannot be fetched; the picker catches that to keep
 // itself open, so the rejection must survive rather than being swallowed here.
 const picker = makePicker({
+  behind: behindPanes,
   root: els.picker,
   heading: must('picker-title'),
   select: /** @type {HTMLSelectElement} */ (must('picker-select')),
@@ -721,21 +717,7 @@ function snapshot() {
 /** Put a snapshot back as the live board, without regenerating it.
  * @param {Snapshot} snap @returns {void} */
 function reinstate(snap) {
-  if (levelBoard) play.pause();
-  levelBoard = snap.level; categoryName = snap.category;
-  currentSeed = snap.seed; subjectId = snap.subjectId;
-  state.size = snap.size; state.minCell = snap.minCell;
-  state.puzzle = snap.puzzle; state.found = snap.found; state.foundOrder = snap.foundOrder;
-  state.sel = null; state.miss = null; state.drag = null; justFound = null;
-  els.subject.textContent = cap(snap.puzzle.name);
-  els.subject.dataset.accent = String(accentSlot(snap.puzzle.name));
-  showCategory();
-  renderArt(els, snap.subjectId, cfg.get().art);
-  showBackdrop();
-  hideWin();
-  layout();   // a different puzzle object, so this rebuilds the cells, found ones and pills
-  list();
-  persist();
+  showBoard(snap);
   if (levelBoard) startLevel(levelBoard);
 }
 /** @returns {void} */
@@ -1010,6 +992,7 @@ function openSettings() {
   if (st.signedIn && (st.pending || st.error)) void play.sync().then(afterSync);
   anchorPane(settings);
   settings.style.display = 'flex';
+  coverBehind(true);
   els.appearance.setAttribute('aria-expanded', 'true');
   // The title, not the first control: focusing a select from a tap opens it on an iPhone.
   must('settings-title').focus({ preventScroll: true });
@@ -1023,6 +1006,7 @@ function closeSettings() {
   // A sign-in still in flight lands in Settings, not by reopening New game.
   signInFromPicker = false;
   settings.style.display = 'none';
+  coverBehind(false);
   els.appearance.setAttribute('aria-expanded', 'false');
   els.appearance.focus();
 }
@@ -1132,8 +1116,7 @@ async function boot() {
       // and the subject draw below continues the same stream.
       const rng = makeRng(seed);
       const target = resolveTarget(location.search, CATEGORIES, rng);
-      const cat = await loadCategory(target.category);
-      noteCategory(cat);
+      const cat = await fetchCategory(target.category);
       const id = target.subject && cat.subjectIds.includes(target.subject)
         ? target.subject
         : cat.subjectIds[rng.int(cat.subjectIds.length)];
@@ -1186,12 +1169,7 @@ async function restore(saved) {
   newPuzzle(saved.seed, subject, {
     size: saved.size, count: saved.count, mix: shape.mix, minCell: shape.minCell,
   }, false, dealt, level);
-  for (const f of saved.found) {
-    if (!state.puzzle || !state.puzzle.words.includes(f.word) || state.found[f.word]) continue;
-    const sel = { x0: f.x0, y0: f.y0, x1: f.x1, y1: f.y1 };
-    state.found[f.word] = f.revealed === true ? { sel, revealed: true } : { sel };
-    state.foundOrder.push(f.word);
-  }
+  addFinds(saved.found);
   renderFoundCells(els, state, state.size);
   pills();
   list(); // redraw pills + cross out; deliberately does NOT pop the win overlay

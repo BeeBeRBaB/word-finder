@@ -74,8 +74,8 @@ test('the dark palette still resolves to the colours the game shipped with', asy
 // genuinely cannot run still gets the dark palette this game has always shipped with,
 // never an unstyled/white page. The localStorage read has its own inner try, so a
 // throwing getItem no longer counts as "the resolver cannot run" -- it falls through to
-// the default and DOES set data-appearance. Both tests block src/main.js from loading, to
-// rule out the module papering over the inline script either way.
+// the default and DOES set data-appearance. The test blocks src/main.js from loading, to
+// rule out the module papering over the inline script.
 test('a throwing localStorage.getItem resolves dark, it does not abort the resolver', async ({ page }) => {
   await page.addInitScript(() => {
     window.localStorage.getItem = () => { throw new Error('blocked'); };

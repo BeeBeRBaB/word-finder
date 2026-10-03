@@ -43,7 +43,7 @@ export function levelPuzzle(deal, subject, shape) {
 /** Where each recorded word lies on the board, in the order found, to put a resumed level's
  * finds back. A word the board does not hold is skipped.
  * @param {{placements:{word:string, x0:number, y0:number, dx:number, dy:number}[]}} puzzle
- * @param {LevelEvent[]} events @returns {{word:string, sel:{x0:number, y0:number, x1:number, y1:number}}[]} */
+ * @param {{word:string}[]} events @returns {{word:string, sel:{x0:number, y0:number, x1:number, y1:number}}[]} */
 export function replaySelections(puzzle, events) {
   /** @type {{word:string, sel:{x0:number, y0:number, x1:number, y1:number}}[]} */
   const out = [];
