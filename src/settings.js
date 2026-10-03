@@ -1,4 +1,4 @@
-// Player preferences other than theme and mode (appearance.js) and least-seen (progress.js):
+// Player preferences other than the look (appearance.js) and least-seen (progress.js):
 // one record, validated field by field, stored under one key. Pure: the store is injected,
 // and a missing, throwing or garbled one degrades to the defaults, never into the game.
 import { defaultStore } from './storage.js';

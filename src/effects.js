@@ -7,22 +7,15 @@
 
 /**
  * Confetti from the middle of a found selection. Math.random on purpose — a reproducible
- * puzzle means a reproducible grid, not identical confetti.
+ * puzzle means a reproducible grid, not identical confetti. The caller decides whether
+ * motion is wanted at all.
  * @param {HTMLElement} fxEl @param {Selection} s @param {number} count
- * @param {LayoutDims} dims @param {number} pad
+ * @param {LayoutDims} dims @param {number} pad @param {string[]} colors the look's six confetti colours
  * @returns {void}
  */
-export function burst(fxEl, s, count, dims, pad) {
-  // The OS asking, or Settings' Reduce motion (which main.js mirrors onto <html>).
-  if (document.documentElement.dataset.motion === 'reduce') return;
-  if (globalThis.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+export function burst(fxEl, s, count, dims, pad, colors) {
   const cell = dims.cell;
   const cx = pad + ((s.x0 + s.x1) / 2 + 0.5) * cell, cy = pad + ((s.y0 + s.y1) / 2 + 0.5) * cell;
-  // Confetti lives in the palette so it can follow the appearance setting — the old
-  // hardcoded set ended in a near-white that vanished on light paper. Read once per
-  // burst rather than once per particle; getComputedStyle is not cheap.
-  const cs = getComputedStyle(document.documentElement);
-  const colors = [1, 2, 3, 4, 5, 6].map(i => cs.getPropertyValue('--confetti-' + i).trim());
   for (let i = 0; i < count; i++) {
     const d = document.createElement('div');
     const sz = 5 + Math.random() * 6;

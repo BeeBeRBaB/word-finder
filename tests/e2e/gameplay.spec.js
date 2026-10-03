@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { findDiagonalWord, findAndDrag, dragCells } from './helpers.js';
+import { findDiagonalWord, findAndDrag, findRunsInGrid, dragCells, cellCentre } from './helpers.js';
 
 // Every unseeded goto() below is pinned to ?subject=nature/birds rather than left as
 // '/': none of these tests care which subject loads, only that one does, and the
@@ -37,6 +37,41 @@ test('a found word glows, then crosses out', async ({ page }) => {
   // later. Both assertions auto-retry, so they observe the two states in order.
   await expect(chip).toHaveClass(/\bglow\b/);
   await expect(chip).toHaveClass(/\bdone\b/);
+});
+
+// An OS gesture or an incoming call takes the pointer over with pointercancel: not a release.
+test('a drag the browser cancels claims nothing', async ({ page }) => {
+  await page.goto('/?seed=1&subject=nature/birds');
+  const word = /** @type {string} */ (await page.locator('.w').first().textContent()).toUpperCase();
+  for (const run of await findRunsInGrid(page, word)) {
+    const a = await cellCentre(page, run.x0, run.y0), b = await cellCentre(page, run.x1, run.y1);
+    await page.mouse.move(a.x, a.y);
+    await page.mouse.down();
+    await page.mouse.move(b.x, b.y, { steps: 8 });
+    await page.locator('#gridbox').dispatchEvent('pointercancel', { isPrimary: true });
+    await page.mouse.up();
+  }
+  await expect(page.locator('.w.done, .w.glow')).toHaveCount(0);
+  await expect(page.locator('#pills .pill')).toHaveCount(0);
+});
+
+// A second finger lifting off the board mid-drag used to end the first finger's drag there.
+test('a second pointer lifting mid-drag leaves the drag to the first', async ({ page }) => {
+  await page.goto('/?seed=1&subject=nature/birds');
+  const word = /** @type {string} */ (await page.locator('.w').first().textContent()).toUpperCase();
+  for (const run of await findRunsInGrid(page, word)) {
+    const half = Math.floor((word.length - 1) / 2), dx = Math.sign(run.x1 - run.x0), dy = Math.sign(run.y1 - run.y0);
+    const a = await cellCentre(page, run.x0, run.y0), b = await cellCentre(page, run.x1, run.y1);
+    const m = await cellCentre(page, run.x0 + dx * half, run.y0 + dy * half);
+    await page.mouse.move(a.x, a.y);
+    await page.mouse.down();
+    await page.mouse.move(m.x, m.y, { steps: 4 });
+    await page.locator('#gridbox').dispatchEvent('pointerup', { isPrimary: false, pointerId: 7 });
+    await page.mouse.move(b.x, b.y, { steps: 4 });
+    await page.mouse.up();
+    if (await page.locator('.w.done, .w.glow').count()) break;
+  }
+  await expect(page.locator('.w', { hasText: new RegExp(`^${word}$`, 'i') })).toHaveClass(/\b(glow|done)\b/);
 });
 
 test('clicking a word list item does nothing', async ({ page }) => {

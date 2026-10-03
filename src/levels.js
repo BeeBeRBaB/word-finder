@@ -2,7 +2,7 @@
 // Level n's category, subject and puzzle seed are a function of (account seed, n) and the
 // catalog, so every device deals the same level. Changing a hash here, or adding a category
 // or subject, re-deals every account's unplayed levels.
-import { makeRng } from './rng.js';
+import { makeRng, fnv1a } from './rng.js';
 import { defaultStore } from './storage.js';
 import { CHOICES } from './settings.js';
 
@@ -40,13 +40,6 @@ function hash(...parts) {
   let h = 0;
   for (const p of parts) h = fmix32(((h ^ p) + 0x9e3779b9) | 0);
   return h;
-}
-
-/** FNV-1a over UTF-16 code units. @param {string} s @returns {number} */
-function hashString(s) {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193);
-  return h >>> 0;
 }
 
 /** @param {unknown} n @returns {n is number} */
@@ -172,7 +165,7 @@ export function levelSubject(accountSeed, level, categoryId, subjectIds, categor
   if (!isLevel(categoryCount)) throw new RangeError(`categoryCount must be an integer >= 1, got ${categoryCount}`);
   const visit = Math.floor((level - 1) / categoryCount);
   const round = Math.floor(visit / m);
-  const rng = makeRng(hash(SALT_SUBJECT, accountSeed, hashString(categoryId), round));
+  const rng = makeRng(hash(SALT_SUBJECT, accountSeed, fnv1a(categoryId), round));
   return rng.shuffle([...subjectIds].sort())[visit % m];
 }
 

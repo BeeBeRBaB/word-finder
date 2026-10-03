@@ -78,6 +78,14 @@ test('the streak window is inclusive, and a longer gap drops the level to 0', ()
   assert.equal(line(chain, 'streak').points, 10 + 25 + 50);
 });
 
+test('finds at one instant were carried onto the level and never chain', () => {
+  const b = scoreLevel({ events: [find('AAAAA', 500), find('BBBBB', 500), find('CCCCC', 500)], elapsedMs: 0, difficulty: 'easy', wordCount: 9 });
+  assert.equal(line(b, 'streak'), undefined);
+  // The next real find still chains from the last of them.
+  const on = scoreLevel({ events: [find('AAAAA', 500), find('BBBBB', 500), find('CCCCC', 900)], elapsedMs: 0, difficulty: 'easy', wordCount: 9 });
+  assert.equal(line(on, 'streak').points, 10);
+});
+
 test('a reveal ends the streak and is not a find to chain from', () => {
   const base = [find('AAAAA', 0), find('BBBBB', 1000), find('CCCCC', 2000)];
   const clean = scoreLevel({ events: [...base, find('DDDDD', 3000)], elapsedMs: 0, difficulty: 'easy', wordCount: 9 });
@@ -173,7 +181,7 @@ test('bad input degrades instead of throwing', () => {
   assert.equal(line(odd, 'words').points, 90);
   assert.equal(odd.complete, true, 'duplicates are the caller\'s problem');
   // Negative and NaN event times clamp to 0, so both of these chain.
-  for (const events of [[find('ABCDE', -5000), find('FGHIJ', NaN)], [find('ABCDE', -30000), find('FGHIJ', 1)]]) {
+  for (const events of [[find('ABCDE', NaN), find('FGHIJ', 1)], [find('ABCDE', -30000), find('FGHIJ', 1)]]) {
     const b = scoreLevel({ events, elapsedMs: 0, difficulty: 'easy', wordCount: 9 });
     assert.equal(line(b, 'streak')?.points, 10, JSON.stringify(events.map(e => e.at)));
   }

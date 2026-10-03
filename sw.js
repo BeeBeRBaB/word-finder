@@ -43,26 +43,15 @@ sw.addEventListener('fetch',e=>{
   // Fonts are the only cross-origin files worth caching. Firestore documents have no
   // extension, so cache-first would serve every account a device's first copy forever.
   if(url.origin!==sw.location.origin&&!isFont(url))return;
-  // Word pools: cache-first, own cache. They never change in place, so revalidating
-  // would spend a request to learn nothing.
-  if(url.origin===sw.location.origin&&isSubject(url)){
-    // Path only. subjects.js retries as `?retry=N`, and keying on the full URL made
-    // every retry an entry nothing could hit again.
-    const key=url.origin+url.pathname;
-    e.respondWith(caches.open(SUBJECT_CACHE).then(async cache=>{
-      const hit=await cache.match(key);
-      if(hit)return hit;
-      const res=await fetch(e.request);
-      if(res&&res.ok)cache.put(key,res.clone());
-      return res;
-    }));
-    return;
-  }
   const req=e.request;
   // Same-origin entries are keyed by path. Matching with ignoreSearch but storing under the
-  // full URL let the first ?subject= visit pin an index.html that no later refresh updated.
+  // full URL let the first ?subject= visit pin an index.html that no later refresh updated,
+  // and made each of subjects.js's `?retry=N` loads an entry nothing could hit again.
   const key=url.origin===sw.location.origin?url.origin+url.pathname:req;
-  e.respondWith(caches.open(CACHE).then(async cache=>{
+  // Word pools are code too (a subject is added by editing one), refreshed the same way, but
+  // kept in their own cache so a deploy does not throw them away.
+  const name=url.origin===sw.location.origin&&isSubject(url)?SUBJECT_CACHE:CACHE;
+  e.respondWith(caches.open(name).then(async cache=>{
     const cached=await cache.match(key);
     // Icons and fonts only change when renamed, so never revalidate them.
     if(cached&&!isCode(new URL(req.url)))return cached;

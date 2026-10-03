@@ -92,8 +92,15 @@ test('word pools live in their own cache, which the activate sweep spares', () =
   );
 });
 
-test('a subject module is routed to the subject cache, cache-first', () => {
-  assert.match(sw, /isSubject/, 'the fetch handler needs to recognise a word pool');
+// A pool changes whenever a subject is added to it, so it takes the code path, which
+// revalidates; only the cache it is kept in differs.
+test('a subject module is kept in the subject cache, on the same path as code', () => {
+  /** @type {string[]} */
+  const opened = [];
+  const handler = swFetchHandler((name) => opened.push(name));
+  answers(handler, 'https://beeberbab.github.io/word-finder/src/subjects/animals.js?retry=1');
+  answers(handler, 'https://beeberbab.github.io/word-finder/src/main.js');
+  assert.deepEqual(opened, ['wordfinder-subjects', /const CACHE='([^']+)'/.exec(sw)?.[1]]);
 });
 
 // Matching with ignoreSearch while storing under the full URL let a ?subject= visit pin an
@@ -105,15 +112,16 @@ test('same-origin code is read and refreshed under one path-only key', () => {
   assert.match(sw, /cache\.put\(key,res\.clone\(\)\)/);
 });
 
-/** Runs sw.js against stub globals and returns the fetch listener. @returns {(e: object) => void} */
-function swFetchHandler() {
+/** Runs sw.js against stub globals and returns the fetch listener.
+ * @param {(name: string) => void} [onOpen] told each cache the handler opens @returns {(e: object) => void} */
+function swFetchHandler(onOpen = () => {}) {
   /** @type {Record<string, (e: object) => void>} */
   const on = {};
   const self = {
     location: new URL('https://beeberbab.github.io/word-finder/sw.js'),
     addEventListener: (/** @type {string} */ t, /** @type {(e: object) => void} */ f) => { on[t] = f; },
   };
-  vm.runInNewContext(sw, { self, caches: { open: () => new Promise(() => {}) }, fetch: () => new Promise(() => {}), URL, Request, Response });
+  vm.runInNewContext(sw, { self, caches: { open: (/** @type {string} */ n) => { onOpen(n); return new Promise(() => {}); } }, fetch: () => new Promise(() => {}), URL, Request, Response });
   return on.fetch;
 }
 

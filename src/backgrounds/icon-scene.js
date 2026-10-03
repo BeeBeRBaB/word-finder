@@ -4,6 +4,7 @@
 // Nothing here is precached, so changing an export needs a CACHE bump in sw.js: else an
 // importer cached last week can meet this file's new copy.
 
+import { fnv1a } from '../rng.js';
 import { ICONS } from './icons.js';
 import { CATEGORY_ICONS, SUBJECT_ICONS } from './subject-icons.js';
 
@@ -25,9 +26,7 @@ export function iconsFor(subject) {
  * @returns {{layout:number, hero:number, seed:number}} */
 export function variantOf(subject, seed) {
   const v = (seed >>> 0) % VARIANTS;
-  let h = 2166136261;
-  for (let i = 0; i < subject.length; i++) h = Math.imul(h ^ subject.charCodeAt(i), 16777619);
-  return { layout: v % 3, hero: Math.floor(v / 3), seed: (h ^ Math.imul(v + 1, 0x9E3779B1)) >>> 0 };
+  return { layout: v % 3, hero: Math.floor(v / 3), seed: (fnv1a(subject) ^ Math.imul(v + 1, 0x9E3779B1)) >>> 0 };
 }
 
 /** The ids with the chosen hero moved to the front. @param {string[]} ids @param {number} hero

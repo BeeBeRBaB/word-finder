@@ -110,6 +110,18 @@ export function makeLevelPlay(deps) {
   /** @returns {number} */
   const elapsed = () => (live ? live.base + (live.since === null ? 0 : clock() - live.since) : 0);
 
+  /** Record a find or a reveal. False for a word not on the board or already recorded.
+   * @param {string} word @param {boolean} revealed @param {number} [at] active ms, now by default
+   * @returns {boolean} */
+  function note(word, revealed, at = Math.round(elapsed())) {
+    if (!live || !live.words.has(word) || live.events.some(e => e.word === word)) return false;
+    live.events.push({ word, at, revealed });
+    remember();
+    // Not online until the next save: Sign out warns, and opening Settings tries again.
+    if (cloud.session()) dirty = true;
+    return true;
+  }
+
   /** The in-progress level as levels.js stores it. @returns {void} */
   function remember() {
     if (!live || !prog) return;
@@ -302,15 +314,14 @@ export function makeLevelPlay(deps) {
     /** @returns {void} */
     resume() { if (live && live.since === null) live.since = clock(); },
 
-    /** Record a find or a reveal. False for a word not on the board or already recorded.
-     * @param {string} word @param {boolean} revealed @returns {boolean} */
-    note(word, revealed) {
-      if (!live || !live.words.has(word) || live.events.some(e => e.word === word)) return false;
-      live.events.push({ word, at: Math.round(elapsed()), revealed });
-      remember();
-      // Not online until the next save: Sign out warns, and opening Settings tries again.
-      if (cloud.session()) dirty = true;
-      return true;
+    note,
+
+    /** Record the finds a board already had when its level started, all at one instant, which
+     * scoreLevel never counts as a streak: when they were found is not known.
+     * @param {{word:string, revealed:boolean}[]} finds @returns {void} */
+    carry(finds) {
+      const at = Math.round(elapsed());
+      for (const f of finds) note(f.word, f.revealed, at);
     },
 
     /** Score and bank the level once every word is found or revealed; null before that.

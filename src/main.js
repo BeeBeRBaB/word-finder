@@ -3,12 +3,12 @@
 // or a stateless renderer (view, effects).
 import { CATEGORIES, categoryOf } from './catalog.js';
 import { loadCategory, loadSubject, SubjectLoadError } from './subjects.js';
-import { makeRng, resolveSeed, resolveTarget } from './rng.js';
+import { makeRng, resolveSeed, resolveTarget, stringHash } from './rng.js';
 import { buildPuzzle, cap, matchWord, snap } from './puzzle.js';
 import { computeLayout, pickPreset, PRESETS, mixFor } from './layout.js';
 import { applyLayout, renderGrid, renderList, renderPills, renderFoundCells, renderSolvedShape, renderArt, placeArt } from './view.js';
 import { burst, pop } from './effects.js';
-import { makeStorage, defaultStore } from './storage.js';
+import { makeStorage } from './storage.js';
 import { makeProgress, chooseSubject } from './progress.js';
 import { makeAppearance } from './appearance.js';
 import { makeSettings } from './settings.js';
@@ -136,9 +136,7 @@ let justFound = null;
  * rather than its position, so reordering the catalog does not reshuffle all 600.
  * @param {string} name @returns {number} */
 function accentSlot(name) {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
-  return h % 4 + 1;
+  return stringHash(name) % 4 + 1;
 }
 
 /** One phosphor pass across the grid as a puzzle appears. Restarting a CSS animation
@@ -237,7 +235,7 @@ function startLevel(deal) {
   const events = play.start(deal, puzzle.words, document.hidden);
   if (!play.playing()) { levelBoard = null; showCategory(); return; }
   const added = addFinds(events);
-  for (const w of state.foundOrder) play.note(w, !!state.found[w].revealed);
+  play.carry(state.foundOrder.map(w => ({ word: w, revealed: !!state.found[w].revealed })));
   if (added) { renderFoundCells(els, state, state.size); pills(); list(); persist(); }
   // Complete without a win, as when the last find reached this device but not the account:
   // bank it quietly, the way a restored board never pops the win card.
@@ -326,8 +324,10 @@ function cellXY(e) {
 /** @param {number} v @returns {number} */
 const clampI = (v) => Math.max(0, Math.min(state.size - 1, Math.round(v)));
 
+// Only the primary pointer's left button drags: a resting thumb or a right-click would
+// otherwise re-anchor or end a drag the first finger is still tracing.
 els.gridbox.addEventListener('pointerdown', (e) => {
-  if (!state.puzzle) return;
+  if (!state.puzzle || !e.isPrimary || e.button !== 0) return;
   els.gridbox.setPointerCapture(e.pointerId);
   const p = cellXY(e), x = clampI(p.fx), y = clampI(p.fy);
   state.drag = { x, y };
@@ -336,7 +336,7 @@ els.gridbox.addEventListener('pointerdown', (e) => {
 });
 
 els.gridbox.addEventListener('pointermove', (e) => {
-  if (!state.drag) return;
+  if (!state.drag || !e.isPrimary) return;
   const p = cellXY(e), r = snap(state.drag.x, state.drag.y, p.fx, p.fy, state.size);
   if (!state.sel || state.sel.x1 !== r.x1 || state.sel.y1 !== r.y1) {
     state.sel = { x0: state.drag.x, y0: state.drag.y, x1: r.x1, y1: r.y1 };
@@ -361,7 +361,7 @@ function claim(hit, s, revealed = false) {
   if (won) progress.addSolve();
   // Banked at the find, not when the card shows: a reload in between must not lose the level.
   const finished = won && level ? play.finish() : null;
-  burst(els.fx, s, won ? 90 : 34, state.dims, PAD);
+  if (!prefersReducedMotion()) burst(els.fx, s, won ? 90 : 34, state.dims, PAD, confettiColors());
   if (cfg.get().sound) pop(won);
   if (cfg.get().vibrate) navigator.vibrate?.(won ? [30, 50, 90] : 18);
   // Glow, then strike through. The timer only clears if `hit` is still the one
@@ -378,14 +378,14 @@ function claim(hit, s, revealed = false) {
   // this fires `puzzle` is still the one that was just won.
   if (won) state.winTimer = setTimeout(() => {
     state.winTimer = null;
-    const paneOpen = els.picker.style.display === 'flex' || settings.style.display === 'flex';
-    if (finished && level) { showLevelCard(finished, level.level, paneOpen); return; }
+    const covered = paneOpen();
+    if (finished && level) { showLevelCard(finished, level.level, covered); return; }
     els.winmsg.textContent = 'You found every ' + cap(puzzle.name) + ' word.';
     // Written here rather than in the markup so the live region is empty until there is
     // something to announce. The count is the only number shown anywhere — no
     // fractions, which are what turn a record into a target.
     const n = progress.get().puzzles;
-    const counting = !paneOpen && startAutoNext();
+    const counting = !covered && startAutoNext();
     els.winstats.textContent = `${n} ${n === 1 ? 'puzzle' : 'puzzles'} solved`;
     // One announcement, including the countdown, rather than a live digit every second.
     // Visually hidden: the countdown row already shows it.
@@ -397,7 +397,7 @@ function claim(hit, s, revealed = false) {
     }
     renderSolvedShape(els, state, state.size);
     els.win.style.display = 'flex';
-    if (!paneOpen) winbtn.focus({ preventScroll: true });
+    if (!covered) winbtn.focus({ preventScroll: true });
   }, 700);
 }
 
@@ -431,10 +431,14 @@ function endDrag() {
   }
   pills();
 }
-els.gridbox.addEventListener('pointerup', endDrag);
+els.gridbox.addEventListener('pointerup', (e) => { if (e.isPrimary) endDrag(); });
 const revealBtn = /** @type {HTMLButtonElement} */ (must('reveal'));
 revealBtn.addEventListener('click', revealWord);
-els.gridbox.addEventListener('pointercancel', endDrag);
+// A gesture the browser took over is dropped, not judged: it is not a release.
+els.gridbox.addEventListener('pointercancel', (e) => {
+  if (!e.isPrimary || !state.drag) return;
+  state.drag = null; state.sel = null; pills();
+});
 
 /** Say why a deal failed, in the one place a subject name would otherwise sit. Shared by
  * every caller that can hit a rejected load, so a failure reads identically wherever it
@@ -554,8 +558,6 @@ const picker = makePicker({
     onLevel: async () => { await dealLevel(); },
   },
 });
-// Unconditional, unlike the confirm it replaces: the dialog is now how a game is started,
-// and the warning is one line inside it rather than a reason to show it.
 // Where Settings is a full-screen page rather than a card. Must match styles.css.
 const SETTINGS_PAGE = '(max-width:599px), (max-height:420px)';
 /** On a wide screen a pane drops from under the header's buttons, which in landscape sit
@@ -598,7 +600,11 @@ let dealing = false;
 // Bumped whenever the player moves on from the win card (closes it, opens a pane, or a
 // board is dealt). A win-card deal still loading checks it and quietly drops its result.
 let dealGen = 0;
-const prefs = defaultStore();
+
+/** @param {HTMLElement} el @returns {boolean} whether a pane or card is showing */
+function shown(el) { return el.style.display === 'flex'; }
+/** @returns {boolean} whether New game or Settings is open over the board */
+function paneOpen() { return shown(els.picker) || shown(settings); }
 
 /** @returns {void} */
 function cancelAutoNext() {
@@ -621,7 +627,7 @@ function advance(level = false) {
   const wanted = () => gen === dealGen;
   const card = levelCard;
   // Dropped because a pane opened over the card while it loaded: its Next works again.
-  const rearm = () => { if (card && card === levelCard && els.win.style.display === 'flex') card.rearm(); };
+  const rearm = () => { if (card && card === levelCard && shown(els.win)) card.rearm(); };
   // Signed out since the level was won, as when the session lapsed: an ordinary game instead.
   const asLevel = level && !!play.account();
   (asLevel ? dealLevel(wanted) : newGame(null, wanted)).then((dealt) => {
@@ -642,7 +648,7 @@ function advance(level = false) {
  * @returns {boolean} whether it started */
 function startAutoNext() {
   cancelAutoNext();
-  if (!cfg.get().autoNext || document.hidden || els.picker.style.display === 'flex' || settings.style.display === 'flex') return false;
+  if (!cfg.get().autoNext || document.hidden || paneOpen()) return false;
   const deadline = performance.now() + AUTO_NEXT_MS;
   wincount.textContent = String(AUTO_NEXT_MS / 1000);
   winnext.hidden = false;
@@ -668,14 +674,14 @@ function hideWin() {
   levelCard = null;
 }
 /** The win card as a level's score card. The setting and an open pane decide its countdown, as
- * they do the plain card's. @param {Finish} f @param {number} level @param {boolean} paneOpen
+ * they do the plain card's. @param {Finish} f @param {number} level @param {boolean} covered
  * @returns {void} */
-function showLevelCard(f, level, paneOpen) {
+function showLevelCard(f, level, covered) {
   els.win.style.display = 'flex';
   levelCard = showLevelWin(wincard, wintitle, level, f, {
     reduceMotion: prefersReducedMotion(),
-    countdownMs: cfg.get().autoNext && !paneOpen && !document.hidden ? undefined : 0,
-    focus: !paneOpen,
+    countdownMs: cfg.get().autoNext && !covered && !document.hidden ? undefined : 0,
+    focus: !covered,
     onNext: () => advance(true),
     onStay: () => {},
   });
@@ -840,17 +846,22 @@ function syncThemeColor() {
 // One background runs at a time, behind the whole page or behind the word list.
 const backdrop = makeBackdrop();
 const bgFull = must('bg'), bgList = must('bgside');
+/** The look's six confetti colours, which the animated backgrounds draw in too: read from
+ * the stylesheet, so they follow the theme. @returns {string[]} */
+function confettiColors() {
+  const root = getComputedStyle(document.documentElement);
+  return [1, 2, 3, 4, 5, 6].map(i => root.getPropertyValue(`--confetti-${i}`).trim());
+}
 /** Run the chosen background in its area for the current deal; a still choice stops it.
  * @returns {void} */
 function showBackdrop() {
   const s = cfg.get();
   els.app.dataset.bgarea = s.area;
   if (!subjectId) return;   // nothing dealt yet; the deal calls again
-  const root = getComputedStyle(document.documentElement);
   // With the list under the board, the still scene keeps the board corner as the category art does.
   const corner = s.art === 'scene' && s.area !== 'full' && !state.dims.landscape;
   void backdrop.show(s.art, corner ? els.art : s.area === 'full' ? bgFull : bgList, {
-    colors: [1, 2, 3, 4, 5, 6].map(i => root.getPropertyValue(`--confetti-${i}`).trim()),
+    colors: confettiColors(),
     dark: document.documentElement.dataset.appearance !== 'light', reducedMotion: prefersReducedMotion(),
     subject: subjectId, seed: currentSeed, corner,
   });
@@ -939,7 +950,7 @@ function signedOut() {
  * Not while the win card shows: that board is done. @returns {void} */
 function reconcileLevel() {
   const puzzle = state.puzzle;
-  if (!puzzle || els.win.style.display === 'flex') return;
+  if (!puzzle || shown(els.win)) return;
   if (levelBoard && !play.account()) { letLevelGo(); return; }
   if (!levelBoard) {
     const deal = subjectId ? play.resumable(subjectId, currentSeed) : null;
@@ -964,7 +975,7 @@ function reconcileLevel() {
   const level = levelBoard;
   const finished = play.finish();
   progress.addSolve();
-  if (finished) showLevelCard(finished, level.level, els.picker.style.display === 'flex' || settings.style.display === 'flex');
+  if (finished) showLevelCard(finished, level.level, paneOpen());
 }
 /** The session ended here without Sign out (it lapsed, or a save was refused): an ordinary
  * board now, and the player is told why the header changed. @returns {void} */
@@ -1001,7 +1012,7 @@ function openSettings() {
 }
 /** @returns {void} */
 function closeSettings() {
-  if (settings.style.display !== 'flex') return;
+  if (!shown(settings)) return;
   bgPage.close(false);
   lookPage.close(false);
   signInPage.close(false);
@@ -1013,7 +1024,7 @@ function closeSettings() {
 }
 els.appearance.setAttribute('aria-expanded', 'false');
 els.appearance.addEventListener('click', () => {
-  if (settings.style.display === 'flex') closeSettings(); else openSettings();
+  if (shown(settings)) closeSettings(); else openSettings();
 });
 /** Show the stored settings in the pane's controls. Every control under [data-setting] is a
  * settings.js field: a checkbox (data-on/data-off map it to a two-value choice), a radio, a
@@ -1084,7 +1095,7 @@ document.addEventListener('keydown', (e) => {
     const sel = e.target instanceof Element ? e.target.closest('select') : null;
     try { if (sel && sel.matches(':open')) return; } catch { /* no :open, so no in-page list */ }
     // Only when it is showing: hideWin() also cancels a win-card deal in flight.
-    if (els.win.style.display === 'flex') hideWin();
+    if (shown(els.win)) hideWin();
     picker.close(); closeSettings();
   }
 });
@@ -1094,7 +1105,7 @@ window.addEventListener('load', () => { onResize(); syncThemeColor(); showBackdr
 window.addEventListener('resize', () => {
   onResize();
   // An open pane's inline offsets were measured for the old shape.
-  for (const p of [els.picker, settings]) if (p.style.display === 'flex') anchorPane(p);
+  for (const p of [els.picker, settings]) if (shown(p)) anchorPane(p);
 });
 
 /** Explicit `?seed=` / `?subject=` / `?category=` always wins, even over a saved game —

@@ -301,6 +301,20 @@ test('when the cloud has moved past the level being played, it is neither banked
   assert.equal(play.progress()?.level, 3);
 });
 
+test('finds carried onto a level are noted at one instant, skipping words already noted', async () => {
+  const { play, clock } = setup();
+  await play.signUp('ana', 'secret1');
+  const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
+  play.start(deal, WORDS);
+  clock.tick(1000);
+  play.note('ROBIN', false);
+  clock.tick(1500);
+  play.carry([{ word: 'ROBIN', revealed: false }, { word: 'OWL', revealed: false }, { word: 'WREN', revealed: false }, { word: 'EAGLE', revealed: false }]);
+  const done = play.finish();
+  assert.equal(done?.breakdown.stats.found, 3, 'ROBIN once, EAGLE not on the board');
+  assert.equal(done?.breakdown.stats.bestStreak, 1.2, 'OWL chains from ROBIN; WREN, at the same instant, does not');
+});
+
 test('a level the store refuses to bank is reported, not counted', async () => {
   const { play } = setup({ now: () => NaN });
   await play.signUp('ana', 'secret1');

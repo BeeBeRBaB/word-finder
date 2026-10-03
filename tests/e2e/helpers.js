@@ -106,16 +106,17 @@ export async function findDiagonalWord(page) {
   throw new Error('no diagonally placed word in this puzzle');
 }
 
+/** The page coordinates of a cell's centre.
+ * @param {Page} page @param {number} x @param {number} y @returns {Promise<{x:number, y:number}>} */
+export async function cellCentre(page, x, y) {
+  const g = await gridGeometry(page);
+  return { x: g.left + g.pad + (x + 0.5) * g.cell, y: g.top + g.pad + (y + 0.5) * g.cell };
+}
+
 /** Drag across a selection using real pointer events, with intermediate steps.
  * @param {Page} page @param {Selection} sel @returns {Promise<void>} */
 export async function dragCells(page, sel) {
-  const g = await gridGeometry(page);
-  /** @param {number} x @param {number} y @returns {{x:number, y:number}} */
-  const pt = (x, y) => ({
-    x: g.left + g.pad + (x + 0.5) * g.cell,
-    y: g.top + g.pad + (y + 0.5) * g.cell,
-  });
-  const a = pt(sel.x0, sel.y0), b = pt(sel.x1, sel.y1);
+  const a = await cellCentre(page, sel.x0, sel.y0), b = await cellCentre(page, sel.x1, sel.y1);
   await page.mouse.move(a.x, a.y);
   await page.mouse.down();
   await page.mouse.move(b.x, b.y, { steps: 12 });

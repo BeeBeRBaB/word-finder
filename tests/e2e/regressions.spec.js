@@ -53,7 +53,7 @@ test('a diagonal drag selects exactly the cells under the pointer', async ({ pag
     const a = pt(0, 0), b = pt(3, 3);
     /** @param {string} t @param {{x:number, y:number}} p @returns {boolean} */
     const ev = (t, p) => gb.dispatchEvent(new PointerEvent(t, {
-      clientX: p.x, clientY: p.y, bubbles: true, pointerId: 1,
+      clientX: p.x, clientY: p.y, bubbles: true, pointerId: 1, isPrimary: true,
     }));
     ev('pointerdown', a);
     ev('pointermove', b);

@@ -76,7 +76,9 @@ export function scoreLevel({ events, elapsedMs, difficulty, wordCount }) {
       continue;
     }
     const at = ms(e.at);
-    level = lastFind !== null && at - lastFind <= SCORING.streakWindowMs
+    // Finds at one instant were on the board before the level took it over (levelplay's
+    // carry), not found in a run, so they never chain.
+    level = lastFind !== null && at > lastFind && at - lastFind <= SCORING.streakWindowMs
       ? Math.min(level + 1, SCORING.streak.length - 1) : 0;
     lastFind = at;
     found++;
