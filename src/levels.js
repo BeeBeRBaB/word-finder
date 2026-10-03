@@ -5,6 +5,7 @@
 import { makeRng, fnv1a } from './rng.js';
 import { safeStore } from './storage.js';
 import { DIFFICULTY_NAMES } from './scoring.js';
+import { PRESETS } from './layout.js';
 
 export const LEVELS_KEY = 'wordfinder-levels-v1';
 export const HISTORY_MAX = 50;
@@ -55,6 +56,8 @@ const isLevel = (n) => isInt(n) && n >= 1;
 const isText = (s) => typeof s === 'string' && s.length > 0;
 /** @param {unknown} d @returns {d is Difficulty} */
 const isDifficulty = (d) => typeof d === 'string' && Object.keys(DIFFICULTY_NAMES).includes(d);
+/** A board width this build deals. @param {unknown} n @returns {n is number} */
+const isSize = (n) => Object.values(PRESETS).some(p => p.size === n);
 /** @param {unknown} o @returns {o is Record<string, unknown>} */
 const isRecord = (o) => !!o && typeof o === 'object' && !Array.isArray(o);
 
@@ -89,7 +92,7 @@ function toCurrent(c) {
   if (!isRecord(c)) return null;
   const { level, subject, difficulty, events, elapsedMs, size } = c;
   if (!isLevel(level) || !isText(subject) || !isDifficulty(difficulty) || !isTime(elapsedMs)
-    || !Array.isArray(events) || (size !== undefined && !(isInt(size) && size > 0))) return null;
+    || !Array.isArray(events) || (size !== undefined && !isSize(size))) return null;
   /** @type {LevelEvent[]} */
   const out = [];
   for (const e of events) {

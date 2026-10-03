@@ -187,7 +187,7 @@ for (const [from, to] of /** @type {const} */ ([['full', 'compact'], ['compact',
   });
 }
 
-const MOVED = 'Another device carried on with this level on a board of another size.';
+const MOVED = 'Another device carried on with this level on another board.';
 
 // The fixture closes only its own context; a second device's would run on into later tests.
 /** @type {import('@playwright/test').BrowserContext[]} */
@@ -276,6 +276,27 @@ test('a phone keeps playing a level started on the large board, and its game is 
   await expect(phone.locator('#list .w.done')).toHaveCount(1);
   await findTheRest(phone);
   await expect(phone.locator('#wincard h2')).toHaveText('Level 3 complete');
+});
+
+test('a level dealt again from its own board hears what the save on the way out found', async ({ page }) => {
+  const fb = makeFirebase();
+  const uid = fb.add('ana_reads', 'hunter22');
+  fb.put(uid, PROGRESS);
+  await fb.install(page);
+  await signedInAs(page, uid, 'ana_reads');
+  await page.goto('/?subject=nature/birds');
+  await levelsSide(page);
+  await page.click('#picker-start');
+  await expect(page.locator('#category')).toHaveText('Level 3');
+  await findFirst(page);
+  const subject = await page.evaluate(() => JSON.parse(localStorage.getItem('wordfinder-levels-v1') ?? 'null')?.current?.subject);
+  // A phone's game of the level, which this page has not synced since.
+  fb.put(uid, { ...PROGRESS, current: { level: 3, subject, difficulty: 'normal', size: 10, elapsedMs: 50000,
+    events: [{ word: 'NOVA', at: 1, revealed: false }] } });
+  await levelsSide(page);
+  await page.click('#picker-start');
+  await expect(page.locator('#toast-msg')).toHaveText(MOVED);
+  await expect(page.locator('#category')).not.toHaveText('Level 3');
 });
 
 test('Undo does not take back a level another device carried on with on a smaller board', async ({ page }) => {
@@ -742,7 +763,7 @@ test('a sign-out raised under Settings is not news once signing in again there p
   await expect(page.locator('#toast')).toBeHidden({ timeout: 1000 });
 });
 
-test('signing in again after a lapse nothing noticed picks the level on the board back up, with no toast', async ({ page }) => {
+test('a level dealt again as the session lapses says so, and signing in again picks it back up', async ({ page }) => {
   const fb = makeFirebase();
   const uid = fb.add('ana_reads', 'hunter22');
   fb.put(uid, PROGRESS);
@@ -754,11 +775,11 @@ test('signing in again after a lapse nothing noticed picks the level on the boar
   await expect(page.locator('#category')).toHaveText('Level 3');
   await findFirst(page);
   await refuseSession(page);
-  // Dealt again: leaving the board saves it, which is refused and signs this device out, unseen.
+  // Dealt again: leaving the board saves it, which is refused and signs this device out.
   await levelsSide(page);
   await page.click('#picker-start');
-  await expect.poll(() => page.evaluate(() => localStorage.getItem('wordfinder-session-v1'))).toBeNull();
-  await expect(page.locator('#category')).toHaveText('Level 3');
+  await expect(page.locator('#toast-msg')).toHaveText("You've been signed out, so this game no longer counts as a level.");
+  await expect(page.locator('#category')).not.toHaveText('Level 3');
   await page.unroute(/^https:\/\/(securetoken|firestore)\.googleapis\.com\//);
   await fb.install(page);
   await page.click('#appearance');

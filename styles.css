@@ -910,6 +910,8 @@ label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12
    further and the bar runs under the countdown in the same row. After the rules above, to win. */
 @media (max-height:420px){
   .sc-row{padding:2px}
+  /* Space Grotesk's normal line height is about 1.3em, which made each row 2px taller with the web font loaded. */
+  .sc-row .sc-pts{line-height:1}
   .sc-total{padding-top:4px}
   .sc-all{margin-top:0}
   .sc-foot{margin-top:4px}

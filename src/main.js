@@ -190,8 +190,9 @@ function newPuzzle(seed, subject, shape, useBag = true, dealt, level = null) {
 /** Put a board on screen as the live one: a new deal's, or Undo's snapshot. Saves it too.
  * @param {Snapshot} b @returns {void} */
 function showBoard(b) {
-  // Leaving a level saves where it stood, so New game's Levels side picks it up again.
-  if (levelBoard) play.pause();
+  // Leaving a level saves where it stood, so New game's Levels side picks it up again. That save
+  // reads the cloud first, which can let go of the board shown next, so the board hears of it.
+  if (levelBoard) void play.pause().then(afterSync);
   levelBoard = b.level; categoryName = b.category; currentSeed = b.seed; subjectId = b.subjectId;
   state.size = b.size; state.minCell = b.minCell;
   state.puzzle = b.puzzle; state.found = b.found; state.foundOrder = b.foundOrder;
@@ -239,15 +240,14 @@ function showCategory() {
 
 /** Time the level on screen. Finds the account already has for it go back on the board, and
  * finds the board has that the account lacks are recorded. A level the account has moved past
- * leaves an ordinary board, saying `why` if that is news. @param {Deal} deal @param {string} [why]
- * @returns {void} */
-function startLevel(deal, why = '') {
+ * leaves an ordinary board. @param {Deal} deal @returns {void} */
+function startLevel(deal) {
   const puzzle = state.puzzle;
   if (!puzzle) return;
   // A page loaded or dealt in the background starts the clock when it is shown, not before.
   const events = play.start(deal, puzzle.words, state.size, document.hidden);
-  // A sign-out since it was dealt (before an Undo, say) is news.
-  if (!play.playing()) { letLevelGo(play.account() ? why : SIGNED_OUT); return; }
+  // A sign-out since it was dealt (before an Undo, say) is news; a level the account moved past is not.
+  if (!play.playing()) { letLevelGo(play.account() ? '' : SIGNED_OUT); return; }
   const won = state.foundOrder.length === puzzle.words.length;
   addFinds(events);
   play.carry(state.foundOrder.map(w => ({ word: w, revealed: !!state.found[w].revealed })));
@@ -988,10 +988,7 @@ function reconcileLevel() {
   if (levelBoard && (!play.account() || !play.playing())) {
     // A level won here was banked at its last find, so letting it go then is no news.
     const solved = state.foundOrder.length === puzzle.words.length;
-    if (solved || !play.account()) letLevelGo(solved ? '' : SIGNED_OUT);
-    // Signing in again after a lapse nothing caught stopped it, and it is still the account's
-    // level: it picks up where it was. Otherwise the sync let it go.
-    else startLevel(levelBoard, LET_GO[play.lost(levelBoard)]);
+    letLevelGo(solved ? '' : !play.account() ? SIGNED_OUT : LET_GO[play.lost(levelBoard)]);
     return;
   }
   if (!levelBoard) {
@@ -1007,7 +1004,7 @@ const SIGNED_OUT = "You've been signed out, so this game no longer counts as a l
 // Why a sync let go of the level on the board, by play.lost().
 const LET_GO = {
   finished: 'This level was finished on another device.',
-  moved: 'Another device carried on with this level on a board of another size.',
+  moved: 'Another device carried on with this level on another board.',
   replaced: 'Your progress from another device replaced this level.',
 };
 /** The board is an ordinary one now. `why` tells the player why the header changed, unless it

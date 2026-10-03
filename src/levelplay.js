@@ -65,9 +65,15 @@ const ofRun = (p, deal) => levelSeed(p.seed, deal.level) === deal.seed;
  * the size was kept left it out. @param {LevelCurrent|null} c @param {number} size @returns {boolean} */
 const onBoard = (c, size) => (c?.size ?? size) === size;
 
-/** Whether a saved level is a game on a board smaller than `size`, which wins it over one on this
- * board (mergeProgress). @param {LevelCurrent|null} c @param {number} size @returns {boolean} */
-const onSmaller = (c, size) => (c?.size ?? size) < size;
+/** Whether a saved level is the game of `deal` on a board `size` wide, as far as it says.
+ * @param {LevelCurrent} c @param {Deal} deal @param {number} size @returns {boolean} */
+const sameGame = (c, deal, size) => c.subject === deal.subject && c.difficulty === deal.difficulty && onBoard(c, size);
+
+/** Whether a saved level is another game of `deal`'s level that has won it from the game on a board
+ * `size` wide: any other, but one on a larger board, which mergeProgress ranks below this board's
+ * and a phone cannot deal. @param {LevelCurrent|null} c @param {Deal} deal @param {number} size
+ * @returns {boolean} */
+const beaten = (c, deal, size) => !!c && !sameGame(c, deal, size) && (c.size ?? size) <= size;
 
 /** What went wrong, from a thrown cloud error; 'server' for anything else.
  * @param {unknown} e @returns {CloudCode} */
@@ -156,11 +162,11 @@ export function makeLevelPlay(deps) {
     const r = normalizeProgress(remote);
     const merged = mergeProgress(prog, r) ?? newProgress((random() * 0x100000000) >>> 0);
     // The level being played is the cloud's no longer: it moved on, another device's run with its
-    // own seed won, or another device's game of it on a smaller board won.
-    if (live && (merged.level !== live.deal.level || !ofRun(merged, live.deal) || !onBoard(merged.current, live.size))) live = null;
+    // own seed won, or another device's game of it did.
+    if (live && (merged.level !== live.deal.level || !ofRun(merged, live.deal) || beaten(merged.current, live.deal, live.size))) live = null;
     keep(merged);
     const c = live && r && r.seed === merged.seed && r.level === live.deal.level ? r.current : null;
-    if (live && c && c.subject === live.deal.subject && c.difficulty === live.deal.difficulty && onBoard(c, live.size)) {
+    if (live && c && sameGame(c, live.deal, live.size)) {
       const have = new Set(live.events.map(e => e.word));
       for (const e of c.events) if (live.words.has(e.word) && !have.has(e.word)) { live.events.push({ ...e }); have.add(e.word); }
       live.events.sort((a, b) => a.at - b.at);
@@ -299,15 +305,15 @@ export function makeLevelPlay(deps) {
     resumable(subjectId, seed, size) {
       const p = progress(), c = p?.current;
       if (!p || !c || c.subject !== subjectId || levelSeed(p.seed, p.level) !== seed || !onBoard(c, size)) return null;
-      return { level: p.level, subject: subjectId, seed, difficulty: c.difficulty, size };
+      return { level: p.level, subject: subjectId, seed, difficulty: c.difficulty };
     },
 
     /** The deal being played and timed, or null. @returns {Deal|null} */
     playing: () => (live ? live.deal : null),
 
     /** Why a sync let go of `deal`: the account is past its level on the run it was dealt from
-     * ('finished'), or still on it there, as another device's game on a smaller board ('moved'),
-     * or on another device's run ('replaced'). @param {Deal} deal
+     * ('finished'), or still on it there, as another device's game of it ('moved'), or on another
+     * device's run ('replaced'). @param {Deal} deal
      * @returns {'finished'|'moved'|'replaced'} */
     lost(deal) {
       const p = progress();
@@ -319,17 +325,17 @@ export function makeLevelPlay(deps) {
     events: () => (live ? live.events.map(e => ({ ...e })) : []),
 
     /** Start timing a dealt level, unless the session has lapsed, the account has moved on from it
-     * since it was dealt, or another device's game of it on a smaller board has won it. Returns the
-     * finds to put back when it resumes one, in order; a saved level played on a larger board (a
-     * phone cannot deal it), or whose words are not all on this board, starts over.
+     * since it was dealt, or another device's game of it has won it. Returns the finds to put back
+     * when it resumes one, in order; a saved level played on a larger board (a phone cannot deal
+     * it), or whose words are not all on this board, starts over.
      * @param {Deal} deal @param {string[]} words the board's words @param {number} size its width
      * @param {boolean} [paused] the page is hidden: the clock waits for resume() @returns {LevelEvent[]} */
     start(deal, words, size, paused = false) {
       const p = progress();
-      if (!p || deal.level !== p.level || !ofRun(p, deal) || onSmaller(p.current, size)) { live = null; return []; }
+      if (!p || deal.level !== p.level || !ofRun(p, deal) || beaten(p.current, deal, size)) { live = null; return []; }
       const set = new Set(words);
       const c = p.current;
-      const resume = !!c && c.subject === deal.subject && c.difficulty === deal.difficulty && onBoard(c, size)
+      const resume = !!c && sameGame(c, deal, size)
         && c.events.every(e => set.has(e.word)) && new Set(c.events.map(e => e.word)).size === c.events.length;
       live = { deal, words: set, size, events: resume && c ? c.events.map(e => ({ ...e })) : [], base: resume && c ? c.elapsedMs : 0, since: paused ? null : clock() };
       remember();
@@ -339,13 +345,14 @@ export function makeLevelPlay(deps) {
     /** Active play time of the level, in ms. */
     elapsed,
 
-    /** The page is hidden: stop the clock and save, so another device can carry on. @returns {void} */
+    /** Stop the clock and save, so another device can carry on: the page is hidden, or the board
+     * is going. @returns {Promise<void>} settles when that save has landed or failed */
     pause() {
-      if (!live || live.since === null) return;
+      if (!live || live.since === null) return Promise.resolve();
       live.base = elapsed();
       live.since = null;
       remember();
-      void push();
+      return push();
     },
 
     /** @returns {void} */
