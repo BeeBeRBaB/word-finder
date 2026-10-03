@@ -291,6 +291,14 @@ export function makeLevelPlay(deps) {
       return { level: p.level, subject: subjectId, seed, difficulty: p.current.difficulty };
     },
 
+    /** Whether a board of `words` holds every find saved for `deal`'s level, so start() picks it
+     * up there rather than starting it over: true when none are saved.
+     * @param {Deal} deal @param {string[]} words @returns {boolean} */
+    fits(deal, words) {
+      const c = progress()?.current;
+      return !c || c.level !== deal.level || c.events.every(e => words.includes(e.word));
+    },
+
     /** The deal being played and timed, or null. @returns {Deal|null} */
     playing: () => (live ? live.deal : null),
 

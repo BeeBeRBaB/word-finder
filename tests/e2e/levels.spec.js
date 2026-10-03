@@ -145,6 +145,32 @@ test('signing up from New game comes back to it, and a level plays through to it
   await expect(card.locator('h2')).toHaveText('Puzzle solved!');
 });
 
+test('a level started on the large board stays on it, finds and all, after Board is set to Compact', async ({ page }) => {
+  const fb = makeFirebase();
+  const uid = fb.add('ana_reads', 'hunter22');
+  fb.put(uid, PROGRESS);
+  await fb.install(page);
+  await signedInAs(page, uid, 'ana_reads');
+  await page.goto('/?subject=nature/birds');
+  await levelsSide(page);
+  await page.click('#picker-start');
+  await expect(page.locator('#category')).toHaveText('Level 3');
+  await expect(page.locator('#letters .cell')).toHaveCount(169);
+  const board = await page.locator('#letters').textContent();
+  await findAndDrag(page, ((await page.locator('#list .w').first().textContent()) ?? '').trim().toUpperCase());
+  await page.click('#appearance');
+  await page.locator('.seg[data-setting="board"] button[data-value="compact"]').click();
+  await page.keyboard.press('Escape');
+  await page.click('#newbtn');   // away from the level, then back to it
+  await expect(page.locator('#category')).not.toHaveText('Level 3');
+  await expect(page.locator('#letters .cell')).toHaveCount(100);
+  await levelsSide(page);
+  await page.click('#picker-start');
+  await expect(page.locator('#category')).toHaveText('Level 3');
+  await expect(page.locator('#letters')).toHaveText(board ?? '');
+  await expect(page.locator('#list .w.done')).toHaveCount(1);
+});
+
 test('a level in progress survives a reload with its finds, then scores as the same level', async ({ page }) => {
   const fb = makeFirebase();
   const uid = fb.add('ana_reads', 'hunter22');
@@ -319,6 +345,31 @@ test('a level finished on another device lets go of this board when the account 
   await expect(page.locator('#category')).not.toHaveText('Level 3');
   await levelsSide(page);
   await expect(page.locator('#picker-start')).toHaveText('Play level 4');
+});
+
+test('a level let go under Settings says so once Settings closes, for the toast\'s full time', async ({ page }) => {
+  const fb = makeFirebase();
+  const uid = fb.add('ana_reads', 'hunter22');
+  fb.put(uid, PROGRESS);
+  await fb.install(page);
+  await signedInAs(page, uid, 'ana_reads');
+  await page.clock.install();
+  await page.goto('/?subject=nature/birds');
+  await levelsSide(page);
+  await page.click('#picker-start');
+  await expect(page.locator('#category')).toHaveText('Level 3');
+  await page.click('#appearance');
+  fb.put(uid, { ...PROGRESS, level: 4, points: 900, history: [{ level: 3, subject: 'x/y', difficulty: 'normal', score: 480, ms: 60000, reveals: 0, at: 1 }] });
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
+  const toast = page.locator('#toast');
+  await expect(page.locator('#toast-msg')).toHaveText('This level was finished on another device.');
+  await skipAhead(page, 7000);
+  await expect(toast).toBeVisible();   // under Settings, where it cannot be read, it waits
+  await page.keyboard.press('Escape');
+  await skipAhead(page, 4000);
+  await expect(toast).toBeVisible();
+  await skipAhead(page, 2500);
+  await expect(toast).toBeHidden();
 });
 
 // Two devices that each began the account's progress, as when its first save never reached the

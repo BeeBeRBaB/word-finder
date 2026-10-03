@@ -18,10 +18,10 @@ import { makePane } from './pane.js';
  *   isUnavailable:(categoryId:string)=>boolean,
  *   isComplete:(categoryId:string)=>boolean,
  *   onStart:(categoryId:string)=>Promise<void>,
- *   opener?:HTMLElement, levels?:LevelSide, behind?:HTMLElement[],
- * }} deps `behind` is the page under the dialog, inert while it is open.
+ *   opener?:HTMLElement, levels?:LevelSide, behind?:HTMLElement[], onClose?:() => void,
+ * }} deps `behind` is the page under the dialog, inert while it is open; `onClose` runs once it closes.
  */
-export function makePicker({ root, heading, select, warning, error, start, cancel, categories, isUnavailable, isComplete, onStart, opener, levels, behind = [] }) {
+export function makePicker({ root, heading, select, warning, error, start, cancel, categories, isUnavailable, isComplete, onStart, opener, levels, behind = [], onClose }) {
   // A disabled placeholder, then the real categories. Random is the header's one-click New
   // game, so the list holds only things you can choose — no action hiding among the values.
   select.innerHTML = '';
@@ -95,7 +95,7 @@ export function makePicker({ root, heading, select, warning, error, start, cance
     if (!on) syncDisabled();
   }
 
-  const modal = makePane({ root, heading, opener, behind });
+  const modal = makePane({ root, heading, opener, behind, onClose });
   const close = () => { if (!pending) modal.close(); };
 
   // Derived from main.js's shared failure record on every call, never tracked here, so

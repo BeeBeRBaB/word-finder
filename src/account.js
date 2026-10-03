@@ -177,7 +177,7 @@ export function renderSignIn(host, play, on) {
 export function renderLevelChoice(host, play, on) {
   const doc = host.ownerDocument;
   const s = play.status();
-  const p = s.signedIn ? play.progress() : null;
+  const p = play.progress();
   if (p) {
     const d = p.current ? p.current.difficulty : on.difficulty;
     host.replaceChildren(make(doc, 'p', 'acct-lvl', `Level ${p.level}`),

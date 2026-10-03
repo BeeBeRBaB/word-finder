@@ -185,7 +185,7 @@ test('every control is a 44px touch target, and the fields are 16px so iOS does 
 });
 
 /** Mount the Levels side of New game under the open dialog's heading.
- * @param {Page} page @param {object} status @param {object|null} progress */
+ * @param {Page} page @param {{signedIn:boolean}} status @param {object|null} progress */
 async function mountChoice(page, status, progress) {
   await page.goto('/?seed=1&subject=nature/birds');
   await page.click('#catbtn');
@@ -197,7 +197,8 @@ async function mountChoice(page, status, progress) {
     const host = document.createElement('div');
     host.id = 'lv-host';
     document.querySelector('#pickercard h2')?.after(host);
-    const play = { status: () => status, progress: () => progress };
+    // As levelplay.js: no progress without a session, though the device keeps its copy.
+    const play = { status: () => status, progress: () => (status.signedIn ? progress : null) };
     w.result = m.renderLevelChoice(host, play, { difficulty: 'easy', onSignIn: () => w.calls.push(['onSignIn']), onRetry: () => w.calls.push(['onRetry']) });
   }, { status, progress });
 }
@@ -223,7 +224,6 @@ test('a level already started keeps its own difficulty, and one point is singula
 });
 
 test('signed out, the Levels side offers Sign in and cannot start', async ({ page }) => {
-  // Progress left over from a signed-out session must not be offered.
   await mountChoice(page, OUT, PROGRESS);
   const host = page.locator('#lv-host');
   await expect(host).toContainText('Numbered puzzles that keep your points on any device.');

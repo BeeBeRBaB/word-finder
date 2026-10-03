@@ -306,6 +306,20 @@ test('each find is saved, so the level resumes with its finds and its time', asy
   assert.ok(store.getItem(LEVELS_KEY));
 });
 
+test('fits() says whether a board holds every find saved for the level, as start() needs to resume it', async () => {
+  const { play, cloud } = setup();
+  await play.signUp('ana', 'secret1');
+  const deal = /** @type {import('../../src/levelplay.js').Deal} */ (await play.deal(IDS, loadCategory, 'normal'));
+  assert.equal(play.fits(deal, []), true, 'nothing saved yet');
+  play.start(deal, WORDS);
+  play.note('OWL', false);
+  assert.equal(play.fits(deal, WORDS), true);
+  assert.equal(play.fits(deal, ['ROBIN', 'WREN']), false);
+  assert.equal(play.fits({ ...deal, level: 2 }, ['ROBIN']), true, 'not this level\'s finds');
+  cloud.signOut();
+  assert.equal(play.fits(deal, ['ROBIN']), true, 'no session, nothing to resume');
+});
+
 test('a saved level of another subject or difficulty is not resumed into this one', async () => {
   const { play, cloud } = setup();
   await play.signUp('ana', 'secret1');
@@ -480,6 +494,7 @@ test('once the session has expired, nothing is sent until the player signs in ag
   await settle();
   assert.equal(cloud.saves.length, sent);
   assert.deepEqual(play.status(), { signedIn: false, username: null, level: 0, points: 0, pending: false, error: null });
+  assert.equal(play.progress(), null, 'kept on the device for signing in again, not offered meanwhile');
   assert.equal(play.resumable(deal.subject, deal.seed), null, 'no level to resume for a player no longer signed in');
   assert.deepEqual(play.start(deal, WORDS), [], 'nor to start again, as Undo would');
   assert.equal(play.playing(), null);

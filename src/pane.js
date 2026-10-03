@@ -4,10 +4,10 @@
 /**
  * Focus goes to the heading on open, never a control: a select focused from a tap opens at once
  * on an iPhone. On close it goes back to the opener, or it is left on a hidden element.
- * @param {{root:HTMLElement, heading:HTMLElement, opener?:HTMLElement, behind?:HTMLElement[]}} els
- *   `behind` is the page under the pane.
+ * @param {{root:HTMLElement, heading:HTMLElement, opener?:HTMLElement, behind?:HTMLElement[], onClose?:() => void}} els
+ *   `behind` is the page under the pane; `onClose` runs once the pane has closed.
  */
-export function makePane({ root, heading, opener, behind = [] }) {
+export function makePane({ root, heading, opener, behind = [], onClose }) {
   /** @returns {boolean} */
   const isOpen = () => root.style.display === 'flex';
   /** @param {boolean} on @returns {void} */
@@ -23,6 +23,6 @@ export function makePane({ root, heading, opener, behind = [] }) {
     /** @returns {void} */
     open: () => show(true),
     /** @returns {void} */
-    close: () => { if (isOpen()) show(false); },
+    close: () => { if (isOpen()) { show(false); onClose?.(); } },
   };
 }

@@ -544,8 +544,15 @@ async function dealLevel(stillWanted = () => true) {
   if (!deal) return null;
   const subject = await loadSubject(deal.subject);
   if (!stillWanted()) return false;
-  const shape = shapeFor();
-  newPuzzle(deal.seed, subject, shape, false, levelPuzzle(deal, subject, shape), deal);
+  let shape = shapeFor(), puzzle = levelPuzzle(deal, subject, shape);
+  // Board was changed since the level was started: it stays on the board its finds are on, if
+  // this device can show that one (a phone cannot show the full board).
+  const other = shape === PRESETS.full ? PRESETS.compact : PRESET === PRESETS.full ? PRESETS.full : null;
+  if (other && !play.fits(deal, puzzle.words)) {
+    const there = levelPuzzle(deal, subject, other);
+    if (play.fits(deal, there.words)) { shape = other; puzzle = there; }
+  }
+  newPuzzle(deal.seed, subject, shape, false, puzzle, deal);
   startLevel(deal);
   return true;
 }
@@ -556,6 +563,7 @@ const behindPanes = [els.app, els.win, must('toast')];
 // itself open, so the rejection must survive rather than being swallowed here.
 const picker = makePicker({
   behind: behindPanes,
+  onClose: paneClosed,
   root: els.picker,
   heading: must('picker-title'),
   select: /** @type {HTMLSelectElement} */ (must('picker-select')),
@@ -751,7 +759,12 @@ function reinstate(snap) {
 /** @returns {void} */
 function armToastTimer() {
   if (toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout(hideToast, UNDO_MS);
+  // Under an open pane a toast is neither seen nor reachable, so it waits there for paneClosed().
+  toastTimer = setTimeout(() => { toastTimer = null; if (!paneOpen()) hideToast(); }, UNDO_MS);
+}
+/** A toast the pane covered gets its full time now that it can be seen. @returns {void} */
+function paneClosed() {
+  if (!toast.hidden) armToastTimer();
 }
 /** @param {string} msg @param {boolean} undoable @returns {void} */
 function showToast(msg, undoable) {
@@ -844,7 +857,7 @@ function catchUp() {
 // duplicated here, so a colour edit has exactly one home.
 const themeColorMeta = document.querySelector('meta[name="theme-color"]');
 const settings = must('settings');
-const settingsPane = makePane({ root: settings, heading: must('settings-title'), opener: els.appearance, behind: behindPanes });
+const settingsPane = makePane({ root: settings, heading: must('settings-title'), opener: els.appearance, behind: behindPanes, onClose: paneClosed });
 const leastBox = /** @type {HTMLInputElement} */ (must('settings-least-box'));
 // Vibration is a no-op where unsupported (iOS Safari, most desktops); do not offer it there.
 if (!('vibrate' in navigator)) must('settings-vibrate').hidden = true;
