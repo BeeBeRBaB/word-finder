@@ -128,6 +128,18 @@ test('a shorter list gives the portrait grid its rows back', () => {
   assert.ok(small.cell >= 30, `compact cell is ${small.cell}px, expected 30+`);
 });
 
+// A name on two lines makes the header 69px, not 46. An iPhone SE in Safari is sized by height,
+// with a pixel to spare, so the extra 23 has to come out of the grid or the last row of words
+// goes below the fold, where #app's overflow:hidden leaves nothing to scroll to it.
+test('a two-line header takes its extra height from a portrait grid, and landscape ignores it', () => {
+  const one = computeLayout({ vw: 355, vh: 533, size: 10, pad: 10, count: 8 });
+  const two = computeLayout({ vw: 355, vh: 533, size: 10, pad: 10, count: 8, header: 69 });
+  assert.ok(two.cell < one.cell, `two-line header kept a ${two.cell}px cell`);
+  assert.ok(10 * two.cell + 2 * 10 + 2 + reservePortrait(8) + 23 <= 533);
+  const side = { vw: 824, vh: 370, size: 13, pad: 10, count: 12 };
+  assert.deepEqual(computeLayout({ ...side, header: 74 }), computeLayout(side));
+});
+
 // Measured, not guessed: the 12 longest words of each of the 600 subjects rendered as two
 // content-sized columns peak at 316px (sports/archery), median 275. The rail shipped with
 // a 160px floor, so between roughly 725 and 950 CSS px it was squeezed to 167-279 and the

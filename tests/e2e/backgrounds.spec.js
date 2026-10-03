@@ -64,6 +64,8 @@ test('an animated background runs behind the word list, then the whole page, and
 });
 
 // The ring is 24 shadows on every glyph, painted for nothing when nothing is behind the text.
+// The header never takes it: in Full screen it sits on a plate of the ground, since the ring
+// blurred its small label and, in WebKit, painted over the name's underline.
 test('text keeps its ground-colour ring only where something is drawn behind it', async ({ page }) => {
   await page.goto('/?seed=1&subject=space/jupiter');
   /** @param {string} sel */
@@ -80,7 +82,13 @@ test('text keeps its ground-colour ring only where something is drawn behind it'
   expect(await ring('#subject')).toBe(false);
   await page.locator('.bgtile[data-bg="illustrated"]').click();   // large, behind everything
   expect(await ring('#list .w')).toBe(true);
-  expect(await ring('#subject')).toBe(true);
+  expect(await ring('#subject')).toBe(false);
+  const hdr = await page.locator('#hdr').evaluate((el) => {
+    const cs = getComputedStyle(el);
+    return { bg: cs.backgroundColor, ground: getComputedStyle(document.body).backgroundColor, spread: cs.boxShadow };
+  });
+  expect(hdr.bg).toBe(hdr.ground);
+  expect(hdr.spread).toContain(hdr.ground);
 });
 
 test('the choice and area are remembered, and a new deal keeps the background running', async ({ page }) => {

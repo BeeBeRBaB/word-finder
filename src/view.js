@@ -11,7 +11,7 @@ import { artFor, spriteRects, ILLUSTRATIONS, CORNERS } from './art.js';
  *   revealed: put there by Reveal, which a level scores differently.
  * @typedef {{found:Record<string, FoundEntry>, foundOrder:string[], sel:Selection|null, miss:Selection|null}} GameState
  * @typedef {{
- *   app:HTMLElement, gridbox:HTMLElement, pills:HTMLElement, letters:HTMLElement, fx:HTMLElement,
+ *   app:HTMLElement, hdr:HTMLElement, gridbox:HTMLElement, pills:HTMLElement, letters:HTMLElement, fx:HTMLElement,
  *   list:HTMLElement, side:HTMLElement, count:HTMLElement,
  *   subject:HTMLElement, category:HTMLElement, win:HTMLElement, winmsg:HTMLElement,
  *   winstats:HTMLElement,

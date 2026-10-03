@@ -85,7 +85,7 @@ function must(id) {
 }
 /** @type {Els} */
 const els = {
-  app: must('app'), gridbox: must('gridbox'), pills: must('pills'), letters: must('letters'), fx: must('fx'),
+  app: must('app'), hdr: must('hdr'), gridbox: must('gridbox'), pills: must('pills'), letters: must('letters'), fx: must('fx'),
   list: must('list'), side: must('side'), count: must('count'),
   subject: must('subject'), category: must('category'), win: must('win'), winmsg: must('winmsg'),
   winstats: must('winstats'), art: must('art'), railart: must('railart'),
@@ -296,6 +296,7 @@ function layout() {
     vw: window.innerWidth - padX,
     vh: window.innerHeight - padY,
     size: state.size, pad: PAD, count: state.puzzle.words.length, minCell: state.minCell,
+    header: els.hdr.offsetHeight,
   });
   applyLayout(els, state.dims);
   placeArt(els, state.dims);
@@ -1127,6 +1128,9 @@ document.addEventListener('keydown', (e) => {
 // The backdrop again too: WebKit can boot before the stylesheet, with no confetti colours yet.
 window.addEventListener('load', () => { onResize(); syncThemeColor(); showBackdrop(); });
 window.addEventListener('resize', onResize);
+// The header's height sizes the portrait grid, and a name, a late font or a turn changes it after
+// layout() measured. It settles: no layout() changes the header's height in portrait, and landscape ignores it.
+new ResizeObserver(onResize).observe(els.hdr);
 
 /** Explicit `?seed=` / `?subject=` / `?category=` always wins, even over a saved game —
  * that is the point of pinning a puzzle by URL. Otherwise prefer the save, and only deal

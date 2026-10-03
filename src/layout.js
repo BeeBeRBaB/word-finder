@@ -58,6 +58,9 @@ export function pickPreset({ screenW, screenH }) {
 // gap, is 95; each row is 31 plus a 6px gap. 96 keeps a pixel of margin. The hint used to
 // sit below the list and cost every phone 46px of grid.
 const RESERVE_BASE = 96;
+// The header RESERVE_BASE counts. A long name takes a second line on a phone, and what that
+// adds comes out of the grid, or the last row of words falls below the fold.
+const HEADER_ROW = 46;
 const ROW_H = 37;
 /** @param {number} count @returns {number} */
 export const reservePortrait = (count) => RESERVE_BASE + Math.ceil(count / 2) * ROW_H;
@@ -86,10 +89,11 @@ const LIST_COLUMNS = 'max-content max-content';
  * Viewport arithmetic. Pure, so it can be swept across every device shape in a unit test.
  * vw/vh are the space inside #app, safe-area insets already subtracted by the caller.
  * `scroll` means minCell won and the board is bigger than its space.
- * @param {{vw:number, vh:number, size:number, pad:number, count:number, minCell?:number}} opts
+ * `header` is the header's measured height, which portrait takes from the grid past one row.
+ * @param {{vw:number, vh:number, size:number, pad:number, count:number, minCell?:number, header?:number}} opts
  * @returns {LayoutDims}
  */
-export function computeLayout({ vw, vh, size, pad, count, minCell = 16 }) {
+export function computeLayout({ vw, vh, size, pad, count, minCell = 16, header = HEADER_ROW }) {
   const landscape = vw > vh * 1.08;
   let cell, sideWidth;
   if (landscape) {
@@ -104,7 +108,7 @@ export function computeLayout({ vw, vh, size, pad, count, minCell = 16 }) {
     return { landscape, cell, gridSize, sideWidth, listColumns: LIST_COLUMNS, scroll };
   }
   const availW = vw - 2 * pad - BORDER;
-  const availH = vh - reservePortrait(count) - 2 * pad - BORDER;
+  const availH = vh - reservePortrait(count) - Math.max(0, header - HEADER_ROW) - 2 * pad - BORDER;
   cell = Math.max(minCell, Math.min(CELL_MAX, Math.floor(Math.min(availW, availH) / size)));
   const gridSize = size * cell + 2 * pad;
   // avail* already exclude padding, border and the list reserve, so compare the raw run.

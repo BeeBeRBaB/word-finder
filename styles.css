@@ -358,14 +358,11 @@ body{position:fixed;inset:0;width:100%;height:100%}
 /* The header's own width, so a laptop window whose rail is at its floor narrows it too, not
    just a phone. A name that does not fit takes a second line rather than an ellipsis. */
 #hdr{container:hdr/inline-size}
-@container hdr (max-width:420px){
+/* Up to where every name fits on one line. In portrait the grid gives up what the second line
+   adds (layout.js, `header`); in landscape the rail holds it. */
+@container hdr (max-width:469px){
   #subject{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
 }
-/* A tablet's or a laptop's rail has the height for that second line up to where every name fits on
-   one. A phone on its side does not: the taller header would push words below the fold. */
-@media (min-height:500px){@container hdr (max-width:469px){
-  #app[data-landscape] #subject{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
-}}
 /* New game's label left the title block 83px at 320px; its icon alone lets every name and
    category fit. A phone held upright fits the label from 341px, but the rail's larger type
    still cut names below 385px, so a laptop window with a narrow rail drops it sooner. */
