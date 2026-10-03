@@ -15,10 +15,12 @@ if ! node -e 'const [a,b]=process.versions.node.split(".").map(Number);process.e
 fi
 # Chromium and WebKit (playwright.config.js has a Desktop Safari project), pinned to
 # package-lock's Playwright: bump this with it, or the test run downloads its own builds.
-# A shared path, readable by any user: the docs don't say which user threads run as. Set the
-# environment variable PLAYWRIGHT_BROWSERS_PATH=/opt/ms-playwright so threads look here.
+# The cloud image sets PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers, where threads look; the
+# fallback is a shared path for an image that doesn't.
 export PLAYWRIGHT_BROWSERS_PATH="${PLAYWRIGHT_BROWSERS_PATH:-/opt/ms-playwright}"
 npx -y playwright@1.61.1 install --with-deps chromium webkit
 $SUDO chmod -R a+rX "$PLAYWRIGHT_BROWSERS_PATH"
+# certutil, for trusting each session's proxy CA in Chromium's own NSS store (docs/handoff.md).
+$SUDO apt-get install -y libnss3-tools
 # Last line: its status is the script's.
 node --version && npx -y playwright@1.61.1 --version
