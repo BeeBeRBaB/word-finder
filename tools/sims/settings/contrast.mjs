@@ -1,26 +1,26 @@
 // WCAG contrast of every piece of text on every Settings page (the main page, Theme and
-// Background), against whatever it sits on composited down to the card, for each theme x
-// palette x mode, on a phone (page) and a desktop (card). Text under 4.5:1 (3:1 if large) is
-// listed; disabled controls are exempt, as WCAG has them. Exits 1 if any text fails.
+// Background), against whatever it sits on composited down to the card, for each theme in each
+// flavour, on a phone (page) and a desktop (card). Text under 4.5:1 (3:1 if large) is listed;
+// disabled controls are exempt, as WCAG has them. Exits 1 if any text fails.
 //   node tools/sims/settings/contrast.mjs
-//   PALETTES=classic,calm THEMES=plum node tools/sims/settings/contrast.mjs
+//   THEMES=plum,grove MODES=light node tools/sims/settings/contrast.mjs
 import { chromium } from '@playwright/test';
 import { serve } from '../site.mjs';
-import { THEMES as ALL_THEMES, PALETTES as ALL_PALETTES } from '../../../src/appearance.js';
+import { THEMES as ALL_THEMES, PREFS } from '../../../src/appearance.js';
 
 const list = (k, all) => (process.env[k] ? process.env[k].split(',') : all);
 const THEMES = list('THEMES', ALL_THEMES);
-const PALETTES = list('PALETTES', ALL_PALETTES);
+const MODES = list('MODES', PREFS);
 // The main page, then each subpage through the row that opens it.
 const PAGES = [['main', null], ['theme', '#settings-theme'], ['background', '#settings-bg']];
 
 const site = await serve();
 const browser = await chromium.launch();
 let failed = 0;
-for (const palette of PALETTES) for (const [w, h] of [[390, 844], [1440, 900]]) for (const mode of ['dark', 'light']) for (const theme of THEMES) {
+for (const [w, h] of [[390, 844], [1440, 900]]) for (const mode of MODES) for (const theme of THEMES) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, serviceWorkers: 'block', reducedMotion: 'reduce', hasTouch: w < 600 });
   const page = await ctx.newPage();
-  await page.addInitScript(([m, t, p]) => { localStorage.setItem('wordfinder-appearance', m); localStorage.setItem('wordfinder-theme', t); localStorage.setItem('wordfinder-palette', p); }, [mode, theme, palette]);
+  await page.addInitScript(([m, t]) => { localStorage.setItem('wordfinder-appearance', m); localStorage.setItem('wordfinder-theme', t); }, [mode, theme]);
   await page.goto(site.url + '/?subject=sports/golf'); await page.waitForSelector('.cell');
   const out = [];
   for (const [name, row] of PAGES) {
@@ -61,7 +61,7 @@ for (const palette of PALETTES) for (const [w, h] of [[390, 844], [1440, 900]]) 
   }
   const bad = out.flatMap(o => o.bad);
   failed += bad.length;
-  console.log(`${bad.length ? 'FAIL' : 'ok  '} ${w}x${h} ${mode.padEnd(5)} ${theme}/${palette} lowest ${Math.min(...out.map(o => o.low)).toFixed(2)}`
+  console.log(`${bad.length ? 'FAIL' : 'ok  '} ${w}x${h} ${theme}/${mode} lowest ${Math.min(...out.map(o => o.low)).toFixed(2)}`
     + (bad.length ? `\n     ${[...new Set(bad)].join('\n     ')}` : ''));
   await ctx.close();
 }

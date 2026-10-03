@@ -21,16 +21,18 @@ const rootBg = (page) => page.evaluate(() => {
   return c;
 });
 
-test('the Theme row opens a page of every theme, its palettes as tiles, the current one focused', async ({ page }) => {
+test('the Theme row opens a page of every theme in Light and Dark, the current one focused', async ({ page }) => {
   await page.goto('/?seed=1&subject=space/jupiter');
   await openPage(page);
   await expect(page.locator('#settings-body')).toBeHidden();
   await expect(page.locator('.lookgroup')).toHaveCount(7);
-  await expect(page.locator('.looktile')).toHaveCount(28);
+  await expect(page.locator('.looktile')).toHaveCount(14);
   await expect(page.locator('#look-plum')).toHaveText('Plum');
-  await expect(page.locator('.looktile[data-look="plum/jewel"] input')).toHaveAccessibleName('Plum Jewel');
-  await expect(page.locator('.looktile[data-look="phosphor/classic"] input')).toBeFocused();
-  await expect(page.locator('.looktile[data-look="phosphor/classic"] input')).toBeChecked();
+  await expect(page.locator('.looktile[data-look="plum/light"] input')).toHaveAccessibleName('Plum Light');
+  await expect(page.locator('.looktile[data-look="phosphor/dark"] input')).toBeFocused();
+  await expect(page.locator('.looktile[data-look="phosphor/dark"] input')).toBeChecked();
+  // The Mode switch is gone: a flavour is part of the look.
+  await expect(page.locator('#settings-mode')).toHaveCount(0);
   for (const h of await page.locator('.looktile').evaluateAll(ts => ts.map(t => t.getBoundingClientRect().height))) expect(h).toBeGreaterThanOrEqual(44);
   // Every id in the page once, now that both pages' markup is in.
   const dupes = await page.evaluate(() => {
@@ -40,40 +42,36 @@ test('the Theme row opens a page of every theme, its palettes as tiles, the curr
   expect(dupes).toEqual([]);
 });
 
-test('a tile applies its theme and palette at once, is shown on the row, and is remembered', async ({ page }) => {
+test('a tile applies its theme and flavour at once, is shown on the row, and is remembered', async ({ page }) => {
   await page.goto('/?seed=1&subject=space/jupiter');
   await openPage(page);
-  await page.locator('.looktile[data-look="grove/calm"]').click();
+  await page.locator('.looktile[data-look="grove/light"]').click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'grove');
-  await expect(page.locator('html')).toHaveAttribute('data-palette', 'calm');
+  await expect(page.locator('html')).toHaveAttribute('data-appearance', 'light');
   await expect(page.locator('#settings-themepage')).toBeVisible();   // stays, to compare others
   await page.locator('#theme-back').click();
   await expect(page.locator('#settings-theme')).toBeFocused();
-  await expect(page.locator('#settings-theme')).toHaveAccessibleName('Theme Grove · Calm');
+  await expect(page.locator('#settings-theme')).toHaveAccessibleName('Theme Grove · Light');
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'grove');
-  await expect(page.locator('html')).toHaveAttribute('data-palette', 'calm');
+  await expect(page.locator('html')).toHaveAttribute('data-appearance', 'light');
   await openPage(page);
-  await expect(page.locator('.looktile[data-look="grove/calm"] input')).toBeChecked();
+  await expect(page.locator('.looktile[data-look="grove/light"] input')).toBeChecked();
   await page.keyboard.press('Escape');
   await expect(page.locator('#settings')).toBeHidden();
 });
 
-test('each preview shows the colours its look really has, in either mode', async ({ page }) => {
+test('each preview shows the colours its look really has', async ({ page }) => {
   await page.goto('/?seed=1&subject=space/jupiter');
-  for (const mode of ['dark', 'light']) {
-    await page.locator('#appearance').click();
-    await page.locator(`#mode-${mode}`).click();
-    await page.locator('#settings-theme').click();
-    const before = await page.evaluate(() => ({ ...document.documentElement.dataset }));
-    const shown = await page.locator('.looktile').evaluateAll(ts => ts.map(t => [
-      /** @type {HTMLElement} */ (t).dataset.look, getComputedStyle(/** @type {Element} */ (t.querySelector('.lookprev'))).backgroundColor]));
-    // Reading them left the page in its own look.
-    expect(await page.evaluate(() => ({ ...document.documentElement.dataset }))).toEqual(before);
-    for (const [look, bg] of shown) {
-      await page.locator(`.looktile[data-look="${look}"]`).click();
-      expect(await rootBg(page), `${look} ${mode}`).toBe(bg);
-    }
-    await page.keyboard.press('Escape');
+  await openPage(page);
+  const before = await page.evaluate(() => ({ ...document.documentElement.dataset }));
+  const shown = await page.locator('.looktile').evaluateAll(ts => ts.map(t => [
+    /** @type {HTMLElement} */ (t).dataset.look, getComputedStyle(/** @type {Element} */ (t.querySelector('.lookprev'))).backgroundColor]));
+  // Reading them left the page in its own look.
+  expect(await page.evaluate(() => ({ ...document.documentElement.dataset }))).toEqual(before);
+  expect(new Set(shown.map(([, bg]) => bg)).size, 'every look has its own ground').toBe(shown.length);
+  for (const [look, bg] of shown) {
+    await page.locator(`.looktile[data-look="${look}"]`).click();
+    expect(await rootBg(page), look).toBe(bg);
   }
 });

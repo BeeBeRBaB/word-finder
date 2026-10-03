@@ -3,16 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<!-- Resolves the appearance before first paint; module scripts are deferred, so main.js
-     would land after a flash. Must stay equivalent to normalizePref() in src/appearance.js:
-     anything that is not exactly 'light' resolves to dark, which is both the default and
-     the migration for the 'system' setting this app used to offer. There is no OS query —
-     dropping `system` removed the only reason to ask. The storage read still needs its own
-     inner try: a throwing getItem (iOS "Block All Cookies") must fall through to the
-     default, not abort the script. Theme and palette are resolved the same way and must stay
-     equivalent to normalizeTheme() and normalizePalette(): anything not listed is the default. Covered by
-     appearance.spec.js. -->
-<script>try{var p=null,t=null,c=null;try{p=localStorage.getItem('wordfinder-appearance');t=localStorage.getItem('wordfinder-theme');c=localStorage.getItem('wordfinder-palette')}catch(e){}if(p!=='light')p='dark';if(['broadsheet','sticker','drafting','grove','plum','graphite'].indexOf(t)<0)t='phosphor';document.documentElement.dataset.appearance=p;if(['jewel','duotone','calm'].indexOf(c)<0)c='classic';document.documentElement.dataset.theme=t;document.documentElement.dataset.palette=c}catch(e){}</script>
+<!-- Resolves the look before first paint; module scripts are deferred, so main.js would land
+     after a flash. Must stay equivalent to normalizePref() and normalizeTheme() in
+     src/appearance.js: anything but exactly 'light' is dark, and anything but a listed theme is
+     the default. The storage read has its own inner try, so a throwing getItem (iOS "Block All
+     Cookies") falls through to the defaults rather than aborting. Covered by appearance.spec.js. -->
+<script>try{var p=null,t=null;try{p=localStorage.getItem('wordfinder-appearance');t=localStorage.getItem('wordfinder-theme')}catch(e){}if(p!=='light')p='dark';if(['graphite','broadsheet','drafting','sticker','plum','grove'].indexOf(t)<0)t='phosphor';document.documentElement.dataset.appearance=p;document.documentElement.dataset.theme=t}catch(e){}</script>
 <!-- Hold the first paint until main.js has laid the board out. The shell paints
      portrait with an unsized grid, and JS then flips orientation and sizes it, which
      measured CLS 0.66 — one shift moving #gridbox, #hdr and #side at once. Its own
@@ -31,7 +27,7 @@
 <!-- Three faces, one request. Atkinson Hyperlegible reads the grid and the list —
      disambiguating I/l/1 and O/0 is exactly the job. Cross-origin, so sw.js cannot
      precache them; `display=swap` keeps first paint on the fallback rather than blank. -->
-<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Space+Grotesk:wght@500;700&family=Space+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Space+Grotesk:wght@500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -46,10 +42,9 @@
     <div id="titles"><div id="kickerline"><span id="kicker">WORD FINDER</span><span id="category"></span></div>
       <div id="subjectline"><span id="subject">Loading…</span></div></div>
     <div id="actions">
-      <button id="appearance" type="button" aria-haspopup="dialog" aria-controls="settings" data-pref="dark" title="Settings" aria-label="Settings">
-        <!-- A gear: the button opens Settings (theme, mode, background, and whatever comes
-             next), so it shows neither the mode nor a palette. It carries both old classes so a
-             stale stylesheet, which shows .i-light or .i-dark by data-pref, still shows it. -->
+      <button id="appearance" type="button" aria-haspopup="dialog" aria-controls="settings" title="Settings" aria-label="Settings">
+        <!-- A gear: the button opens Settings, so it shows no look of its own. It keeps the old
+             .i-light and .i-dark classes so a stale stylesheet, which shows one of them, still does. -->
         <svg class="i-look i-light i-dark" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.33 9.63L21.88 10.45L21.88 13.55L19.33 14.37L18.86 15.51L20.08 17.89L17.89 20.08L15.51 18.86L14.37 19.33L13.55 21.88L10.45 21.88L9.63 19.33L8.49 18.86L6.11 20.08L3.92 17.89L5.14 15.51L4.67 14.37L2.12 13.55L2.12 10.45L4.67 9.63L5.14 8.49L3.92 6.11L6.11 3.92L8.49 5.14L9.63 4.67L10.45 2.12L13.55 2.12L14.37 4.67L15.51 5.14L17.89 3.92L20.08 6.11L18.86 8.49Z"/><circle cx="12" cy="12" r="3.4"/></svg>
       </button>
       <!-- One control in two parts: the label deals a random game in one click, the chevron
@@ -100,11 +95,6 @@
   <section id="settings-look" class="panegroup" aria-labelledby="sec-look"><h3 class="panesection" id="sec-look">Look</h3>
     <div class="row"><span class="panelabel" id="lbl-theme">Theme</span>
       <button id="settings-theme" class="navrow" type="button" aria-labelledby="lbl-theme settings-theme-now" aria-controls="settings-themepage"><span id="settings-theme-now" class="navnow"></span><svg class="navchev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button></div>
-    <div class="row"><span class="panelabel" id="settings-mode-label">Mode</span>
-      <div id="settings-mode" class="seg" role="group" aria-labelledby="settings-mode-label">
-        <button id="mode-light" type="button" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.6"/><path d="M12 2v2.6M12 19.4V22M2 12h2.6M19.4 12H22M4.9 4.9l1.9 1.9M17.2 17.2l1.9 1.9M19.1 4.9l-1.9 1.9M6.8 17.2l-1.9 1.9"/></svg>Light</button>
-        <button id="mode-dark" type="button" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1z"/></svg>Dark</button>
-      </div></div>
     <div class="row"><span class="panelabel" id="lbl-bg">Background</span>
       <button id="settings-bg" class="navrow" type="button" aria-labelledby="lbl-bg settings-bg-now" aria-controls="settings-bgpage"><span id="settings-bg-now" class="navnow"></span><svg class="navchev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button></div>
     <div class="row"><span class="panelabel" id="lbl-letters">Letters</span>

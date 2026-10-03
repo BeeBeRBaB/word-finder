@@ -7,16 +7,17 @@ import { findWordInGrid, dragCells } from './helpers.js';
 // cached `main.js` is handed back from `caches.match()` without ever touching the
 // network — which silently defeats the `page.route(...).abort()` in the module-blocked
 // test below, and would let it pass while proving nothing. The appearance tests are
-// about the inline resolver and the palette, never about caching; `regressions.spec.js`
+// about the inline resolver and the colours, never about caching; `regressions.spec.js`
 // owns the service worker's behaviour and keeps its own workers.
 test.use({ serviceWorkers: 'block' });
 
-/** Flip light/dark the way a player now does: through the Settings pane.
+/** Flip light/dark the way a player now does: the current theme's other tile on the Theme page.
  * @param {Page} page @param {'light'|'dark'} [to] @returns {Promise<void>} */
 async function switchMode(page, to) {
+  const { theme, appearance } = await page.evaluate(() => ({ ...document.documentElement.dataset }));
   await page.locator('#appearance').click();
-  const target = to ?? ((await page.locator('#mode-light').getAttribute('aria-pressed')) === 'true' ? 'dark' : 'light');
-  await page.locator(`#mode-${target}`).click();
+  await page.locator('#settings-theme').click();
+  await page.locator(`.looktile[data-look="${theme}/${to ?? (appearance === 'light' ? 'dark' : 'light')}"]`).click();
   await page.keyboard.press('Escape');
   await expect(page.locator('#settings')).toBeHidden();
 }
@@ -106,8 +107,8 @@ test('the inline resolver contains no OS colour-scheme query', async ({ page }) 
 
 /** @param {Page} page */
 const modeOf = (page) => page.evaluate(() => document.documentElement.dataset.appearance);
-/** @param {Page} page */
-const prefOf = (page) => page.locator('#appearance').getAttribute('data-pref');
+/** The stored flavour, as a first visit (nothing stored) resolves it. @param {Page} page */
+const prefOf = (page) => page.evaluate(() => localStorage.getItem('wordfinder-appearance') ?? 'dark');
 /** @param {Page} page */
 const bgOf = (page) => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
 // The page background alone would still pass if a token were declared in only one
@@ -177,33 +178,20 @@ test('a throwing localStorage resolves dark, and does not flip on hydration', as
   expect(hydrated).toBe('dark');
 });
 
-// One pass over the whole toggle, asserting everything the button owns at each step:
-// the stored pref, the resolved mode, the repaint (background AND a grid letter — the
-// page background alone would still pass if a token were declared in only one palette),
-// the visible icon, and the accessible name. Two steps now rather than three: with
-// `system` gone a preference IS the resolved mode, and a new visitor starts on dark.
-const CYCLE = [
-  { pref: 'dark', mode: 'dark', icon: 'i-dark', label: 'Settings' },
-  { pref: 'light', mode: 'light', icon: 'i-light', label: 'Settings' },
-  { pref: 'dark', mode: 'dark', icon: 'i-dark', label: 'Settings' },
-];
-
-test('the mode switch toggles dark <-> light, repainting and relabelling each step', async ({ page }) => {
+// One pass over both flavours, asserting the stored pref, the resolved mode and the repaint
+// (background AND a grid letter: the page background alone would still pass if a token were
+// declared in only one block) at each step.
+test('the Light and Dark tiles flip the flavour, repainting each step', async ({ page }) => {
   await page.goto('/?seed=1&subject=nature/birds');
   /** @type {Record<string, string>} */
   const darkPaint = { bg: await bgOf(page), ink: await inkOf(page) };
-
-  for (const [i, step] of CYCLE.entries()) {
-    expect(await prefOf(page), `step ${i} pref`).toBe(step.pref);
-    expect(await modeOf(page), `step ${i} mode`).toBe(step.mode);
-    await expect(page.locator(`#appearance svg.${step.icon}`)).toBeVisible();
-    await expect(page.locator('#appearance svg:visible')).toHaveCount(1);
-    await expect(page.locator('#appearance')).toHaveAttribute('aria-label', step.label);
-
+  for (const [i, mode] of ['dark', 'light', 'dark'].entries()) {
+    expect(await prefOf(page), `step ${i} pref`).toBe(mode);
+    expect(await modeOf(page), `step ${i} mode`).toBe(mode);
+    await expect(page.locator('#appearance svg')).toBeVisible();
     const paint = { bg: await bgOf(page), ink: await inkOf(page) };
-    if (step.mode === 'dark') expect(paint, `step ${i} paint`).toEqual(darkPaint);
+    if (mode === 'dark') expect(paint, `step ${i} paint`).toEqual(darkPaint);
     else expect(paint, `step ${i} paint`).not.toEqual(darkPaint);
-
     await switchMode(page);
   }
 });
@@ -265,51 +253,25 @@ test('a stored "system" preference migrates to dark at first paint', async ({ pa
   expect(await modeOf(page)).toBe('dark');
 });
 
-// A visitor reported the theme button as an empty circle after a deploy. Reproduced: the
-// service worker revalidates each file independently, so new CSS can pair with old markup
-// for one load, and the old markup ships data-pref="system" -- which an exact
-// [data-pref="dark"] selector does not match, leaving zero icons visible.
-//
-// The button must never render glyph-less, whatever the attribute says. This drives the
-// attribute directly rather than through the toggle, because the toggle can only ever
-// produce the two values this build already handles.
-test('exactly one icon shows for any data-pref, including values this build retired', async ({ page }) => {
-  await page.goto('/?seed=1&subject=nature/birds');
-  await page.waitForSelector('#letters .cell');
-  for (const pref of ['dark', 'light', 'system', 'banana', '']) {
-    const shown = await page.evaluate((p) => {
-      const btn = /** @type {HTMLElement} */ (document.getElementById('appearance'));
-      btn.dataset.pref = p;
-      return [...btn.querySelectorAll('svg')]
-        .filter(s => getComputedStyle(s).display !== 'none')
-        .map(s => s.getAttribute('class'));
-    }, pref);
-    expect(shown, `data-pref="${pref}" must show exactly one icon`).toHaveLength(1);
-    // One gear now, carrying both old classes so either old rule still shows it.
-    expect(shown[0]).toContain('i-look');
-  }
-});
-
-// A palette recolours whichever theme is on, and the <head> resolver applies a stored one
-// before any module runs, like the theme, so it never flashes the classic colours first.
-test('a palette recolours the theme, is remembered, and is applied at first paint', async ({ page }) => {
+// A look is a theme and its flavour together, and the <head> resolver applies both before any
+// module runs, so a stored look never flashes the default colours first.
+test('a look recolours the page, is remembered, and is applied at first paint', async ({ page }) => {
   await page.goto('/?seed=1&subject=nature/birds');
   await page.waitForSelector('#letters .cell');
   const bg = () => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--bg').trim());
-  const classic = await bg();
+  const phosphor = await bg();
   await page.locator('#appearance').click();
   await page.locator('#settings-theme').click();
-  await page.locator('.looktile[data-look="phosphor/jewel"]').click();
-  await expect(page.locator('html')).toHaveAttribute('data-palette', 'jewel');
-  expect(await bg()).toBe('#3d200c');
-  expect(await page.locator('meta[name="theme-color"]').getAttribute('content')).toBe('#3d200c');
-  await page.locator('.looktile[data-look="grove/jewel"]').click();
+  await page.locator('.looktile[data-look="grove/light"]').click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'grove');
-  const jewelGrove = await bg();
-  expect(jewelGrove).not.toBe(classic);
+  await expect(page.locator('html')).toHaveAttribute('data-appearance', 'light');
+  expect(await bg()).toBe('#bfe3bd');
+  expect(await page.locator('meta[name="theme-color"]').getAttribute('content')).toBe('#bfe3bd');
+  expect(phosphor).not.toBe('#bfe3bd');
   await page.route('**/src/main.js', route => route.abort());
   await page.reload();
   await expect(page.locator('.cell')).toHaveCount(0);   // only the inline resolver ran
-  await expect(page.locator('html')).toHaveAttribute('data-palette', 'jewel');
-  expect(await bg()).toBe(jewelGrove);
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'grove');
+  await expect(page.locator('html')).toHaveAttribute('data-appearance', 'light');
+  expect(await bg()).toBe('#bfe3bd');
 });

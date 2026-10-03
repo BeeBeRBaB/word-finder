@@ -817,11 +817,10 @@ function catchUp() {
 }
 
 // appearance.js owns the preference and resolves it onto <html>; this callback is the
-// page-shaped half. The status-bar colour is read back off the resolved palette rather
-// than duplicated here, so a palette edit has exactly one home.
+// page-shaped half. The status-bar colour is read back off the resolved look rather than
+// duplicated here, so a colour edit has exactly one home.
 const themeColorMeta = document.querySelector('meta[name="theme-color"]');
 const settings = must('settings');
-const modeLight = must('mode-light'), modeDark = must('mode-dark');
 const leastBox = /** @type {HTMLInputElement} */ (must('settings-least-box'));
 // Vibration is a no-op where unsupported (iOS Safari, most desktops); do not offer it there.
 if (!('vibrate' in navigator)) must('settings-vibrate').hidden = true;
@@ -857,32 +856,29 @@ function showBackdrop() {
   });
 }
 globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').addEventListener?.('change', showBackdrop);
-// The Theme page: every theme and palette as one choice. Previews are read once per mode.
+// The Theme page: every theme in both flavours, each one choice. The stylesheet never changes
+// under a running page, so the previews are read once, on the first open.
 const lookTiles = must('theme-tiles'), lookNow = must('settings-theme-now');
 lookTiles.innerHTML = lookTilesMarkup();
-/** @type {Map<string, Map<string, string>>} */
-const lookVars = new Map();
+let previewsFilled = false;
 /** @returns {void} */
 function fillPreviews() {
-  const root = document.documentElement, mode = root.dataset.appearance ?? 'dark';
-  const vars = lookVars.get(mode) ?? readLooks(root, getComputedStyle);
-  lookVars.set(mode, vars);
+  if (previewsFilled) return;
+  previewsFilled = true;
+  const vars = readLooks(document.documentElement, getComputedStyle);
   for (const tile of lookTiles.querySelectorAll('[data-look]')) {
     tile.querySelector('.lookprev')?.setAttribute('style', vars.get(/** @type {HTMLElement} */ (tile).dataset.look ?? '') ?? '');
   }
 }
-/** The Theme row's summary and the checked tile. @param {string} theme @param {string} palette @returns {void} */
-function syncLook(theme, palette) {
-  lookNow.innerHTML = lookSummaryMarkup(theme, palette, varsOf(getComputedStyle(document.documentElement)));
-  const on = /** @type {HTMLInputElement|null} */ (lookTiles.querySelector(`input[value="${lookId(theme, palette)}"]`));
+/** The Theme row's summary and the checked tile. @param {string} theme @param {string} pref @returns {void} */
+function syncLook(theme, pref) {
+  lookNow.innerHTML = lookSummaryMarkup(theme, pref, varsOf(getComputedStyle(document.documentElement)));
+  const on = /** @type {HTMLInputElement|null} */ (lookTiles.querySelector(`input[value="${lookId(theme, pref)}"]`));
   if (on) on.checked = true;
 }
 const appearance = makeAppearance({
-  onApply(mode, theme, palette) {
-    els.appearance.dataset.pref = mode;
-    modeLight.setAttribute('aria-pressed', String(mode === 'light'));
-    modeDark.setAttribute('aria-pressed', String(mode === 'dark'));
-    syncLook(theme, palette);
+  onApply(mode, theme) {
+    syncLook(theme, mode);
     syncThemeColor();
     showBackdrop();
   },
@@ -1019,8 +1015,6 @@ els.appearance.setAttribute('aria-expanded', 'false');
 els.appearance.addEventListener('click', () => {
   if (settings.style.display === 'flex') closeSettings(); else openSettings();
 });
-modeLight.addEventListener('click', () => appearance.set('light'));
-modeDark.addEventListener('click', () => appearance.set('dark'));
 /** Show the stored settings in the pane's controls. Every control under [data-setting] is a
  * settings.js field: a checkbox (data-on/data-off map it to a two-value choice), a radio, a
  * select, or a .seg group of buttons. @returns {void} */
@@ -1038,7 +1032,7 @@ function syncSettings() {
   }
   leastBox.checked = progress.get().favourLeastSeen;
   bgNow.innerHTML = summaryMarkup(now.art);
-  syncLook(appearance.getTheme(), appearance.getPalette());
+  syncLook(appearance.getTheme(), appearance.get());
 }
 /** Make a changed setting take effect now, where it has something to change now.
  * @param {string} key @returns {void} */

@@ -58,7 +58,7 @@ export function start(host, opts) {
     if (nw === w && nh === h) return;
     if (w && h) for (let i = 0; i < seeded; i++) { X[i] *= nw / w; Y[i] *= nh / h; }
     w = nw; h = nh;
-    dpr = Math.min(2, window.devicePixelRatio || 1);
+    dpr = Math.min(3, window.devicePixelRatio || 1);
     cv.width = Math.max(1, Math.round(w * dpr));
     cv.height = Math.max(1, Math.round(h * dpr));
     n = Math.max(26, Math.min(MAX, Math.round((w * h) / 16000) + 10)); // denser on small screens

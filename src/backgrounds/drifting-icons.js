@@ -79,7 +79,7 @@ export function start(host, opts) {
   /** @returns {void} */
   function resize() {
     const w = host.clientWidth || innerWidth, h = host.clientHeight || innerHeight;
-    const d = Math.min(2, devicePixelRatio || 1);
+    const d = Math.min(3, devicePixelRatio || 1);
     if (w === W && h === H && d === dpr && parts.length) return;
     const remake = d !== dpr || !parts.length;
     // Icons in flight keep their place, scaled to the new size, so dragging a window edge

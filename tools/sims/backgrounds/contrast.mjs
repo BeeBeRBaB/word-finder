@@ -1,5 +1,5 @@
-// WCAG contrast of what sits over a background, for every background x mode x area x shape x
-// theme x palette (the animations take their colours from the palette, so each is run in it).
+// WCAG contrast of what sits over a background, for every background x area x shape x look, a
+// theme in one flavour (the animations take their colours from the look, so each is run in it).
 // Each frame is captured at full opacity over a black and a white ground, which gives every
 // pixel's colour and coverage, so any host opacity is composited in the math. What counts is
 // the ring within 2px of each glyph, where legibility is decided, after anything the page paints
@@ -7,21 +7,22 @@
 // 4.5:1 for text (3:1 if large) and 3:1 for icons. Prints the highest host opacity that would
 // pass as well. Exits 1 if the stylesheet's opacity fails anywhere.
 //   node tools/sims/backgrounds/contrast.mjs
-//   ONLY=aurora,starfield MODES=dark AREAS=full SHAPES=phone LOOKS=sticker/duotone node tools/sims/backgrounds/contrast.mjs
+//   ONLY=aurora,starfield MODES=dark AREAS=full SHAPES=phone LOOKS=sticker/dark node tools/sims/backgrounds/contrast.mjs
 //   NOHALO=1 strips text-shadow, to see what a halo is buying; CSS='...' adds a rule, to try one;
 //   RING=3 widens the ring; DEBUG=<dir> saves the masks and prints each box.
 import { chromium } from '@playwright/test';
 import { serve } from '../site.mjs';
 import { BACKGROUNDS } from '../../../src/backgrounds.js';
-import { THEMES, PALETTES } from '../../../src/appearance.js';
+import { THEMES, PREFS } from '../../../src/appearance.js';
 
 const list = (k, all) => (process.env[k] ? process.env[k].split(',') : all);
 const IDS = list('ONLY', BACKGROUNDS.filter(b => b.id !== 'none').map(b => b.id));
-const MODES = list('MODES', ['dark', 'light']);
+const MODES = list('MODES', PREFS);
 const AREAS = list('AREAS', ['list', 'full']);
 const ALL_SHAPES = { desktop: [1440, 900], phone: [390, 664], landscape: [844, 390] };
 const SHAPES = list('SHAPES', Object.keys(ALL_SHAPES));
-const LOOKS = list('LOOKS', THEMES.flatMap(t => PALETTES.map(p => `${t}/${p}`)));
+// Each look carries its flavour, so MODES narrows the looks rather than adding a loop.
+const LOOKS = list('LOOKS', THEMES.flatMap(t => PREFS.map(p => `${t}/${p}`))).filter(l => MODES.includes(l.split('/')[1]));
 const FRAMES = Number(process.env.FRAMES || 2);
 const WORKERS = Number(process.env.WORKERS || 3);
 const STEPS = [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.7, 0.8, 0.9, 1];
@@ -38,12 +39,13 @@ const ICONS = ['#appearance svg', '#catbtn svg'];
 // for Full screen, and in Word list it is behind no text. Nor is the Subject scene in Word list
 // on a phone held upright, where it keeps the board corner too.
 const jobs = [];
-for (const shape of SHAPES) for (const mode of MODES) for (const area of AREAS) for (const id of IDS) {
+for (const shape of SHAPES) for (const area of AREAS) for (const id of IDS) {
   const bg = BACKGROUNDS.find(b => b.id === id);
   const corner = area === 'list' && (!bg?.file || (id === 'scene' && shape === 'phone'));
-  if (bg && !corner) jobs.push({ shape, mode, area, bg });
+  if (bg && !corner) jobs.push({ shape, area, bg });
 }
 
+console.log(`${jobs.length} jobs, each through ${LOOKS.length} looks: ${LOOKS.join(' ')}`);
 const site = await serve();
 const proxy = process.env.HTTPS_PROXY;   // the theme fonts come from Google Fonts
 const browser = await chromium.launch(proxy ? { proxy: { server: proxy, bypass: 'localhost,127.0.0.1' } } : {});
@@ -51,14 +53,13 @@ let failed = 0;
 /** @type {Record<string, number>} */
 const ceiling = {};
 
-/** One background x mode x area x shape, through every look. */
+/** One background x area x shape, through every look. */
 async function run(job, math) {
-  const { shape, mode, area, bg } = job;
+  const { shape, area, bg } = job;
   const [w, h] = ALL_SHAPES[shape];
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, serviceWorkers: 'block', hasTouch: w < 600 });
   const page = await ctx.newPage();
-  await page.addInitScript(([m, s]) => {
-    localStorage.setItem('wordfinder-appearance', m);
+  await page.addInitScript((s) => {
     localStorage.setItem('wordfinder-settings-v1', s);
     const raf = window.requestAnimationFrame.bind(window);
     /** @type {FrameRequestCallback[]} */ let held = [];
@@ -66,7 +67,7 @@ async function run(job, math) {
     w.__freeze = () => { held = []; window.requestAnimationFrame = (cb) => { held.push(cb); return 0; }; };
     // Each held frame is released once: releasing one twice would start a second loop.
     w.__thaw = () => { window.requestAnimationFrame = raf; const h = held; held = []; for (const cb of h) raf(cb); };
-  }, [mode, JSON.stringify({ art: bg.id, area })]);
+  }, JSON.stringify({ art: bg.id, area }));
   await page.goto(`${site.url}/?seed=1&subject=history/industrial-revolution`);
   await page.waitForSelector('.cell');
   const host = area === 'full' ? '#bg' : '#bgside';
@@ -128,7 +129,7 @@ async function run(job, math) {
       await s.evaluate(n => n.remove());
     }
     await hideBg.evaluate(n => n.remove());
-    if (process.env.DEBUG) for (const [n, b] of [['glyph', glyph], ['halo', halo[0]]]) (await import('node:fs')).writeFileSync(`${process.env.DEBUG}/${bg.id}-${mode}-${area}-${shape}-${n}.png`, Buffer.from(b, 'base64'));
+    if (process.env.DEBUG) for (const [n, b] of [['glyph', glyph], ['halo', halo[0]]]) (await import('node:fs')).writeFileSync(`${process.env.DEBUG}/${bg.id}-${look.replace('/', '-')}-${area}-${shape}-${n}.png`, Buffer.from(b, 'base64'));
     // The background alone at full opacity, over black and over white.
     s = await tag(`#app{visibility:hidden} #bgside,#art{visibility:visible} #settings,#toast{display:none} #bg,#bgside{opacity:1!important}`);
     const frames = [];
@@ -215,7 +216,7 @@ async function run(job, math) {
   const max = Math.min(...rows.map(([, v]) => v.max));
   const key = `${bg.id} ${area}`;
   ceiling[key] = Math.min(ceiling[key] ?? 1, max);
-  const lines = [`${bad.length ? 'FAIL' : 'ok  '} ${bg.id.padEnd(13)} ${mode.padEnd(5)} ${area.padEnd(4)} ${shape.padEnd(9)} at ${opacity}: `
+  const lines = [`${bad.length ? 'FAIL' : 'ok  '} ${bg.id.padEnd(13)} ${area.padEnd(4)} ${shape.padEnd(9)} at ${opacity}: `
     + `lowest ${lv.score.toFixed(2)}/${lv.need} ${lk} (${lv.at}); passes up to ${max}`];
   for (const [k, v] of bad) lines.push(`     ${k} ${v.score.toFixed(2)} < ${v.need} at ${v.at}`);
   console.log(lines.join('\n'));
@@ -228,7 +229,7 @@ await Promise.all(Array.from({ length: Math.min(WORKERS, jobs.length) }, async (
 }));
 await browser.close();
 site.close();
-console.log('\nHighest host opacity every theme, palette, mode and shape passes at:');
+console.log('\nHighest host opacity every look and shape passes at:');
 for (const [k, v] of Object.entries(ceiling).sort()) console.log(`  ${k.padEnd(20)} ${v}`);
 console.log(failed ? `${failed} roles under AA at the stylesheet's opacity` : 'everything over the backgrounds meets AA');
 process.exit(failed ? 1 : 0);

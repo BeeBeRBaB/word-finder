@@ -54,40 +54,8 @@ test('every theme has both a dark and a light block, and appearance.js lists exa
     assert.ok(THEME_BLOCKS.some(s => s.startsWith(`:root[data-theme="${k}"], `)), `${k} has no dark block`);
     assert.ok(THEME_BLOCKS.includes(`:root[data-theme="${k}"][data-appearance="light"]`), `${k} has no light block`);
   }
-  // The default theme rides on the base palettes and has no block of its own.
+  // The default theme rides on the base blocks and has no block of its own.
   assert.deepEqual([...inCss].sort(), THEMES.filter(t => t !== THEMES[0]).slice().sort());
-});
-
-// Palette blocks recolour a theme: every colour token and nothing else, so each theme keeps
-// its own shape, shadows and art opacity underneath whichever palette is on.
-const PALETTE_BLOCKS = [...css.matchAll(/^(:root\[data-palette="[\w-]+"\][^{]*)\{/gm)].map(m => m[1].trim());
-const PALETTE_TOKENS = ['--bg', '--surface', '--border', '--text', '--text-strong', '--muted', '--label',
-  '--hint', '--accent', '--accent-text', '--accent-ink', '--accent-wash', '--scrim', '--found-text',
-  '--done-text', '--glow', '--pill-1', '--pill-2', '--pill-3', '--pill-4', '--pill-sel',
-  ...[1, 2, 3, 4, 5, 6].map(i => `--confetti-${i}`)];
-
-test('every palette covers every theme in both modes, with exactly the colour tokens', async () => {
-  const { THEMES, PALETTES } = await import('../../src/appearance.js');
-  const dark = tokensIn(DEFAULT_DARK);
-  for (const t of PALETTE_TOKENS) assert.ok(dark.has(t), `${t} is not a palette token any more`);
-  for (const p of PALETTES.slice(1)) for (const th of THEMES) {
-    const sel = `:root[data-palette="${p}"][data-theme="${th}"]`;
-    for (const block of [`${sel}, ${sel}[data-appearance="dark"]`, `${sel}[data-appearance="light"]`]) {
-      assert.ok(PALETTE_BLOCKS.includes(block), `no \`${block}\` block`);
-      // Plum rings its board in a tone of its own colours, so its palettes restate the shadow.
-      const want = th === 'plum' ? [...PALETTE_TOKENS, '--shadow'] : PALETTE_TOKENS;
-      assert.deepEqual([...tokensIn(block)].sort(), [...want].sort(), `${block} tokens`);
-    }
-  }
-  assert.equal(PALETTE_BLOCKS.length, (PALETTES.length - 1) * THEMES.length * 2, 'a palette block for a palette or theme appearance.js does not list');
-});
-
-// Order does not decide any token today (see the comment above the palette blocks); this
-// keeps a future selector change from making it decide the wrong way.
-test('the palette blocks come after every theme block', () => {
-  const lastTheme = Math.max(...THEME_BLOCKS.map(s => css.indexOf(s)));
-  const firstPalette = Math.min(...PALETTE_BLOCKS.map(s => css.indexOf(s)));
-  assert.ok(firstPalette > lastTheme);
 });
 
 test('the type block is first, so it is what a bare `:root` lookup finds', () => {
@@ -159,7 +127,7 @@ test('no bare hex literal survives outside the palette blocks', () => {
     const open = css.indexOf('{', at);
     return css.indexOf('}', open);
   };
-  const lastClose = Math.max(closeOf(DEFAULT_DARK), closeOf(LIGHT_ONLY), ...THEME_BLOCKS.map(closeOf), ...PALETTE_BLOCKS.map(closeOf));
+  const lastClose = Math.max(closeOf(DEFAULT_DARK), closeOf(LIGHT_ONLY), ...THEME_BLOCKS.map(closeOf));
   const body = css.slice(lastClose + 1);
   assert.ok(body.length > 100, 'suspiciously little CSS left after the palette blocks — did the slice point go wrong?');
   assert.deepEqual(body.match(/#[0-9a-fA-F]{3,8}\b/g) ?? [], []);

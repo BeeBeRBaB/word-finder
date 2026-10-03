@@ -7,7 +7,7 @@
 //   npm run shots                      Every shape.
 //   npm run shots -- landscape         Only shapes whose name matches (case-insensitive).
 //   npm run shots -- --subject=sports/golf
-//   npm run shots -- --dark            Render the dark palette instead of light.
+//   npm run shots -- --dark            Render the dark flavour instead of light.
 //   npm run shots -- --measure         Also print grid/list geometry per shape.
 //
 // The default subject is pinned so runs are comparable: the same board every time,
@@ -61,10 +61,9 @@ const browser = await chromium.launch();
 for (const d of shapes) {
   const ctx = await browser.newContext({ viewport: { width: d.w, height: d.h } });
   const page = await ctx.newPage();
-  // Set the stored preference before any script runs — index.html's inline resolver
-  // reads it before first paint, so setting it after load would render the wrong
-  // palette first and repaint.
-  if (dark) await page.addInitScript(() => localStorage.setItem('wordfinder-appearance', 'dark'));
+  // Set the stored flavour before any script runs — index.html's inline resolver reads it
+  // before first paint. Light is set too, as an unset one resolves to dark.
+  await page.addInitScript((p) => localStorage.setItem('wordfinder-appearance', p), dark ? 'dark' : 'light');
   await page.goto(url);
   await page.waitForSelector('#letters .cell');
   const file = new URL(`${d.name.replace(/\s+/g, '-').toLowerCase()}.png`, OUT);

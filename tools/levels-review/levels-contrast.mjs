@@ -1,12 +1,11 @@
 // WCAG contrast of every text role on the score card (against the win card) and on the account
 // section and sign-in form (against the Settings card), and of the countdown bar against its
-// track (3:1, non-text), for each palette x theme x mode. Exits 1 on any failure.
+// track (3:1, non-text), for each theme in each flavour. Exits 1 on any failure.
 //   node tools/levels-review/levels-contrast.mjs
 import { chromium } from '@playwright/test';
 import { serve } from '../sims/site.mjs';
+import { THEMES, PREFS } from '../../src/appearance.js';
 
-const THEMES = ['phosphor', 'broadsheet', 'sticker', 'drafting', 'grove', 'plum', 'graphite'];
-const PALETTES = ['classic', 'jewel', 'duotone', 'calm'];
 const site = await serve();
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 390, height: 844 }, serviceWorkers: 'block' });
@@ -46,9 +45,9 @@ await page.evaluate(async () => {
 });
 
 let failed = 0;
-for (const palette of PALETTES) for (const mode of ['dark', 'light']) for (const theme of THEMES) {
-  const r = await page.evaluate(([palette, mode, theme]) => {
-    Object.assign(document.documentElement.dataset, { palette, appearance: mode, theme });
+for (const mode of PREFS) for (const theme of THEMES) {
+  const r = await page.evaluate(([mode, theme]) => {
+    Object.assign(document.documentElement.dataset, { appearance: mode, theme });
     const rgb = (s) => (s.match(/[\d.]+/g) || []).map(Number).slice(0, 3);
     const L = (c) => { const [r, g, b] = c.map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
     const cr = (a, b) => { const x = L(rgb(a)), y = L(rgb(b)); return +((Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05)).toFixed(2); };
@@ -72,8 +71,8 @@ for (const palette of PALETTES) for (const mode of ['dark', 'light']) for (const
     const track = cs('#sc-pos .sc-bar').backgroundColor;
     const bar = { pos: cr(cs('#sc-pos .sc-bar i').backgroundColor, track), neg: cr(cs('#sc-neg .sc-bar i').backgroundColor, track) };
     const bad = [...Object.entries(text).filter(([, v]) => v < 4.5), ...Object.entries(bar).filter(([, v]) => v < 3)].map(([k]) => k);
-    return { palette, mode, theme, text, bar, bad };
-  }, [palette, mode, theme]);
+    return { mode, theme, text, bar, bad };
+  }, [mode, theme]);
   console.log(JSON.stringify(r));
   failed += r.bad.length;
 }

@@ -3,21 +3,21 @@ import { findAndDrag } from './helpers.js';
 
 /** @typedef {import('@playwright/test').Page} Page */
 
-// Palette tests read the resolved tokens, so a cached main.js must not stand in for the
+// Theme tests read the resolved tokens, so a cached main.js must not stand in for the
 // one under test. Same reasoning as appearance.spec.js.
 test.use({ serviceWorkers: 'block' });
 
 /** @param {Page} page @returns {Promise<string>} */
 const bgOf = (page) => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--bg').trim());
 
-/** Open Settings if it is closed, then the Theme page, and pick a theme in a palette.
- * @param {Page} page @param {string} theme @param {string} [palette] */
-async function pickLook(page, theme, palette = 'classic') {
+/** Open Settings if it is closed, then the Theme page, and pick a theme in one flavour.
+ * @param {Page} page @param {string} theme @param {'light'|'dark'} [mode] */
+async function pickLook(page, theme, mode = 'dark') {
   if (!(await page.locator('#settings').isVisible())) await page.locator('#appearance').click();
   if (!(await page.locator('#settings-themepage').isVisible())) await page.locator('#settings-theme').click();
-  await page.locator(`.looktile[data-look="${theme}/${palette}"]`).click();
+  await page.locator(`.looktile[data-look="${theme}/${mode}"]`).click();
   await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
-  await expect(page.locator('html')).toHaveAttribute('data-palette', palette);
+  await expect(page.locator('html')).toHaveAttribute('data-appearance', mode);
 }
 
 /** @param {Page} page @returns {Promise<void>} */
@@ -40,18 +40,16 @@ test('the header button opens Settings, and Escape closes it with focus returned
   await expect(btn).toBeFocused();
 });
 
-test('every theme repaints in both modes, and no two share a background', async ({ page }) => {
+test('every theme repaints in both flavours, and no two looks share a background', async ({ page }) => {
   await page.goto('/?seed=1&subject=nature/birds');
   await page.locator('#appearance').click();
   const themes = await page.locator('.lookgroup').evaluateAll(gs => gs.map(g => g.getAttribute('aria-labelledby')?.slice(5)));
   expect(themes.length).toBeGreaterThanOrEqual(7);
   /** @type {Set<string>} */
   const seen = new Set();
-  for (const mode of ['dark', 'light']) {
-    if (await page.locator('#settings-themepage').isVisible()) await page.locator('#theme-back').click();
-    await page.locator(`#mode-${mode}`).click();
+  for (const mode of /** @type {const} */ (['dark', 'light'])) {
     for (const t of themes) {
-      await pickLook(page, /** @type {string} */ (t));
+      await pickLook(page, /** @type {string} */ (t), mode);
       const bg = await bgOf(page);
       expect(seen.has(bg), `${t}/${mode} repeats background ${bg}`).toBe(false);
       seen.add(bg);
