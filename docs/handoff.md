@@ -55,7 +55,7 @@ current default marked), and don't build on an assumption.
 
 The result is cached only if the script finishes in about 5 minutes. A thread whose setup failed resumes without re-running it, so its browsers can be missing: `npx playwright install --with-deps chromium webkit` fetches them in about 30 seconds.
 
-The script runs in whichever session starts first after a change, which can be the project chat with no checkout, so it must make no repo steps: `npm ci` there fails with `npm error code EUSAGE` and no session starts (2026-10-04). The failure notice shows none of the script's output, so it keeps a copy in `/tmp/setup-script.log`, ending in `SETUP OK` or in `SETUP FAILED:` and the command that failed. The failed session's disk is kept, so Claude there can read it once a message resumes it.
+The script runs in whichever session starts first after a change, which can be the project chat with no checkout, so it must make no repo steps: `npm ci` there fails with `npm error code EUSAGE` and no session starts (2026-10-04). The failure notice shows none of the script's output, so it keeps a copy in `/tmp/setup-script.log`, ending in `SETUP OK` or in `SETUP FAILED:` and the command that failed. The failed session's disk is kept, so Claude there can read it once a message resumes it. The runner hands the script to `/bin/sh`, which is dash, whatever its first line says, so it must be plain sh: a bash-only line (`exec > >(tee …)`) stopped the next new session 11 ms in (2026-10-04). `sh -n docs/environment.sh` checks an edit.
 
 Each cloud thread needs two things before testing, and the `SessionStart` hook [.claude/hooks/cloud-session.sh](../.claude/hooks/cloud-session.sh) does both, printing a line only if one failed:
 - `npm ci`: the edit hook runs `tsc`.
