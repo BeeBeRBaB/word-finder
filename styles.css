@@ -37,8 +37,9 @@
   --found-shadow:0 0 10px var(--glow); --board-outline:none; --board-outline-offset:0px; --board-texture:none;
   --pill-ring-1:inset 0 0 0 1px var(--pill-edge); --pill-ring-2:inset 0 0 0 1px var(--pill-edge);
   --pill-ring-3:inset 0 0 0 1px var(--pill-edge); --pill-ring-4:inset 0 0 0 1px var(--pill-edge);
-  /* Category art: the opacity of its densest tone behind the board and beside it. */
-  --art-board:.18; --art-rail:.22;
+  /* Category art: its densest tone's opacity on the board and beside it. Backgrounds: the opacity
+     of #bg and #bgside, and how solid the board stays over a Full screen one. */
+  --art-board:.18; --art-rail:.22; --backdrop-full:.6; --backdrop-list:.5; --board-solid:65%;
 }
 /* An orange light enough to feel warm on paper cannot carry white button text, so
    --accent is measured against the white --accent-ink it is actually read on (5.08:1),
@@ -63,7 +64,7 @@
   --found-shadow:0 0 10px var(--glow); --board-outline:none; --board-outline-offset:0px; --board-texture:none;
   --pill-ring-1:inset 0 0 0 1px var(--pill-edge); --pill-ring-2:inset 0 0 0 1px var(--pill-edge);
   --pill-ring-3:inset 0 0 0 1px var(--pill-edge); --pill-ring-4:inset 0 0 0 1px var(--pill-edge);
-  --art-board:.17; --art-rail:.25;
+  --art-board:.4; --art-rail:.5; --backdrop-full:1; --backdrop-list:1; --board-solid:60%;
 }
 /* Six more themes, each with its own fixed colours. Same token names as Phosphor's blocks,
    and the same shape: the bare [data-theme] selector is the dark default, and the
@@ -83,7 +84,7 @@
   --ctl-edge:var(--border); --ctl-width:1px; --ctl-shadow:none; --found-shadow:none;
   --board-outline:1px solid var(--border); --board-outline-offset:4px; --board-texture:none;
   --pill-ring-1:none; --pill-ring-2:none; --pill-ring-3:none; --pill-ring-4:none;
-  --art-board:.18; --art-rail:.22;
+  --art-board:.18; --art-rail:.22; --backdrop-full:.6; --backdrop-list:.5; --board-solid:65%;
 }
 :root[data-theme="broadsheet"][data-appearance="light"]{
   color-scheme:light; --bg:#efe6a0; --surface:#fffcea; --border:#1c1a10; --text:#1c1a10;
@@ -99,7 +100,7 @@
   --ctl-shadow:none; --found-shadow:none; --board-outline:1px solid var(--border);
   --board-outline-offset:4px; --board-texture:none; --pill-ring-1:none; --pill-ring-2:none;
   --pill-ring-3:none; --pill-ring-4:none;
-  --art-board:.17; --art-rail:.25;
+  --art-board:.4; --art-rail:.5; --backdrop-full:1; --backdrop-list:1; --board-solid:60%;
 }
 :root[data-theme="sticker"], :root[data-theme="sticker"][data-appearance="dark"]{
   color-scheme:dark; --bg:#211756; --surface:#2c2266; --border:#0a0620; --text:#f0ebff;
@@ -116,7 +117,7 @@
   --board-outline-offset:0px; --board-texture:none; --pill-ring-1:inset 0 0 0 2px #07040f;
   --pill-ring-2:inset 0 0 0 2px #07040f; --pill-ring-3:inset 0 0 0 2px #07040f;
   --pill-ring-4:inset 0 0 0 2px #07040f;
-  --art-board:.18; --art-rail:.22;
+  --art-board:.18; --art-rail:.22; --backdrop-full:.6; --backdrop-list:.5; --board-solid:65%;
 }
 :root[data-theme="sticker"][data-appearance="light"]{
   color-scheme:light; --bg:#c4c2fa; --surface:#ffffff; --border:#1d1638; --text:#1d1638;
@@ -133,7 +134,7 @@
   --board-outline-offset:0px; --board-texture:none; --pill-ring-1:inset 0 0 0 2px #1d1638;
   --pill-ring-2:inset 0 0 0 2px #1d1638; --pill-ring-3:inset 0 0 0 2px #1d1638;
   --pill-ring-4:inset 0 0 0 2px #1d1638;
-  --art-board:.17; --art-rail:.25;
+  --art-board:.4; --art-rail:.5; --backdrop-full:1; --backdrop-list:1; --board-solid:60%;
 }
 :root[data-theme="drafting"], :root[data-theme="drafting"][data-appearance="dark"]{
   color-scheme:dark; --bg:#002f56; --surface:#113e66; --border:#326893; --text:#dee9f6;
@@ -151,7 +152,7 @@
   --board-texture:linear-gradient(rgba(127,211,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(127,211,255,.07) 1px,transparent 1px);
   --pill-ring-1:inset 0 0 0 1.5px #ffbe46; --pill-ring-2:inset 0 0 0 1.5px #5adcff;
   --pill-ring-3:inset 0 0 0 1.5px #ff786e; --pill-ring-4:inset 0 0 0 1.5px #aae65a;
-  --art-board:.18; --art-rail:.22;
+  --art-board:.18; --art-rail:.22; --backdrop-full:.6; --backdrop-list:.5; --board-solid:65%;
 }
 :root[data-theme="drafting"][data-appearance="light"]{
   color-scheme:light; --bg:#95c5e2; --surface:#eff9fd; --border:#4b81a5; --text:#0f2430;
@@ -169,7 +170,7 @@
   --board-texture:linear-gradient(rgba(10,95,138,.10) 1px,transparent 1px),linear-gradient(90deg,rgba(10,95,138,.10) 1px,transparent 1px);
   --pill-ring-1:inset 0 0 0 1.5px #b87108; --pill-ring-2:inset 0 0 0 1.5px #0b7fa3;
   --pill-ring-3:inset 0 0 0 1.5px #b8332f; --pill-ring-4:inset 0 0 0 1.5px #4f8a12;
-  --art-board:.17; --art-rail:.25;
+  --art-board:.55; --art-rail:.65; --backdrop-full:1; --backdrop-list:1; --board-solid:60%;
 }
 :root[data-theme="grove"], :root[data-theme="grove"][data-appearance="dark"]{
   color-scheme:dark; --bg:#14301f; --surface:#1b3a27; --border:#3a5c44; --text:#e4ebd6;
@@ -186,7 +187,7 @@
   --ctl-edge:var(--accent); --ctl-width:1.5px; --ctl-shadow:none; --found-shadow:none;
   --board-outline:none; --board-outline-offset:0px; --board-texture:none; --pill-ring-1:none;
   --pill-ring-2:none; --pill-ring-3:none; --pill-ring-4:none;
-  --art-board:.18; --art-rail:.22;
+  --art-board:.18; --art-rail:.22; --backdrop-full:.6; --backdrop-list:.5; --board-solid:65%;
 }
 :root[data-theme="grove"][data-appearance="light"]{
   color-scheme:light; --bg:#bfe3bd; --surface:#f5fbf0; --border:#93b98a; --text:#1e2e1b;
@@ -202,7 +203,7 @@
   --ctl-edge:var(--accent); --ctl-width:1.5px; --ctl-shadow:none; --found-shadow:none;
   --board-outline:none; --board-outline-offset:0px; --board-texture:none; --pill-ring-1:none;
   --pill-ring-2:none; --pill-ring-3:none; --pill-ring-4:none;
-  --art-board:.17; --art-rail:.25;
+  --art-board:.55; --art-rail:.65; --backdrop-full:1; --backdrop-list:1; --board-solid:60%;
 }
 :root[data-theme="plum"], :root[data-theme="plum"][data-appearance="dark"]{
   color-scheme:dark; --bg:#43173b; --surface:#4f2146; --border:#74406a; --text:#f5e4ee;
@@ -219,7 +220,7 @@
   --ctl-edge:var(--accent); --ctl-width:1.5px; --ctl-shadow:none; --found-shadow:none;
   --board-outline:none; --board-outline-offset:0px; --board-texture:none; --pill-ring-1:none;
   --pill-ring-2:none; --pill-ring-3:none; --pill-ring-4:none;
-  --art-board:.18; --art-rail:.22;
+  --art-board:.18; --art-rail:.22; --backdrop-full:.6; --backdrop-list:.5; --board-solid:65%;
 }
 :root[data-theme="plum"][data-appearance="light"]{
   color-scheme:light; --bg:#ecbfdc; --surface:#fdf3f8; --border:#d49bbd; --text:#2d1530;
@@ -236,7 +237,7 @@
   --ctl-edge:var(--accent); --ctl-width:1.5px; --ctl-shadow:none; --found-shadow:none;
   --board-outline:none; --board-outline-offset:0px; --board-texture:none; --pill-ring-1:none;
   --pill-ring-2:none; --pill-ring-3:none; --pill-ring-4:none;
-  --art-board:.17; --art-rail:.25;
+  --art-board:.4; --art-rail:.5; --backdrop-full:1; --backdrop-list:1; --board-solid:60%;
 }
 :root[data-theme="graphite"], :root[data-theme="graphite"][data-appearance="dark"]{
   color-scheme:dark; --bg:#23272c; --surface:#2f3339; --border:#51555c; --text:#e6e8eb;
@@ -252,7 +253,7 @@
   --ctl-edge:var(--accent); --ctl-width:1.5px; --ctl-shadow:none; --found-shadow:none;
   --board-outline:none; --board-outline-offset:0px; --board-texture:none; --pill-ring-1:none;
   --pill-ring-2:none; --pill-ring-3:none; --pill-ring-4:none;
-  --art-board:.18; --art-rail:.22;
+  --art-board:.18; --art-rail:.22; --backdrop-full:.6; --backdrop-list:.5; --board-solid:65%;
 }
 :root[data-theme="graphite"][data-appearance="light"]{
   color-scheme:light; --bg:#b8bec5; --surface:#f1f4f6; --border:#757b81; --text:#1f2225;
@@ -270,7 +271,7 @@
   --board-outline:none; --board-outline-offset:0px; --board-texture:none;
   --pill-ring-1:inset 0 0 0 1.5px #8FA10F; --pill-ring-2:inset 0 0 0 1.5px #D9731C;
   --pill-ring-3:inset 0 0 0 1.5px #2F6FE0; --pill-ring-4:inset 0 0 0 1.5px #C42E2E;
-  --art-board:.17; --art-rail:.25;
+  --art-board:.55; --art-rail:.65; --backdrop-full:1; --backdrop-list:1; --board-solid:60%;
 }
 
 /* Lock the viewport: no page scroll or rubber-band on iPad / iOS standalone. */
@@ -446,9 +447,9 @@ body{position:fixed;inset:0;width:100%;height:100%}
    area. z-index:-1 puts both under the page's content and over the body's ground; a module
    fills its host, so each needs a box even while empty. */
 #bg,#bgside{pointer-events:none;overflow:hidden;z-index:-1}
-#bg{position:fixed;inset:0;opacity:.6}
+#bg{position:fixed;inset:0;opacity:var(--backdrop-full)}
 #side{position:relative}
-#bgside{position:absolute;inset:0;opacity:.5;
+#bgside{position:absolute;inset:0;opacity:var(--backdrop-list);
   -webkit-mask-image:linear-gradient(to bottom,transparent,var(--bg) 36px);mask-image:linear-gradient(to bottom,transparent,var(--bg) 36px)}
 /* Portrait: from the top of the list to the screen's bottom edge, across #app (the board's width
    when that is wider). The list's row takes the spare height, so the edge is inside #app. */
@@ -461,6 +462,11 @@ body{position:fixed;inset:0;width:100%;height:100%}
 #app[data-bgarea="full"][data-art] #art{display:block;position:fixed;z-index:-1;border-radius:0}
 #app[data-bgarea="full"] #art svg{left:auto;top:auto;right:-4vmin;bottom:-4vmin;width:min(72vmin,640px);height:min(72vmin,640px)}
 #app[data-bgarea="full"] #railart{display:none}
+/* Full screen: the background shows through the board, fainter than around it, and with no ring or
+   blur on the letters. A browser without color-mix keeps the board solid rather than clear. */
+@supports (background-color:color-mix(in srgb,red 50%,transparent)){
+  #app[data-bgarea="full"][data-behind] #gridbox{background-color:color-mix(in srgb,var(--surface) var(--board-solid),transparent)}
+}
 /* Text over a background keeps a 2.5px ring of the ground colour, so a star or a glow passing
    behind a letter never takes it under AA; tools/sims/backgrounds/contrast.mjs measures it.
    Only where main.js says something is drawn behind: otherwise it is 24 shadows per glyph
@@ -495,6 +501,15 @@ body{position:fixed;inset:0;width:100%;height:100%}
 .pill.p4{background:var(--pill-4);box-shadow:var(--pill-ring-4)}
 .pill.sel{background:var(--pill-sel)}
 .pill.miss{background:var(--pill-miss)}
+/* A pill's colour sits on solid surface, so its letters read the same over the see-through board,
+   corner art or Drafting's grid lines; a later pill covers an earlier one where they cross. */
+#pills .pill{background-color:var(--surface)}
+#pills .p1{background-image:linear-gradient(var(--pill-1),var(--pill-1))}
+#pills .p2{background-image:linear-gradient(var(--pill-2),var(--pill-2))}
+#pills .p3{background-image:linear-gradient(var(--pill-3),var(--pill-3))}
+#pills .p4{background-image:linear-gradient(var(--pill-4),var(--pill-4))}
+#pills .sel{background-image:linear-gradient(var(--pill-sel),var(--pill-sel))}
+#pills .miss{background-image:linear-gradient(var(--pill-miss),var(--pill-miss))}
 .cell{position:absolute;text-align:center;font-weight:700;color:var(--text);pointer-events:none}
 /* The halo is what carries the found state — on light, --found-text and --text are two
    dark browns a hair apart. text-shadow doesn't reflow, so cells cannot shift. */

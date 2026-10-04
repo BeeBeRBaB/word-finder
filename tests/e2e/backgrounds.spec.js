@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { openBoard, handPickedBackground } from './helpers.js';
+import { openBoard, handPickedBackground, findAndDrag } from './helpers.js';
 import { findBackground, resolveBackground } from '../../src/backgrounds.js';
 import { MOTIONS } from '../../src/backgrounds/subject-motion.js';
 import { motionFor } from '../../src/backgrounds/icon-scene.js';
@@ -379,7 +379,9 @@ test('on a phone with Word list the scene keeps the board corner, and moves to t
   expect(await corner.getAttribute('data-kind')).toBeNull();
   await expect(corner.locator('[data-icon]')).toHaveCount(1);
   expect(await ownIcons(page, '#art')).toBe(true);
-  expect(Number(await corner.evaluate(el => getComputedStyle(el).opacity))).toBeLessThan(0.3);
+  const fade = await corner.evaluate(el => [getComputedStyle(el).opacity, getComputedStyle(el).getPropertyValue('--art-board')].map(Number));
+  expect(fade[0]).toBe(fade[1]);
+  expect(fade[0]).toBeLessThan(0.6);
   await expect(page.locator('#bgside > *')).toHaveCount(0);
   await page.setViewportSize({ width: 844, height: 390 });
   await expect(page.locator('#bgside > svg')).toHaveCount(1);
@@ -422,4 +424,43 @@ test('the Settings row shows the background in use and how it was chosen', async
   await page.locator('#theme-back').click();
   await expect(row.locator('.bgname')).toHaveText('Constellation');
   expect(await row.locator('.bgname').evaluate(n => n.scrollWidth <= n.clientWidth)).toBe(true);
+});
+
+// Full screen lets the background through the board, fainter than around it, with nothing drawn on
+// the letters; a pill keeps solid surface under its colour, so a find reads as on a solid board.
+test('in Full screen the background shows through the board but not through its pills', async ({ page }) => {
+  await handPickedBackground(page);
+  await page.goto('/?seed=1&subject=space/jupiter');
+  await page.locator('.cell').first().waitFor();
+  /** The alpha of an element's background colour. @param {string} sel */
+  const alpha = (sel) => page.locator(sel).first().evaluate(el => {
+    const m = getComputedStyle(el).backgroundColor.match(/[\d.]+/g) ?? [];
+    return m.length > 3 ? Number(m[3]) : 1;
+  });
+  const surface = () => page.evaluate(() => {
+    const probe = document.body.appendChild(document.createElement('div'));
+    probe.style.background = 'var(--surface)';
+    const c = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return c;
+  });
+  await openPage(page);
+  await page.locator('.bgtile[data-bg="aurora"]').click();
+  expect(await alpha('#gridbox')).toBe(1);   // Word list: the board stays solid
+  await page.locator('#settings-bgpage [data-setting="area"] [data-value="full"]').click();
+  const a = await alpha('#gridbox');
+  expect(a).toBeGreaterThan(0.5);
+  expect(a).toBeLessThan(1);
+  // No ring or blur: the letters stay crisp.
+  expect(await page.locator('#gridbox').evaluate(el => getComputedStyle(el).backdropFilter)).toBe('none');
+  expect(await page.locator('.cell').first().evaluate(el => getComputedStyle(el).textShadow)).toBe('none');
+  await page.keyboard.press('Escape');
+  await findAndDrag(page, ((await page.locator('#list .w').first().textContent()) ?? '').trim().toUpperCase());
+  const pill = await page.locator('#pills .p1').evaluate(el => ({ bg: getComputedStyle(el).backgroundColor, image: getComputedStyle(el).backgroundImage }));
+  expect(pill.bg).toBe(await surface());
+  expect(pill.image).toContain('linear-gradient');
+  // Nothing behind it: the board is solid again.
+  await openPage(page);
+  await page.locator('.bgtile[data-bg="none"]').click();
+  expect(await alpha('#gridbox')).toBe(1);
 });
