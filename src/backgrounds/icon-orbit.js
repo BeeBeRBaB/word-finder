@@ -1,10 +1,11 @@
 // Icon carousel: the subject's icons ride slow elliptical orbits, a carousel seen from slightly
 // above: the front of a ring larger and stronger, the back smaller and fainter, drawn back to front.
 // The seed picks the variant: one wide ring, two rings turning opposite ways, or one round a corner.
+// One drawn facing a side faces the way it rides, turning round at the ends of the ring.
 
 import { makeRng } from '../rng.js';
 import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
-import { iconSprites, iconsFor, sceneColors, variantOf, withHero } from './icon-scene.js';
+import { facingOf, iconSprites, iconsFor, sceneColors, variantOf, withHero } from './icon-scene.js';
 
 /**
  * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number}} BackgroundOptions
@@ -31,6 +32,7 @@ export function start(host, opts) {
   const reduced = !!opts.reducedMotion;
   const { layout, hero, seed } = variantOf(subject, opts.seed ?? 0);
   const ids = withHero(iconsFor(subject), hero);
+  const facing = ids.map(id => facingOf(id));
   const rng = makeRng(seed);
   const hue0 = rng.int(colors.length);
   // 0 one ring, 1 two turning opposite ways, 2 one round the corner these two pick.
@@ -46,9 +48,9 @@ export function start(host, opts) {
   const { cv, ctx } = layer;
   /** @type {(HTMLCanvasElement|null)[]} */
   const sprites = ids.map(() => null);
-  // One frame's icons in view: centre, size, alpha, sprite and depth, drawn back to front by order.
+  // One frame's icons in view: centre, size, alpha, sprite, depth and mirror, drawn back to front by order.
   const cap = rings.length * SLOTS, X = new Float32Array(cap), Y = new Float32Array(cap), S = new Float32Array(cap);
-  const A = new Float32Array(cap), K = new Uint8Array(cap), Z = new Float32Array(cap);
+  const A = new Float32Array(cap), K = new Uint8Array(cap), Z = new Float32Array(cap), F = new Int8Array(cap);
   /** @type {number[]} */
   const order = [];
   const bob = reduced ? 0 : 0.06;   // of an icon's size; a still frame keeps them level
@@ -193,7 +195,10 @@ export function start(host, opts) {
         // Each icon bobs a little, like a carousel horse.
         const x = r.cx + r.rx * Math.cos(a), y = r.cy + r.ry * sin + Math.sin(t * 0.9 + s * 2.4 + ri) * size * bob;
         if (x < -size || x > W + size || y < -size || y > H + size) continue;
-        X[n] = x; Y[n] = y; S[n] = size; A[n] = v * (0.3 + z * 0.4); K[n] = r.icon[s]; Z[n] = z; order[n] = n;
+        // It goes right where -spin * sin is positive, so it turns round at the ends, moving in depth.
+        const k = r.icon[s], go = -r.spin * sin < 0 ? -1 : 1;
+        X[n] = x; Y[n] = y; S[n] = size; A[n] = v * (0.3 + z * 0.4); K[n] = k; Z[n] = z; F[n] = facing[k] ? go * facing[k] : 1;
+        order[n] = n;
         n++;
       }
     });
@@ -203,7 +208,8 @@ export function start(host, opts) {
       const spr = sprites[K[i]];
       if (!spr) continue;
       ctx.globalAlpha = A[i];
-      ctx.drawImage(spr, X[i] - S[i] / 2, Y[i] - S[i] / 2, S[i], S[i]);
+      ctx.setTransform(F[i] * dpr, 0, 0, dpr, X[i] * dpr, Y[i] * dpr);
+      ctx.drawImage(spr, -S[i] / 2, -S[i] / 2, S[i], S[i]);
     }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.globalAlpha = 1;

@@ -1,10 +1,11 @@
 // Bouncing icons: the subject's icons bounce, squashing as they land and stretching as they take
 // off, each over a soft shadow in its own colour. The seed picks the variant: hopping along the
-// ground, bouncing in place in rows, or travelling diagonally off all four edges.
+// ground, bouncing in place in rows, or travelling diagonally off all four edges. One drawn
+// facing a side faces the way it hops or travels.
 
 import { makeRng } from '../rng.js';
 import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
-import { iconSprites, iconsFor, sceneColors, variantOf, withHero } from './icon-scene.js';
+import { facingOf, iconSprites, iconsFor, sceneColors, variantOf, withHero } from './icon-scene.js';
 
 /**
  * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number}} BackgroundOptions
@@ -80,6 +81,7 @@ export function start(host, opts) {
   const reduced = !!opts.reducedMotion;
   const { layout, hero, seed } = variantOf(subject, opts.seed ?? 0);
   const ids = withHero(iconsFor(subject), hero);
+  const facing = ids.map(id => facingOf(id));
   const rng = makeRng(seed);
   const hue0 = rng.int(colors.length);
   // 0 hops along the ground (rightwards or back, by seed), 1 bounces in place in rows, 2 travels.
@@ -260,15 +262,15 @@ export function start(host, opts) {
     ctx.drawImage(spr, -size / 2, -size * (1 - FOOT), size, size);
   }
 
-  /** A hopping or bouncing icon in the pose poseAt left, f sizes high at most.
+  /** A hopping or bouncing icon in the pose poseAt left, f sizes high at most, mirrored when face is -1.
    * @param {number} k @param {number} x @param {number} base @param {number} size @param {number} f
-   * @param {number} alpha @param {number} lean radians at full lean @returns {void} */
-  function hopper(k, x, base, size, f, alpha, lean) {
+   * @param {number} alpha @param {number} lean radians at full lean @param {number} face @returns {void} */
+  function hopper(k, x, base, size, f, alpha, lean, face) {
     const spr = sprites[k];
     if (!spr) return;
     const d = pose.d * ampOf(f), up = pose.lift * f * size, high = Math.min(1, up / (size * 2.2));
     shadow(k, x, base, size * 0.85 * (1 - 0.45 * high) * (1 - Math.min(0, d)), alpha * 0.75 * (1 - 0.6 * high));
-    stand(spr, x, base - up, size, 1 - 0.75 * d, 1 + d, pose.lean * lean, alpha);
+    stand(spr, x, base - up, size, face * (1 - 0.75 * d), 1 + d, pose.lean * lean, alpha);
   }
 
   /** @returns {void} */
@@ -279,7 +281,7 @@ export function start(host, opts) {
       for (const c of cells) {
         const ph = t / c.T + c.ph, air = c.T - GROUND;
         poseAt((ph - Math.floor(ph)) * c.T, GROUND, air);
-        hopper(c.k, c.x, c.base, c.size, c.f, c.alpha, 0);
+        hopper(c.k, c.x, c.base, c.size, c.f, c.alpha, 0, 1);
       }
     } else if (mode === 0) {
       for (let i = 0; i < parts.length; i++) {
@@ -289,7 +291,9 @@ export function start(host, opts) {
         const base = H * (0.55 + 0.42 * p.z), f = p.hops[p.n % 3];
         const fit = Math.min(1, Math.max(0.3, (base - p.size - H * 0.06) / (p.size * 2)));
         poseAt(p.u, groundOf(p, p.n), airOf(f));
-        hopper(p.k, p.x, base, p.size, f * fit, p.alpha, dir * 0.11 * Math.min(1, f));
+        // Mirrored before the lean, so the nose still dips into each landing.
+        const face = facing[p.k] ? dir * facing[p.k] : 1;
+        hopper(p.k, p.x, base, p.size, f * fit, p.alpha, dir * 0.11 * Math.min(1, f), face);
       }
     } else {
       const floor = H - SILL;
@@ -303,7 +307,9 @@ export function start(host, opts) {
         const across = p.wall < 2, side = p.wall % 2 ? 1 : -1;
         const sx = across ? 1 + d : 1 - 0.75 * d, sy = across ? 1 - 0.75 * d : 1 + d;
         const x = p.x + (across ? side * r * (1 - sx) : 0), y = p.y + (across ? 0 : side * r * (1 - sy));
-        ctx.setTransform(sx * dpr, 0, 0, sy * dpr, x * dpr, y * dpr);
+        // Turns round as it meets a side wall, which flips vx.
+        const face = facing[p.k] && p.vx * facing[p.k] < 0 ? -1 : 1;
+        ctx.setTransform(face * sx * dpr, 0, 0, sy * dpr, x * dpr, y * dpr);
         ctx.globalAlpha = p.alpha;
         ctx.drawImage(spr, -p.size / 2, -p.size / 2, p.size, p.size);
       }

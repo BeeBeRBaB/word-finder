@@ -237,3 +237,34 @@ export const ICONS = Object.freeze({
   'yarn-ball': '<path class="ln" stroke-width="3.2" d="M24 30L45 5M40 30L19 5"/><path class="t-b" d="M43.2 4a2.8 2.8 0 1 0 5.6 0a2.8 2.8 0 1 0 -5.6 0ZM15.2 4a2.8 2.8 0 1 0 5.6 0a2.8 2.8 0 1 0 -5.6 0Z"/><path class="t-a" d="M10 38a21 21 0 1 0 42 0a21 21 0 1 0 -42 0Z"/><path class="t-b" fill-rule="evenodd" d="M10 38a21 21 0 1 0 42 0a21 21 0 1 0 -42 0ZM10.6 36.5a18.9 18.9 0 1 0 37.8 0a18.9 18.9 0 1 0 -37.8 0Z"/><path class="ln" stroke-width="2" d="M19.3 53.5A47 47 0 0 1 45.3 24.9M15 49.2A52.5 52.5 0 0 1 40.6 21M12.1 42.1A58 58 0 0 1 33.3 18.8M50.3 39.6A30 30 0 0 1 41 30.6M49.1 45.2A35.5 35.5 0 0 1 36.6 33.9M46.4 50A41 41 0 0 1 32.4 37.5M42.1 53.9A46.5 46.5 0 0 1 28.9 42M21.2 54.9A44.8 44.8 0 0 1 46.9 26.6"/><path class="t-c" d="M16.8 26.5A1.6 3.4 40 1 0 19.2 28.5A1.6 3.4 40 1 0 16.8 26.5Z"/><path class="ln" stroke-width="2.2" d="M12.5 48.5C6.5 51 10 57.5 3.5 60.5"/>',
   'zipper': '<path class="t-a" d="M26.5 26H37.5V64H26.5Z"/><path class="t-b" d="M35.5 26H37.5V64H35.5Z"/><path class="t-a" d="M36.1 21.1L16.1 -6.9A5 5 0 0 0 7.9 -1.1L27.9 26.9A5 5 0 0 0 36.1 21.1ZM36.1 26.9L56.1 -1.1A5 5 0 0 0 47.9 -6.9L27.9 21.1A5 5 0 0 0 36.1 26.9Z"/><path class="t-b" d="M36.5 26L54.8 -2.2A1.5 1.5 0 0 0 52.2 -3.8L33.9 24.4A1.5 1.5 0 0 0 36.5 26Z"/><path class="t-c" d="M27.9 14.9L32.2 11.8L33.7 14L29.4 17ZM25.6 11.6L29.8 8.6L31.3 10.7L27.1 13.7ZM23.3 8.4L27.5 5.3L29 7.4L24.8 10.5ZM21 5.1L25.2 2.1L26.7 4.2L22.5 7.2ZM18.6 1.8L22.9 -1.2L24.4 0.9L20.1 4ZM16.3 -1.4L20.5 -4.4L22 -2.3L17.8 0.7ZM14 -4.7L18.2 -7.7L19.7 -5.6L15.5 -2.6ZM34.6 17L30.3 14L31.8 11.8L36.1 14.9ZM36.9 13.7L32.7 10.7L34.2 8.6L38.4 11.6ZM39.2 10.5L35 7.4L36.5 5.3L40.7 8.4ZM41.5 7.2L37.3 4.2L38.8 2.1L43 5.1ZM43.9 4L39.6 0.9L41.1 -1.2L45.4 1.8ZM46.2 0.7L42 -2.3L43.5 -4.4L47.7 -1.4ZM48.5 -2.6L44.3 -5.6L45.8 -7.7L50 -4.7Z"/><path class="t-c" d="M31.3 29.5h5.5v2.1h-5.5ZM27.2 32.4h5.5v2.1h-5.5ZM31.3 35.3h5.5v2.1h-5.5ZM27.2 38.2h5.5v2.1h-5.5ZM31.3 41.1h5.5v2.1h-5.5ZM27.2 44h5.5v2.1h-5.5ZM31.3 46.9h5.5v2.1h-5.5ZM27.2 49.8h5.5v2.1h-5.5ZM31.3 52.7h5.5v2.1h-5.5ZM27.2 55.6h5.5v2.1h-5.5ZM31.3 58.5h5.5v2.1h-5.5ZM27.2 61.4h5.5v2.1h-5.5Z"/><path class="t-b" d="M24.5 18H39.5Q41 18 40.6 19.5L37.8 29Q37.4 30.5 36 30.5H28Q26.6 30.5 26.2 29L23.4 19.5Q23 18 24.5 18Z"/><path class="t-c" d="M26.3 20H37.7L37 22.2H27Z"/><g transform="translate(32 27.5) rotate(-24)"><path class="t-a" d="M-3.5 0H3.5L5 17Q5.2 20 2.5 20H-2.5Q-5.2 20 -5 17Z"/><path class="t-b" d="M2 0H3.5L5 17Q5.2 20 2.5 20H1Q3.4 19.6 3.3 17Z"/><rect class="t-b" x="-2.2" y="9.5" width="4.4" height="7" rx="2.2"/><circle class="t-c" cx="0" cy="3" r="1.7"/></g><path class="t-c" d="M55 40Q55 44 59 44Q55 44 55 48Q55 44 51 44Q55 44 55 40ZM12 45Q12 48 15 48Q12 48 12 51Q12 48 9 48Q12 48 12 45Z"/><circle class="t-c" cx="50" cy="56" r="1.3"/>',
 });
+
+// The icons drawn side-on: -1 faces left, 1 right. Any other faces front or is symmetric.
+
+/** @type {Readonly<Record<string, number>>} */
+export const FACING = Object.freeze({
+  'airplane': 1,
+  'bee': -1,
+  'bicycle': 1,
+  'bird': -1,
+  'boot': 1,
+  'car': 1,
+  'cat': -1,
+  'chess-knight': -1,
+  'deer': -1,
+  'dinosaur': 1,
+  'fish': -1,
+  'fox': -1,
+  'horse': 1,
+  'lawnmower': 1,
+  'rabbit': -1,
+  'rocket': 1,
+  'sailing-ship': 1,
+  'sheep': -1,
+  'shooting-star': 1,
+  'sneaker': 1,
+  'sock': 1,
+  'wave': 1,
+  'whale': -1,
+  'wheel': 1,
+  'wheelbarrow': -1,
+});

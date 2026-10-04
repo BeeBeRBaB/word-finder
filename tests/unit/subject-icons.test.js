@@ -2,10 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { CATEGORIES } from '../../src/catalog.js';
-import { ICONS } from '../../src/backgrounds/icons.js';
-import { existsSync } from 'node:fs';
+import { FACING, ICONS } from '../../src/backgrounds/icons.js';
+import { existsSync, readFileSync } from 'node:fs';
 import { CATEGORY_ICONS, CATEGORY_MOTION, SUBJECT_ICONS, SUBJECT_MOTION } from '../../src/backgrounds/subject-icons.js';
-import { VARIANTS, iconMarkup, iconsFor, layoutScene, motionFor, sceneColors, variantOf, withHero } from '../../src/backgrounds/icon-scene.js';
+import { VARIANTS, facingOf, iconMarkup, iconsFor, layoutScene, motionFor, sceneColors, variantOf, withHero } from '../../src/backgrounds/icon-scene.js';
 import { MOTIONS } from '../../src/backgrounds/subject-motion.js';
 import { makeRng } from '../../src/rng.js';
 
@@ -58,6 +58,21 @@ test('every category has a motion, every override names a real subject, and ever
 test('the emitted modules match the icon and map sources', () => {
   const r = spawnSync(process.execPath, ['tools/art-src/iconmap/emit.mjs', '--check'], { encoding: 'utf8' });
   assert.equal(r.status, 0, r.stderr);
+});
+
+test('FACING is facing.json for the drawn icons, -1 or 1 each, and facingOf gives the rest 0', () => {
+  const src = JSON.parse(readFileSync(new URL('../../tools/art-src/icons/facing.json', import.meta.url), 'utf8'));
+  const want = [...src.left.map(id => [id, -1]), ...src.right.map(id => [id, 1])].filter(([id]) => id in ICONS);
+  assert.deepEqual(FACING, Object.fromEntries(want));
+  assert.ok(Object.isFrozen(FACING));
+  for (const [id, v] of Object.entries(FACING)) {
+    assert.ok(id in ICONS, `${id} is not drawn`);
+    assert.ok(v === -1 || v === 1, `${id}: ${v}`);
+    assert.equal(facingOf(id), v);
+  }
+  assert.ok('owl' in ICONS && !('owl' in FACING));
+  assert.equal(facingOf('owl'), 0);
+  assert.equal(facingOf('no-such-icon'), 0);
 });
 
 test('a subject shows its own icons, an unknown one its category\'s', () => {

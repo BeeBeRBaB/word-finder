@@ -1,11 +1,11 @@
 // Swimming icons: the subject's icons glide along gentle wavy paths at three depths, in small
 // schools that trail a leader, each body wiggling as it swims. The seed picks the variant:
 // schools crossing both ways, one large school weaving across, or a calm tank where they turn.
-// A sprite tilts with its path and is never mirrored: which way an icon faces is unknown.
+// A sprite tilts with its path, and one drawn facing a side is mirrored to face the way it swims.
 
 import { makeRng } from '../rng.js';
 import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
-import { iconSprites, iconsFor, sceneColors, variantOf, withHero } from './icon-scene.js';
+import { facingOf, iconSprites, iconsFor, sceneColors, variantOf, withHero } from './icon-scene.js';
 
 /**
  * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number}} BackgroundOptions
@@ -49,6 +49,7 @@ export function start(host, opts) {
   const flip = rng.random() < 0.5;
   // The large school is the hero in two of the colours, so one faint colour cannot hide it all.
   const art = layout === 1 ? ids.slice(0, 1).concat(ids.slice(0, 1)) : ids;
+  const facing = art.map(id => facingOf(id));
 
   const layer = hostCanvas(host);
   if (!layer) return () => {};
@@ -58,7 +59,7 @@ export function start(host, opts) {
   /** @type {School[]} */
   const schools = [];
   let W = 0, H = 0, dpr = 1, t = 0;
-  let X = 0, Y = 0, TILT = 0, TURN = 0;   // where locate() last found a body
+  let X = 0, Y = 0, TILT = 0, TURN = 0, DIR = 1;   // where locate() last found a body, DIR its way across
   let cancel = () => {};
 
   /** @param {number} z depth, 0 far to 1 near @param {number} size @param {number} lag
@@ -180,7 +181,7 @@ export function start(host, opts) {
     return s.weave ? pad + lane * (H - 2 * pad) : Math.min(H - pad, Math.max(pad, lane * H));
   }
 
-  /** Sets X, Y, TILT and TURN for body b, or returns false while it is off the host.
+  /** Sets X, Y, TILT, TURN and DIR for body b, or returns false while it is off the host.
    * @param {School} s @param {Body} b @returns {boolean} */
   function locate(s, b) {
     const lag = b.lag + b.jog * Math.sin(t * 0.43 + b.ph);
@@ -199,6 +200,8 @@ export function start(host, opts) {
       const vy = amp * T.m * Math.cos(a);
       TILT = Math.atan(vy * vx / (vx * vx + 0.12 * rate * rate));
       TURN = 1 - Math.abs(vx) / rate;
+      // It turns round at the end, where TURN has narrowed it most.
+      DIR = vx < 0 ? -1 : 1;
       return true;
     }
     const span = W + 2 * EDGE, u = s.u - lag / span;
@@ -216,6 +219,7 @@ export function start(host, opts) {
     Y = laneY(s, L.lane, amp) + amp * Math.sin(a) + jog;
     TILT = Math.atan(amp * TAU / wl * Math.cos(a));
     TURN = 0;
+    DIR = L.dir;
     return true;
   }
 
@@ -284,7 +288,9 @@ export function start(host, opts) {
       // tank narrows the body as if seen edge-on.
       const st = t * b.wf * TAU + b.ph, q = Math.sin(st * 2 + 0.9) * 0.045;
       const a = TILT * 0.85 + Math.sin(st) * WIG;
-      const sx = (1 - q) * (1 - 0.32 * TURN * TURN) * dpr, sy = (1 + q * 0.6) * dpr;
+      // Mirrored before the tilt, so the tilt still follows the path.
+      const face = facing[b.k] ? DIR * facing[b.k] : 1;
+      const sx = face * (1 - q) * (1 - 0.32 * TURN * TURN) * dpr, sy = (1 + q * 0.6) * dpr;
       const cos = Math.cos(a), sin = Math.sin(a);
       ctx.setTransform(cos * sx, sin * sx, -sin * sy, cos * sy, X * dpr, Y * dpr);
       ctx.globalAlpha = b.alpha;

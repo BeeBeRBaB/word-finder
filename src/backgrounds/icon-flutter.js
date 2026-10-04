@@ -5,7 +5,7 @@
 
 import { makeRng } from '../rng.js';
 import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
-import { iconSprites, iconsFor, sceneColors, variantOf, withHero } from './icon-scene.js';
+import { facingOf, iconSprites, iconsFor, sceneColors, variantOf, withHero } from './icon-scene.js';
 
 /**
  * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number}} BackgroundOptions
@@ -28,10 +28,6 @@ const FLOCKS = 7;    // flocks of up to five made for the flock variant
 const TAU = Math.PI * 2;
 // The loose bunch's slots, along and across, apart enough that no two icons sit on each other.
 const BUNCH = [0, 0, -0.7, 1.05, -1.05, -0.8, -1.85, 0.35, -0.3, -1.9];
-// Icons drawn facing a side, -1 left and 1 right: a flier mirrors them to face its way.
-/** @type {Readonly<Record<string, number>>} */
-const FACES = { bee: -1, bird: -1, cat: -1, deer: -1, fish: -1, fox: -1, rabbit: -1, sheep: -1, whale: -1,
-  airplane: 1, dinosaur: 1, horse: 1, rocket: 1, 'shooting-star': 1 };
 
 /** The sum of n sines from triple i of w at time t.
  * @param {number[]} w @param {number} i @param {number} n @param {number} t @returns {number} */
@@ -55,7 +51,8 @@ export function start(host, opts) {
   const reduced = !!opts.reducedMotion;
   const { layout, hero, seed } = variantOf(subject, opts.seed ?? 0);
   const ids = withHero(iconsFor(subject), hero);
-  const facing = ids.map(id => FACES[id] ?? 0);
+  // Icons drawn facing a side, -1 left and 1 right: a flier mirrors them to face its way.
+  const facing = ids.map(id => facingOf(id));
   const rng = makeRng(seed);
   /** @param {number} lo @param {number} hi @returns {number} */
   const span = (lo, hi) => lo + rng.random() * (hi - lo);

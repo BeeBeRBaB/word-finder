@@ -1,10 +1,11 @@
 // Drifting icons: the subject's icons float across the host at three depths, swaying and
-// tilting as they go. The seed picks the variant: rising, falling or blowing sideways.
+// tilting as they go. The seed picks the variant: rising, falling or blowing sideways, where one
+// drawn facing a side faces the way it blows.
 // Each icon is rasterised once into a sprite canvas in its own colour.
 
 import { makeRng } from '../rng.js';
 import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
-import { iconSprites, iconsFor, sceneColors, variantOf, withHero } from './icon-scene.js';
+import { facingOf, iconSprites, iconsFor, sceneColors, variantOf, withHero } from './icon-scene.js';
 
 /**
  * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number}} BackgroundOptions
@@ -31,6 +32,8 @@ export function start(host, opts) {
   const hue0 = rng.int(colors.length);
   // 0 rises, 1 falls, 2 blows sideways (left to right or back, by seed).
   const dir = layout, back = dir === 2 && rng.random() < 0.5;
+  // -1 mirrors an icon drawn facing against the way it blows.
+  const mirror = ids.map(id => dir === 2 && facingOf(id) === (back ? 1 : -1) ? -1 : 1);
 
   const layer = hostCanvas(host);
   if (!layer) return () => {};
@@ -112,7 +115,7 @@ export function start(host, opts) {
       else { x = p.across + off; y = dir === 0 ? H - p.along : p.along; }
       const a = Math.sin(t * p.tiltF * 6.28 + p.ph * 1.7) * p.tilt * Math.PI / 180;
       const cos = Math.cos(a) * dpr, sin = Math.sin(a) * dpr;
-      ctx.setTransform(cos, sin, -sin, cos, x * dpr, y * dpr);
+      ctx.setTransform(cos * mirror[p.k], sin * mirror[p.k], -sin, cos, x * dpr, y * dpr);
       ctx.globalAlpha = p.alpha;
       ctx.drawImage(spr, -p.size / 2, -p.size / 2, p.size, p.size);
     }
