@@ -67,7 +67,7 @@ async function run(job, math) {
     w.__freeze = () => { held = []; window.requestAnimationFrame = (cb) => { held.push(cb); return 0; }; };
     // Each held frame is released once: releasing one twice would start a second loop.
     w.__thaw = () => { window.requestAnimationFrame = raf; const h = held; held = []; for (const cb of h) raf(cb); };
-  }, JSON.stringify({ art: bg.id, area }));
+  }, JSON.stringify({ bgmode: 'manual', art: bg.id, area }));
   await page.goto(`${site.url}/?seed=1&subject=history/industrial-revolution`);
   await page.waitForSelector('.cell');
   const host = area === 'full' ? '#bg' : '#bgside';

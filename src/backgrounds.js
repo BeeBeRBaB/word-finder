@@ -2,6 +2,8 @@
 // src/backgrounds/, which load only when picked. Pure: the import is injected, and the
 // host a background draws into is passed in.
 import { retryingImport } from './importer.js';
+import { makeRng } from './rng.js';
+import { normalizeTheme } from './appearance.js';
 
 /**
  * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed:number, corner?:boolean}} BackgroundOptions
@@ -52,6 +54,31 @@ export const BACKGROUNDS = Object.freeze([
 /** @param {unknown} id @param {readonly Background[]} [list] @returns {Background} */
 export function findBackground(id, list = BACKGROUNDS) {
   return list.find(b => b.id === id) ?? list[0];
+}
+
+/** Each theme's own background, the same in both flavours: what the Theme mode shows.
+ * @type {Readonly<Record<string, string>>} */
+export const THEME_BACKGROUNDS = Object.freeze({
+  phosphor: 'starfield', graphite: 'constellation', broadsheet: 'illustrated', drafting: 'shimmer',
+  sticker: 'drift', plum: 'bokeh', grove: 'aurora',
+});
+
+/** What Random picks from: every background but None. @type {readonly string[]} */
+export const RANDOM_POOL = Object.freeze(BACKGROUNDS.filter(b => b.id !== 'none').map(b => b.id));
+
+/**
+ * The background a deal shows. Manual is the player's pick; Theme is the theme's own; Random is
+ * picked by the deal's seed, never `previous` (the last pick), so a new game always changes it.
+ * @param {string} mode 'theme' | 'random' | 'manual' @param {string} art the Manual pick
+ * @param {string} theme @param {number} seed @param {string} [previous]
+ * @param {readonly string[]} [pool] @returns {string} an id
+ */
+export function resolveBackground(mode, art, theme, seed, previous = '', pool = RANDOM_POOL) {
+  if (mode === 'theme') return THEME_BACKGROUNDS[normalizeTheme(theme)];
+  if (mode !== 'random') return findBackground(art).id;
+  const others = pool.filter(id => id !== previous);
+  const from = others.length ? others : pool;
+  return from[makeRng(seed).int(from.length)];
 }
 
 /** A background's module, by its registry `file`, tried again under a new URL after a failure

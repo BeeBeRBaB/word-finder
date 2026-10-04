@@ -3,7 +3,7 @@
 // segment buttons, wrapped labels, sticky header, and which open animation ran.
 //   node tools/sims/settings/measure.mjs
 //   ENGINES=chromium,webkit MODES=dark,light SHAPES=390x844,844x390 node tools/sims/settings/measure.mjs
-//   PANE=picker | THEME=plum | RM=reduce | DATAMOTION=1 | NOFONTS=1 | SHOT=tag (PNGs to OUT, default .shots/sims)
+//   PANE=picker | PAGE=bg (or theme) | THEME=plum | RM=reduce | DATAMOTION=1 | NOFONTS=1 | SHOT=tag (PNGs to OUT, default .shots/sims)
 import { chromium, webkit } from '@playwright/test';
 import fs from 'node:fs';
 import { serve, REPO } from '../site.mjs';
@@ -31,6 +31,8 @@ for (const en of engines) {
     const cardId = pane === 'settings' ? 'settingscard' : 'pickercard';
     const anims = await page.evaluate((id) => document.getElementById(id).getAnimations().map((a) => a.animationName), cardId);
     await page.evaluate((id) => Promise.all(document.getElementById(id).getAnimations().map((a) => a.finished)), cardId);
+    // PAGE=bg or theme measures that page of Settings instead, opened from its row.
+    if (pane === 'settings' && process.env.PAGE) await page.click(`#settings-${process.env.PAGE}`);
     await page.waitForTimeout(100);
     const m = await page.evaluate(({ id }) => {
       const c = document.getElementById(id), r = c.getBoundingClientRect(), cs = getComputedStyle(c);

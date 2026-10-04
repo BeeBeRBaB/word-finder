@@ -288,6 +288,9 @@ test('every same-origin asset the app loads is covered by the precache list', as
   // a player actually deals. src/subjects.js (the loader) is a different,
   // always-precached file and is not matched by this.
   const LAZY_SUBJECT = /^src\/subjects\/[^/]+\.js$/;
+  // The backgrounds too: a new player's Theme mode loads one at once, and each is cached on first
+  // use rather than precached (sw.js), like a word pool.
+  const LAZY_BACKGROUND = /^src\/backgrounds\/[^/]+\.js$/;
 
   /** @type {string[]} */
   const missing = [];
@@ -295,7 +298,7 @@ test('every same-origin asset the app loads is covered by the precache list', as
     const u = new URL(url);
     if (u.origin !== origin) continue; // cross-origin, e.g. Google Fonts
     const rel = normalize(u.pathname);
-    if (EXCLUDED.has(rel) || LAZY_SUBJECT.test(rel)) continue;
+    if (EXCLUDED.has(rel) || LAZY_SUBJECT.test(rel) || LAZY_BACKGROUND.test(rel)) continue;
     if (!assetSet.has(rel)) missing.push(rel);
   }
 

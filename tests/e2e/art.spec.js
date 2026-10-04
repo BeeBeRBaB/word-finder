@@ -1,6 +1,10 @@
 import { test, expect } from '@playwright/test';
+import { handPickedBackground } from './helpers.js';
 
 test.use({ serviceWorkers: 'block' });
+// The category art shows for the Illustrated and Pixel art backgrounds; a new player's Theme mode
+// may show another, so these start from Illustrated behind the word list.
+test.beforeEach(({ page }) => handPickedBackground(page));
 
 test('desktop shows the category art beside the board, under the word list', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });

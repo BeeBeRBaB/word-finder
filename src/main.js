@@ -13,8 +13,8 @@ import { makeProgress, chooseSubject } from './progress.js';
 import { makeAppearance } from './appearance.js';
 import { makeSettings } from './settings.js';
 import { makePicker } from './picker.js';
-import { makeBackdrop, findBackground } from './backgrounds.js';
-import { tilesMarkup, summaryMarkup } from './bgpicker.js';
+import { makeBackdrop, findBackground, resolveBackground, RANDOM_POOL } from './backgrounds.js';
+import { tilesMarkup, summaryMarkup, MODE_NOTES } from './bgpicker.js';
 import { makeSubpage } from './subpage.js';
 import { makePane } from './pane.js';
 import { tilesMarkup as lookTilesMarkup, summaryMarkup as lookSummaryMarkup, readLooks, varsOf, lookId } from './lookpicker.js';
@@ -124,6 +124,8 @@ void navigator.storage?.persist?.().catch(() => {});
 let currentSeed;
 /** @type {string} */
 let subjectId;
+// The board's Random pick, made when it was dealt and kept with it through Undo and a reload.
+let boardBg = '';
 // Levels: the signed-in account's numbered puzzles. Its copy on this device loads now, before
 // boot() restores a board that may be the level in progress; the cloud's answers later.
 const play = makeLevelPlay({ cloud: makeCloud() });
@@ -169,8 +171,9 @@ function sweep() {
  *   that second reason.
  * @param {Puzzle} [dealt] a saved board to put back instead of building one
  * @param {Deal|null} [level] the level this board is; start timing it once its finds are back
+ * @param {string} [bg] the board's Random pick, when it has one already (a restored save)
  * @returns {void} */
-function newPuzzle(seed, subject, shape, useBag = true, dealt, level = null) {
+function newPuzzle(seed, subject, shape, useBag = true, dealt, level = null, bg) {
   const puzzle = dealt ?? buildPuzzle({
     name: subject.name, pool: subject.words, rng: makeRng(seed),
     size: shape.size, count: shape.count,
@@ -182,8 +185,12 @@ function newPuzzle(seed, subject, shape, useBag = true, dealt, level = null) {
   // separate fact, counted by addSolve, so an abandoned puzzle still advances coverage —
   // you saw those words either way.
   if (useBag) progress.noteDraw(subject.id, subject.words, puzzle.words);
+  // Random picks again for a new deal, never the last pick; the same board dealt again keeps its own.
+  const same = boardBg && seed === currentSeed && subject.id === subjectId;
+  const s = cfg.get();
   showBoard({ puzzle, found: {}, foundOrder: [], seed, subjectId: subject.id, size: shape.size,
-    minCell: shape.minCell, category: subject.categoryName, level });
+    minCell: shape.minCell, category: subject.categoryName, level,
+    bg: bg ?? (same ? boardBg : resolveBackground('random', s.art, appearance.getTheme(), seed, boardBg)) });
   sweep();
 }
 
@@ -193,14 +200,14 @@ function showBoard(b) {
   // Leaving a level saves where it stood, so New game's Levels side picks it up again. That save
   // reads the cloud first, which can let go of the board shown next, so the board hears of it.
   if (levelBoard) void play.pause().then(afterSync);
-  levelBoard = b.level; categoryName = b.category; currentSeed = b.seed; subjectId = b.subjectId;
+  levelBoard = b.level; categoryName = b.category; currentSeed = b.seed; subjectId = b.subjectId; boardBg = b.bg;
   state.size = b.size; state.minCell = b.minCell;
   state.puzzle = b.puzzle; state.found = b.found; state.foundOrder = b.foundOrder;
   state.sel = null; state.miss = null; state.drag = null; justFound = null;
   els.subject.textContent = cap(b.puzzle.name);
   els.subject.dataset.accent = String(accentSlot(b.puzzle.name));
   showCategory();
-  renderArt(els, b.subjectId, cfg.get().art);
+  renderArt(els, b.subjectId, shownBg());
   // Or a stale timer drops the win overlay over the fresh grid, swallowing every tap.
   if (state.winTimer) { clearTimeout(state.winTimer); state.winTimer = null; }
   hideWin();
@@ -229,6 +236,7 @@ function persist() {
     // The coordinates are not read back here (restore replays placements), but builds up to
     // v17 read them, and a tab still running one can load this save.
     found: state.foundOrder.map(w => ({ word: w, ...state.found[w].sel, ...(state.found[w].revealed ? { revealed: true } : {}) })),
+    bg: boardBg,
   });
 }
 
@@ -735,7 +743,8 @@ const toastUndo = must('toast-undo'), newbtn = must('newbtn');
 const UNDO_MS = 6000;
 /** A board exactly as it stood, held in memory.
  * @typedef {{puzzle:Puzzle, found:State['found'], foundOrder:string[], seed:number,
- *   subjectId:string, size:number, minCell:number, category:string, level:Deal|null}} Snapshot */
+ *   subjectId:string, size:number, minCell:number, category:string, level:Deal|null, bg:string}} Snapshot
+ *   bg: the board's Random pick. */
 /** @type {Snapshot|null} */
 let undoSnap = null;
 /** @type {ReturnType<typeof setTimeout>|null} */
@@ -751,7 +760,7 @@ function snapshot() {
   const p = state.puzzle;
   if (!p) return null;
   return { puzzle: p, found: { ...state.found }, foundOrder: [...state.foundOrder], seed: currentSeed,
-    subjectId, size: state.size, minCell: state.minCell, category: categoryName, level: levelBoard };
+    subjectId, size: state.size, minCell: state.minCell, category: categoryName, level: levelBoard, bg: boardBg };
 }
 /** Put a snapshot back as the live board, without regenerating it.
  * @param {Snapshot} snap @returns {void} */
@@ -886,18 +895,25 @@ function confettiColors() {
   const root = getComputedStyle(document.documentElement);
   return [1, 2, 3, 4, 5, 6].map(i => root.getPropertyValue(`--confetti-${i}`).trim());
 }
-/** Run the chosen background in its area for the current deal; a still choice stops it.
+/** The background showing for the current deal: the mode's choice, and under Random the board's own pick.
+ * @returns {string} */
+function shownBg() {
+  const s = cfg.get();
+  return s.bgmode === 'random' && boardBg ? boardBg : resolveBackground(s.bgmode, s.art, appearance.getTheme(), currentSeed);
+}
+/** Run the background showing in its area for the current deal; a still one stops it.
  * @returns {void} */
 function showBackdrop() {
-  const s = cfg.get();
+  const s = cfg.get(), id = shownBg();
   els.app.dataset.bgarea = s.area;
   // With the list under the board, the still scene keeps the board corner as the category art does.
-  const corner = s.art === 'scene' && s.area !== 'full' && !state.dims.landscape;
+  const corner = id === 'scene' && s.area !== 'full' && !state.dims.landscape;
   // Whether anything is drawn behind the word list, and on Full screen the header: still art
   // with Word list keeps to the board corner or below the list. The stylesheet rings text if so.
-  els.app.toggleAttribute('data-behind', s.area === 'full' ? s.art !== 'none' : !!findBackground(s.art).file && !corner);
+  els.app.toggleAttribute('data-behind', s.area === 'full' ? id !== 'none' : !!findBackground(id).file && !corner);
+  syncBg();
   if (!subjectId) return;   // nothing dealt yet; the deal calls again
-  void backdrop.show(s.art, corner ? els.art : s.area === 'full' ? bgFull : bgList, {
+  void backdrop.show(id, corner ? els.art : s.area === 'full' ? bgFull : bgList, {
     colors: confettiColors(),
     dark: document.documentElement.dataset.appearance !== 'light', reducedMotion: prefersReducedMotion(),
     subject: subjectId, seed: currentSeed, corner,
@@ -924,16 +940,39 @@ function syncLook(theme, pref) {
   const on = /** @type {HTMLInputElement|null} */ (lookTiles.querySelector(`input[value="${lookId(theme, pref)}"]`));
   if (on) on.checked = true;
 }
+// The Background page: the mode, the area, and a tile per background, Still and Animated.
+const bgTiles = must('bg-tiles'), bgNow = must('settings-bg-now'), bgNote = must('bgmode-note');
+bgTiles.innerHTML = tilesMarkup();
+/** The Background row's summary, the note on the mode, and the checked tile: the background
+ * showing now, whichever way it was chosen. @returns {void} */
+function syncBg() {
+  const mode = cfg.get().bgmode, id = shownBg();
+  bgNow.innerHTML = summaryMarkup(id, mode);
+  bgNote.textContent = MODE_NOTES[mode];
+  const on = bgTiles.querySelector(`input[value="${id}"]`);
+  if (on instanceof HTMLInputElement) on.checked = true;
+}
+/** Draw the background showing now: the category art for a still one, and the backdrop.
+ * @returns {void} */
+function applyBackground() {
+  if (subjectId) { renderArt(els, subjectId, shownBg()); placeArt(els, state.dims); }
+  showBackdrop();
+}
+/** A tile is the player's own pick, so it is Manual from then on. @param {string} id @returns {void} */
+function pickBg(id) {
+  const s = cfg.get();
+  if (s.bgmode === 'manual' && s.art === id) return;
+  cfg.set('art', id);
+  changeSetting('bgmode', 'manual');
+}
 const appearance = makeAppearance({
   onApply(mode, theme) {
     syncLook(theme, mode);
     syncThemeColor();
-    showBackdrop();
+    applyBackground();   // Theme mode follows the theme
   },
 });
 appearance.start();
-const bgTiles = must('bg-tiles'), bgNow = must('settings-bg-now');
-bgTiles.innerHTML = tilesMarkup();
 const bgPage = makeSubpage({
   card: must('settingscard'), page: must('settings-bgpage'), row: must('settings-bg'), back: must('bg-back'), name: 'background',
 });
@@ -1067,15 +1106,15 @@ function syncSettings() {
     }
   }
   leastBox.checked = progress.get().favourLeastSeen;
-  bgNow.innerHTML = summaryMarkup(now.art);
+  syncBg();
   syncLook(appearance.getTheme(), appearance.get());
 }
 /** Make a changed setting take effect now, where it has something to change now.
  * @param {string} key @returns {void} */
 function applySetting(key) {
   const now = cfg.get();
-  if (key === 'art') { if (subjectId) renderArt(els, subjectId, now.art); placeArt(els, state.dims); }
-  if (key === 'art' || key === 'area' || key === 'motion') showBackdrop();
+  if (key === 'art' || key === 'bgmode') applyBackground();
+  if (key === 'area' || key === 'motion') showBackdrop();
   if (key === 'letters') { state.rendered = { puzzle: null, cell: 0 }; layout(); }
   if (key === 'reveal') els.app.dataset.reveal = now.reveal ? 'on' : 'off';
   if (key === 'motion') document.documentElement.dataset.motion = now.motion;
@@ -1087,6 +1126,8 @@ function changeSetting(key, value) {
   applySetting(key);
 }
 settings.addEventListener('click', (e) => {
+  // A click on the checked tile too: under Theme or Random it makes that background the Manual pick.
+  if (e.target instanceof HTMLInputElement && e.target.name === 'art') { pickBg(e.target.value); return; }
   const btn = e.target instanceof Element ? e.target.closest('.seg[data-setting] button[data-value]') : null;
   if (!btn) return;
   const group = /** @type {HTMLElement} */ (btn.closest('[data-setting]'));
@@ -1096,6 +1137,7 @@ settings.addEventListener('change', (e) => {
   const el = e.target;
   if (el === leastBox) { progress.setFavourLeastSeen(leastBox.checked); return; }
   if (el instanceof HTMLInputElement && el.name === 'look') { const [t, p] = el.value.split('/'); appearance.setLook(t, p); return; }
+  if (el instanceof HTMLInputElement && el.name === 'art') { pickBg(el.value); return; }
   if (!(el instanceof HTMLInputElement || el instanceof HTMLSelectElement) || !el.dataset.setting) return;
   const value = el instanceof HTMLSelectElement || el.type === 'radio' ? el.value
     : el.dataset.on ? (el.checked ? el.dataset.on : el.dataset.off) : el.checked;
@@ -1212,9 +1254,11 @@ async function restore(saved, stillWanted) {
     : level ? levelPuzzle(level, subject, shape) : undefined;
   // useBag=false: this board was already dealt and its draw already recorded. Recording
   // it again would advance the bag twice for one puzzle, silently, on every reload.
+  // Its Random pick as saved; a save from before it was kept picks again by its seed.
+  const bg = saved.bg && RANDOM_POOL.includes(saved.bg) ? saved.bg : undefined;
   newPuzzle(saved.seed, subject, {
     size: saved.size, count: saved.count, mix: shape.mix, minCell: shape.minCell,
-  }, false, dealt, level);
+  }, false, dealt, level, bg);
   addFinds(saved.found);
   if (level) startLevel(level);
 }
