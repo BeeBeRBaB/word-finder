@@ -11,7 +11,7 @@
 //   node tools/sims/backgrounds/contrast.mjs
 //   ONLY=aurora,starfield MODES=dark AREAS=full SHAPES=phone LOOKS=sticker/dark node tools/sims/backgrounds/contrast.mjs
 //   NOHALO=1 strips text-shadow, to see what a halo is buying; CSS='...' adds a rule, to try one;
-//   RING=3 widens the ring; DEBUG=<dir> saves the masks and prints each box.
+//   RING=3 widens the ring; DEBUG=<dir> saves the masks and prints each box; SUBJECT=nature/fish deals it.
 import { chromium } from '@playwright/test';
 import { serve } from '../site.mjs';
 import { BACKGROUNDS } from '../../../src/backgrounds.js';
@@ -27,6 +27,8 @@ const SHAPES = list('SHAPES', Object.keys(ALL_SHAPES));
 // Each look carries its flavour, so MODES narrows the looks rather than adding a loop.
 const LOOKS = list('LOOKS', THEMES.flatMap(t => PREFS.map(p => `${t}/${p}`))).filter(l => MODES.includes(l.split('/')[1]));
 const FRAMES = Number(process.env.FRAMES || 2);
+// The dealt subject: the subject backgrounds draw its icons, and Subject motion its motion.
+const SUBJECT = process.env.SUBJECT || 'history/industrial-revolution';
 const WORKERS = Number(process.env.WORKERS || 3);
 const STEPS = [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1];
 const RING = Number(process.env.RING || 2);
@@ -94,7 +96,7 @@ async function run(job, math) {
     // Each held frame is released once: releasing one twice would start a second loop.
     w.__thaw = () => { window.requestAnimationFrame = raf; const h = held; held = []; for (const cb of h) raf(cb); };
   }, JSON.stringify({ bgmode: 'manual', art: bg.id, area }));
-  await page.goto(`${site.url}/?seed=1&subject=history/industrial-revolution`);
+  await page.goto(`${site.url}/?seed=1&subject=${SUBJECT}`);
   await page.waitForSelector('.cell');
   // The module draws into the board corner (#art) for the Subject scene there, else into its host.
   const host = corner ? '#art' : area === 'full' ? '#bg' : '#bgside';
