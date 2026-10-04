@@ -103,6 +103,9 @@ test('every same-origin asset the app loads on the live origin is covered by the
     // src/subjects.js (the loader) is a different, always-precached file, and the
     // trailing [^/]+ keeps this from matching it.
     const LAZY_SUBJECT = /^src\/subjects\/[^/]+\.js$/;
+    // The backgrounds too: a new player's Theme mode loads one at once, and each is cached on
+    // first use rather than precached (sw.js), like a word pool.
+    const LAZY_BACKGROUND = /^src\/backgrounds\/[^/]+\.js$/;
 
     /** @type {string[]} */
     const out = [];
@@ -111,7 +114,7 @@ test('every same-origin asset the app loads on the live origin is covered by the
       if (u.origin !== location.origin) continue;        // cross-origin, e.g. Google Fonts
       if (!u.pathname.startsWith(rootPath)) continue;     // outside the app's own path
       const rel = normalize(u.pathname.slice(rootPath.length));
-      if (EXCLUDED.has(rel) || LAZY_SUBJECT.test(rel)) continue;
+      if (EXCLUDED.has(rel) || LAZY_SUBJECT.test(rel) || LAZY_BACKGROUND.test(rel)) continue;
       if (!assetSet.has(rel)) out.push(rel);
     }
     return out;
