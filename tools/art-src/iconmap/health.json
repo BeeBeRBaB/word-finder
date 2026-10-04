@@ -1,11 +1,11 @@
 {
   "category": ["heart", "stethoscope", "apple", "flexed-arm", "water-bottle", "sneaker"],
   "subjects": {
-    "health/exercise": ["dumbbell", "stopwatch", "flexed-arm", "sneaker", "water-bottle", "medal"],
+    "health/exercise": ["dumbbell", "stopwatch", "stretching-figure", "flexed-arm", "sneaker", "water-bottle"],
     "health/healthy-eating": ["apple", "dinner-plate", "leaf", "fish", "bread", "heart"],
     "health/sleep": ["bed", "pillow", "crescent-moon", "alarm-clock", "lamp", "heart"],
-    "health/stretching": ["flexed-arm", "sneaker", "heart", "water-bottle"],
-    "health/yoga": ["flower", "candle", "heart", "water-bottle"],
+    "health/stretching": ["stretching-figure", "flexed-arm", "sneaker", "heart", "water-bottle"],
+    "health/yoga": ["yoga-figure", "stretching-figure", "flower", "candle", "heart", "water-bottle"],
     "health/walking": ["footprints", "sneaker", "signpost", "map", "park-bench", "street-lamp"],
     "health/hydration": ["water-bottle", "faucet", "fountain", "coffee-cup", "heart"],
     "health/vitamins": ["pill", "apple", "heart", "stethoscope"],
@@ -14,8 +14,8 @@
     "health/hand-washing": ["faucet", "microscope", "heart", "stethoscope", "first-aid-kit"],
     "health/rest-days": ["armchair", "pillow", "palm-island", "coffee-cup", "book-stack"],
     "health/posture": ["laptop", "armchair", "heart", "stethoscope"],
-    "health/meditation": ["lungs", "candle", "brain", "flower", "heart"],
-    "health/running": ["stopwatch", "footprints", "sneaker", "medal", "water-bottle", "heart"],
+    "health/meditation": ["meditating-figure", "lungs", "candle", "brain", "flower", "heart"],
+    "health/running": ["runner", "stopwatch", "footprints", "sneaker", "medal", "water-bottle"],
     "health/cycling": ["bicycle", "wheel", "gear", "water-bottle", "mountain", "heart"],
     "health/swimming": ["swim-goggles", "stopwatch", "lungs", "wave", "medal", "heart"],
     "health/meal-prep": ["cooking-pot", "dinner-plate", "apple", "heart"],
@@ -23,7 +23,7 @@
     "health/sunscreen": ["sun", "palm-island", "wave", "water-bottle", "heart"],
     "health/hiking": ["sun", "mountain", "compass", "map", "pine-tree", "signpost"],
     "health/napping": ["bed", "pillow", "armchair", "alarm-clock", "heart"],
-    "health/self-care": ["candle", "book-stack", "coffee-cup", "flower", "smiley", "heart"],
+    "health/self-care": ["bathtub", "candle", "book-stack", "coffee-cup", "flower", "smiley"],
     "health/grocery-shopping": ["storefront", "apple", "bread", "heart"]
   },
   "wishlist": [

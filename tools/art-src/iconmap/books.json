@@ -1,7 +1,7 @@
 {
   "category": ["book-stack", "quill", "owl", "lamp", "armchair", "pencil"],
   "subjects": {
-    "books/libraries": ["bookshelf", "open-book", "book-stack", "lamp", "owl", "armchair"],
+    "books/libraries": ["bookshelf", "open-book", "glossy-magazine", "book-stack", "lamp", "owl"],
     "books/poetry": ["quill", "heart", "flower", "crescent-moon", "book-stack"],
     "books/novels": ["open-book", "book-stack", "quill", "theater-masks", "armchair", "lamp"],
     "books/fairy-tales": ["castle", "magic-wand", "crown", "wizard-hat", "mushroom", "shield"],
@@ -23,7 +23,7 @@
     "books/picture-books": ["open-book", "alphabet-blocks", "teddy-bear", "rabbit", "paintbrush", "crescent-moon"],
     "books/book-covers": ["hardcover-book", "paintbrush", "laptop", "camera", "book-stack", "pencil"],
     "books/proofreading": ["magnifying-glass", "pencil", "eye", "laptop", "book-stack", "quill"],
-    "books/magazines": ["camera", "dress", "speech-bubble", "paintbrush", "book-stack"],
+    "books/magazines": ["glossy-magazine", "camera", "dress", "speech-bubble", "paintbrush", "book-stack"],
     "books/encyclopedias": ["magnifying-glass", "open-book", "globe", "book-stack", "map", "owl"]
   },
   "wishlist": [

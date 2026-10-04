@@ -8,7 +8,7 @@ Run everything from any directory; paths resolve from each script.
 
 | File | What it is | Run |
 | --- | --- | --- |
-| `icons/gen1.mjs`–`gen14.mjs` | One generator per committed `partN.json` (round 1 is 1–6, round 2 is 7–14). Each rebuilds its part byte-for-byte. | `node tools/art-src/generators/icons/gen7.mjs [out.json]` (no arg overwrites `../icons/part7.json`) |
+| `icons/gen1.mjs`–`gen17.mjs` | One generator per committed `partN.json` (round 1 is 1–6, round 2 is 7–14, round 3 is 15–17). Each rebuilds its part byte-for-byte. | `node tools/art-src/generators/icons/gen7.mjs [out.json]` (no arg overwrites `../icons/part7.json`) |
 | `icons/p2lib.mjs` | Geometry helpers that `gen2.mjs` imports. | — |
 | `icons/round2-report.json` | The round-2 drawing agents' reports: skips (`paint-palette` = `palette`, `envelope` = `invitation-card`; map those subjects to the drawn icon when merging), near-duplicate calls, and faint-preview tips. | read it |
 
