@@ -1,15 +1,15 @@
 {
   "category": ["armchair", "lamp", "pillow", "candle", "book-stack"],
   "subjects": {
-    "home/living-room": ["chandelier", "fireplace", "armchair", "lamp", "television", "pillow"],
+    "home/living-room": ["armchair", "chandelier", "fireplace", "lamp", "television", "pillow"],
     "home/bedroom": ["bed", "pillow", "alarm-clock", "lamp", "crescent-moon", "book-stack"],
     "home/bathroom": ["faucet", "tooth", "first-aid-kit", "pill", "candle"],
-    "home/dining-room": ["chandelier", "dinner-plate", "champagne-flutes", "candle", "flower", "coffee-cup"],
-    "home/furniture": ["bed", "armchair", "park-bench", "pillow", "book-stack", "lamp"],
+    "home/dining-room": ["dinner-plate", "chandelier", "champagne-flutes", "candle", "flower", "coffee-cup"],
+    "home/furniture": ["armchair", "bed", "park-bench", "pillow", "book-stack", "lamp"],
     "home/cleaning": ["washing-machine", "armchair", "lamp", "pillow"],
     "home/laundry": ["washing-machine", "dress", "pillow", "armchair"],
     "home/tools": ["wrench", "toolbox", "hammer", "saw", "gear", "shovel"],
-    "home/storage": ["padlock", "cardboard-box", "suitcase", "treasure-chest", "armchair", "lamp"],
+    "home/storage": ["cardboard-box", "padlock", "suitcase", "treasure-chest", "armchair", "lamp"],
     "home/decorating": ["palette", "paintbrush", "flower", "candle", "pillow", "lamp"],
     "home/painting": ["palette", "paintbrush", "pencil", "lamp", "armchair"],
     "home/lighting": ["chandelier", "lightbulb", "lamp", "candle", "street-lamp", "lighthouse"],
@@ -23,8 +23,8 @@
     "home/curtains": ["armchair", "pillow", "lamp", "candle"],
     "home/home-office": ["laptop", "smartphone", "pencil", "book-stack", "lamp"],
     "home/garage": ["wrench", "car", "padlock", "toolbox", "lawnmower", "steering-wheel"],
-    "home/fireplace": ["flame", "fireplace", "candle", "armchair", "pillow", "book-stack"],
-    "home/sewing": ["scissors", "thread-spool", "yarn-ball", "dress", "lamp"]
+    "home/fireplace": ["fireplace", "flame", "candle", "armchair", "pillow", "book-stack"],
+    "home/sewing": ["thread-spool", "scissors", "yarn-ball", "dress", "lamp"]
   },
   "wishlist": [
     {"id": "bed", "motif": "bed with a headboard, quilt and pillows", "subjects": ["home/bedroom", "home/bedding", "home/furniture"]},

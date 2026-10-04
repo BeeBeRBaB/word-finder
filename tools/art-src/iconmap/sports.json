@@ -1,7 +1,7 @@
 {
   "category": ["soccer-ball", "medal", "sneaker", "flexed-arm", "water-bottle"],
   "subjects": {
-    "sports/soccer": ["trophy", "whistle", "soccer-ball", "sneaker", "medal", "water-bottle"],
+    "sports/soccer": ["soccer-ball", "trophy", "whistle", "sneaker", "medal", "water-bottle"],
     "sports/baseball": ["trophy", "medal", "ticket", "sneaker", "flexed-arm"],
     "sports/basketball": ["trophy", "whistle", "sneaker", "medal", "water-bottle", "flexed-arm"],
     "sports/tennis": ["trophy", "medal", "sneaker", "water-bottle", "ticket"],
@@ -21,7 +21,7 @@
     "sports/fishing": ["fishing-rod", "fish", "wave", "pine-tree", "crab"],
     "sports/camping": ["campfire", "backpack", "pine-tree", "compass", "crescent-moon", "mountain"],
     "sports/hiking": ["backpack", "signpost", "mountain", "map", "compass", "water-bottle"],
-    "sports/chess": ["stopwatch", "chess-knight", "crown", "castle", "brain", "medal"],
+    "sports/chess": ["chess-knight", "stopwatch", "crown", "castle", "brain", "medal"],
     "sports/card-games": ["dice", "heart", "crown", "medal"],
     "sports/board-games": ["stopwatch", "dice", "chess-knight", "brain", "medal"],
     "sports/puzzles": ["magnifying-glass", "lightbulb", "brain", "pencil", "eye"]

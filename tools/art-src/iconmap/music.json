@@ -5,7 +5,7 @@
     "music/string-instruments": ["violin", "guitar", "trumpet", "drum"],
     "music/woodwind-instruments": ["trumpet", "violin", "microphone", "drum"],
     "music/percussion": ["drum-kit", "drum", "guitar", "trumpet", "microphone"],
-    "music/keyboard-instruments": ["music-notes", "piano", "violin", "trumpet", "guitar", "microphone"],
+    "music/keyboard-instruments": ["piano", "music-notes", "violin", "trumpet", "guitar", "microphone"],
     "music/guitars": ["guitar", "violin", "microphone", "drum"],
     "music/drums": ["drum-kit", "drum", "guitar", "microphone", "trumpet"],
     "music/orchestras": ["music-notes", "violin", "trumpet", "drum", "ticket"],
@@ -17,14 +17,14 @@
     "music/classical-music": ["music-notes", "piano", "violin", "quill", "trumpet", "ticket"],
     "music/hip-hop": ["headphones", "microphone", "sneaker", "speech-bubble", "drum", "street-lamp"],
     "music/country-music": ["campfire", "guitar", "violin", "microphone", "drum"],
-    "music/folk-music": ["campfire", "guitar", "violin", "coffee-cup", "speech-bubble"],
+    "music/folk-music": ["guitar", "campfire", "violin", "coffee-cup", "speech-bubble"],
     "music/electronic-music": ["headphones", "laptop", "drum", "microphone", "guitar"],
-    "music/singing": ["music-notes", "microphone", "speech-bubble", "bird", "guitar"],
+    "music/singing": ["microphone", "music-notes", "speech-bubble", "bird", "guitar"],
     "music/songwriting": ["music-notes", "quill", "pencil", "lightbulb", "guitar", "microphone"],
     "music/recording-studio": ["headphones", "microphone", "laptop", "guitar", "drum"],
     "music/concerts": ["stage-spotlight", "ticket", "microphone", "guitar", "drum"],
     "music/music-theory": ["music-notes", "chalkboard", "pencil", "violin", "guitar"],
-    "music/bands": ["stage-spotlight", "piano", "drum-kit", "guitar", "drum", "microphone"]
+    "music/bands": ["drum-kit", "stage-spotlight", "piano", "guitar", "drum", "microphone"]
   },
   "wishlist": [
     { "id": "music-notes", "motif": "beamed eighth notes and a treble clef on a staff", "subjects": ["music/music-theory", "music/classical-music", "music/choirs", "music/singing", "music/songwriting", "music/orchestras", "music/keyboard-instruments"] },

@@ -1,7 +1,7 @@
 {
   "category": ["steering-wheel", "wheel", "traffic-cone", "airplane", "sailing-ship", "rocket"],
   "subjects": {
-    "vehicles/cars": ["wrench", "car", "steering-wheel", "wheel", "traffic-cone", "signpost"],
+    "vehicles/cars": ["car", "wrench", "steering-wheel", "wheel", "traffic-cone", "signpost"],
     "vehicles/engines": ["wrench", "car", "gear", "steering-wheel", "wheel", "traffic-cone"],
     "vehicles/motorbikes": ["wrench", "wheel", "gear", "traffic-cone", "signpost"],
     "vehicles/trucks": ["cardboard-box", "wheel", "steering-wheel", "traffic-cone", "gear"],
@@ -12,7 +12,7 @@
     "vehicles/submarines": ["anchor", "fish", "whale", "wave", "compass"],
     "vehicles/helicopters": ["airplane", "siren", "compass", "first-aid-kit"],
     "vehicles/hot-air-balloons": ["mountain", "airplane", "balloons", "compass"],
-    "vehicles/tyres": ["wrench", "car", "wheel", "steering-wheel", "traffic-cone", "signpost"],
+    "vehicles/tyres": ["wheel", "wrench", "car", "steering-wheel", "traffic-cone", "signpost"],
     "vehicles/racing": ["steering-wheel", "medal", "wheel", "traffic-cone"],
     "vehicles/garages": ["wrench", "car", "gear", "wheel", "traffic-cone", "steering-wheel"],
     "vehicles/vans": ["cardboard-box", "wheel", "steering-wheel", "storefront", "traffic-cone"],

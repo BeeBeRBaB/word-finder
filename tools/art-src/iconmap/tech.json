@@ -10,8 +10,8 @@
   "subjects": {
     "tech/computers": ["microchip", "keyboard-and-mouse", "laptop", "gear", "television", "smartphone"],
     "tech/smartphones": ["smartphone", "speech-bubble", "camera", "battery", "microphone", "alarm-clock"],
-    "tech/laptops": ["microchip", "keyboard-and-mouse", "laptop", "battery", "smartphone", "gear"],
-    "tech/internet": ["padlock", "wifi-signal", "laptop", "speech-bubble", "smartphone", "satellite"],
+    "tech/laptops": ["laptop", "microchip", "keyboard-and-mouse", "battery", "smartphone", "gear"],
+    "tech/internet": ["wifi-signal", "padlock", "laptop", "speech-bubble", "smartphone", "satellite"],
     "tech/software": ["laptop", "gear", "smartphone", "lightbulb"],
     "tech/hardware": ["microchip", "keyboard-and-mouse", "battery", "gear", "laptop", "smartphone"],
     "tech/robots": ["robot", "microchip", "gear", "wheel", "battery", "laptop"],

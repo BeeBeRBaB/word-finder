@@ -1,5 +1,5 @@
 // node emit.mjs [--check] — writes the lazy icon modules the subject backgrounds import:
-// src/backgrounds/icons.js (every icon a map uses) and subject-icons.js (the maps).
+// src/backgrounds/icons.js (every icon a map uses) and subject-icons.js (the icon and motion maps).
 // --check writes nothing and exits 1 when either file differs from what it would write.
 import fs from 'node:fs';
 const dir = new URL('.', import.meta.url).pathname;
@@ -12,6 +12,11 @@ for (const f of fs.readdirSync(iconDir).filter(f => /^part\d+\.json$/.test(f)))
   for (const it of JSON.parse(fs.readFileSync(iconDir + f, 'utf8'))) svg.set(it.id, it.svg);
 
 const cats = fs.readdirSync(dir).filter(f => /^[a-z]+\.json$/.test(f) && f !== 'wishlist.json').sort();
+// Subject motion: a motion per category, and per subject where another fits better.
+/** @type {{categories:Record<string,string>, subjects:Record<string,string>}} */
+const motion = JSON.parse(fs.readFileSync(dir + 'subject-motion.json', 'utf8'));
+/** @param {Record<string,string>} o @returns {[string, string[]][]} */
+const sorted = o => Object.entries(o).sort(([a], [b]) => (a < b ? -1 : 1)).map(([k, v]) => [k, [v]]);
 /** @type {[string, string[]][]} */ const category = [];
 /** @type {[string, string[]][]} */ const subject = [];
 for (const f of cats) {
@@ -46,6 +51,18 @@ ${table(category)}
 /** @type {Readonly<Record<string, string>>} */
 export const SUBJECT_ICONS = Object.freeze({
 ${table(subject)}
+});
+
+// Motion ids (subject-motion.js) per category, and per subject where another fits better.
+
+/** @type {Readonly<Record<string, string>>} */
+export const CATEGORY_MOTION = Object.freeze({
+${table(sorted(motion.categories))}
+});
+
+/** @type {Readonly<Record<string, string>>} */
+export const SUBJECT_MOTION = Object.freeze({
+${table(sorted(motion.subjects))}
 });
 `;
 

@@ -1,10 +1,10 @@
 {
   "category": ["film-reel", "popcorn", "ticket", "camera", "television", "theater-masks"],
   "subjects": {
-    "movies/cinemas": ["stage-curtain", "popcorn", "ticket", "armchair", "film-reel", "theater-masks"],
+    "movies/cinemas": ["popcorn", "stage-curtain", "ticket", "armchair", "film-reel", "theater-masks"],
     "movies/cartoons": ["comic-burst", "rabbit", "smiley", "pencil", "paintbrush", "television"],
     "movies/comedies": ["smiley", "theater-masks", "microphone", "popcorn", "film-reel"],
-    "movies/cameras": ["clapperboard", "movie-camera", "camera", "battery", "eye", "film-reel"],
+    "movies/cameras": ["movie-camera", "clapperboard", "camera", "battery", "eye", "film-reel"],
     "movies/costumes": ["superhero-mask", "dress", "thread-spool", "crown", "top-hat", "theater-masks"],
     "movies/stunts": ["clapperboard", "movie-camera", "steering-wheel", "firework", "traffic-cone", "first-aid-kit"],
     "movies/soundtracks": ["music-notes", "violin", "trumpet", "drum", "film-reel", "microphone"],
@@ -23,7 +23,7 @@
     "movies/horror-movies": ["bat", "candle", "bone", "crescent-moon", "owl", "film-reel"],
     "movies/musicals": ["music-notes", "stage-curtain", "spotlight", "microphone", "top-hat", "trumpet"],
     "movies/westerns": ["signpost", "mountain", "film-reel", "popcorn", "ticket"],
-    "movies/superhero-movies": ["lightning-bolt", "comic-burst", "superhero-mask", "shield", "flexed-arm", "film-reel"],
+    "movies/superhero-movies": ["superhero-mask", "lightning-bolt", "comic-burst", "shield", "flexed-arm", "film-reel"],
     "movies/puppetry": ["stage-curtain", "thread-spool", "yarn-ball", "theater-masks", "paintbrush", "ticket"]
   },
   "wishlist": [

@@ -8,7 +8,7 @@ import { fnv1a } from '../rng.js';
 import { TONE } from '../art.js';
 import { categoryOf } from '../catalog.js';
 import { ICONS } from './icons.js';
-import { CATEGORY_ICONS, SUBJECT_ICONS } from './subject-icons.js';
+import { CATEGORY_ICONS, CATEGORY_MOTION, SUBJECT_ICONS, SUBJECT_MOTION } from './subject-icons.js';
 
 /** @typedef {{id:string, x:number, y:number, size:number, rot:number, hue:number, alpha:number}} Placed
  * x, y is the icon's centre in CSS px, size its edge, rot degrees, hue an index into the colours. */
@@ -29,6 +29,12 @@ export function sceneColors(colors, fallback) {
 export function iconsFor(subject) {
   const list = SUBJECT_ICONS[subject] ?? CATEGORY_ICONS[categoryOf(subject)] ?? CATEGORY_ICONS.nature;
   return list.split(' ').filter(id => id in ICONS);
+}
+
+/** The motion id the subject moves with (subject-motion.js), else its category's, else drift.
+ * @param {string} subject @returns {string} */
+export function motionFor(subject) {
+  return SUBJECT_MOTION[subject] ?? CATEGORY_MOTION[categoryOf(subject)] ?? 'drift';
 }
 
 /** The variant a seed picks, and the seed its layout rng starts from: the same subject and

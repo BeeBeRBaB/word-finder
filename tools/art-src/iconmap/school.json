@@ -1,7 +1,7 @@
 {
   "category": ["chalkboard", "apple", "pencil", "graduation-cap", "book-stack"],
   "subjects": {
-    "school/classrooms": ["scissors", "globe", "backpack", "ruler", "chalkboard", "pencil"],
+    "school/classrooms": ["chalkboard", "scissors", "globe", "backpack", "ruler", "pencil"],
     "school/maths": ["ruler", "chalkboard", "pencil", "book-stack", "graduation-cap"],
     "school/spelling": ["alphabet-blocks", "bee", "speech-bubble", "chalkboard", "pencil", "book-stack"],
     "school/playgrounds": ["park-bench", "soccer-ball", "sneaker", "tree"],
@@ -14,8 +14,8 @@
     "school/school-trips": ["backpack", "map", "camera", "ticket", "amphora", "water-bottle"],
     "school/stationery": ["scissors", "ruler", "pencil", "quill", "magnet", "chalkboard"],
     "school/lunchtime": ["apple", "dinner-plate", "bread", "water-bottle", "cooking-pot"],
-    "school/library": ["book-stack", "owl", "armchair", "lamp"],
-    "school/art-class": ["scissors", "palette", "paintbrush", "yarn-ball", "amphora", "thread-spool"],
+    "school/library": ["bookshelf", "book-stack", "owl", "armchair", "lamp"],
+    "school/art-class": ["palette", "scissors", "paintbrush", "yarn-ball", "amphora", "thread-spool"],
     "school/music-class": ["music-notes", "headphones", "drum", "guitar", "violin", "trumpet"],
     "school/gym-class": ["whistle", "sneaker", "traffic-cone", "flexed-arm", "soccer-ball", "water-bottle"],
     "school/report-cards": ["medal", "speech-bubble", "quill", "apple", "chalkboard"],
@@ -23,7 +23,7 @@
     "school/teachers": ["whistle", "apple", "speech-bubble", "handshake", "chalkboard", "pencil"],
     "school/graduation": ["graduation-cap", "medal", "champagne-flutes", "camera", "bunting"],
     "school/timetables": ["stopwatch", "alarm-clock", "chalkboard", "book-stack", "pencil"],
-    "school/computer-lab": ["headphones", "laptop", "smartphone", "gear", "chalkboard"],
+    "school/computer-lab": ["laptop", "headphones", "smartphone", "gear", "chalkboard"],
     "school/chemistry-lab": ["flask", "atom", "microscope", "first-aid-kit", "chalkboard"]
   },
   "wishlist": [
