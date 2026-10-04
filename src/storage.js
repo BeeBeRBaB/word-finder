@@ -9,9 +9,10 @@ const KEY = 'wordfinder-save-v1';
  * @typedef {import('./puzzle.js').Placement} Placement
  * @typedef {{word:string,x0:number,y0:number,x1:number,y1:number,revealed?:boolean}} FoundWord
  * @typedef {{seed:number, subjectId:string, size:number, count:number, found:FoundWord[],
- *            cells?:string, placements?:Placement[]}} SaveData
+ *            cells?:string, placements?:Placement[], bg?:string}} SaveData
  *   `cells` and `placements` are the board as dealt. Optional: a save written before they
- *   existed still loads, and restore regenerates it from the seed.
+ *   existed still loads, and restore regenerates it from the seed. `bg` is the board's Random
+ *   background pick (main.js checks it).
  */
 
 /** Whether a save's board can be put back as-is: a letter for every square, and every

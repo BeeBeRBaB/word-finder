@@ -175,3 +175,14 @@ export async function skipAhead(page, ms) {
 export async function blockServiceWorker(page) {
   await page.addInitScript(() => { delete Object.getPrototypeOf(navigator).serviceWorker; });
 }
+
+/** The background as it was before Theme mode: the illustration, picked by hand, behind the
+ * word list. For tests about the category art and the areas. A change the test makes is kept.
+ * @param {Page} page @returns {Promise<void>} */
+export async function handPickedBackground(page) {
+  await page.addInitScript(() => {
+    if (!localStorage.getItem('wordfinder-settings-v1')) {
+      localStorage.setItem('wordfinder-settings-v1', JSON.stringify({ bgmode: 'manual', art: 'illustrated', area: 'list' }));
+    }
+  });
+}

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync } from 'node:fs';
-import { BACKGROUNDS, findBackground, makeBackdrop, importBackground } from '../../src/backgrounds.js';
+import { BACKGROUNDS, findBackground, makeBackdrop, importBackground, resolveBackground, RANDOM_POOL, THEME_BACKGROUNDS } from '../../src/backgrounds.js';
 
 const OPTS = { colors: ['#111111', '#222222'], dark: true, reducedMotion: false, subject: 'space/jupiter', seed: 1 };
 /** @param {string} id */
@@ -128,4 +128,46 @@ test('a module whose start() throws leaves nothing running, like a failed load',
   const bd = makeBackdrop();
   assert.equal(await bd.show('aurora', host('side'), OPTS), false);
   assert.equal(bd.running(), '');
+});
+
+test('every theme has its own background, a real one, the same in both flavours', async () => {
+  const { THEMES } = await import('../../src/appearance.js');
+  assert.deepEqual(Object.keys(THEME_BACKGROUNDS).sort(), [...THEMES].sort());
+  for (const t of THEMES) {
+    const id = resolveBackground('theme', 'none', t, 1);
+    assert.equal(findBackground(id).id, id, `${t}: ${id} is not in the registry`);
+    // The flavour is no input at all, and the Manual pick, seed and last pick change nothing.
+    assert.equal(resolveBackground('theme', 'pixel', t, 2, id), id, t);
+  }
+  assert.deepEqual(THEMES.map(t => resolveBackground('theme', '', t, 0)),
+    ['starfield', 'constellation', 'illustrated', 'shimmer', 'drift', 'bokeh', 'aurora']);
+  assert.equal(resolveBackground('theme', '', 'retired', 0), 'starfield', 'an unknown theme is the default one');
+  assert.equal(new Set(Object.values(THEME_BACKGROUNDS)).size, THEMES.length, 'no two themes share one');
+});
+
+test('Manual shows the pick, and an unknown pick the default', () => {
+  assert.equal(resolveBackground('manual', 'aquarium', 'plum', 5, 'aquarium'), 'aquarium');
+  assert.equal(resolveBackground('manual', 'none', 'grove', 5), 'none');
+  assert.equal(resolveBackground('manual', 'gone', 'grove', 5), BACKGROUNDS[0].id);
+});
+
+test('Random picks by the seed from every background but None, and never the last pick', () => {
+  assert.deepEqual([...RANDOM_POOL], BACKGROUNDS.filter(b => b.id !== 'none').map(b => b.id));
+  /** @type {Record<string, number>} */
+  const count = Object.fromEntries(RANDOM_POOL.map(id => [id, 0]));
+  let prev = '';
+  for (let seed = 0; seed < 1300; seed++) {
+    const id = resolveBackground('random', 'pixel', 'plum', seed, prev);
+    assert.notEqual(id, prev, `seed ${seed} repeated ${prev}`);
+    assert.equal(resolveBackground('random', 'none', 'grove', seed, prev), id, 'the seed and last pick decide it, nothing else');
+    count[id]++;
+    prev = id;
+  }
+  // 100 each on average: every one comes up, and none far from its share.
+  for (const [id, n] of Object.entries(count)) assert.ok(n > 60 && n < 140, `${id}: ${n} of 1300`);
+  // Clock seeds, as New game deals them, spread over the pool too.
+  const clock = new Set(Array.from({ length: 200 }, (_, i) => resolveBackground('random', '', '', (1759536000000 + i * 977) >>> 0)));
+  assert.equal(clock.size, RANDOM_POOL.length);
+  assert.equal(resolveBackground('random', '', '', 9, 'solo', ['solo']), 'solo', 'a pool of one has nothing else to pick');
+  assert.equal(resolveBackground('random', '', '', 9, 'a', ['a', 'b']), 'b');
 });

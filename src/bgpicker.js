@@ -1,14 +1,19 @@
-// The Background page's markup: a radio tile per entry in the backgrounds registry, so a new
-// entry there needs no markup anywhere, and the summary on the row that opens the page.
+// The Background page's markup: a radio tile per entry in the backgrounds registry, grouped Still
+// and Animated by its `animated` flag, so a new entry there needs no markup anywhere; the note
+// under the mode switch; and the summary on the row that opens the page.
 import { BACKGROUNDS, findBackground } from './backgrounds.js';
 
 /** @typedef {import('./backgrounds.js').Background} Background */
 
-// Badge icons on a 16x16 grid: a play mark for animated, a framed picture for still.
-const ICONS = {
-  animated: '<path d="M5.5 3.5v9l7-4.5z"/>',
-  still: '<rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M2.5 12.5l3.5-4 3 3 2-2 2.5 3"/>',
-};
+/** What each way of choosing does, said under the switch. @type {Readonly<Record<string, string>>} */
+export const MODE_NOTES = Object.freeze({
+  theme: 'Each theme comes with its own background.',
+  random: 'A new background with every game.',
+  manual: 'The one you pick below.',
+});
+// The row's tag for a background the player did not pick themselves.
+/** @type {Readonly<Record<string, string>>} */
+const MODE_TAGS = Object.freeze({ theme: 'Theme', random: 'Random' });
 
 /** @param {Background} bg @returns {string} */
 function glyphMarkup(bg) {
@@ -16,22 +21,23 @@ function glyphMarkup(bg) {
 }
 
 /** @param {Background} bg @returns {string} */
-export function badgeMarkup(bg) {
-  const kind = bg.animated ? 'animated' : 'still';
-  return `<span class="bgbadge" data-kind="${kind}"><svg viewBox="0 0 16 16" aria-hidden="true">${ICONS[kind]}</svg>`
-    + `${bg.animated ? 'Animated' : 'Still'}</span>`;
-}
+const tileMarkup = (bg) => `<label class="tile bgtile" data-bg="${bg.id}">`
+  + `<input type="radio" name="art" value="${bg.id}">${glyphMarkup(bg)}<span class="bgname">${bg.name}</span></label>`;
 
-/** One radio per background, in registry order; data-setting makes each a settings.js field.
+/** Two groups, Still then Animated, each in registry order under its heading. The radios share
+ * one name, so the arrow keys run through both groups.
  * @param {readonly Background[]} [list] @returns {string} */
 export function tilesMarkup(list = BACKGROUNDS) {
-  return list.map(bg => `<label class="tile bgtile" data-bg="${bg.id}">`
-    + `<input type="radio" name="art" value="${bg.id}" data-setting="art">`
-    + `${glyphMarkup(bg)}<span class="bgname">${bg.name}</span>${badgeMarkup(bg)}</label>`).join('');
+  return /** @type {const} */ ([['still', 'Still', false], ['animated', 'Animated', true]])
+    .map(([kind, head, animated]) => `<div class="bggroup" role="group" aria-labelledby="bghead-${kind}" data-kind="${kind}">`
+      + `<h3 class="bghead" id="bghead-${kind}">${head}</h3><div class="tiles">`
+      + list.filter(bg => bg.animated === animated).map(tileMarkup).join('') + '</div></div>').join('');
 }
 
-/** @param {unknown} id @returns {string} the row's picture and name for a stored choice */
-export function summaryMarkup(id) {
-  const bg = findBackground(id);
-  return `${glyphMarkup(bg)}<span class="bgname">${bg.name}</span>`;
+/** The row's picture and name for the background showing, with the mode under the name unless
+ * it is Manual. @param {unknown} id @param {string} [mode] @returns {string} */
+export function summaryMarkup(id, mode = 'manual') {
+  const bg = findBackground(id), tag = MODE_TAGS[mode];
+  return `${glyphMarkup(bg)}<span class="bgsum"><span class="bgname">${bg.name}</span>`
+    + `${tag ? `<span class="bgtag">${tag}</span>` : ''}</span>`;
 }

@@ -9,22 +9,24 @@ export const SETTINGS_KEY = 'wordfinder-settings-v1';
 const LEGACY_AUTO_KEY = 'wordfinder-autonext';
 
 /**
- * @typedef {{art:string, area:'list'|'full', board:'auto'|'compact'|'full',
+ * @typedef {{bgmode:'theme'|'random'|'manual', art:string, area:'full'|'list', board:'auto'|'compact'|'full',
  *   difficulty:'normal'|'easy'|'hard', letters:'normal'|'large', motion:'system'|'reduce',
  *   sound:boolean, vibrate:boolean, reveal:boolean, autoNext:boolean, play:'random'|'levels'}} Settings
+ *   bgmode: how the background is chosen (backgrounds.js resolveBackground); art is Manual's pick.
  *   play: the side of New game last chosen. It has no Settings control.
  * @typedef {Pick<Storage,'getItem'|'setItem'>} SettingsStore
  */
 
 /** @type {Readonly<Settings>} */
 export const DEFAULTS = Object.freeze({
-  art: 'illustrated', area: 'list', board: 'auto', difficulty: 'normal', letters: 'normal', motion: 'system',
+  bgmode: 'theme', art: 'illustrated', area: 'full', board: 'auto', difficulty: 'normal', letters: 'normal', motion: 'system',
   sound: true, vibrate: true, reveal: true, autoNext: true, play: 'random',
 });
 
 /** The allowed values of each multiple-choice setting, default first. */
 export const CHOICES = Object.freeze({
-  art: BACKGROUNDS.map(b => b.id), area: ['list', 'full'], board: ['auto', 'compact', 'full'],
+  bgmode: ['theme', 'random', 'manual'], art: BACKGROUNDS.map(b => b.id), area: ['full', 'list'],
+  board: ['auto', 'compact', 'full'],
   difficulty: ['normal', 'easy', 'hard'], letters: ['normal', 'large'], motion: ['system', 'reduce'],
   play: ['random', 'levels'],
 });
@@ -40,6 +42,8 @@ export function normalizeSettings(raw) {
     if (list.some(v => v === r[k])) /** @type {any} */ (out)[k] = r[k];
   }
   for (const k of FLAGS) if (typeof r[k] === 'boolean') /** @type {any} */ (out)[k] = r[k];
+  // A record from before the mode keeps a background the player picked: Manual, unless it is the default.
+  if (!CHOICES.bgmode.some(v => v === r.bgmode)) out.bgmode = out.art === DEFAULTS.art ? 'theme' : 'manual';
   return out;
 }
 

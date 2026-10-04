@@ -9,6 +9,32 @@ test('a first visit gets the defaults', () => {
   assert.equal(DEFAULTS.board, 'auto');
   assert.equal(DEFAULTS.difficulty, 'normal');
   assert.equal(DEFAULTS.play, 'random', 'levels are opt-in');
+  assert.equal(DEFAULTS.bgmode, 'theme', 'each theme brings its own background');
+  assert.equal(DEFAULTS.area, 'full');
+});
+
+test('the background is chosen by theme, at random or by hand, and the choice is remembered', () => {
+  assert.deepEqual(CHOICES.bgmode, ['theme', 'random', 'manual']);
+  const store = memStore();
+  makeSettings({ store }).set('bgmode', 'random');
+  assert.equal(makeSettings({ store }).get().bgmode, 'random');
+  assert.equal(normalizeSettings({ bgmode: 'daily', art: 'illustrated' }).bgmode, 'theme');
+});
+
+test('a record from before the mode keeps a background the player picked', () => {
+  /** @param {object} rec */
+  const from = (rec) => { const store = memStore(); store.setItem(SETTINGS_KEY, JSON.stringify(rec)); return makeSettings({ store }).get(); };
+  assert.deepEqual([from({ art: 'aurora', area: 'list' }).bgmode, from({ art: 'aurora' }).art], ['manual', 'aurora']);
+  assert.equal(from({ art: 'none' }).bgmode, 'manual', 'None was a pick too');
+  assert.equal(from({ art: 'illustrated', area: 'list' }).bgmode, 'theme', 'the old default is no pick');
+  assert.equal(from({ art: 'gone' }).bgmode, 'theme', 'nor is one this build does not have');
+  assert.equal(from({ sound: false }).bgmode, 'theme');
+  // A stored mode stands, whatever the art.
+  assert.equal(from({ art: 'aurora', bgmode: 'theme' }).bgmode, 'theme');
+  assert.equal(from({ art: 'illustrated', bgmode: 'manual' }).bgmode, 'manual');
+  // A stored area stays as it was; only a new player gets Full screen.
+  assert.equal(from({ art: 'aurora', area: 'list' }).area, 'list');
+  assert.equal(makeSettings({ store: memStore() }).get().area, 'full');
 });
 
 test('the New game side is remembered, and only random or levels', () => {
