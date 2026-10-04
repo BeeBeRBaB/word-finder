@@ -87,7 +87,7 @@ export function start(host, opts) {
 
   if (layout === 1) {
     // One large school in the hero's icon: a sunflower, so any first n of it are an even disc.
-    const big = school(0.5, 0, 10 + rng.random() * 3);
+    const big = school(0.5, 0, 26 + rng.random() * 4);
     big.weave = true;
     const rot = rng.random() * TAU;
     for (let j = 0; j < BIG; j++) {
@@ -136,9 +136,10 @@ export function start(host, opts) {
   function leg(s, u0, dir) {
     const r = s.rng.random;
     // The extra length is time spent off the host before it comes back in by the edge it left,
-    // in the roomier of two lanes.
+    // in the roomier of two lanes; the large school's lane is low going right and high coming back.
     const len = 1 + (s.weave ? 0.02 + r() * 0.05 : 0.04 + r() * 0.3), a = r(), b = r();
-    return { u0, len, dir, lane: s.weave || room(a, s) >= room(b, s) ? a : b, amp: r(), wl: r(), ph: r() * TAU };
+    const lane = s.weave ? (a + (dir > 0 ? 1 : 0)) / 2 : room(a, s) >= room(b, s) ? a : b;
+    return { u0, len, dir, lane, amp: r(), wl: r(), ph: r() * TAU };
   }
 
   /** Places every school mid-flight, its leader on the host. @returns {void} */
@@ -146,7 +147,7 @@ export function start(host, opts) {
     const span = W + 2 * EDGE;
     for (const s of schools) {
       // Spread across the host by rank, either way, so a still frame does not bunch them.
-      const p = (s.rank * 0.618 + (flip ? 0.3 : 0.1)) % 1, dir = s.rng.random() < 0.5 ? 1 : -1;
+      const p = (s.rank * 0.618 + (flip ? 0.3 : 0.1)) % 1, dir = s.rng.random() < 0.5 || s.weave ? 1 : -1;
       if (s.tank) {
         const K = s.tank.ease, th = Math.asin(Math.sin((2 * p - 1) * Math.asin(K)) / K);
         s.u = dir > 0 ? th : Math.PI - th;
@@ -155,6 +156,9 @@ export function start(host, opts) {
       const back = Math.max(0, ...s.bodies.filter(b => b.on).map(b => b.lag)) / span;
       const lo = Math.min(0.9, back + 0.04);
       s.u = lo + (dir > 0 ? p : 1 - p) * Math.max(0, 0.92 - lo);
+      // The board takes the left of a Full screen host, or its top on one taller than wide: the large
+      // school starts swimming right in the lower half, its middle 0.7 across, so a still frame shows it.
+      if (s.weave) s.u = Math.max(lo, Math.min(0.92, ((W > H ? 0.7 : 0.5) * W + EDGE + back * span / 2) / span));
       s.legs = [leg(s, 0, dir)];
       if (!s.weave) s.legs[0].lane = s.lane;
       // The legs its tail is still on.

@@ -100,10 +100,6 @@ export function start(host, opts) {
   let shown = [];
   /** @type {Juggler[]} */
   let cells = [];
-  /** @type {Map<number, Row>} */
-  const rows = new Map();
-  /** @type {Map<string, {s:number, f:number, ph:number}>} */
-  const slots = new Map();
   let W = 0, H = 0, dpr = 1, t = rng.random() * 20, made = false;
   const o1 = rng.random(), o2 = rng.random();
   let cancel = () => {};
@@ -145,14 +141,9 @@ export function start(host, opts) {
   /** The rows variant's tempo and look for row r, the same whatever the host's size.
    * @param {number} r @returns {Row} */
   function rowOf(r) {
-    let row = rows.get(r);
-    if (!row) {
-      const q = makeRng((seed ^ Math.imul(r + 31, 0x27D4EB2F)) >>> 0);
-      row = { T: 1.4 + q.random() * 0.6, step: [0.5, 1 / 3, -1 / 3, 0.25, -0.25][q.int(5)],
-        f: 0.5 + q.random() * 0.35, s: 0.26 + q.random() * 0.1, ph: q.random() };
-      rows.set(r, row);
-    }
-    return row;
+    const q = makeRng((seed ^ Math.imul(r + 31, 0x27D4EB2F)) >>> 0);
+    return { T: 1.4 + q.random() * 0.6, step: [0.5, 1 / 3, -1 / 3, 0.25, -0.25][q.int(5)],
+      f: 0.5 + q.random() * 0.35, s: 0.26 + q.random() * 0.1, ph: q.random() };
   }
 
   /** Lays the rows variant over the host: rows stacked up from its floor, centred across, so a
@@ -167,12 +158,9 @@ export function start(host, opts) {
     for (let r = 0; r <= H / py; r++) {
       const row = rowOf(r), base = H - py * 0.1 - r * py;
       for (let c = c0; c <= c1; c++) {
-        let s = slots.get(r + ',' + c);
-        if (!s) {
-          const q = makeRng((seed ^ Math.imul(r + 977, 0x85EBCA6B) ^ Math.imul(c + 6151, 0xC2B2AE35)) >>> 0);
-          s = { s: 0.88 + q.random() * 0.24, f: 0.85 + q.random() * 0.3, ph: (q.random() - 0.5) * 0.08 };
-          slots.set(r + ',' + c, s);
-        }
+        // Seeded by its place alone, so a slot looks the same whatever the host's size.
+        const q = makeRng((seed ^ Math.imul(r + 977, 0x85EBCA6B) ^ Math.imul(c + 6151, 0xC2B2AE35)) >>> 0);
+        const s = { s: 0.88 + q.random() * 0.24, f: 0.85 + q.random() * 0.3, ph: (q.random() - 0.5) * 0.08 };
         const size = Math.max(28, Math.min(80, p * row.s * s.s)), x = W / 2 + (c + (r & 1) / 2) * p;
         if (x < -size / 2 || x > W + size / 2 || base - size * 0.8 < 0) continue;
         const f = Math.min(2.2, (py - size * 0.9) * row.f * s.f / size);

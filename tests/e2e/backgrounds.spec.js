@@ -270,6 +270,39 @@ test('a background that could not load draws once the device is back online', as
   }).toBe(1);
 });
 
+/** Subject motion on nature/fish with its motion module failing once, then served again.
+ * @param {Page} page */
+async function motionFailsOnce(page) {
+  await page.addInitScript(() => localStorage.setItem('wordfinder-settings-v1',
+    JSON.stringify({ bgmode: 'manual', art: 'motion', area: 'full' })));
+  const file = MOTIONS[/** @type {keyof typeof MOTIONS} */ (motionFor('nature/fish'))];
+  const url = new RegExp(`/src/backgrounds/${file}\\.js`);
+  await page.route(url, route => route.abort('internetdisconnected'));
+  const failed = page.waitForEvent('requestfailed', r => r.url().includes(`/${file}.js`));
+  await page.goto('/?seed=1&subject=nature/fish');
+  await failed;
+  await page.unroute(url);
+}
+
+test('Subject motion whose motion could not load draws once the device is back online', async ({ page }) => {
+  await motionFailsOnce(page);
+  await expect.poll(async () => {
+    await page.evaluate(() => dispatchEvent(new Event('online')));
+    return page.locator('#bg canvas').count();
+  }).toBe(1);
+});
+
+test('Subject motion whose motion could not load draws when it next starts', async ({ page }) => {
+  await motionFailsOnce(page);
+  const subject = await page.locator('#subject').textContent();
+  await page.locator('#reveal').click();   // a board with a find is kept for Undo
+  await page.locator('#newbtn').click();
+  await expect(page.locator('#subject')).not.toHaveText(subject ?? '');
+  await page.locator('#toast-undo').click();
+  await expect(page.locator('#subject')).toHaveText(subject ?? '');
+  await expect(page.locator('#bg canvas')).toHaveCount(1);
+});
+
 test('Back returns to Settings and its row; Escape closes the pane from the page', async ({ page }) => {
   await page.goto('/?seed=1&subject=space/jupiter');
   await openPage(page);
@@ -463,4 +496,82 @@ test('in Full screen the background shows through the board but not through its 
   await openPage(page);
   await page.locator('.bgtile[data-bg="none"]').click();
   expect(await alpha('#gridbox')).toBe(1);
+});
+
+test('at 320 wide the Background page stacks each label over its switch, and nothing runs off the card', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.goto('/?seed=1&subject=sports/golf');
+  await openPage(page);
+  const edges = await page.evaluate(() => {
+    const card = /** @type {HTMLElement} */ (document.getElementById('settingscard'));
+    const right = card.getBoundingClientRect().right - parseFloat(getComputedStyle(card).paddingRight);
+    const buttons = [...document.querySelectorAll('#settings-bgpage .seg button')].map(b => b.getBoundingClientRect().right);
+    return { scroll: card.scrollWidth, client: card.clientWidth, right, widest: Math.max(...buttons) };
+  });
+  expect(edges.scroll).toBeLessThanOrEqual(edges.client);
+  expect(edges.widest).toBeLessThanOrEqual(edges.right + 0.5);
+  const label = await page.locator('#lbl-bgmode').boundingBox();
+  const manual = await page.locator('#settings-bgpage [data-setting="bgmode"] [data-value="manual"]').boundingBox();
+  expect((manual?.y ?? 0)).toBeGreaterThanOrEqual((label?.y ?? 0) + (label?.height ?? 0));
+});
+
+test('Subject motion\'s one large school starts beside the board, so a reduced-motion frame shows it', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('wordfinder-settings-v1',
+    JSON.stringify({ bgmode: 'manual', art: 'motion', area: 'full', motion: 'reduce' })));
+  // Seeds 1 and 4 deal swim's one-school variant; a landscape board takes the left, a portrait one the top.
+  for (const [width, height, seed] of [[1280, 800, 1], [390, 844, 4]]) {
+    await page.setViewportSize({ width, height });
+    await page.goto(`/?seed=${seed}&subject=animals/jellyfish`);
+    await expect(page.locator('#bg canvas')).toHaveCount(1);
+    const beside = () => page.evaluate(() => {
+      const cv = /** @type {HTMLCanvasElement} */ (document.querySelector('#bg canvas'));
+      const board = /** @type {Element} */ (document.getElementById('gridbox')).getBoundingClientRect();
+      const k = cv.width / innerWidth, wide = innerWidth > innerHeight;
+      const x = wide ? Math.ceil(board.right * k) : 0, y = wide ? 0 : Math.ceil(board.bottom * k);
+      const data = cv.getContext('2d')?.getImageData(x, y, cv.width - x, cv.height - y).data ?? [];
+      let n = 0;
+      for (let i = 3; i < data.length; i += 4) if (data[i]) n++;
+      return n;
+    });
+    await expect.poll(beside, { message: `${width}x${height}` }).toBeGreaterThan(2000);
+  }
+});
+
+test('flutter\'s flocks never leave a phone\'s screen bare for long', async ({ page }) => {
+  await handPickedBackground(page);
+  await page.goto('/?seed=1&subject=space/jupiter');
+  // A minute and a half of the flock variant (seed 1) on a phone-sized host, its frames run by
+  // hand and painting nothing: the longest stretch, in ms, with no icon on the host.
+  const bare = await page.evaluate(async (mod) => {
+    const { start } = await import(mod);
+    const host = document.createElement('div');
+    host.style.cssText = 'position:fixed;left:0;top:0;width:390px;height:844px';
+    document.body.append(host);
+    /** @type {FrameRequestCallback[]} */ let queue = [];
+    const raf = window.requestAnimationFrame;
+    window.requestAnimationFrame = (cb) => queue.push(cb);
+    const stop = start(host, { colors: ['#e33', '#3a3', '#33e'], dark: true, reducedMotion: false, subject: 'tech/drones', seed: 1 });
+    const cv = /** @type {HTMLCanvasElement} */ (host.querySelector('canvas'));
+    const ctx = /** @type {CanvasRenderingContext2D} */ (cv.getContext('2d'));
+    /** @type {[number, number][]} */ const frames = [];
+    let now = 0;
+    ctx.clearRect = () => { frames.push([now, 0]); };
+    ctx.drawImage = (/** @type {any[]} */ ...a) => {
+      const { a: m, b, e, f } = ctx.getTransform(), r = a[3] * Math.hypot(m, b) / 2;
+      if (frames.length && e > -r && f > -r && e < cv.width + r && f < cv.height + r) frames[frames.length - 1][1]++;
+    };
+    const tick = () => { now += 1000 / 60; const due = queue; queue = []; for (const cb of due) cb(now); };
+    // The sprites load in their own time; then the clock starts.
+    while (!frames.some(([, hits]) => hits)) { tick(); await new Promise(r => setTimeout(r, 20)); }
+    frames.length = 0;
+    while (now < 90_000) tick();
+    stop();
+    window.requestAnimationFrame = raf;
+    let since = -1, worst = 0;
+    for (const [t, hits] of frames) {
+      if (hits) since = -1; else if (since < 0) since = t; else worst = Math.max(worst, t - since);
+    }
+    return worst;
+  }, '/src/backgrounds/icon-flutter.js');
+  expect(bare).toBeLessThan(2000);
 });

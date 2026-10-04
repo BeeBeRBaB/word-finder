@@ -43,7 +43,11 @@ export function normalizeSettings(raw) {
   }
   for (const k of FLAGS) if (typeof r[k] === 'boolean') /** @type {any} */ (out)[k] = r[k];
   // A record from before the mode keeps a background the player picked: Manual, unless it is the default.
-  if (!CHOICES.bgmode.some(v => v === r.bgmode)) out.bgmode = out.art === DEFAULTS.art ? 'theme' : 'manual';
+  // One from before the area too keeps its art where it was, which is where Word list puts it.
+  if (!CHOICES.bgmode.some(v => v === r.bgmode)) {
+    out.bgmode = out.art === DEFAULTS.art ? 'theme' : 'manual';
+    if (!CHOICES.area.some(v => v === r.area)) out.area = 'list';
+  }
   return out;
 }
 
