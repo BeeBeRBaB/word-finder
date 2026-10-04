@@ -4,7 +4,7 @@
 
 import { makeRng } from '../rng.js';
 import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
-import { iconSvg, iconsFor, sceneColors, variantOf, withHero } from './icon-scene.js';
+import { iconSprites, iconsFor, sceneColors, variantOf, withHero } from './icon-scene.js';
 
 /**
  * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number}} BackgroundOptions
@@ -41,24 +41,17 @@ export function start(host, opts) {
   const parts = [];
   /** @type {boolean[]} which of parts the host's size has room for */
   let shown = [];
-  let W = 0, H = 0, dpr = 1, t = 0, dead = false, next = 0, batch = 0;
+  let W = 0, H = 0, dpr = 1, t = 0, next = 0;
+  let cancel = () => {};
 
   /** Sprites are drawn at the device pixel ratio of the last resize that changed it.
    * @returns {void} */
   function makeSprites() {
-    const px = Math.round(SPRITE * dpr), my = ++batch;
-    ids.forEach((id, i) => {
-      const img = new Image();
-      img.onload = () => {
-        // One still loading from before a density change would land over the new one.
-        if (dead || my !== batch) return;
-        const s = document.createElement('canvas');
-        s.width = s.height = px;
-        s.getContext('2d')?.drawImage(img, 0, 0, px, px);
-        sprites[i] = s;
-        draw();
-      };
-      img.src = 'data:image/svg+xml,' + encodeURIComponent(iconSvg(id, colors[(hue0 + i) % colors.length], px));
+    // One still loading from before a density change would land over the new one.
+    cancel();
+    cancel = iconSprites(ids, i => colors[(hue0 + i) % colors.length], Math.round(SPRITE * dpr), (i, s) => {
+      sprites[i] = s;
+      draw();
     });
   }
 
@@ -133,5 +126,5 @@ export function start(host, opts) {
     step(dt);
     draw();
   }, reduced);
-  return () => { dead = true; stop(); cv.remove(); parts.length = 0; };
+  return () => { cancel(); stop(); cv.remove(); parts.length = 0; };
 }

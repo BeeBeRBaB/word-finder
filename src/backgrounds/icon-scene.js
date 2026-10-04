@@ -66,6 +66,26 @@ export function iconSvg(id, color, px) {
     `<g fill="${color}" color="${color}">${iconMarkup(id)}</g></svg>`;
 }
 
+/** Rasterises each icon once, `px` square in the colour `colorOf` gives it, for the canvas
+ * backgrounds. `ready` runs as each one lands; the returned cancel drops any still loading.
+ * @param {string[]} ids @param {(i:number) => string} colorOf @param {number} px
+ * @param {(i:number, sprite:HTMLCanvasElement) => void} ready @returns {() => void} */
+export function iconSprites(ids, colorOf, px, ready) {
+  let live = true;
+  ids.forEach((id, i) => {
+    const img = new Image();
+    img.onload = () => {
+      if (!live) return;
+      const s = document.createElement('canvas');
+      s.width = s.height = px;
+      s.getContext('2d')?.drawImage(img, 0, 0, px, px);
+      ready(i, s);
+    };
+    img.src = 'data:image/svg+xml,' + encodeURIComponent(iconSvg(id, colorOf(i), px));
+  });
+  return () => { live = false; };
+}
+
 /**
  * Places icons over a W x H host. Layout 0 scatters them on a jittered grid, 1 is a tidy
  * staggered wallpaper, 2 is one large hero bleeding off a corner with small icons around it.
