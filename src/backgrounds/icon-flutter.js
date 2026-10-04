@@ -225,17 +225,21 @@ export function start(host, opts) {
         if (p.y > H + m) p.y -= H + 2 * m; else if (p.y < -m) p.y += H + 2 * m;
       }
     } else if (layout === 1) {
+      // While none is in sight the flocks fly on unseen at many times the speed, so the host is
+      // never bare for long, their fliers keeping the heading and bank they had.
+      const seen = birds.some((p, j) => shown[j] && Math.abs(p.x - W / 2) < (W + p.size) / 2 && Math.abs(p.y - H / 2) < (H + p.size) / 2);
+      const rush = seen ? 1 : 16;
       flocks.forEach((f, i) => {
         const h = f.h + wave(f.w, 0, 2, t);
-        f.x += Math.cos(h) * f.speed * dt;
-        f.y += Math.sin(h) * f.speed * dt;
+        f.x += Math.cos(h) * f.speed * dt * rush;
+        f.y += Math.sin(h) * f.speed * dt * rush;
         const aft = f.aft + f.half * 0.55;
         const gone = (dir > 0 ? f.x - aft > W : f.x + aft < 0) || Math.abs(f.y - H / 2) > H / 2 + f.half + f.fore;
         if (gone) launch(f, i, false);
         const c = Math.cos(h), s = Math.sin(h);
         for (const b of f.birds) {
           const a = (b.u + wave(b.w, 0, 1, t)) * f.sp, q = (b.v + wave(b.w, 1, 1, t)) * f.sp;
-          move(b, f.x + c * a - s * q, f.y + s * a + c * q, dt, gone);
+          move(b, f.x + c * a - s * q, f.y + s * a + c * q, dt, gone || rush > 1);
         }
       });
     } else {

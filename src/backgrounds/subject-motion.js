@@ -1,9 +1,10 @@
 // Subject motion: the subject's icons move the way the subject does (fish swim, leaves fall),
 // by handing the host to the motion module the subject's map entry names.
 
+import { importBackground } from '../backgrounds.js';
 import { motionFor } from './icon-scene.js';
 
-/** @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number}} BackgroundOptions */
+/** @typedef {import('../backgrounds.js').BackgroundOptions} BackgroundOptions */
 
 /** Each motion id in the map, and the module in this folder that draws it. */
 export const MOTIONS = Object.freeze({
@@ -19,8 +20,16 @@ export const MOTIONS = Object.freeze({
  */
 export function start(host, opts) {
   const id = /** @type {keyof typeof MOTIONS} */ (motionFor(opts.subject));
-  let live = true, stop = () => {};
-  // A motion that fails to load (offline) leaves the host empty, as any background's would.
-  import(`./${MOTIONS[id] ?? MOTIONS.drift}.js`).then(m => { if (live) stop = m.start(host, opts); }, () => {});
-  return () => { live = false; stop(); };
+  let live = true, started = false, stop = () => {};
+  // Through the registry's loader, so a motion that failed to load (offline) is tried under a new URL
+  // on its next start, and back online too, where the backdrop sees this one running and leaves it.
+  const load = () => importBackground(MOTIONS[id] ?? MOTIONS.drift).then(m => {
+    if (!live || started) return;
+    started = true;
+    removeEventListener('online', load);
+    stop = m.start(host, opts);
+  }, () => {});
+  addEventListener('online', load);
+  load();
+  return () => { live = false; removeEventListener('online', load); stop(); };
 }

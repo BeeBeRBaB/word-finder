@@ -667,6 +667,8 @@ body{position:fixed;inset:0;width:100%;height:100%}
 .subpage{display:flex;flex-direction:column;gap:12px}
 .subpage[hidden]{display:none}
 .subpage .paneback{display:flex}
+/* A container like .panegroup, so its rows stack their labels too where a three-way switch would not fit. */
+#settings-bgpage{container-type:inline-size}
 /* Tiles on the Theme and Background pages. The radio stays in the tab order and the tile
    draws its focus and check. */
 .tile{position:relative;display:flex;flex-direction:column;gap:4px;min-width:0;padding:7px 8px 8px;

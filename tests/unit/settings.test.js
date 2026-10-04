@@ -35,6 +35,9 @@ test('a record from before the mode keeps a background the player picked', () =>
   // A stored area stays as it was; only a new player gets Full screen.
   assert.equal(from({ art: 'aurora', area: 'list' }).area, 'list');
   assert.equal(makeSettings({ store: memStore() }).get().area, 'full');
+  // A record from before the area had the art where Word list puts it.
+  assert.deepEqual([from({ art: 'pixel', sound: true }).area, from({ art: 'illustrated' }).area], ['list', 'list']);
+  assert.equal(from({ art: 'pixel', bgmode: 'manual' }).area, 'full', 'only a record from before the mode is migrated');
 });
 
 test('the New game side is remembered, and only random or levels', () => {
