@@ -162,6 +162,11 @@ async function run(job, math) {
       + `text-shadow:none!important;border-color:transparent!important;background:transparent!important;box-shadow:none!important}`);
     const glyph = (await page.screenshot()).toString('base64');
     await s.evaluate(n => n.remove());
+    // The pills alone, in black. A letter in none is not on one: a diagonal pill grazes the corner
+    // of a wide letter beside it (a W), and that edge is the pill's, not the letter's ground.
+    s = await tag(`body *{visibility:hidden!important} #pills .pill{visibility:visible!important;filter:brightness(0)}`);
+    const pills = (await page.screenshot()).toString('base64');
+    await s.evaluate(n => n.remove());
     // Everything painted over the background but the glyphs (a halo, a plate, the board, a pill),
     // over a black ground and a white one: what differs between them is how much shows through.
     // Over corner art, the board's own surface is beneath the art, so it is left out here.
@@ -199,14 +204,14 @@ async function run(job, math) {
     await ground('');
     if (bg.animated) await page.evaluate(() => /** @type {any} */ (window).__thaw());
 
-    const res = await math.evaluate(async ([glyphPng, overPngs, basePng, frames, info, steps, cur, ring]) => {
+    const res = await math.evaluate(async ([glyphPng, overPngs, basePng, frames, info, steps, cur, ring, pillPng]) => {
       /** @param {string} b64 */
       const pixels = async (b64) => {
         const img = new Image(); img.src = `data:image/png;base64,${b64}`; await img.decode();
         const c = new OffscreenCanvas(img.width, img.height), x = /** @type {OffscreenCanvasRenderingContext2D} */ (c.getContext('2d'));
         x.drawImage(img, 0, 0); return { d: x.getImageData(0, 0, img.width, img.height).data, w: img.width, h: img.height };
       };
-      const G = await pixels(glyphPng), O0 = await pixels(overPngs[0]), O1 = await pixels(overPngs[1]);
+      const G = await pixels(glyphPng), O0 = await pixels(overPngs[0]), O1 = await pixels(overPngs[1]), P = await pixels(pillPng);
       const U = basePng ? await pixels(basePng) : null;
       const F = await Promise.all(frames.map(async ([k, w]) => [await pixels(k), await pixels(w)]));
       /** @param {string} s */
@@ -214,14 +219,15 @@ async function run(job, math) {
       const lin = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
       const L = (c) => 0.2126 * lin(c[0]) + 0.7152 * lin(c[1]) + 0.0722 * lin(c[2]);
       const ink = (i) => 1 - G.d[i * 4 + 1] / 255;   // glyph coverage
+      const pill = (i) => 1 - P.d[i * 4 + 1] / 255;
       const B = parse(info.bg);
       return info.boxes.map(box => {
         const T = parse(box.fg);
-        // The ring: pixels clear of the glyph but within `ring` px of it.
+        // The ring: pixels clear of the glyph (and of the pills, for a letter in none) but within `ring` px of it.
         const zone = [];
         const x1 = Math.min(G.w, box.x + box.w), y1 = Math.min(G.h, box.y + box.h);
         for (let y = box.y; y < y1; y++) for (let x = box.x; x < x1; x++) {
-          if (ink(y * G.w + x) > 0.1) continue;
+          if (ink(y * G.w + x) > 0.1 || (box.sel === 'cell' && pill(y * G.w + x) > 0.1)) continue;
           let near = false;
           for (let dy = -ring; dy <= ring && !near; dy++) for (let dx = -ring; dx <= ring; dx++) {
             const yy = y + dy, xx = x + dx;
@@ -253,7 +259,7 @@ async function run(job, math) {
         const opens = zone.map(i => (O1.d[i * 4 + 1] - O0.d[i * 4 + 1]) / 255).sort((a, b) => b - a);
         return { sel: box.sel, need: box.need, score, max, frame: at, dbg: `zone ${zone.length} open p5 ${opens[Math.floor(opens.length * 0.05)]?.toFixed(2)} box ${box.x},${box.y},${box.w}x${box.h}` };
       });
-    }, [glyph, over, base, frames, info, [...new Set([...STEPS, opacity])].sort((a, b) => a - b), opacity, RING]);
+    }, [glyph, over, base, frames, info, [...new Set([...STEPS, opacity])].sort((a, b) => a - b), opacity, RING, pills]);
     if (process.env.DEBUG) for (const r of res) console.log(look, r.sel, r.score.toFixed(2), r.dbg);
     for (const r of res) {
       const o = worst[r.sel] ??= { score: 99, at: '', need: r.need, max: 1 };
