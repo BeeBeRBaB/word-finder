@@ -3,8 +3,10 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { CATEGORIES } from '../../src/catalog.js';
 import { ICONS } from '../../src/backgrounds/icons.js';
-import { CATEGORY_ICONS, SUBJECT_ICONS } from '../../src/backgrounds/subject-icons.js';
-import { VARIANTS, iconMarkup, iconsFor, layoutScene, sceneColors, variantOf, withHero } from '../../src/backgrounds/icon-scene.js';
+import { existsSync } from 'node:fs';
+import { CATEGORY_ICONS, CATEGORY_MOTION, SUBJECT_ICONS, SUBJECT_MOTION } from '../../src/backgrounds/subject-icons.js';
+import { VARIANTS, iconMarkup, iconsFor, layoutScene, motionFor, sceneColors, variantOf, withHero } from '../../src/backgrounds/icon-scene.js';
+import { MOTIONS } from '../../src/backgrounds/subject-motion.js';
 import { makeRng } from '../../src/rng.js';
 
 test('every subject and category maps 4-6 distinct drawn icons, and every icon is used', async () => {
@@ -36,6 +38,21 @@ test('icon markup uses only shapes, geometry attributes and the four tone classe
     }
     assert.doesNotMatch(svg, /url\(|href|javascript|on\w+=|style|['\\]/i, id);
   }
+});
+
+test('every category has a motion, every override names a real subject, and every motion has a module', () => {
+  assert.deepEqual(Object.keys(CATEGORY_MOTION).sort(), CATEGORIES.map(c => c.id).sort());
+  for (const [key, m] of [...Object.entries(CATEGORY_MOTION), ...Object.entries(SUBJECT_MOTION)]) {
+    assert.ok(m in MOTIONS, `${key}: no motion ${m}`);
+    if (key.includes('/')) {
+      assert.ok(key in SUBJECT_ICONS, `${key}: not a subject`);
+      assert.notEqual(m, CATEGORY_MOTION[key.split('/')[0]], `${key}: repeats its category`);
+    }
+  }
+  for (const file of Object.values(MOTIONS)) assert.ok(existsSync(new URL(`../../src/backgrounds/${file}.js`, import.meta.url)), file);
+  assert.equal(motionFor('nature/weather'), SUBJECT_MOTION['nature/weather'] ?? CATEGORY_MOTION.nature);
+  assert.equal(motionFor('space/not-a-subject'), CATEGORY_MOTION.space);
+  assert.equal(motionFor('nope/nope'), 'drift');
 });
 
 test('the emitted modules match the icon and map sources', () => {

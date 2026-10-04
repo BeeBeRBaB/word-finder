@@ -16,7 +16,7 @@ test('a Still group then an Animated one, each a labelled group of tiles in regi
   assert.deepEqual(values(groups[0]), BACKGROUNDS.filter(b => !b.animated).map(b => b.id));
   assert.deepEqual(values(groups[1]), BACKGROUNDS.filter(b => b.animated).map(b => b.id));
   assert.deepEqual(values(groups[0]), ['illustrated', 'pixel', 'scene', 'none']);
-  assert.equal(values(groups[1]).length, 10);
+  assert.equal(values(groups[1]).length, 15);
   // One name across both groups, so the arrow keys run through every tile.
   assert.equal(values(html).length, BACKGROUNDS.length);
   assert.equal((html.match(/<label class="tile bgtile"/g) ?? []).length, BACKGROUNDS.length);

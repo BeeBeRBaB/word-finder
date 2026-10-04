@@ -140,7 +140,7 @@ test('every theme has its own background, a real one, the same in both flavours'
     assert.equal(resolveBackground('theme', 'pixel', t, 2, id), id, t);
   }
   assert.deepEqual(THEMES.map(t => resolveBackground('theme', '', t, 0)),
-    ['starfield', 'constellation', 'illustrated', 'shimmer', 'drift', 'bokeh', 'aurora']);
+    ['starfield', 'constellation', 'illustrated', 'shimmer', 'motion', 'bokeh', 'aurora']);
   assert.equal(resolveBackground('theme', '', 'retired', 0), 'starfield', 'an unknown theme is the default one');
   assert.equal(new Set(Object.values(THEME_BACKGROUNDS)).size, THEMES.length, 'no two themes share one');
 });
@@ -156,7 +156,8 @@ test('Random picks by the seed from every background but None, and never the las
   /** @type {Record<string, number>} */
   const count = Object.fromEntries(RANDOM_POOL.map(id => [id, 0]));
   let prev = '';
-  for (let seed = 0; seed < 1300; seed++) {
+  const deals = 100 * RANDOM_POOL.length;
+  for (let seed = 0; seed < deals; seed++) {
     const id = resolveBackground('random', 'pixel', 'plum', seed, prev);
     assert.notEqual(id, prev, `seed ${seed} repeated ${prev}`);
     assert.equal(resolveBackground('random', 'none', 'grove', seed, prev), id, 'the seed and last pick decide it, nothing else');
@@ -164,7 +165,7 @@ test('Random picks by the seed from every background but None, and never the las
     prev = id;
   }
   // 100 each on average: every one comes up, and none far from its share.
-  for (const [id, n] of Object.entries(count)) assert.ok(n > 60 && n < 140, `${id}: ${n} of 1300`);
+  for (const [id, n] of Object.entries(count)) assert.ok(n > 60 && n < 140, `${id}: ${n} of ${deals}`);
   // Clock seeds, as New game deals them, spread over the pool too.
   const clock = new Set(Array.from({ length: 200 }, (_, i) => resolveBackground('random', '', '', (1759536000000 + i * 977) >>> 0)));
   assert.equal(clock.size, RANDOM_POOL.length);

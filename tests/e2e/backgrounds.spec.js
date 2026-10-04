@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { openBoard, handPickedBackground } from './helpers.js';
 import { findBackground, resolveBackground } from '../../src/backgrounds.js';
+import { MOTIONS } from '../../src/backgrounds/subject-motion.js';
+import { motionFor } from '../../src/backgrounds/icon-scene.js';
 
 /** @typedef {import('@playwright/test').Page} Page */
 
@@ -62,9 +64,9 @@ test('the Background page has the mode, the area, and Still and Animated groups 
   await expect(page.locator('#settings-bgpage [data-setting="area"] [data-value="full"]')).toHaveAttribute('aria-pressed', 'true');
   const still = page.getByRole('group', { name: 'Still' }), moving = page.getByRole('group', { name: 'Animated' });
   await expect(still.getByRole('radio')).toHaveCount(4);
-  await expect(moving.getByRole('radio')).toHaveCount(10);
+  await expect(moving.getByRole('radio')).toHaveCount(15);
   expect(await still.locator('.bgtile').evaluateAll(ts => ts.map(t => t.getAttribute('data-bg')))).toEqual(['illustrated', 'pixel', 'scene', 'none']);
-  await expect(page.locator('.bgtile')).toHaveCount(14);
+  await expect(page.locator('.bgtile')).toHaveCount(19);
   await expect(page.locator('.bgbadge')).toHaveCount(0);
   // Phosphor's Starfield is showing, so it is checked, and has focus for the arrow keys.
   await expect(page.locator('.bgtile[data-bg="starfield"] input')).toBeChecked();
@@ -79,7 +81,7 @@ test('the Background page has the mode, the area, and Still and Animated groups 
   await expect(mode(page, 'manual')).toHaveAttribute('aria-pressed', 'true');
   // Every tile and button is a 44px target.
   const heights = await page.locator('#settings-bgpage .bgtile, #settings-bgpage .seg button').evaluateAll(ts => ts.map(t => t.getBoundingClientRect().height));
-  expect(heights).toHaveLength(19);
+  expect(heights).toHaveLength(24);
   for (const h of heights) expect(h).toBeGreaterThanOrEqual(44);
 });
 
@@ -339,6 +341,27 @@ test('the subject backgrounds draw the subject\'s icons, and a new deal draws th
   await expect.poll(() => page.evaluate(c => c?.isConnected, canvas)).toBe(false);
   await expect(page.locator('#bgside > canvas')).toHaveCount(1);
   await expect.poll(() => painted(page, '#bgside > canvas')).toBe(true);
+});
+
+test('Subject motion runs the motion its subject is mapped to, and a new subject can change it', async ({ page }) => {
+  await handPickedBackground(page);
+  await page.setViewportSize({ width: 1280, height: 800 });
+  /** @type {string[]} */ const loaded = [];
+  const motions = new Set(/** @type {string[]} */ (Object.values(MOTIONS)));
+  page.on('requestfinished', r => { const m = r.url().match(/\/src\/backgrounds\/([a-z-]+)\.js/); if (m && motions.has(m[1])) loaded.push(m[1]); });
+  /** @param {string} subject */
+  const moduleOf = (subject) => MOTIONS[/** @type {keyof typeof MOTIONS} */ (motionFor(subject))];
+  expect(moduleOf('nature/fish')).not.toBe(moduleOf('space/rockets'));
+  await page.goto('/?seed=1&subject=nature/fish');
+  await openPage(page);
+  await page.locator('.bgtile[data-bg="motion"]').click();
+  await expect(page.locator('#bgside > canvas')).toHaveCount(1);
+  await expect.poll(() => painted(page, '#bgside > canvas')).toBe(true);
+  expect(loaded).toEqual([moduleOf('nature/fish')]);
+  await page.goto('/?seed=1&subject=space/rockets');
+  await expect(page.locator('#bgside > canvas')).toHaveCount(1);
+  await expect.poll(() => painted(page, '#bgside > canvas')).toBe(true);
+  expect(loaded).toEqual([moduleOf('nature/fish'), moduleOf('space/rockets')]);
 });
 
 test('on a phone with Word list the scene keeps the board corner, and moves to the rail in landscape', async ({ page }) => {
