@@ -1,10 +1,11 @@
 // Icon parade: the subject's icons march along lanes across the host, each lane at its own
 // pace, hopping a step at a time and leaning into the way they go. The seed picks the variant:
 // lanes alternating left and right, all one way at staggered speeds, or columns up and down.
+// One drawn facing a side faces the way its lane goes.
 
 import { makeRng } from '../rng.js';
 import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
-import { iconSprites, iconsFor, sceneColors, variantOf, withHero } from './icon-scene.js';
+import { facingOf, iconSprites, iconsFor, sceneColors, variantOf, withHero } from './icon-scene.js';
 
 /**
  * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number}} BackgroundOptions
@@ -32,6 +33,7 @@ export function start(host, opts) {
   const reduced = !!opts.reducedMotion;
   const { layout, hero, seed } = variantOf(subject, opts.seed ?? 0);
   const ids = withHero(iconsFor(subject), hero);
+  const facing = ids.map(id => facingOf(id));
   const rng = makeRng(seed);
   const hue0 = rng.int(colors.length);
   // 0 alternates left and right, 1 all one way at staggered speeds, 2 columns up and down.
@@ -139,13 +141,13 @@ export function start(host, opts) {
         let hsh = Math.imul(kk ^ L.salt, 0x9E3779B1);
         hsh = Math.imul(hsh ^ (hsh >>> 15), 0x85EBCA77);
         hsh ^= hsh >>> 13;
-        const spr = sprites[L.seq[((k % L.seq.length) + L.seq.length) % L.seq.length]];
+        const ik = L.seq[((k % L.seq.length) + L.seq.length) % L.seq.length], spr = sprites[ik];
         if (!spr) continue;
         const j1 = (hsh & 1023) / 1023 - 0.5, j2 = ((hsh >>> 10) & 1023) / 1023 - 0.5, j3 = ((hsh >>> 20) & 1023) / 1023;
         const along = (k + off + j1 * 0.4) * gap;
         // Mostly in step with the lane, as a parade would be, with a little stagger.
         const ph = L.ph + j3 * 1.2, lift = Math.abs(Math.sin(ph)) * size * 0.14;
-        let x, y, a;
+        let x, y, a, face = 1;
         if (vert) {
           // Seen from above: a step surges forward, and the icon rocks foot to foot.
           x = base + j2 * pitch * 0.1; y = along + dir * lift;
@@ -153,9 +155,11 @@ export function start(host, opts) {
         } else {
           x = along; y = base + j2 * pitch * 0.08 - lift;
           a = dir * (7 + Math.cos(2 * ph) * 3);
+          // Mirrored before the lean, so it still leans the way it goes.
+          if (facing[ik]) face = dir * facing[ik];
         }
         const r = a * Math.PI / 180, cos = Math.cos(r) * dpr, sin = Math.sin(r) * dpr;
-        ctx.setTransform(cos, sin, -sin, cos, x * dpr, y * dpr);
+        ctx.setTransform(cos * face, sin * face, -sin, cos, x * dpr, y * dpr);
         ctx.drawImage(spr, -size / 2, -size / 2, size, size);
       }
     }

@@ -1,0 +1,5 @@
+{
+  "left": ["bee", "bird", "cat", "chess-knight", "deer", "fish", "fox", "rabbit", "sheep", "whale", "wheelbarrow"],
+  "right": ["airplane", "bicycle", "boot", "car", "dinosaur", "horse", "lawnmower", "rocket", "sailing-ship",
+    "shooting-star", "sneaker", "sock", "wave", "wheel"]
+}

@@ -7,7 +7,7 @@
 import { fnv1a } from '../rng.js';
 import { TONE } from '../art.js';
 import { categoryOf } from '../catalog.js';
-import { ICONS } from './icons.js';
+import { FACING, ICONS } from './icons.js';
 import { CATEGORY_ICONS, CATEGORY_MOTION, SUBJECT_ICONS, SUBJECT_MOTION } from './subject-icons.js';
 
 /** @typedef {{id:string, x:number, y:number, size:number, rot:number, hue:number, alpha:number}} Placed
@@ -29,6 +29,12 @@ export function sceneColors(colors, fallback) {
 export function iconsFor(subject) {
   const list = SUBJECT_ICONS[subject] ?? CATEGORY_ICONS[categoryOf(subject)] ?? CATEGORY_ICONS.nature;
   return list.split(' ').filter(id => id in ICONS);
+}
+
+/** Which way an icon is drawn facing: -1 left, 1 right, 0 front-on or symmetric. A motion that
+ * moves it sideways mirrors it to face its way. @param {string} id @returns {number} */
+export function facingOf(id) {
+  return FACING[id] ?? 0;
 }
 
 /** The motion id the subject moves with (subject-motion.js), else its category's, else drift.

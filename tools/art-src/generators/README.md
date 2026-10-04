@@ -14,7 +14,8 @@ Run everything from any directory; paths resolve from each script.
 
 To add icons, copy the shape of a round-2 generator into a new `icons/genN.mjs`, write
 `../icons/partN.json`, validate with `node tools/art-src/icons/check.mjs tools/art-src/icons/partN.json`,
-then run the two `iconmap` scripts below.
+then run the two `iconmap` scripts below. An icon drawn side-on (facing right, by rule) also goes
+in `../icons/facing.json`, so the motions mirror it to face the way it moves.
 
 ## Category illustrations (shipped as `ILLUSTRATIONS` in `src/art.js`)
 
@@ -36,4 +37,4 @@ then run the two `iconmap` scripts below.
 | --- | --- | --- |
 | `iconmap/<category>.json` | Each category's icons and each subject's 4–6 icons, hero first. | `node tools/art-src/iconmap/check.mjs <category>` |
 | `iconmap/merge.mjs` | Puts every newly drawn wishlist icon in front of the icons of the subjects that asked for it (most-requested first, capped at 6), and rebuilds `index.txt`. Re-running changes nothing. | `node tools/art-src/iconmap/merge.mjs` |
-| `iconmap/emit.mjs` | Writes the lazy `src/backgrounds/icons.js` (every mapped icon) and `subject-icons.js` (the maps). `--check` exits 1 when they are stale; the unit suite runs it. | `node tools/art-src/iconmap/emit.mjs [--check]` |
+| `iconmap/emit.mjs` | Writes the lazy `src/backgrounds/icons.js` (every mapped icon, and `FACING` from `icons/facing.json`) and `subject-icons.js` (the maps). `--check` exits 1 when they are stale; the unit suite runs it. | `node tools/art-src/iconmap/emit.mjs [--check]` |
