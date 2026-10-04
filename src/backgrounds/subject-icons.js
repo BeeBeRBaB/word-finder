@@ -668,7 +668,6 @@ export const CATEGORY_MOTION = Object.freeze({
 /** @type {Readonly<Record<string, string>>} */
 export const SUBJECT_MOTION = Object.freeze({
   'animals/bats': 'flutter',
-  'animals/bears': 'drift',
   'animals/dogs': 'bounce',
   'animals/frogs': 'bounce',
   'animals/jellyfish': 'swim',
@@ -678,9 +677,8 @@ export const SUBJECT_MOTION = Object.freeze({
   'animals/pandas': 'wallpaper',
   'animals/penguins': 'swim',
   'animals/rabbits': 'bounce',
-  'animals/rodents': 'fall',
   'animals/snakes': 'wallpaper',
-  'animals/spiders': 'flutter',
+  'animals/spiders': 'fall',
   'art/animation': 'bounce',
   'art/ceramics': 'carousel',
   'art/color-theory': 'carousel',
