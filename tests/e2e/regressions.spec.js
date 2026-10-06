@@ -149,7 +149,7 @@ test('the board and background from a first visit come back offline', async ({ p
 // they lack an export for draws nothing. So the page reloads when next hidden, but not before an
 // update, and not over Settings or an Undo offer.
 test('a page an update took over reloads when next hidden, keeping its board', async ({ page }) => {
-  await openBoard(page, '/');
+  await openBoard(page, '/?subject=nature/birds');
   expect(await page.evaluate(controlled)).toBe(true);
   const letters = await page.locator('#letters').textContent();
   const hide = (/** @type {boolean} */ hidden) => page.evaluate((h) => {
@@ -187,6 +187,7 @@ test('a page an update took over reloads when next hidden, keeping its board', a
   await reloaded;
   await page.locator('.cell').first().waitFor();
   expect(await page.evaluate(() => /** @type {any} */ (window).mark)).toBeUndefined();
+  expect(new URL(page.url()).search, 'a pinned subject would deal over the save').toBe('');
   expect(await page.locator('#letters').textContent()).toBe(letters);
   await expect(page.locator('.w.done')).toHaveCount(1);
 });

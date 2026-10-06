@@ -860,8 +860,9 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     cancelAutoNext();
     const saved = levelBoard ? play.pause() : Promise.resolve();
-    // Reloaded out of sight, as an evicted app is, once the level's save has landed.
-    if (updated && reloadable()) void saved.finally(() => { if (document.hidden && reloadable()) location.reload(); });
+    // Reloaded out of sight, as an evicted app is, once the level's save has landed. Without the
+    // query, which would deal its pinned subject over the board saved.
+    if (updated && reloadable()) void saved.finally(() => { if (document.hidden && reloadable()) location.replace(location.pathname); });
     return;
   }
   if (levelBoard && play.account()) play.resume();
