@@ -383,15 +383,26 @@ test('on one board size a device keeps its own game of a level over another diff
   old.cloud.docs.set('uid-ana', { ...newProgress(0x40000000), current: sizeless });
   await old.play.sync();
   assert.equal(old.play.playing(), deal);
-  // On a larger board, the smaller board's game is the level whatever it has found.
+  // On a larger board, the smaller board's game is the level whatever it has found, once it finds.
   const phone = makeLevelPlay({ cloud, store: memStore() });
   await phone.boot();
   const d = /** @type {import('../../src/levelplay.js').Deal} */ (await phone.deal(IDS, loadCategory, 'normal'));
   assert.deepEqual(phone.start(d, WORDS, 10), []);
   assert.equal(phone.playing(), d);
+  await phone.pause();
   await phone.sync();
   assert.equal(phone.playing(), d, 'a phone keeps its own game over the larger board\'s');
+  const kept = /** @type {any} */ (cloud.docs.get('uid-ana')).current;
+  assert.deepEqual([kept.size, kept.events.map((/** @type {any} */ e) => e.word)], [13, ['OWL']], 'opening it there ends nothing');
+  assert.deepEqual(phone.resumable(d.subject, d.seed, 10), { level: 1, subject: d.subject, seed: d.seed, difficulty: 'hard' },
+    'its board is still the level after a reload');
+  assert.equal(phone.resumable(d.subject, d.seed, 13)?.level, 1);
+  phone.note('ROBIN', false);
+  await phone.sync();
   assert.equal(/** @type {any} */ (cloud.docs.get('uid-ana')).current.size, 10);
+  await play.sync();
+  assert.equal(play.playing(), null, 'and the larger board lets it go');
+  assert.equal(play.resumable(d.subject, d.seed, 13), null);
 });
 
 test('a level saved on a larger board starts over on a smaller one, and its game then wins over that one', async () => {

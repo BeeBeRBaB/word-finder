@@ -139,6 +139,8 @@ export function renderSignIn(host, play, on) {
     for (const el of [user, pass]) el.readOnly = on;
     for (const el of [submit, toggle]) el.setAttribute('aria-disabled', String(on));
     form.setAttribute('aria-busy', String(on));
+    if (on) submit.textContent = creating ? 'Creating account…' : 'Signing in…';
+    else label();
   }
 
   toggle.addEventListener('click', () => {

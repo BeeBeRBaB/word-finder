@@ -74,6 +74,10 @@ const sameGame = (c, deal, size) => c.subject === deal.subject && c.difficulty =
  * @param {LevelCurrent|null} c @param {number} size @returns {boolean} */
 const beaten = (c, size) => (c?.size ?? size) < size;
 
+/** Whether a saved level was played on a board larger than `size`, which a phone cannot deal.
+ * @param {LevelCurrent|null} c @param {number} size @returns {boolean} */
+const larger = (c, size) => (c?.size ?? size) > size;
+
 /** What went wrong, from a thrown cloud error; 'server' for anything else.
  * @param {unknown} e @returns {CloudCode} */
 export const codeOf = (e) => {
@@ -150,6 +154,9 @@ export function makeLevelPlay(deps) {
   /** The in-progress level as levels.js stores it. @returns {void} */
   function remember() {
     if (!live || !prog) return;
+    // A larger board's game stays the level until this board finds or reveals a word: opening
+    // the level on a phone must not end the game a laptop has going.
+    if (!live.events.length && larger(prog.current, live.size)) return;
     const { level, subject, difficulty } = live.deal;
     keep(saveCurrent(prog, { level, subject, difficulty, size: live.size, events: live.events.map(e => ({ ...e })), elapsedMs: Math.round(elapsed()) }));
   }
@@ -298,12 +305,13 @@ export function makeLevelPlay(deps) {
       }
     },
 
-    /** A board is the level in progress when its subject, seed and size are that level's:
-     * returns its deal, to start() with the board. @param {string} subjectId
-     * @param {number} seed @param {number} size @returns {Deal|null} */
+    /** A board is the level in progress when its subject, seed and size are that level's, or it
+     * is a smaller board's game of it that has found nothing yet: returns its deal, to start()
+     * with the board. @param {string} subjectId @param {number} seed @param {number} size
+     * @returns {Deal|null} */
     resumable(subjectId, seed, size) {
       const p = progress(), c = p?.current;
-      if (!p || !c || c.subject !== subjectId || levelSeed(p.seed, p.level) !== seed || !onBoard(c, size)) return null;
+      if (!p || !c || c.subject !== subjectId || levelSeed(p.seed, p.level) !== seed || beaten(c, size)) return null;
       return { level: p.level, subject: subjectId, seed, difficulty: c.difficulty };
     },
 

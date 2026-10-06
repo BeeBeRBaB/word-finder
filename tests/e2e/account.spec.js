@@ -159,11 +159,14 @@ test('while an attempt is in flight the form is busy, and a second submit sends 
   await page.getByLabel('Password').fill('hunter22');
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(page.locator('.acct-form')).toHaveAttribute('aria-busy', 'true');
-  await expect(page.getByRole('button', { name: 'Sign in', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Signing in…', exact: true })).toBeDisabled();
+  // Said by its label, not by dimming, which took some looks' text under 3:1.
+  for (const b of await page.locator('.acct-form button').all()) await expect(b).toHaveCSS('opacity', '1');
   await page.evaluate(() => document.querySelector('.acct-form')?.dispatchEvent(new Event('submit', { cancelable: true })));
   await page.evaluate(() => /** @type {any} */ (window).release());
   await expect.poll(() => calls(page)).toEqual([['signIn', 'ana', 'hunter22'], ['onDone', 'ana']]);
   await expect(page.locator('.acct-form')).toHaveAttribute('aria-busy', 'false');
+  await expect(page.locator('.acct-submit')).toHaveText('Sign in');
 });
 
 test('every control is a 44px touch target, and the fields are 16px so iOS does not zoom', async ({ page }) => {

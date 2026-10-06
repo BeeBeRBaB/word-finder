@@ -145,6 +145,44 @@ test('the board and background from a first visit come back offline', async ({ p
   await expect(drawn).not.toHaveCount(0);
 });
 
+// An update that takes over an open page leaves the old build's modules running, and a background
+// they lack an export for draws nothing. So the page reloads when next hidden, but not before an
+// update, and not over Settings.
+test('a page an update took over reloads when next hidden, keeping its board', async ({ page }) => {
+  await openBoard(page, '/');
+  expect(await page.evaluate(controlled)).toBe(true);
+  const letters = await page.locator('#letters').textContent();
+  const hide = (/** @type {boolean} */ hidden) => page.evaluate((h) => {
+    Object.defineProperty(document, 'hidden', { value: h, configurable: true });
+    document.dispatchEvent(new Event('visibilitychange'));
+  }, hidden);
+  /** Hidden and shown again; whether the page is still the one marked. */
+  const stays = async () => {
+    await hide(true);
+    await page.waitForTimeout(500);   // a reload, had one started, would have begun
+    const same = await page.evaluate(() => /** @type {any} */ (window).mark === 1);
+    await hide(false);
+    return same;
+  };
+  await page.evaluate(() => { /** @type {any} */ (window).mark = 1; });
+  expect(await stays(), 'no update yet').toBe(true);
+  // A deploy's new worker: another script URL installs even with the same bytes.
+  await page.evaluate(async () => {
+    const changed = new Promise(r => navigator.serviceWorker.addEventListener('controllerchange', r, { once: true }));
+    await navigator.serviceWorker.register('./sw.js?update=1');
+    await changed;
+  });
+  await page.click('#appearance');
+  expect(await stays(), 'Settings is open').toBe(true);
+  await page.keyboard.press('Escape');
+  const reloaded = page.waitForEvent('load');
+  await hide(true);
+  await reloaded;
+  await page.locator('.cell').first().waitFor();
+  expect(await page.evaluate(() => /** @type {any} */ (window).mark)).toBeUndefined();
+  expect(await page.locator('#letters').textContent()).toBe(letters);
+});
+
 // A launch that could not put its save back offline tries again once the network returns, even
 // with New game open; but a board the player deals while it loads is theirs, and stays.
 test('a launch that failed offline is tried again online, and gives way to a board the player deals', async ({ page }) => {

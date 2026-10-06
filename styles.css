@@ -997,7 +997,8 @@ b.acct-name{color:var(--text-strong)}
 .acct-swap{text-align:center}
 .acct-toggle{min-height:44px;padding:0 10px;border:none;background:transparent;color:var(--accent-text);font-family:inherit;font-size:14px;
   font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
-.acct-form[aria-busy="true"] .acct-submit,.acct-form button[aria-disabled="true"]{opacity:.6;cursor:progress}
+/* Busy reads in the submit label, not by dimming: .6 took some looks' text under 3:1. */
+.acct-form[aria-busy="true"] .acct-submit,.acct-form button[aria-disabled="true"]{cursor:progress}
 /* The Levels side of New game: the level to play over the account's points and difficulty. */
 .acct-lvl{margin:0;font-family:var(--display);font-weight:700;font-size:22px;line-height:1.2;color:var(--text-strong)}
 .acct-lvl-line{margin:2px 0 0;font-size:14.5px;color:var(--muted)}

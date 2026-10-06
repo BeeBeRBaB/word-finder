@@ -848,11 +848,20 @@ els.gridbox.addEventListener('pointerdown', () => { if (!toast.hidden) hideToast
 must('winstay').addEventListener('click', () => { cancelAutoNext(); winbtn.focus(); });
 els.winclose.addEventListener('click', hideWin);
 els.win.addEventListener('click', (e) => { if (e.target === els.win) hideWin(); });
+// A service-worker update has taken over this page since it loaded (set at the bottom).
+let updated = false;
 // Cancel rather than pause: a player coming back to the tab should find the board they
 // left, not one dealt behind their back. Play is still there. A level's clock stops while
 // the page is hidden, and saving it then lets another device carry on.
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) { cancelAutoNext(); if (levelBoard) play.pause(); return; }
+  if (document.hidden) {
+    cancelAutoNext();
+    const saved = levelBoard ? play.pause() : Promise.resolve();
+    // Reloaded out of sight, as an evicted app is, once the level's save has landed; not over a
+    // pane or a win card, whose state a reload would drop.
+    if (updated && !paneOpen() && !winShown() && !state.winTimer) void saved.finally(() => { if (document.hidden) location.reload(); });
+    return;
+  }
   if (levelBoard && play.account()) play.resume();
   catchUp();
 });
@@ -1306,4 +1315,8 @@ if ('serviceWorker' in navigator) {
     refetch();
   }).observe({ type: 'resource', buffered: true });
   navigator.serviceWorker.addEventListener('controllerchange', refetch);
+  // An update taking over a page it already controlled leaves this build's modules running, and a
+  // background not loaded yet can need exports they lack. The page reloads when next hidden.
+  let controlled = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => { updated ||= controlled; controlled = true; });
 }
