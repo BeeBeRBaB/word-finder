@@ -306,8 +306,8 @@ export function makeLevelPlay(deps) {
     },
 
     /** A board is the level in progress when its subject, seed and size are that level's, or it
-     * is a smaller board's game of it that has found nothing yet: returns its deal, to start()
-     * with the board. @param {string} subjectId @param {number} seed @param {number} size
+     * is smaller than the board of the game saved, which it takes over at its first find: returns
+     * its deal, to start() with the board. @param {string} subjectId @param {number} seed @param {number} size
      * @returns {Deal|null} */
     resumable(subjectId, seed, size) {
       const p = progress(), c = p?.current;

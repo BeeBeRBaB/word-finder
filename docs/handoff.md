@@ -1,12 +1,12 @@
-# Word Finder — handoff (paused 2026-09-27, updated 2026-10-03)
+# Word Finder — handoff (finished 2026-10-06)
 
-Read this first. It is the state of the work in progress, the decisions waiting on the owner,
-and the order to do things in. CLAUDE.md still governs how to work; README has the file map.
+Every item on the owner's list has shipped and is live. This file records the owner's decisions,
+what is on main, and the gaps left open on purpose, with why. CLAUDE.md still governs how to
+work; README has the file map.
 
-## Before doing anything: ask the owner
+## Owner decisions
 
-These are open decisions. Ask them together at the start of the thread (one message, with the
-current default marked), and don't build on an assumption.
+All answered; none is open. A new question goes here, asked in one message with the default marked.
 
 1. **Branches.** *Answered 2026-10-02: threads merge verified work into `main` themselves.* Project threads work on their own branch, but CLAUDE.md says push to `main`, with no PRs and no feature branches, because `main` is what GitHub Pages serves. After `npm test` passes, should a thread fast-forward its work into `main` itself, or leave the branch for the owner?
 2. **Ultracode for every thread.** *Answered 2026-10-02: no.* It is a per-session setting. Adding `"ultracode": true` to the repo's `.claude/settings.json` would turn it on for every thread in this repo, including local sessions, which uses more tokens. Should we add it? Default: no.
@@ -18,7 +18,7 @@ current default marked), and don't build on an assumption.
 
 ## What is on main
 - **Settings:** a compact two-column card (fits 1366x768), and a full-screen page with Back on phones and short screens. Its Theme and Background rows each open a page inside the card (`subpage.js`). Opening a pane focuses its title, never a dropdown, which an iPhone would open at once.
-- **Theme page** (`lookpicker.js`): 7 themes x 2 flavours (Light, Dark) as one choice, each tile previewed in its own colours, read off the stylesheet the first time the page opens. Storage keeps the two keys, `wordfinder-theme` and `wordfinder-appearance`; `wordfinder-palette` from older builds is ignored. Known gaps: that first open spends tens of milliseconds reading the 14 looks, and a tile shows checked and focus only through `:has()` (absent before Firefox 121).
+- **Theme page** (`lookpicker.js`): 7 themes x 2 flavours (Light, Dark) as one choice, each tile previewed in its own colours, read off the stylesheet the first time the page opens. Storage keeps the two keys, `wordfinder-theme` and `wordfinder-appearance`; `wordfinder-palette` from older builds is ignored.
 - **Background page** (`bgpicker.js`): Choose (Theme / Random / Manual) with a note on what it does, Area (Word list / Full screen), and a tile per registry background in a Still and an Animated group (by its `animated` flag). The checked tile is the background showing; picking one makes it the Manual pick. Theme shows the theme's own (`THEME_BACKGROUNDS`, both flavours alike) and follows a theme change at once; Random picks by the deal's seed from all but None, never the last pick, and the pick is kept with the board (in Undo's snapshot and the save as `bg`; an older save picks by its seed). A new player gets Theme and Full screen; a stored record from before keeps its area, and is Manual when it had picked anything but Illustrated. The Settings row shows the background showing, tagged Theme or Random. The animations run behind the word list (`#bgside`) or the page (`#bg`), at exactly 30fps. Word-list text over them keeps a 2.5px ring of the ground colour and the Full screen header sits on a plate of it, so every look passes AA over every background (`node tools/sims/backgrounds/contrast.mjs`, about 15 minutes a flavour; `SHAPES=` splits it).
   - In Full screen the background shows through the board: its surface is `--board-solid` of `--surface` (65% dark, 60% light), with no ring or blur on the letters. It stays solid with None, in Word list, and where color-mix is missing. Every pill sits on solid surface, so a find or a drag reads as on a solid board; a later pill covers an earlier one where they cross.
   - Opacities, per look in `styles.css`: `--backdrop-full` / `--backdrop-list` (#bg / #bgside) .6 / .5 dark, 1 / 1 light; `--art-board` / `--art-rail` .18 / .22 dark, .4 / .5 light, and .55 / .65 in Drafting, Grove and Graphite light, whose pastel art still read faint at .4.
@@ -26,10 +26,10 @@ current default marked), and don't build on an assumption.
   - The solid pills also fixed a failure the board measure found on main: Drafting dark's found letters over its grid lines were 4.02:1.
 - **Subject backgrounds:** Subject scene (still), Drifting icons, Parade, Bloom, Wallpaper, Carousel and Subject motion (animated) draw the dealt subject's own icons, else its category's (397 icons in `src/backgrounds/icons.js`, mapped in `subject-icons.js`). Subject motion runs the motion its subject is mapped to, else its category's (`tools/art-src/iconmap/subject-motion.json`), out of eleven: those five plus Swim, Flutter, Fall, Bounce, Rise and Pulse, which have no tile of their own. Icons listed in `tools/art-src/icons/facing.json` are side-on, so the motions mirror them to face the way they move. All of them restart on every deal, and the seed picks one of six variants per subject (`icon-scene.js`). With Word list and the list under the board, the Subject scene shows only its main icon in the board corner, like the category art (question 3). None of `src/backgrounds/` is precached, so a change to an export of the shared `icon-scene.js`, `frame-loop.js` or `pixel-stage.js` needs a CACHE bump.
 - **Levels and accounts** (owner-approved screens, 2026-10-02): Settings starts with an Account section (Sign in, or the username, level, points and whether they are saved online, with Sign out) and a Sign in page that also creates accounts. New game has Random | Levels; Levels deals the account's level, the header's label line reads "Level N", and the win card becomes "Level N complete" with the score card and "N points in all". main.js holds the level on screen in `levelBoard`; `startLevel` puts a level's finds back and starts its clock, `reconcileLevel` re-links or lets go of the board after a sync or sign-in, and `completeLevel` banks a level the account's finds complete, with its score card. Signing in from New game returns to it. `tests/e2e/levels.spec.js` plays all of it against a stubbed Firebase.
-  - Known gaps, each judged too rare to hold the release: two devices finishing the same level at once keep the higher score, but the card on the other one still shows its own total until the next sync; a level started on the large board starts over on a phone, which cannot show that board, and the phone's game then replaces the large board's on every device, finds and all, because of two games of one level on boards of different sizes the one on the smaller board wins (a level is saved with its board size, so Board and other devices otherwise deal it on the board its finds are on; builds before 2026-10-03 drop the size, and a level they save is dealt on whatever board Board picks); two devices that deal one level at different difficulties on boards of one size each save their own game over the other's until one finishes it, and a board of it reloaded meanwhile is timed as the other's difficulty, as 0101aa9 did; a level finished while signed out is banked on signing in again with its clock where its last save left it, as 0101aa9 did; and between 360 and 463px wide and under 360px tall the score card's countdown is cut short (Stay, Next level and the read-out countdown are unaffected). While a sign-in is in flight its buttons dim to 0.6, which takes some looks under 3:1.
-- **Known layout gap (not levels):** at about 410x360, a phone in split screen, the board shrinks to about 180px and the header's New game runs off the right edge. No shape that size is in `tests/viewport.js`.
+  - A level started on the large board starts over on a phone, which cannot show that board. The larger board's game stays the level until the phone finds or reveals a word, so opening it there ends nothing; from that find on, the phone's game is the level on every device (a level is saved with its board size, and of two games of one level the one on the smaller board wins). Builds before 2026-10-03 drop the size, and a level they save is dealt on whatever board Board picks.
+  - While a sign-in is in flight its button reads "Signing in…" or "Creating account…" at full colour (dimming it took some looks under 3:1).
 - **Service worker:** the code cache is keyed by path, and CACHE is `wordfinder-v20`. A bump's install fetches again into the new cache, within 20 seconds, the old cache's backgrounds (and any module they newly import), this build's font stylesheet and the files of it the old cache held, so an update does not lose them offline. It touches only `wordfinder-*` caches: every Pages site on the account shares the origin. A first visit's lazy modules are re-fetched through the worker once it takes control (found with Resource Timing, which is unverified in WebKit here).
-  - Known gaps: a tab left open across an update runs the old modules, so a background it had not loaded yet, whose imports now need a new export (v18's Subject scene and Drifting icons do), draws nothing until the next launch. An update whose install is cut short can leave the old worker's cache torn for one launch (`tools/sims/sw/tear.mjs`). And a background that failed to load is tried again when the device is back online, but only the module itself: if one of its imports was what failed, the page keeps that failure until the next launch.
+  - A page an update takes over keeps running its old modules, and a background it had not loaded yet can need an export they lack (v18's Subject scene and Drifting icons did). So main.js reloads such a page the next time it is hidden, as an evicted app is, once a level's save has landed, and not while a pane, the win card or a toast (Undo) is up.
 - **Tests:** `PORT=<port> npx playwright test` moves the whole e2e run.
 
 ## Module and source notes
@@ -39,7 +39,7 @@ current default marked), and don't build on an assumption.
   - A level is dealt by its seed on every device and every build, so a change to `src/puzzle.js`, a difficulty's mix or the deal order re-deals levels in progress and drops their finds. `tests/unit/puzzle.test.js`, `layout.test.js` and `levels.test.js` pin them in that order.
   - scoring and levels were reviewed clean.
   - cloud had 5 defects, fixed by its reviewer.
-  - scorecard was reviewed on 2026-10-02 with no logic defects. Its open layout and contrast findings are in `tools/levels-review/README.md`.
+  - scorecard was reviewed on 2026-10-02 with no logic defects; `tools/levels-review/README.md` has the review.
   - The owner publishes `firestore.rules` in the Firebase console themselves: tell them whenever it changes.
 - **Art sources:**
   - `tools/art-src/icons/part*.json` hold 397 icons; 164 of them (parts 15–17) are subject heroes, which `iconmap/subject-heroes.json` puts first in their subjects. `src/backgrounds/icons.js` is now about 650KB (about 180KB gzipped), loaded only by the icon backgrounds. Run `node tools/art-src/icons/check.mjs <part.json>` to validate one and render a preview.
@@ -70,39 +70,29 @@ Each cloud thread needs two things before testing, and the `SessionStart` hook [
 - `tools/levels-review/`: planted-bug sets and runner, the scoring reference, the levels fuzz, deal and chi-square checks, and the scorecard harness with a contact sheet and open findings. `build-review-notes.md` has integration warnings that are not repeated here; read it before levels mode.
 - `tools/sims/`: the million-board generator check, the adjacency check, the torn-deploy sim, the theme cascade and resolver fuzz, and the Settings geometry, behaviour and contrast checks.
 
-## Must fix before accounts ship
-- **Done 2026-10-02: sw.js no longer caches cross-origin GETs.** Everything cross-origin except Google Fonts goes straight to the network, `sw.test.js` checks it, and `node tools/levels-review/sw-cloud-probe.mjs` PASSes. Ship it before (not with) the commit that wires `cloud.js`, so the fixed worker already controls the page.
-- **Torn deploys:** bump CACHE whenever markup and modules change together. `node tools/sims/sw/tear.mjs <old-ref> <new-ref>` shows whether a deploy tears.
+## Done, in order
+1. **sw.js stops caching cross-origin GETs**, before accounts shipped (2026-10-02). Everything cross-origin except Google Fonts goes straight to the network; `sw.test.js` checks it, and `node tools/levels-review/sw-cloud-probe.mjs` PASSes.
+2. **Background picker** (2026-10-02, 52cad50).
+3. **Subject art** (2026-10-02, 06bd47a), then more icons and motions (2026-10-04, 4c92ca6).
+4. **Levels and accounts** (2026-10-03, 0101aa9).
+5. **Browser-tool comparison** (2026-10-02, ef70176): [browser-tools.md](browser-tools.md) picks Playwright scripts via Bash, at about 2.4x fewer tokens than either MCP server, and the only option with WebKit.
+6. **Themes rework, crisp text and whole-app review rounds** (2026-10-03, 95b9e9e and 1af5d0d), then the header fixes (2026-10-04, e0364a2).
+7. **Known gaps closed** (2026-10-06): a phone no longer ends a larger board's level game by opening it, sign-in's busy state keeps its contrast, and a page an update took over reloads when next hidden.
 
-## Next steps, in order
-1. **Background picker UI.** Done 2026-10-02 (see What is live).
-   - In Settings, a "Background ›" row opens a sub-page:
-     - Area: Word list / Full screen
-     - radio tiles: glyph, name, and an Animated/Still badge (`name="art"`, `data-setting="art"`)
-   - `syncSettings` and the change handler in main.js need radio support.
-   - Hosts: `#bgside` positioned absolute inside `#side` for list; `#bg` fixed behind `#app` for full.
-   - Call `makeBackdrop().show(id, host, {colors, dark, reducedMotion})` on deal, setting change, appearance change and motion change.
-   - Check word-list contrast over the animations, and lower the host opacity if needed.
-   - Update art.spec, which drives the old `#settings-art` select.
-   - Then run the cascade-and-cache-reviewer and bump CACHE.
-2. **Subject art.** Done 2026-10-02 (see What is live).
-   - Draw the missing batch from `round2-10.json`: music-notes, snowflake, whistle, flame, invitation-card, bed, stage-spotlight, frog, cupcake, wheelbarrow, spotlight, wifi-signal, easel-canvas, bookshelf, mitten. Its agent stalled, as did two others. Keep icon batches small, and have each agent write partial results as it goes.
-   - Script-merge the round-2 icons into the mapping: prepend each new icon on the subjects that asked for it (wishlist `subjects`), capped at 6.
-   - Emit lazy `src/backgrounds/icons.js` and `subject-icons.js`.
-   - Add a "Subject scene" (still) background and a "Drifting icons" (animated) one. A subject's own icons override its category's, and the puzzle seed picks one of several variants per subject.
-3. **Levels mode UI.** Done 2026-10-03 (see What is live).
-   - Random play with no login stays as today, with the per-device no-repeat.
-   - Signing in gives seeded, unlimited levels that can be continued on any device. Points accumulate, and easy/normal/hard still apply.
-   - End of level: the existing win card and its progress bar. The score breakdown wipes in line by line, left to right; then a 10s bar runs forward for a positive total and backward for a negative one, with Next level and Stay.
-   - Needs Firebase (question 7) and the sw.js fix above.
-4. **Browser-tool comparison.** Done: see [browser-tools.md](browser-tools.md). The pick is Playwright scripts via Bash, at about 2.4x fewer tokens than either MCP server.
-   - Candidates: Chrome DevTools MCP, Playwright MCP, the built-in Claude browser pane, and Playwright scripts run via Bash.
-   - Measure tokens per task and capability: viewport, reduced motion, service worker and Cache Storage, touch drag, WebKit.
-   - Expected so far: Bash scripts cost the fewest tokens and are the only option with WebKit; Playwright MCP opens headed Chrome windows unless started with `--headless`.
-   - A peer session (rover, the Mecanum wheel car review, 7173a9) wants the result and will use whichever tool is chosen. It needs viewport emulation at 375 and 1280, screenshots of a file:// page that loads a pinned jsdelivr script, and a WebSocket stub injected before page scripts run (addInitScript). Reduced motion would be nice. It needs no service worker, cache inspection or WebKit. Its headed Chrome windows came from Playwright MCP started by its workflow subagents.
+Standing rule: bump CACHE whenever markup and modules change together. `node tools/sims/sw/tear.mjs <old-ref> <new-ref>` shows whether a deploy tears.
+
+## Left open on purpose
+The owner's targets are current iPhones, iPad and laptops (2026-10-03: not the iPhone SE or other small screens), so gaps on other shapes and browsers stay. Each of the rest was judged too rare, or too small, to be worth the code.
+- **Other shapes and browsers:** at about 410x360, a phone in split screen, the board shrinks to about 180px and the header's New game runs off the right edge. Between 360 and 463px wide and under 360px tall the score card's countdown is cut short (Stay, Next level and the read-out countdown are unaffected). A Theme tile shows checked and focus only through `:has()`, absent before Firefox 121.
+- **Theme page:** its first open spends tens of milliseconds reading the 14 looks off the stylesheet, once a page.
+- **A level on two devices at once:** two devices finishing the same level together keep the higher score, but the card on the other one shows its own total until the next sync. Two devices that deal one level at different difficulties on boards of one size each save their own game over the other's until one finishes it, and a board of it reloaded meanwhile is timed as the other's difficulty.
+- **A level across board sizes:** once a phone's find takes a level over from the large board, the large board's finds and time do not carry to it. Before that find, a reload starts the phone's clock again from zero, since its time is not saved until it has a find.
+- **Signed out mid-level:** a level finished while signed out is banked on signing in again, with its clock where its last save left it.
+- **Service worker:** an update whose install is cut short can leave the old worker's cache torn for one launch (`tools/sims/sw/tear.mjs`). A background that failed to load is tried again when the device is back online, but only the module itself: if one of its imports was what failed, the page keeps that failure until the next launch.
+- **Real devices:** the sign-in fields were typed into and selected on Playwright's WebKit with the iPhone 15 profile (2026-10-06), and WebKit runs the layout suite, but no check ran on a real iPhone.
 
 ## How this project has been run (owner's standing preferences)
-- **Shipping:** push to `main`, without asking for now. Commits are authored as BeeBeRBaB <puchkiray@outlook.com> with no Claude trailer.
+- **Shipping:** push to `main` without asking (owner, 2026-10-03). Commits are authored as BeeBeRBaB <puchkiray@outlook.com> with no Claude trailer.
 - **Verifying:** check on the deployed site with the service worker cleared. Simulate rather than eyeball: million-board runs for the generator, and planted failures to prove a check runs.
 - **Showing:** for visual changes, show examples before implementing. Keep the current fonts, with no italics.
 - **Code:** best-practice formatting, scripts in .js files with no inline script, no new dependencies, short comments.

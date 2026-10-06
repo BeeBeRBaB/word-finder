@@ -147,7 +147,7 @@ test('the board and background from a first visit come back offline', async ({ p
 
 // An update that takes over an open page leaves the old build's modules running, and a background
 // they lack an export for draws nothing. So the page reloads when next hidden, but not before an
-// update, and not over Settings.
+// update, and not over Settings or an Undo offer.
 test('a page an update took over reloads when next hidden, keeping its board', async ({ page }) => {
   await openBoard(page, '/');
   expect(await page.evaluate(controlled)).toBe(true);
@@ -175,12 +175,20 @@ test('a page an update took over reloads when next hidden, keeping its board', a
   await page.click('#appearance');
   expect(await stays(), 'Settings is open').toBe(true);
   await page.keyboard.press('Escape');
+  // A one-click deal over a find keeps the board only in memory, for Undo.
+  await findAndDrag(page, /** @type {string} */ (await page.locator('.w').first().textContent()).toUpperCase());
+  await page.locator('#newbtn').click();
+  await expect(page.locator('#toast-undo')).toBeVisible();
+  expect(await stays(), 'Undo is offered').toBe(true);
+  await page.locator('#toast-undo').click();
+  await expect(page.locator('#toast')).toBeHidden();
   const reloaded = page.waitForEvent('load');
   await hide(true);
   await reloaded;
   await page.locator('.cell').first().waitFor();
   expect(await page.evaluate(() => /** @type {any} */ (window).mark)).toBeUndefined();
   expect(await page.locator('#letters').textContent()).toBe(letters);
+  await expect(page.locator('.w.done')).toHaveCount(1);
 });
 
 // A launch that could not put its save back offline tries again once the network returns, even
