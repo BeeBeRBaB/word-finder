@@ -1,11 +1,12 @@
-// node coverage.mjs [out.md] — Markdown tables of the still and animated backgrounds every subject gets,
-// by category and then by subject, and whether the icon its backgrounds open with is its alone.
+// node coverage.mjs [out.md] — Markdown tables of the background art each category and subject has of
+// its own: still scenes, a distinct animation, and the shared icon motion its own icons move in.
 import fs from 'node:fs';
 const src = new URL('../../../src/', import.meta.url);
 const { SPRITES, ILLUSTRATIONS } = await import(new URL('art.js', src).href);
-const { CATEGORY_ICONS, CATEGORY_MOTION, SUBJECT_MOTION } = await import(new URL('backgrounds/subject-icons.js', src).href);
+const { CATEGORY_MOTION, SUBJECT_MOTION } = await import(new URL('backgrounds/subject-icons.js', src).href);
 const { iconsFor, motionFor } = await import(new URL('backgrounds/icon-scene.js', src).href);
 const { MOTIONS } = await import(new URL('backgrounds/subject-motion.js', src).href);
+const { BACKGROUNDS } = await import(new URL('backgrounds.js', src).href);
 
 const subjects = [];
 const dir = new URL('subjects/', src);
@@ -13,57 +14,47 @@ for (const f of fs.readdirSync(dir).sort())
   for (const m of fs.readFileSync(new URL(f, dir), 'utf8').matchAll(/'([a-z]+\/[a-z0-9-]+)':/g)) subjects.push(m[1]);
 const leads = new Map();
 for (const s of subjects) { const h = iconsFor(s)[0]; leads.set(h, [...(leads.get(h) ?? []), s]); }
-const hasModule = (/** @type {string} */ s) => {
-  const file = MOTIONS[/** @type {keyof typeof MOTIONS} */ (motionFor(s))];
-  return !!file && fs.existsSync(new URL(`backgrounds/${file}.js`, src));
-};
+const ownLead = (/** @type {string} */ s) => leads.get(iconsFor(s)[0])?.length === 1;
 
-const NAMES = /** @type {Record<string, string>} */ ({ drift: 'Drift', parade: 'Parade', bloom: 'Bloom',
-  wallpaper: 'Wallpaper', carousel: 'Carousel', swim: 'Swim', flutter: 'Flutter', fall: 'Fall', bounce: 'Bounce',
-  rise: 'Rise', pulse: 'Pulse', sway: 'Sway', ripple: 'Ripple' });
+const name = (/** @type {string} */ id) => BACKGROUNDS.find(b => b.id === id)?.name ?? id;
+const iconMotions = new Set(Object.values(MOTIONS));
+// Animated backgrounds that draw no subject's icons: the same for every subject, so none is dedicated.
+const ambient = BACKGROUNDS.filter(b => b.animated && !b.perDeal).map(b => b.name);
+const yes = (/** @type {boolean} */ b) => (b ? 'yes' : '**no**');
 const cats = [...new Set(subjects.map(s => s.split('/')[0]))].sort();
-const ownIcon = (/** @type {string} */ s) => leads.get(iconsFor(s)[0])?.length === 1;
-const ok = (/** @type {boolean} */ b) => (b ? 'yes' : '**no**');
-const summary = [], detail = [];
-const total = { n: 0, still: 0, anim: 0, motion: 0, own: 0 };
+
+const byCat = [], detail = [];
+let scenes = 0, own = 0, picked = 0, illus = 0, pixel = 0;
 for (const c of cats) {
   const list = subjects.filter(s => s.startsWith(c + '/'));
-  const catArt = !!ILLUSTRATIONS[c] && !!SPRITES[c];
-  // Still: Illustrated and Pixel art (the category's) and Subject scene (the subject's icons).
-  const still = list.filter(s => catArt && iconsFor(s).length >= 4).length;
-  // Animated: Subject motion and the icon tiles (Drifting icons, Parade, Bloom, Wallpaper, Carousel).
-  const anim = list.filter(s => iconsFor(s).length >= 4 && hasModule(s)).length;
-  const motion = list.filter(s => SUBJECT_MOTION[s]).length;
-  const own = list.filter(ownIcon).length;
-  summary.push(`| ${c} | ${list.length} | ${still} | ${anim} | ${NAMES[CATEGORY_MOTION[c]]} | ${motion} | ${own} | ${list.length - own} |`);
-  total.n += list.length; total.still += still; total.anim += anim; total.motion += motion; total.own += own;
-  detail.push(`### ${c}`, '',
-    `Still for every subject: Illustrated ${ok(!!ILLUSTRATIONS[c])}, Pixel art ${ok(!!SPRITES[c])}. ` +
-    `Category icons: ${CATEGORY_ICONS[c]?.split(' ').join(', ')}. Category motion: ${NAMES[CATEGORY_MOTION[c]]}.`, '',
-    '| Subject | Still: Subject scene icons, first one leads | Animated: Subject motion | Own first icon |',
-    '| --- | --- | --- | --- |',
-    ...list.map(s => {
-      const ids = iconsFor(s), m = motionFor(s), l = leads.get(ids[0]) ?? [];
-      const own = l.length === 1 ? 'yes' : `**shared** with ${l.filter(x => x !== s).join(', ')}`;
-      return `| ${s.split('/')[1]} | ${ids.join(', ')} | ${NAMES[m]}${SUBJECT_MOTION[s] ? '' : ' (category)'}${hasModule(s) ? '' : ' **missing**'} | ${own} |`;
-    }), '');
+  const scene = list.filter(s => iconsFor(s).length >= 4).length;
+  const pick = list.filter(s => SUBJECT_MOTION[s]).length;
+  const o = list.filter(ownLead).length;
+  scenes += scene; own += o; picked += pick; illus += +!!ILLUSTRATIONS[c]; pixel += +!!SPRITES[c];
+  byCat.push(`| ${c} | ${list.length} | ${yes(!!ILLUSTRATIONS[c])} | ${yes(!!SPRITES[c])} | ${scene} of ${list.length} | none | ${name(CATEGORY_MOTION[c])} | ${pick} |`);
+  detail.push(`### ${c}`, '', '| Subject | Subject scene, led by | Distinct animation | Icon motion |', '| --- | --- | --- | --- |',
+    ...list.map(s => `| ${s.split('/')[1]} | ${iconsFor(s)[0]}${ownLead(s) ? '' : ' (**shared**)'} | none | ${name(motionFor(s))}${SUBJECT_MOTION[s] ? '' : ' (category)'} |`), '');
 }
-const groups = [...leads].filter(([, l]) => l.length > 1);
-const toDraw = groups.reduce((n, [, l]) => n + l.length - 1, 0);
+const n = subjects.length, k = cats.length;
 const out = [
-  '# Subject art coverage', '',
-  'Generated by `node tools/art-src/iconmap/coverage.mjs`. **Still** backgrounds are Illustrated and Pixel art',
-  "(one per category) and Subject scene (the subject's own icons). **Animated** backgrounds are Subject motion",
-  "(the subject's motion, else its category's) plus Drifting icons, Parade, Bloom, Wallpaper and Carousel, which",
-  "draw the subject's icons. **Own first icon** means no other subject's backgrounds open with the same icon.", '',
+  '# Background coverage', '',
+  `Generated by \`node tools/art-src/iconmap/coverage.mjs\`. ${n} subjects in ${k} categories.`, '',
+  '## Overall', '',
+  '| Background art | Made for | Covered |', '| --- | --- | ---: |',
+  `| Still: Illustrated scene | each category | ${illus} of ${k} |`,
+  `| Still: Pixel art scene | each category | ${pixel} of ${k} |`,
+  `| Still: Subject scene, the subject's own icons | each subject | ${scenes} of ${n} |`,
+  `| Subject scene led by an icon no other subject leads with | each subject | ${own} of ${n} |`,
+  `| Animated: a distinct animation style of its own | a category or subject | 0 of ${k}, 0 of ${n} |`,
+  `| Animated: Subject motion, the subject's own icons in a shared motion style | each subject | ${n} of ${n} |`,
+  `| Motion style picked for the subject itself, not its category's | each subject | ${picked} of ${n} |`, '',
+  `**What the animated rows mean.** No category or subject has an animation style of its own yet. Every animated background is either one of ${iconMotions.size} shared motion styles (${[...iconMotions].map(f => BACKGROUNDS.find(b => b.file === f)?.name).filter(Boolean).join(', ')}) moving the subject's own icons, or an ambient one that is the same for every subject (${ambient.join(', ')}).`, '',
   '## By category', '',
-  '| Category | Subjects | With still | With animated | Category motion | Own motion | Own first icon | Shares first icon |',
-  '| --- | ---: | ---: | ---: | --- | ---: | ---: | ---: |',
-  ...summary,
-  `| **All** | **${total.n}** | **${total.still}** | **${total.anim}** | | **${total.motion}** | **${total.own}** | **${total.n - total.own}** |`,
-  '',
-  `${total.n - total.own} subjects open with one of ${groups.length} shared icons; ${toDraw} new icons would give every subject its own.`, '',
+  '| Category | Subjects | Illustrated scene | Pixel art scene | Subject scenes | Distinct animation | Category motion | Subjects with their own motion |',
+  '| --- | ---: | --- | --- | ---: | --- | --- | ---: |',
+  ...byCat, '',
   '## By subject', '',
+  '"(category)" means the subject uses its category\'s motion style.', '',
   ...detail,
 ].join('\n');
 if (process.argv[2]) fs.writeFileSync(process.argv[2], out); else process.stdout.write(out);
