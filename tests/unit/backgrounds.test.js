@@ -165,7 +165,7 @@ test('Random picks by the seed from every background but None, and never the las
   // 100 each on average: every one comes up, and none far from its share.
   for (const [id, n] of Object.entries(count)) assert.ok(n > 60 && n < 140, `${id}: ${n} of ${deals}`);
   // Clock seeds, as New game deals them, spread over the pool too.
-  const clock = new Set(Array.from({ length: 200 }, (_, i) => resolveBackground('random', '', '', (1759536000000 + i * 977) >>> 0)));
+  const clock = new Set(Array.from({ length: 20 * RANDOM_POOL.length }, (_, i) => resolveBackground('random', '', '', (1759536000000 + i * 977) >>> 0)));
   assert.equal(clock.size, RANDOM_POOL.length);
   assert.equal(resolveBackground('random', '', '', 9, 'solo', ['solo']), 'solo', 'a pool of one has nothing else to pick');
   assert.equal(resolveBackground('random', '', '', 9, 'a', ['a', 'b']), 'b');
