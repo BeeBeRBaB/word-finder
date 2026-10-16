@@ -2,7 +2,7 @@
 
 Every item on the owner's list has shipped and is live. This file records the owner's decisions,
 what is on main, and the gaps left open on purpose, with why. CLAUDE.md still governs how to
-work; README has the file map.
+work; docs/development.md has the file map.
 
 ## Owner decisions
 
@@ -14,7 +14,7 @@ All answered; none is open. A new question goes here, asked in one message with 
 4. **Streak after a reveal.** Settled 2026-10-02: a reveal restarts the streak from zero (`src/scoring.js` clears `lastFind`).
 5. **Animation frame cap.** *Answered 2026-10-02 and done: exactly 30fps at any refresh rate.* Every animation runs on one loop, `src/backgrounds/frame-loop.js`, and draws 30fps at 60, 100 and 165Hz. Measure with `node tools/art-src/prototypes/check.mjs --hz=N`.
 6. **Palettes.** *Answered 2026-10-03 and done: there is no palette choice and no light/dark setting. Each theme has its own fixed colours in two flavours, Light and Dark, and the Theme page shows a tile for each (two themes, four tiles, to a phone row). `tools/palettes/check.mjs` checks every look's colours for AA straight from `styles.css`.*
-7. **Firebase.** Levels and accounts need the owner's Firebase project. The steps are in the README "Accounts (Firebase)" section. Settled 2026-10-02: the owner sent the config for `word-finder-10f77` and it is in `FIREBASE`. The owner does the console steps and publishes `firestore.rules` themselves, so tell them whenever that file changes.
+7. **Firebase.** Levels and accounts need the owner's Firebase project. The steps are in the "Accounts (Firebase)" section of docs/development.md. Settled 2026-10-02: the owner sent the config for `word-finder-10f77` and it is in `FIREBASE`. The owner does the console steps and publishes `firestore.rules` themselves, so tell them whenever that file changes.
 
 ## What is on main
 - **Settings:** a compact two-column card (fits 1366x768), and a full-screen page with Back on phones and short screens. Its Theme and Background rows each open a page inside the card (`subpage.js`). Opening a pane focuses its title, never a dropdown, which an iPhone would open at once.

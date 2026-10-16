@@ -1,204 +1,75 @@
-# Word Finder — PWA
+<h1 align="center">Word Finder</h1>
 
-A fully client-side word search game. No build step, no dependencies, no server code.
+<p align="center">
+  A colourful word search for phone, iPad and laptop. Free, no ads, and it works offline.
+  <br><br>
+  <a href="https://beeberbab.github.io/word-finder/"><b>▶&nbsp; Play it now</b></a>
+</p>
 
-## Project layout
-The old single-file `index.html` has been split into focused modules — same zero-build deploy, easier to read and extend:
+<p align="center">
+  <img src="docs/screenshots/laptop.jpg" alt="A 13 by 13 word search about rockets, with five words found and pixel-art planets drifting behind the word list" width="860">
+</p>
 
-| File | Purpose |
-| --- | --- |
-| `index.html` | Markup, plus a short inline script that resolves the appearance before first paint. |
-| `styles.css` | All styling. |
-| `sw.js` | Service worker for offline caching. Must stay at the served root for its scope. |
-| `manifest.webmanifest` | PWA manifest. |
-| `firestore.rules` | Firestore security rules for accounts. The app never loads it; it is pasted into the Firebase console. |
-| `icon-192.png`, `icon-512.png` | App icons. |
+## What it is
 
-The engine lives in `src/`, split on the pure-logic / DOM boundary. The pure modules
-have no DOM access at all, which is what makes them cheap to unit-test:
+Every puzzle is about one subject, from penguins and desserts to Vikings and rockets.
+Pick one of 25 categories, or let the game choose, and you get a fresh grid with words
+hidden across, down, diagonally and backwards. Drag across a word to find it.
 
-| File | Purpose | |
-| --- | --- | --- |
-| `src/rng.js` | Seeded PRNG and `?seed=` / `?subject=` / `?category=` resolution. | pure |
-| `src/puzzle.js` | Word placement, grid fill, drag snapping, hit-detection. | pure |
-| `src/layout.js` | Screen arithmetic → grid dimensions. | pure |
-| `src/storage.js` | Reads and writes the saved game; discards a save it cannot trust. | pure |
-| `src/progress.js` | Word coverage per subject: the shuffle bag, and the draw preference. | pure |
-| `src/levels.js` | Level mode: level n's category, subject and puzzle seed from the account seed alone, so every device deals the same level; the progress record, its merge rule, and its local cache. | pure |
-| `src/scoring.js` | Scores one level from its find/reveal events: words, streak, difficulty, speed against par, reveal costs and completion bonuses, as itemised lines that sum to the total. `formatClock` for times. | pure |
-| `src/cloud.js` | Accounts: username sign-up and sign-in, and one cloud copy of progress, over the Firebase Auth and Firestore REST APIs through an injected `fetch`. Hidden while `FIREBASE` is empty — see [Accounts (Firebase)](#accounts-firebase). | pure |
-| `src/view.js` | Renders cells, selection pills and the word list. | DOM |
-| `src/effects.js` | Confetti and the WebAudio chime. | DOM |
-| `src/picker.js` | The category dialog. Reports a category id; owns no game state. | DOM |
-| `src/subpage.js` | A page inside the Settings card, opened from a row on the main page (Theme, Background): it takes the card's place until Back. Owns no setting. | DOM |
-| `src/pane.js` | A modal pane over the page (New game, Settings): the page under it inert, its opener expanded, focus on its heading and back to the opener. | DOM |
-| `src/lookpicker.js` | The Theme page: a group per theme with a Light and a Dark tile, each previewed in its own colours, read off the live stylesheet on the first open. | DOM |
-| `src/bgpicker.js` | The Background page's markup: a tile per entry in the backgrounds registry, in a Still or an Animated group by its `animated` flag, the note on each way of choosing, and the row's summary (the background showing, tagged Theme or Random). | pure |
-| `src/backgrounds.js` | The backgrounds registry (id, name, tile glyph, module), each theme's own background, `resolveBackground()`, which says what a deal shows by Theme, Random (by the seed, never the last pick) or Manual, and `makeBackdrop()`, which runs one background at a time in its host. The modules in `src/backgrounds/` load on first use. | pure-ish |
-| `src/levelplay.js` | Levels mode's bookkeeping: deals a signed-in player's next level (an unfinished one resumes by its saved subject), times it in active play only, records finds and reveals, then scores and banks it, keeping this device's copy and the cloud's together. | pure |
-| `src/account.js` | The levels screens outside the board: the Account section of Settings (Sign in, or the account's level and points with Sign out), the sign-in form, which also creates accounts, the Levels side of New game (the level to play, or a way in), and the win card as a level's score card (`showLevelWin`, `clearLevelWin`). Renders into hosts main.js gives it and talks only to `levelplay.js`. | DOM |
-| `src/scorecard.js` | The end-of-level score card inside the win card: plays `scoring.js`'s breakdown a line at a time (Skip jumps to the end), then counts down to the next level, with Stay to cancel. An optional footnote under the total gives the account's new total. Owns its timers; pauses its reveal while the page is hidden, and `hold()` drops the countdown, which main.js calls wherever it cancels the plain card's, hiding the page included. | DOM |
-| `src/settings.js` | Player preferences (how the background is chosen, the Manual pick and its area, letter size, board size, difficulty, sound, vibrate, motion, Reveal, auto-start, and New game's Random or Levels) as one validated record; the theme and its flavour stay in `appearance.js`, least-seen in `progress.js`. | pure |
-| `src/art.js` | One 16x16 pixel sprite per category, and the per-subject hue, mirror and corner that vary it. `view.js` draws it beside the board (landscape rail) or faintly behind it. | pure |
-| `src/backgrounds/frame-loop.js` | The loop every animated background runs on: exactly 30fps at any refresh rate, nothing while the page is hidden or under reduced motion, and a re-measure when the host's box changes. `pixel-stage.js` adds the pixel modules' scaled-up canvas on top of it. Lazily imported with them and kept out of the precache. | DOM |
-| `src/backgrounds/subject-scene.js`, `drifting-icons.js` | The subject backgrounds: the subject's icons as a still scene, or drifting at 30fps. The seed picks one of six variants per subject. With Word list and the list under the board, the scene draws only its main icon, in the board corner. Shared code is in `icon-scene.js`; `icons.js` and `subject-icons.js` are generated by `tools/art-src/iconmap/emit.mjs`. Lazily imported and kept out of the precache. | DOM |
-| `src/backgrounds/subject-motion.js` | Subject motion: runs the motion its subject is mapped to (`SUBJECT_MOTION`, else its category's `CATEGORY_MOTION`, in `subject-icons.js`), by a dynamic import of one of the modules below through `importBackground`, so one that failed to load is tried again online or on its next start. | DOM |
-| `src/backgrounds/icon-parade.js`, `icon-bloom.js`, `icon-tiles.js`, `icon-orbit.js`, `icon-swim.js`, `icon-flutter.js`, `icon-fall.js`, `icon-bounce.js`, `icon-rise.js`, `icon-pulse.js` | The motions, each moving the subject's icons its own way at 30fps (marching in lanes, opening one at a time, a scrolling wallpaper, a carousel, swimming, fluttering, falling, bouncing, rising, pulsing in waves). Parade, Bloom, Wallpaper and Carousel are tiles of their own; the rest are reached through Subject motion. Side-on icons face the way they move (`facingOf` in `icon-scene.js`, from `tools/art-src/icons/facing.json`). Lazily imported and kept out of the precache. | DOM |
-| `src/main.js` | Entry point: owns game state, wires events, registers the SW. | DOM |
-| `src/catalog.js` | The 25 category names. No subjects, no words — loads on every visit. | data |
-| `src/subjects/*.js` | One category's word pools, 40+ words per subject. Lazily imported. | data |
-| `src/subjects.js` | Resolves a subject id to its pool, memoising each category module. | pure-ish |
-| `src/importer.js` | A dynamic import that can be tried again after it fails, used for the word pools and backgrounds: each retry asks for a fresh `?retry=N` URL, since a page never retries one it has failed on. | pure |
-| `src/appearance.js` | The look, a theme in its light or dark flavour: resolve onto `<html>` and persist. | DOM |
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/iphone.jpg" alt="A penguin puzzle on an iPhone in the Grove light theme" width="250"><br><sub>On an iPhone</sub></td>
+    <td align="center"><img src="docs/screenshots/iphone-won.jpg" alt="The Puzzle solved card over a finished desserts grid" width="250"><br><sub>Puzzle solved</sub></td>
+    <td align="center"><img src="docs/screenshots/iphone-themes.jpg" alt="The Theme page, with a Light and a Dark tile for each of seven themes" width="250"><br><sub>Seven themes, light or dark</sub></td>
+  </tr>
+</table>
 
-### Reproducible puzzles
+## Features
 
-`?seed=N` pins the puzzle, `?subject=<id>` pins the subject, `?category=<id>` pins the
-category and picks a subject inside it — e.g. `/?seed=1&subject=nature/birds`. With
-none of them, the clock seeds it and a subject is chosen by coverage (below).
+- **600 subjects in 25 categories.** Each subject has its own word list, and the game
+  steers you towards subjects and words you haven't seen yet, so it keeps feeling new.
+- **Levels and points.** Sign in with a username and password to play an endless run of
+  levels on easy, normal or hard. Points add up for each word, for streaks and for speed,
+  and your progress follows you to any device. Random play never needs an account.
+- **Art for every subject.** Each subject gets its own scene drawn from an icon library,
+  still or animated, behind the word list or the whole screen. Or choose an animated
+  background such as Aurora, Starfield or Aquarium.
+- **Seven themes**, each in a light and a dark version, all checked for readable
+  contrast.
+- **Made for touch.** The board sizes itself to your screen, with a 10×10 grid on
+  phones and 13×13 on bigger screens, and every button is easy to tap.
+- **Installable and offline.** After your first visit it plays with no connection.
 
-**A pinned `?seed=` bypasses the coverage bag entirely**, so it reproduces the same grid
-for every player regardless of what they have already seen, and consumes nothing. Without
-that, one seed would deal different grids to different people and the pinned-puzzle
-contract the e2e suite rests on would not hold.
+<p align="center">
+  <img src="docs/screenshots/ipad.jpg" alt="A Vikings puzzle on an iPad in landscape, Broadsheet light theme, with a temple drawing behind the word list" width="760">
+  <br><sub>On an iPad in landscape</sub>
+</p>
 
-### Word coverage
+## Install it
 
-A subject's pool holds 40–105 words and a puzzle draws 12, so one win shows about a
-quarter of a subject. `src/progress.js` gives each subject a **shuffle bag** of the words
-not yet drawn this cycle; `pickWords` prefers those, and emptying the bag refills it and
-counts a cycle.
+Open **[beeberbab.github.io/word-finder](https://beeberbab.github.io/word-finder/)**, then:
 
-Measured by playing it, not by arithmetic:
+- **iPhone or iPad:** tap Share, then **Add to Home Screen**.
+- **Chrome or Edge on a laptop:** click the install icon in the address bar.
 
-| Pool | Deals to see every word | Random draw, for comparison |
-| --- | --- | --- |
-| 48 words (median) | 7 | — |
-| 105 words (largest) | 16 | ~70 |
+## Accounts and privacy
 
-The idealised figure would be `ceil(pool / 12)` — 4 and 9 — and the bag does not reach it,
-because the length buckets in `mix` are quotas the bag cannot override. Once one bucket's
-unseen words are used up, that bucket re-serves seen words while the others still have
-fresh ones, so the last few words arrive slowly. Keeping the mix intact is the deliberate
-trade: a deal that is all long words is worse than a deal with a repeat in it.
+Accounts are optional and only used for levels. Your password goes straight to Firebase
+Authentication and is never stored by the game. Your level progress is kept in one
+record that only your account can read or change. Random play keeps everything on your
+device.
 
-The subject you are dealt is the least-covered one in its category, which walks you
-through all 24 before deepening any of them. The picker's *Favour subjects I've seen
-least* checkbox turns that off; with it off the draw is uniform. There is no exhaustion
-case to handle — a minimum always exists, so the pool can never empty.
+## Under the hood
 
-Progress lives in `localStorage` under `wordfinder-progress-v1`, separate from the board
-save. Validation is **merge-tolerant**, the opposite of `storage.js`'s all-or-nothing
-rule: one bad field or one bad bag is discarded and everything else survives, because one
-corrupt counter must not cost 600 bags. Worst case is 28.7 KB.
+Word Finder is plain HTML, CSS and JavaScript served straight from this repository by
+GitHub Pages: no build step, no frameworks and no server. A service worker keeps it
+working offline.
 
-### Board sizes
-
-Two presets, chosen from `screen` rather than the viewport so a device always plays one
-board: **13×13 with 12 words**, or **10×10 with 8 words** when the screen's smaller edge
-is under 480px. Resizing a window or rotating a phone never changes it. A saved board is
-always restored at the size it was saved at.
-
-### Adding a subject
-
-Add `'<category>/<slug>': 'WORD1,WORD2,...'` to `src/subjects/<category>.js`. That is the
-whole change — nothing registers a subject anywhere else. Its category is the slug's
-prefix and its display name is the slug title-cased, so `sports/card-games` is `Card
-Games` in `Sports & Games` without a line of configuration.
-
-The word list must hold **40+ words**, bare uppercase A–Z, 3–12 letters, no duplicates,
-with at least 6 words of 3–4 letters and 8 in each of 3–5, 5–6, 6–8, 7–9 and 9–12.
-No word may appear in more than **6 of its own category's 24 subjects** — that is what a
-player notices, since picking a category deals a random subject inside it. Across the
-whole corpus the ceiling is a far looser 40, a regression guard rather than a quality bar:
-reuse at that range is mostly polysemy, and a music scale, a fish scale and a map scale
-are three words that only look alike.
-
-`npm run test:unit` enforces all of it and names the subject, bucket or word that failed.
-`npm run words` queries the same content as SQLite when you want to explore rather than
-assert. Short words are the scarce ones — write those first, and never count letters by
-eye.
-
-### Adding a category
-
-Add the entry to `CATEGORIES` in `src/catalog.js`, create `src/subjects/<id>.js`
-exporting a `WORDS` record, and add **nothing** to `sw.js` — word modules are cached at
-runtime by directory, not listed. The picker reads its options from the catalog.
-
-## Tests
-
-| Path | Purpose |
-| --- | --- |
-| `tests/unit/` | `node:test` specs for the pure `src/` modules (`rng`, `puzzle`, `layout`, `storage`, `progress`, `appearance`, `catalog`, `subjects`), the word-list and overlap contract every subject must meet (`content`), a token-parity check on the stylesheet (`tokens`), and static and behavioural checks on the service worker (`sw`). No browser. |
-| `tests/e2e/` | Playwright specs (`smoke`, `gameplay`, `layout`, `picker`, `regressions`, `ux`, `appearance`, `progress`, `account`, `levels`) against a local static server (`tests/server.mjs`), on `desktop` and `mobile` viewport projects. |
-| `tests/live/` | Playwright smoke test against the real deployed GitHub Pages site — see [Development](#development). |
-| `tests/viewport.js` | The screen shapes the app is judged against, and the one geometry measurement that decides whether it fits at them. Shared by `playwright.config.js`, `layout.spec.js` and `npm run shots`. |
-| `tools/` | Dev-only, nothing imports them: `words-db.mjs` (`npm run words`) queries the corpus as SQLite, `shots.mjs` (`npm run shots`) renders every device shape to `.shots/`, `icons.mjs` (`npm run icons`) redraws the app icons from the default theme's dark colours, with `--check` to catch a stale pair, `coverage.mjs` (`npm run test:unit`) runs the suite and enforces a **per-file** 90% floor — Node's own `--test-coverage-*` flags are aggregate, so one weak file hides behind well-covered ones. |
-
-## Development
-
-No build step. The files in this repo are exactly what GitHub Pages serves.
+- [docs/development.md](docs/development.md) has the file-by-file map, the tests, how to
+  add a subject, and how to set up accounts.
+- [CLAUDE.md](CLAUDE.md) explains how to work on the project safely.
 
 ```bash
-npm install                 # one-time; also run: npx playwright install chromium
-npm test                    # unit + end-to-end, against a local server
-npm run test:unit           # fast, no browser; fails under 90% coverage of the pure modules
-npm run test:e2e            # Playwright, against a local server started for you
-npm run typecheck           # JSDoc types via tsc --noEmit; emits nothing
-npm run test:live           # against the deployed site, AFTER pushing
+npm ci && npx playwright install chromium
+npm test        # unit and end-to-end tests against a local server
 ```
-
-`npm test` (unit + e2e) is fast, offline, and deploy-independent — it's the one
-to run on every change. `npm run test:live` is separate and opt-in: it drives a
-real browser against `https://beeberbab.github.io/word-finder/` to check the
-things only production can — that the service worker actually registers and
-takes control there, and that every asset the service worker precaches actually
-resolves on the live site. Run it manually after `git push`, once the Pages
-build has finished (usually 1–3 minutes); it is never invoked by `npm test`.
-
-See [Reproducible puzzles](#reproducible-puzzles) above for `?seed=` / `?subject=` /
-`?category=` — the same URL parameters the tests pin puzzles with.
-
-## Host on GitHub Pages
-
-1. Create a repo (e.g. `word-finder`) — or name it `<username>.github.io` to serve at the root.
-2. Copy all the files above into the repo root.
-3. Push, then in the repo: **Settings → Pages → Source: Deploy from a branch → main / (root)**.
-4. Open `https://<username>.github.io/word-finder/` (or `https://<username>.github.io/`).
-
-> Note: the app uses native ES modules, so open it over `http(s)://` (GitHub Pages or any local server), not via `file://`.
-
-Works on iPad, phone, laptop. On iPad/iPhone: Share → **Add to Home Screen** to install. On Chrome/Edge: install icon in the address bar. Runs offline after the first visit.
-
-## Accounts (Firebase)
-
-Accounts are optional and stay hidden until `FIREBASE` in `src/cloud.js` holds both
-values. It now holds the `word-finder-10f77` project's. They talk to Firebase Auth and Firestore over REST with `fetch`; there is no
-Firebase SDK. Players type a username, which `cloud.js` turns into a never-delivered
-address at `users.word-finder.invalid`. Firebase accepts that domain: on 2026-10-02
-`tools/levels-review/firebase-live.mjs` signed up two throwaway accounts with it, saved and
-loaded progress, saw the published rules refuse other accounts and extra fields, and deleted
-everything it made.
-
-In the game, the Account section at the top of Settings signs in or creates an account. New
-game's Levels side then deals the account's level, the header reads "Level N" while it is on
-the board, and its score card adds the points to the account. A level in progress is saved
-on every find and whenever the page is hidden, so leaving it for a random game, reloading, or
-picking it up on another device keeps its finds and its clock.
-
-To turn them on:
-
-1. Create a project in the [Firebase console](https://console.firebase.google.com/).
-2. **Project settings → General → Your apps → Add app → Web**. Note the `apiKey` and
-   `projectId` from the config it shows. Hosting is not needed.
-3. **Authentication → Sign-in method → Email/Password → Enable** (leave email link off).
-4. **Firestore Database → Create database** in **production mode**.
-5. **Firestore → Rules**: paste [`firestore.rules`](firestore.rules) and **Publish**.
-6. In the [Google Cloud console](https://console.cloud.google.com/apis/credentials) for
-   the same project, open the **Browser key** and set **Application restrictions →
-   Websites** to `https://beeberbab.github.io/*` (add `http://localhost:5173/*` to test
-   locally).
-7. Paste the two values into `FIREBASE` in `src/cloud.js` and push.
-
-The web API key is a public identifier, not a secret: it ships to every visitor. What
-protects players' data is `firestore.rules`.

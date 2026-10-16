@@ -7,9 +7,9 @@ transpile, and adding a step that would change that is out of scope.
 **Read [docs/handoff.md](docs/handoff.md) first.** It has the owner's decisions, what is on
 main, and the gaps left open on purpose.
 
-[README.md](README.md) has the file-by-file map and the topic format. This file
-covers what the README does not: how the project fails, and how to work on it
-without causing that.
+[docs/development.md](docs/development.md) has the file-by-file map and the topic format;
+[README.md](README.md) describes the game for visitors. This file covers what neither
+does: how the project fails, and how to work on it without causing that.
 
 ## Constraints
 
@@ -120,7 +120,7 @@ been wrong, and all three are cheap to verify directly.
 [sw.js](sw.js) — a module missing there works online and breaks the app offline.
 The PostToolUse hook blocks on this, so you will be told. `tsconfig.json` picks the
 file up automatically via its `src/**/*.js` glob. Add a unit test if the module is
-pure, and a row to the README's file table.
+pure, and a row to the file table in docs/development.md.
 
 **This does not apply to `src/subjects/*.js`.** Word pools are the one thing that
 must stay *out* of `ASSETS` — precaching them would pull all 25 categories into the

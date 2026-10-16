@@ -27,7 +27,7 @@ async function loadAll() {
 // 25 categories were being written in parallel this check could not exist, and its
 // absence was the ship blocker -- every other content rule is per-subject and passes
 // happily on a file with one subject in it, or on no file at all.
-// A floor, not an equality. Every category ships 24 today, but the README documents
+// A floor, not an equality. Every category ships 24 today, but docs/development.md documents
 // adding a subject as appending one line to one file -- an equality check would turn
 // that documented one-line change red until 24 more landed elsewhere. What actually
 // has to hold is that no listed category is thin enough to feel repetitive or, worse,
