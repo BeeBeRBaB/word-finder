@@ -53,6 +53,18 @@ export function pickPreset({ screenW, screenH }) {
   return Math.min(screenW, screenH) < 480 ? PRESETS.compact : PRESETS.full;
 }
 
+/**
+ * Whether the window is the whole screen, held the way `orientation` says when it is known: where
+ * an iPad Home Screen app's launch ends. `screen` is portrait in both orientations on iOS.
+ * @param {{vw:number, vh:number, screenW:number, screenH:number, landscape?:boolean}} opts
+ * @returns {boolean}
+ */
+export function fillsScreen({ vw, vh, screenW, screenH, landscape }) {
+  const near = (/** @type {number} */ a, /** @type {number} */ b) => Math.abs(a - b) <= 1;
+  return near(Math.max(vw, vh), Math.max(screenW, screenH)) && near(Math.min(vw, vh), Math.min(screenW, screenH))
+    && (landscape === undefined || landscape === vw > vh);
+}
+
 // Portrait chrome above and below the grid: a fixed part, plus one row per two words.
 // Measured: one-row header 46 + two 10px gaps + list header 35, less the last row's 6px
 // gap, is 95; each row is 31 plus a 6px gap. 96 keeps a pixel of margin. The hint used to

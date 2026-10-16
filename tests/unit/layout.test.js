@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { computeLayout, pickPreset, reservePortrait, PRESETS, MIXES, mixFor } from '../../src/layout.js';
+import { computeLayout, fillsScreen, pickPreset, reservePortrait, PRESETS, MIXES, mixFor } from '../../src/layout.js';
 
 const at = (vw, vh, count = 12) => computeLayout({ vw, vh, size: 13, pad: 10, count });
 
@@ -92,6 +92,20 @@ test('pickPreset keys on the device screen, both ways round', () => {
 // iOS Safari reports a device's portrait screen values whichever way it is held;
 // Chrome on Android swaps them. min() is what makes both correct, and this is the
 // test that fails if someone "simplifies" it to screenW alone.
+// An iPad Home Screen app shows its board once this holds, so a launch window that is smaller or
+// held the other way round must fail it, and the full screen must pass whichever way iOS reports it.
+test('fillsScreen holds only for the whole screen, held the way the device is', () => {
+  const ipad = { screenW: 820, screenH: 1180 };
+  assert.ok(fillsScreen({ ...ipad, vw: 1180, vh: 820 }), 'landscape');
+  assert.ok(fillsScreen({ ...ipad, vw: 820, vh: 1180 }), 'portrait');
+  assert.ok(fillsScreen({ ...ipad, vw: 1180, vh: 820, landscape: true }), 'landscape, said so');
+  assert.ok(fillsScreen({ screenW: 1180, screenH: 820, vw: 1180.5, vh: 819.5 }), 'swapped screen, subpixel window');
+  assert.ok(!fillsScreen({ ...ipad, vw: 820, vh: 1180, landscape: true }), 'portrait size while held landscape');
+  assert.ok(!fillsScreen({ ...ipad, vw: 590, vh: 410 }), 'a window still growing');
+  assert.ok(!fillsScreen({ ...ipad, vw: 1180, vh: 790 }), 'one side short');
+  assert.ok(!fillsScreen({ ...ipad, vw: 690, vh: 820 }), 'Split View');
+});
+
 test('pickPreset is unchanged by rotation', () => {
   assert.equal(pickPreset({ screenW: 390, screenH: 844 }), pickPreset({ screenW: 844, screenH: 390 }));
 });

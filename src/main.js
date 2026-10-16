@@ -5,7 +5,7 @@ import { CATEGORIES, categoryOf } from './catalog.js';
 import { loadCategory, loadSubject, SubjectLoadError } from './subjects.js';
 import { makeRng, resolveSeed, resolveTarget, stringHash } from './rng.js';
 import { buildPuzzle, cap, matchWord, snap, spanOf } from './puzzle.js';
-import { computeLayout, pickPreset, PRESETS, mixFor } from './layout.js';
+import { computeLayout, fillsScreen, pickPreset, PRESETS, mixFor } from './layout.js';
 import { applyLayout, renderGrid, renderList, renderPills, renderFoundCells, renderSolvedShape, renderArt, placeArt } from './view.js';
 import { burst, pop } from './effects.js';
 import { makeStorage } from './storage.js';
@@ -51,6 +51,9 @@ const PAD = 10;
 // never changes it. Governs new games only; a restored board keeps the size it was
 // saved at.
 const PRESET = pickPreset({ screenW: screen.width, screenH: screen.height });
+// An iPad Home Screen app: iPadOS scales the frame on screen while the app's window grows at
+// launch and lays the page out afresh only after, so a board shown first opens zoomed in.
+const IPAD_APP = /** @type {{standalone?: boolean}} */ (navigator).standalone === true && PRESET === PRESETS.full;
 // The player's preferences (settings.js). Read at the moment each one matters.
 const cfg = makeSettings();
 /** The board the next deal uses: the device's own unless Settings picks a size.
@@ -321,6 +324,10 @@ function layout() {
   renderFoundCells(els, state, state.size);
   pills();
 }
+
+// How long an iPad Home Screen app's window must hold one size, short of filling the screen, to
+// count as settled (a window in Split View or Stage Manager), and the longest the curtain waits.
+const SETTLE_QUIET = 500, SETTLE_CAP = 1500;
 
 let resizeFrame = 0;
 /** One relayout per frame. Cancel-and-reschedule rather than a pending flag, which would
@@ -1242,8 +1249,35 @@ async function boot() {
   } finally {
     // Reveal whatever we ended up with — a board, or the failure text. Runs after the
     // DOM writes above and before the next paint, so the first frame is the final one.
-    document.documentElement.removeAttribute('data-booting');
+    reveal();
   }
+}
+
+/** Lift the boot curtain. An iPad Home Screen app keeps it until its window is the whole screen
+ * or has stopped changing, so the frame iPadOS scales up while the window grows is an empty one.
+ * @returns {void} */
+function reveal() {
+  const root = document.documentElement;
+  const lift = () => { root.removeAttribute('data-booting'); };
+  const settled = () => fillsScreen({
+    vw: innerWidth, vh: innerHeight, screenW: screen.width, screenH: screen.height,
+    landscape: screen.orientation ? screen.orientation.type.startsWith('landscape') : undefined,
+  });
+  if (!IPAD_APP || !root.hasAttribute('data-booting') || settled()) return lift();
+  const done = () => {
+    clearTimeout(quiet); clearTimeout(cap);
+    window.removeEventListener('resize', onSize);
+    layout();   // at the settled size now, not on the next frame
+    lift();
+  };
+  let quiet = setTimeout(done, SETTLE_QUIET);
+  const cap = setTimeout(done, SETTLE_CAP);
+  const onSize = () => {
+    if (settled()) return done();
+    clearTimeout(quiet);
+    quiet = setTimeout(done, SETTLE_QUIET);
+  };
+  window.addEventListener('resize', onSize);
 }
 
 /** Put back the exact board a save holds, then replay the found words on top. A save
