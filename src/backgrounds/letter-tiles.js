@@ -4,6 +4,7 @@
 // each row in turn, or tiles at three depths sliding down a slope and tumbling end over end.
 
 import { stage, TAU, clamp } from './stage.js';
+import { roundRect } from './shapes.js';
 
 /** @typedef {{x:number, y:number, a:number, va:number, vx:number, vy:number, ch:string, c:number,
  *   face:boolean, fl:number, next:number, z:number, row:number}} Tile
@@ -184,7 +185,7 @@ function paintTile(color, ch, value, px, dark) {
   const g = c.getContext('2d');
   if (!g) return c;
   const n = c.width, t = n / 1.1, o = (n - t) / 2, r = t * 0.15;
-  g.beginPath(); g.roundRect(o, o, t, t, r);
+  g.beginPath(); roundRect(g, o, o, t, t, r);
   g.fillStyle = color;
   g.globalAlpha = ch ? (dark ? 0.26 : 0.22) : (dark ? 0.4 : 0.34);
   g.fill();
@@ -199,7 +200,7 @@ function paintTile(color, ch, value, px, dark) {
   g.restore();
   // Bevel: the edge, lit along the top and left.
   g.globalAlpha = 0.85; g.strokeStyle = color; g.lineWidth = Math.max(1.5, t * 0.05);
-  g.beginPath(); g.roundRect(o, o, t, t, r); g.stroke();
+  g.beginPath(); roundRect(g, o, o, t, t, r); g.stroke();
   g.globalAlpha = dark ? 0.25 : 0.5; g.strokeStyle = '#fff'; g.lineWidth = Math.max(1, t * 0.03);
   g.beginPath(); g.moveTo(o + r, o + t * 0.07); g.lineTo(o + t - r, o + t * 0.07); g.stroke();
   if (!ch) return c;

@@ -42,6 +42,7 @@ test('icon markup uses only shapes, geometry attributes and the four tone classe
 
 test('every category has a motion, every override names a real subject, and every motion has a module', () => {
   assert.deepEqual(Object.keys(CATEGORY_MOTION).sort(), CATEGORIES.map(c => c.id).sort());
+  assert.equal(new Set(Object.values(CATEGORY_MOTION)).size, CATEGORIES.length, 'each category has a style of its own');
   for (const [key, m] of [...Object.entries(CATEGORY_MOTION), ...Object.entries(SUBJECT_MOTION)]) {
     assert.ok(m in MOTIONS, `${key}: no motion ${m}`);
     if (key.includes('/')) {

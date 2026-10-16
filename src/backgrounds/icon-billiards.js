@@ -5,6 +5,7 @@
 
 import { iconStage } from './icon-stage.js';
 import { TAU, clamp } from './stage.js';
+import { roundRect } from './shapes.js';
 
 /** @typedef {{k:number, x:number, y:number, vx:number, vy:number, r:number, m:number, rot:number, w:number,
  *   sx:number, sy:number, tx:number, ty:number}} Ball
@@ -197,7 +198,7 @@ export function start(host, opts) {
           ctx.globalAlpha = 0.28;
           ctx.lineWidth = 3;
           ctx.beginPath();
-          ctx.roundRect(pad * 0.5, pad * 0.5, W - pad, H - pad, size * 0.5);
+          roundRect(ctx, pad * 0.5, pad * 0.5, W - pad, H - pad, size * 0.5);
           ctx.stroke();
           ctx.globalAlpha = 0.14;
           ctx.beginPath();

@@ -1,11 +1,10 @@
 // node coverage.mjs [out.md] — Markdown tables of the background art each category and subject has of
-// its own: still scenes, a distinct animation, and the shared icon motion its own icons move in.
+// its own: still scenes, and the animation style Subject motion runs for it (subject-motion.json).
 import fs from 'node:fs';
 const src = new URL('../../../src/', import.meta.url);
 const { SPRITES, ILLUSTRATIONS } = await import(new URL('art.js', src).href);
 const { CATEGORY_MOTION, SUBJECT_MOTION } = await import(new URL('backgrounds/subject-icons.js', src).href);
 const { iconsFor, motionFor } = await import(new URL('backgrounds/icon-scene.js', src).href);
-const { MOTIONS } = await import(new URL('backgrounds/subject-motion.js', src).href);
 const { BACKGROUNDS } = await import(new URL('backgrounds.js', src).href);
 
 const subjects = [];
@@ -17,9 +16,8 @@ for (const s of subjects) { const h = iconsFor(s)[0]; leads.set(h, [...(leads.ge
 const ownLead = (/** @type {string} */ s) => leads.get(iconsFor(s)[0])?.length === 1;
 
 const name = (/** @type {string} */ id) => BACKGROUNDS.find(b => b.id === id)?.name ?? id;
-const iconMotions = new Set(Object.values(MOTIONS));
-// Animated backgrounds that draw no subject's icons: the same for every subject, so none is dedicated.
-const ambient = BACKGROUNDS.filter(b => b.animated && !b.perDeal).map(b => b.name);
+const animated = BACKGROUNDS.filter(b => b.animated).length;
+const styles = new Set([...Object.values(CATEGORY_MOTION), ...Object.values(SUBJECT_MOTION)]);
 const yes = (/** @type {boolean} */ b) => (b ? 'yes' : '**no**');
 const cats = [...new Set(subjects.map(s => s.split('/')[0]))].sort();
 
@@ -31,9 +29,9 @@ for (const c of cats) {
   const pick = list.filter(s => SUBJECT_MOTION[s]).length;
   const o = list.filter(ownLead).length;
   scenes += scene; own += o; picked += pick; illus += +!!ILLUSTRATIONS[c]; pixel += +!!SPRITES[c];
-  byCat.push(`| ${c} | ${list.length} | ${yes(!!ILLUSTRATIONS[c])} | ${yes(!!SPRITES[c])} | ${scene} of ${list.length} | none | ${name(CATEGORY_MOTION[c])} | ${pick} |`);
-  detail.push(`### ${c}`, '', '| Subject | Subject scene, led by | Distinct animation | Icon motion |', '| --- | --- | --- | --- |',
-    ...list.map(s => `| ${s.split('/')[1]} | ${iconsFor(s)[0]}${ownLead(s) ? '' : ' (**shared**)'} | none | ${name(motionFor(s))}${SUBJECT_MOTION[s] ? '' : ' (category)'} |`), '');
+  byCat.push(`| ${c} | ${list.length} | ${yes(!!ILLUSTRATIONS[c])} | ${yes(!!SPRITES[c])} | ${scene} of ${list.length} | ${name(CATEGORY_MOTION[c])} | ${pick} |`);
+  detail.push(`### ${c}`, '', '| Subject | Subject scene, led by | Animation style |', '| --- | --- | --- |',
+    ...list.map(s => `| ${s.split('/')[1]} | ${iconsFor(s)[0]}${ownLead(s) ? '' : ' (**shared**)'} | ${name(motionFor(s))}${SUBJECT_MOTION[s] ? '' : ' (category)'} |`), '');
 }
 const n = subjects.length, k = cats.length;
 const out = [
@@ -45,16 +43,15 @@ const out = [
   `| Still: Pixel art scene | each category | ${pixel} of ${k} |`,
   `| Still: Subject scene, the subject's own icons | each subject | ${scenes} of ${n} |`,
   `| Subject scene led by an icon no other subject leads with | each subject | ${own} of ${n} |`,
-  `| Animated: a distinct animation style of its own | a category or subject | 0 of ${k}, 0 of ${n} |`,
-  `| Animated: Subject motion, the subject's own icons in a shared motion style | each subject | ${n} of ${n} |`,
-  `| Motion style picked for the subject itself, not its category's | each subject | ${picked} of ${n} |`, '',
-  `**What the animated rows mean.** No category or subject has an animation style of its own yet. Every animated background is either one of ${iconMotions.size} shared motion styles (${[...iconMotions].map(f => BACKGROUNDS.find(b => b.file === f)?.name).filter(Boolean).join(', ')}) moving the subject's own icons, or an ambient one that is the same for every subject (${ambient.join(', ')}).`, '',
+  `| Animated: a style of its own, shared with no other category | each category | ${new Set(Object.values(CATEGORY_MOTION)).size} of ${k} |`,
+  `| Animated: a style picked for the subject itself, not its category's | each subject | ${picked} of ${n} |`, '',
+  `**What the animated rows mean.** Subject motion runs each subject's style: its own pick where one fits (rain for weather, koi for garden ponds), else its category's, which no other category shares. It uses ${styles.size} of the ${animated} animated backgrounds; every one can also be picked by hand, and Random picks from all of them.`, '',
   '## By category', '',
-  '| Category | Subjects | Illustrated scene | Pixel art scene | Subject scenes | Distinct animation | Category motion | Subjects with their own motion |',
-  '| --- | ---: | --- | --- | ---: | --- | --- | ---: |',
+  '| Category | Subjects | Illustrated scene | Pixel art scene | Subject scenes | Its animation style | Subjects with their own style |',
+  '| --- | ---: | --- | --- | ---: | --- | ---: |',
   ...byCat, '',
   '## By subject', '',
-  '"(category)" means the subject uses its category\'s motion style.', '',
+  '"(category)" means the subject uses its category\'s style.', '',
   ...detail,
 ].join('\n');
 if (process.argv[2]) fs.writeFileSync(process.argv[2], out); else process.stdout.write(out);
