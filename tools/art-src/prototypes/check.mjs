@@ -14,6 +14,7 @@
 //   ... --webkit       run in WebKit instead of Chromium (no busy %)
 //   ... --serve        just serve, and print the gallery and preview URLs
 //   ... --src=<url>    load the module from this URL instead (to plant a broken copy)
+//   ... --q=<query>    add to every preview URL, e.g. --q='subject=animals/dogs&seed=4'
 
 import { chromium, webkit } from '@playwright/test';
 import { createServer } from 'node:http';
@@ -130,8 +131,8 @@ const pct = (xs, p) => { const s = [...xs].sort((a, b) => a - b); return s.lengt
 async function run() {
   const engine = flag('webkit') ? webkit : chromium;
   const browser = await engine.launch();
-  const src = value('src');
-  const url = (file, q = '') => `${base}preview.html?name=${file}${src ? `&src=${encodeURIComponent(src)}` : ''}${q}`;
+  const src = value('src'), extra = value('q') ? `&${value('q')}` : '';
+  const url = (file, q = '') => `${base}preview.html?name=${file}${src ? `&src=${encodeURIComponent(src)}` : ''}${extra}${q}`;
   if (shotsDir) await mkdir(shotsDir, { recursive: true });
   let failed = 0;
 

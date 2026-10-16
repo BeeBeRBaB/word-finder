@@ -21,7 +21,7 @@ test('a Still row then an Animated one, each a radio, a dropdown and its menu of
   assert.deepEqual(values(rows[0], 'bg-still'), BACKGROUNDS.filter(b => !b.animated).map(b => b.id));
   assert.deepEqual(values(rows[1], 'bg-moving'), BACKGROUNDS.filter(b => b.animated).map(b => b.id));
   assert.deepEqual(values(html, 'bg-still'), ['illustrated', 'pixel', 'scene', 'none']);
-  assert.equal(values(html, 'bg-moving').length, 23);
+  assert.equal(values(html, 'bg-moving').length, BACKGROUNDS.length - 4);
   assert.equal((html.match(/<label class="tile bgtile"/g) ?? []).length, BACKGROUNDS.length);
   for (const b of BACKGROUNDS) assert.ok(html.includes(`<span class="bgname">${b.name}</span>`), `${b.id}: no name`);
 });

@@ -82,7 +82,7 @@ test('the Background page has the mode, and under Manual a Still and an Animated
   await movingDrop.click();
   const moving = page.getByRole('radiogroup', { name: 'Animated' });
   await expect(moving).toBeVisible();
-  await expect(moving.getByRole('radio')).toHaveCount(23);
+  await expect(moving.getByRole('radio')).toHaveCount(BACKGROUNDS.filter(b => b.animated).length);
   await expect(moving.getByRole('radio', { name: 'Drifting icons' })).toBeChecked();
   await expect(moving.getByRole('radio', { name: 'Drifting icons' })).toBeFocused();
   await expect(page.locator('.bgtile')).toHaveCount(BACKGROUNDS.length);
@@ -110,7 +110,7 @@ test('the Background page has the mode, and under Manual a Still and an Animated
     await page.locator(`#bgdrop-${kind}`).click();
     const heights = await page.locator(`#bgmenu-${kind} .bgtile, #settings-bgpage .bgpick, #settings-bgpage .bgdrop, #settings-bgpage select`)
       .evaluateAll(ts => ts.map(t => t.getBoundingClientRect().height));
-    expect(heights).toHaveLength((kind === 'still' ? 4 : 23) + 5);
+    expect(heights).toHaveLength(BACKGROUNDS.filter(b => b.animated === (kind === 'moving')).length + 5);
     for (const h of heights) expect(h).toBeGreaterThanOrEqual(44);
     // Each name shows whole, none cut short.
     expect(await page.locator(`#bgmenu-${kind} .bgname`).evaluateAll(ns => ns.filter(n => n.scrollWidth > n.clientWidth).map(n => n.textContent))).toEqual([]);
@@ -511,7 +511,7 @@ test('at 320 wide the Background page stacks each label over its control, and no
     const controls = [...document.querySelectorAll('#settings-bgpage :is(select, .bgdrop, .bgmenu:not([hidden]) .bgtile)')].map(b => b.getBoundingClientRect().right);
     return { scroll: card.scrollWidth, client: card.clientWidth, right, widest: Math.max(...controls), count: controls.length };
   });
-  expect(edges.count).toBe(1 + 2 + 23);
+  expect(edges.count).toBe(1 + 2 + BACKGROUNDS.filter(b => b.animated).length);
   expect(edges.scroll).toBeLessThanOrEqual(edges.client);
   expect(edges.widest).toBeLessThanOrEqual(edges.right + 0.5);
   const label = await page.locator('#lbl-bgmode').boundingBox();

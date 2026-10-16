@@ -11,7 +11,11 @@ export const MOTIONS = Object.freeze({
   drift: 'drifting-icons', parade: 'icon-parade', bloom: 'icon-bloom', wallpaper: 'icon-tiles',
   carousel: 'icon-orbit', swim: 'icon-swim', flutter: 'icon-flutter', fall: 'icon-fall',
   bounce: 'icon-bounce', rise: 'icon-rise', pulse: 'icon-pulse', sway: 'icon-sway',
-  ripple: 'icon-ripple',
+  ripple: 'icon-ripple', warp: 'icon-warp', kaleido: 'icon-kaleido', flip: 'icon-flip',
+  wave: 'icon-wave', trail: 'icon-trail', whirlpool: 'icon-whirlpool', stack: 'icon-stack',
+  juggle: 'icon-juggle', fountain: 'icon-fountain', conveyor: 'icon-conveyor',
+  ferris: 'icon-ferris', pendulums: 'icon-pendulums', roll: 'icon-roll',
+  billiards: 'icon-billiards', flock: 'icon-flock', solar: 'icon-solar',
 });
 
 /**
