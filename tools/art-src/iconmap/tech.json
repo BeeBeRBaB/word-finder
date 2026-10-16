@@ -8,7 +8,7 @@
     "gear"
   ],
   "subjects": {
-    "tech/computers": ["microchip", "keyboard-and-mouse", "code-window", "laptop", "gear", "television"],
+    "tech/computers": ["desktop-computer", "microchip", "keyboard-and-mouse", "code-window", "laptop", "gear"],
     "tech/smartphones": ["smartphone", "speech-bubble", "camera", "battery", "microphone", "alarm-clock"],
     "tech/laptops": ["laptop", "microchip", "keyboard-and-mouse", "battery", "smartphone", "gear"],
     "tech/internet": ["wifi-signal", "padlock", "laptop", "speech-bubble", "smartphone", "satellite"],
@@ -20,16 +20,16 @@
     "tech/social-media": ["speech-bubble", "heart", "smiley", "camera", "smartphone"],
     "tech/coding": ["code-window", "laptop", "lightbulb", "gear", "smartphone"],
     "tech/batteries": ["battery", "lightbulb", "smartphone", "laptop"],
-    "tech/screens": ["computer-monitor", "television", "laptop", "smartphone", "lightbulb"],
+    "tech/screens": ["computer-monitor", "desktop-computer", "television", "laptop", "smartphone", "lightbulb"],
     "tech/headphones": ["headphones", "microphone", "guitar", "drum", "smartphone"],
     "tech/printers": ["printer", "book-stack", "quill", "paintbrush", "laptop"],
     "tech/drones": ["drone", "airplane", "camera", "battery", "smartphone"],
     "tech/wearables": ["smartwatch", "heart", "sneaker", "alarm-clock", "smartphone", "battery"],
     "tech/keyboards": ["keyboard-and-mouse", "laptop", "lightbulb", "smartphone", "gear"],
-    "tech/networking": ["wifi-signal", "satellite", "laptop", "smartphone", "gear"],
+    "tech/networking": ["router", "wifi-signal", "satellite", "laptop", "smartphone", "gear"],
     "tech/artificial-intelligence": ["robot", "microchip", "brain", "speech-bubble", "eye", "laptop"],
     "tech/virtual-reality": ["vr-headset", "eye", "game-controller", "laptop", "gear"],
-    "tech/smart-home": ["padlock", "wifi-signal", "lightbulb", "smartphone", "lamp", "siren"],
+    "tech/smart-home": ["smart-house", "padlock", "wifi-signal", "lightbulb", "smartphone", "lamp"],
     "tech/cybersecurity": ["padlock", "shield", "eye", "laptop", "smartphone", "gear"],
     "tech/streaming": ["play-screen", "headphones", "wifi-signal", "television", "film-reel", "popcorn"]
   },

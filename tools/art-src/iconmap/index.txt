@@ -2,6 +2,7 @@ acacia-tree: flat-topped savanna acacia
 acorn: acorn with an oak leaf
 airplane: passenger plane climbing past clouds
 alarm-clock: ringing alarm clock
+alleyway: narrow brick alley with fire escape, sign, bin and far lamp
 alphabet-blocks: stacked wooden ABC letter blocks
 ambulance: ambulance with stripe, roof lights and plus
 ammonite: spiral ammonite fossil in cracked stone
@@ -40,6 +41,7 @@ bone: cartoon bone
 book-on-head: a pictogram person standing tall balancing a book on their head
 book-stack: stack of books with reading glasses
 bookshelf: wooden bookshelf packed with spines
+bookshop-front: small bookshop with striped awning, window full of books and a hanging book sign
 boot: laced leather boot
 boxing-gloves: pair of boxing gloves hanging by laces
 brain: brain with folds
@@ -47,12 +49,14 @@ bread: loaf of bread with a slice
 bridge: suspension bridge over gentle waves
 broomstick: witch broomstick flying across a crescent moon
 bulldozer: bulldozer pushing a heap of soil
+bunsen-burner: Bunsen burner flame heating a flask on a tripod and gauze
 bunting: strings of party flag bunting
 butterfly: butterfly with spotted wings
 button: large four-hole button
 cactus: saguaro cactus in desert dunes at sunset
 cake: two-tier birthday cake with candles
 calculator: pocket calculator with operator keys
+calendar: wall calendar page with a circled day and a little clock
 calligraphy-nib: fountain pen nib finishing an ink flourish
 camel: laden camel with striped bundles and lantern
 camera: photo camera
@@ -99,6 +103,7 @@ conductor-baton: conductor baton held over a music stand with an open score
 confetti-popper: party popper bursting with confetti and streamers
 constellation: Big Dipper stars joined on night sky
 construction-crane: tower crane lifting a steel girder
+control-tower: airport control tower with angled glass cab and a plane taking off
 convertible: open-top convertible car side-on, roof folded down
 cooking-pot: lidded pot with steam
 covered-wagon: pioneer covered wagon with canvas top
@@ -112,7 +117,9 @@ cruise-ship: passenger cruise ship on the waves
 cupcake: frosted cupcake with sprinkles
 cycling-helmet: vented road-cycling helmet with straps
 dancer: figure dancing on tiptoe to music
+date-stamp: rubber date stamp pressing onto a card beside an ink pad
 deer: stag with antlers
+desktop-computer: desktop monitor with windows, tower, keyboard and mouse
 diamond-ring: gold ring with a big diamond
 diary: closed diary with strap, padlock, ribbon and heart
 dice: pair of dice
@@ -145,6 +152,7 @@ faucet: tap with water running
 fertilizer-bag: a sack of plant food with a leaf logo, open top, granules spilling
 field-mouse: mouse sitting up nibbling a seed
 film-reel: film reel with unspooling film
+finish-line: checkered finish banner on posts, runner breaking the tape
 fire-engine: fire engine with ladder and hose reel
 fire-helmet: firefighter's helmet with a shield badge
 fireplace: hearth with a crackling fire
@@ -211,6 +219,8 @@ hourglass: wooden hourglass with trickling sand
 house: little house with a glowing window
 hug: two figures in a warm hug
 ice-cream-sundae: tall glass sundae with scoops, whipped cream, cherry and wafer
+ice-cube: chunky bevelled ice cubes melting into a puddle
+ice-giant: Uranus tipped on its side with near-vertical rings and a moon
 ice-skate: figure skating boot with a toothed blade
 invitation-card: envelope with a card peeking out
 jeans: blue denim jeans with rolled cuffs
@@ -219,11 +229,15 @@ jigsaw-piece: two interlocking jigsaw pieces
 kangaroo: kangaroo with a joey in its pouch
 keyboard-and-mouse: computer keyboard with a mouse beside it
 knight-helmet: plumed knight's helmet with visor
+lab-coat: white lab coat on a hanger with pens and name badge
 ladybug: ladybird seen from above, spotted wing cases slightly open, antennae
 lamp: table lamp glowing
 laptop: open laptop showing code
 lawnmower: push lawnmower on striped grass
 leaf: single leaf with veins
+lectern: wooden lectern with microphone, open page and carved crest
+library-building: library front with book emblem pediment, sign band, columns, doors and steps
+library-card: library card in a pocket inside the cover of an open book
 lightbulb: glowing light bulb
 lighthouse: striped lighthouse beaming on the rocks
 lightning-bolt: zigzag lightning bolt
@@ -298,6 +312,7 @@ piano: grand piano with the lid up
 pickaxe: miner's pickaxe
 picket-fence: white picket fence with an open gate and flowers
 picnic-basket: wicker basket on a gingham blanket
+picture-book: open square picture book with sun, hill and house, and a crayon
 pier: seaside pier on stilts with lamps and kiosk
 pill: capsule and tablets
 pillow: fluffy pillow with a moon and zzz
@@ -320,8 +335,10 @@ potters-wheel: clay pot being thrown on a potter's wheel
 pram: baby pram with folding hood
 printer: desktop printer printing a sunny picture
 printing-press: old hand-cranked printing press with a sheet
+prism: glass prism splitting a white beam into a fan of colours
 prize-wheel: spinning prize wheel with a pointer
 pulled-weed: a hand-pulled dandelion weed with its long root and soil clumps, a hand fork beside
+pulley: pulley wheel on a hook lifting a crate by rope
 pumpkin: round pumpkin with a curly stem
 pyjamas: striped pyjamas and fluffy slippers
 pyramid: pyramids in the desert under the sun
@@ -343,10 +360,13 @@ robot: friendly boxy robot
 rock-climber: climber on a rock wall with holds
 rocket: cartoon rocket blasting off
 rocks: granite chunk, striped pebble and quartz crystal
+router: home wifi router with antennas, status lights and waves
 row-houses: terrace of three joined houses with different coloured doors
 rug: fringed patterned rug seen at an angle
 ruler: wooden ruler with a protractor
 runner: figure sprinting right with speed lines
+safety-goggles: vented lab safety goggles with strap beside a small flask
+sailboat: small sailing dinghy heeling on waves with mainsail and jib
 sailing-ship: tall ship with billowing sails
 salad-bowl: bowl of leafy salad with servers
 satellite: satellite with solar panels and a dish
@@ -368,6 +388,7 @@ sheep: woolly sheep
 sheet-music: sheet of music with a treble clef and notes, pencil beside
 shield: knight's shield over crossed swords
 shooting-star: shooting star with a streaming tail
+shopping-bag: paper shopping bag with rope handles and tag, second bag with tissue
 shopping-cart: shopping trolley full of groceries side-on
 shovel: garden spade
 signpost: wooden signpost with arrows pointing different ways
@@ -376,6 +397,7 @@ skeleton: friendly cartoon skeleton or x-ray showing a spine and ribs
 sketchbook: open sketchbook with a doodle and an eraser
 skis: crossed skis and poles in snow
 skyscraper: glass skyscraper with spire between two towers
+smart-house: house with wifi symbol, phone app and thermostat dial
 smartphone: smartphone with app icons, buzzing
 smartwatch: smartwatch showing a heart and heartbeat
 smiley: grinning smiley face
@@ -387,7 +409,9 @@ snowmobile: snowmobile kicking up snow
 soccer-ball: patched football
 sock: striped sock
 solar-system: sun with planets on curved orbit lines
+sound-waves: speaker cone sending curved sound waves over a waveform
 soup-bowl: steaming bowl of soup with a spoon
+space-station: orbital space station with solar wings above the curve of Earth
 spaghetti: fork twirling spaghetti over a bowl
 sparkler: hand-held sparkler throwing stars
 speech-bubble: chatting speech bubbles
@@ -409,6 +433,7 @@ stethoscope: stethoscope with a little heart
 stomach: friendly rumbling cartoon stomach
 stopwatch: stopwatch with a start button and sweeping hand
 storefront: little shop with a striped awning
+storm-planet: Neptune with a great dark storm, white clouds and wind streaks
 street-lamp: old-fashioned glowing street lamp
 stretching-figure: figure in a wide-legged side stretch
 striped-tent: striped fair tent with a pennant
@@ -416,19 +441,23 @@ stunt-jump: motorbike stunt rider leaping off a ramp
 submarine: friendly submarine with periscope and portholes
 suitcase: vintage suitcase with straps, stickers and a tag
 sun: bright smiling sun
+sun-lounger: reclining sun lounger with towel, drink and parasol edge
 sunscreen-bottle: squeeze bottle of sun lotion with a sun on the label and a drop of lotion
 superhero-mask: superhero eye mask with a flowing cape
 surfboard: surfboard riding a curling wave
 swim-goggles: swimming goggles
+swimmer: swimmer doing front crawl with cap and goggles over a lane rope
 swimsuit: striped one-piece swimsuit with water drops
 swing-set: playground swing set with a slide
 sword-in-stone: sword standing in a rock, glowing
 taxi: yellow taxi cab with a roof sign
+teacher: teacher with glasses pointing at an ABC board, apple on desk
 teapot: a round teapot with a spout, lid knob and a tag hanging out, steam rising, a cup beside
 teddy-bear: cuddly teddy bear
 telescope: telescope on a tripod aimed at a star
 television: retro tv with antennae
 tennis-racket: tennis racket with strings and a fuzzy ball
+test-tube-rack: wooden rack of test tubes with a dropper
 test-tubes: rack of test tubes with coloured liquids
 theater-masks: comedy and tragedy masks
 thermometer: clinical thermometer
@@ -446,6 +475,7 @@ traffic-cone: striped traffic cone
 traffic-light: traffic light on red
 treasure-chest: open chest overflowing with gold coins
 tree: round leafy tree
+tree-lined-avenue: boulevard in perspective lined with round trees and lamps
 trellis: diamond lattice trellis with a flowering vine
 troll: troll peeking over a stone bridge
 trophy: gold cup trophy

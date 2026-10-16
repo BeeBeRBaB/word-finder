@@ -1,13 +1,13 @@
 {
   "category": ["atom", "microscope", "dna", "magnet", "lightbulb"],
   "subjects": {
-    "science/physics": ["newtons-cradle", "atom", "magnet", "planet", "gear", "battery"],
+    "science/physics": ["newtons-cradle", "prism", "pulley", "atom", "magnet", "planet"],
     "science/chemistry": ["flask", "test-tubes", "molecule", "atom", "microscope", "lightbulb"],
     "science/biology": ["germ", "dna", "microscope", "brain", "bone", "sprout"],
     "science/energy": ["thermometer", "battery", "lightbulb", "gear", "atom", "candle"],
     "science/magnets": ["magnet", "compass", "battery", "atom", "gear"],
-    "science/light": ["lightbulb", "candle", "lamp", "camera", "crescent-moon"],
-    "science/sound": ["microphone", "siren", "drum", "trumpet", "speech-bubble"],
+    "science/light": ["prism", "lightbulb", "candle", "lamp", "camera", "crescent-moon"],
+    "science/sound": ["sound-waves", "microphone", "siren", "drum", "trumpet", "speech-bubble"],
     "science/electricity": ["battery", "lightbulb", "lamp", "atom", "gear"],
     "science/motion": ["newtons-cradle", "wheel", "rocket", "sneaker", "soccer-ball", "planet"],
     "science/gravity": ["apple", "planet", "satellite", "crescent-moon", "rocket"],
@@ -17,13 +17,13 @@
     "science/fossils": ["ammonite", "magnifying-glass", "dinosaur", "bone", "shovel", "leaf"],
     "science/genetics": ["dna", "microscope", "sprout", "flower"],
     "science/microscopes": ["microscope", "magnifying-glass", "germ", "eye", "lightbulb", "dna"],
-    "science/states-of-matter": ["flask", "thermometer", "molecule", "cooking-pot", "candle", "atom"],
+    "science/states-of-matter": ["ice-cube", "flask", "thermometer", "molecule", "cooking-pot", "candle"],
     "science/the-periodic-table": ["molecule", "atom", "balloons", "chalkboard", "magnet"],
     "science/atoms": ["atom", "molecule", "magnet", "battery", "microscope", "chalkboard"],
     "science/robotics": ["robot", "gear", "laptop", "game-controller", "battery", "brain"],
     "science/inventions": ["lightbulb", "robot", "gear", "pencil", "laptop", "chalkboard"],
-    "science/the-lab": ["flask", "test-tubes", "microscope", "atom", "dna", "lightbulb"],
-    "science/simple-machines": ["gear", "wheel", "shovel", "chalkboard"],
+    "science/the-lab": ["test-tube-rack", "flask", "test-tubes", "safety-goggles", "microscope", "atom"],
+    "science/simple-machines": ["pulley", "gear", "wheel", "shovel", "chalkboard"],
     "science/microbes": ["germ", "test-tubes", "microscope", "mushroom", "bread", "pill"]
   },
   "wishlist": [

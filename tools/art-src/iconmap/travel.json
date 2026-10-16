@@ -1,8 +1,8 @@
 {
   "category": ["suitcase", "airplane", "map", "compass", "ticket", "palm-island"],
   "subjects": {
-    "travel/airports": ["passport", "airplane", "suitcase", "ticket", "signpost", "map"],
-    "travel/airplanes": ["airplane", "ticket", "compass", "suitcase", "map"],
+    "travel/airports": ["control-tower", "passport", "airplane", "suitcase", "ticket", "signpost"],
+    "travel/airplanes": ["airplane", "control-tower", "ticket", "compass", "suitcase", "map"],
     "travel/trains": ["steam-train", "ticket", "wheel", "alarm-clock", "suitcase", "map"],
     "travel/road-trips": ["caravan", "car", "traffic-light", "steering-wheel", "map", "signpost"],
     "travel/cruises": ["cruise-ship", "anchor", "sailing-ship", "wave", "champagne-flutes", "palm-island"],
@@ -22,7 +22,7 @@
     "travel/currency": ["coins", "treasure-chest", "storefront", "handshake", "suitcase", "airplane"],
     "travel/islands": ["palm-island", "anchor", "seashell", "treasure-chest", "lighthouse", "wave"],
     "travel/ferries": ["cruise-ship", "anchor", "sailing-ship", "lighthouse", "wave", "ticket"],
-    "travel/resorts": ["service-bell", "palm-island", "champagne-flutes", "wave", "pillow", "suitcase"],
+    "travel/resorts": ["sun-lounger", "service-bell", "palm-island", "champagne-flutes", "wave", "pillow"],
     "travel/landmarks": ["castle", "pyramid", "fountain", "camera", "map"],
     "travel/road-signs": ["road-sign", "car", "traffic-light", "signpost", "traffic-cone", "steering-wheel"]
   },
