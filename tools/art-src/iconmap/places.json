@@ -16,15 +16,15 @@
     "places/stadiums": ["stadium", "trophy", "soccer-ball", "ticket", "medal", "sneaker"],
     "places/zoos": ["lion", "paw-print", "ticket", "tree", "park-bench"],
     "places/alleys": ["alleyway", "cat", "street-lamp", "paw-print", "crescent-moon", "signpost"],
-    "places/plazas": ["fountain", "statue", "storefront", "park-bench", "coffee-cup", "map"],
+    "places/plazas": ["town-square", "statue", "fountain", "storefront", "park-bench", "coffee-cup"],
     "places/courtyards": ["leaf", "park-bench", "flower", "fountain", "sprout"],
     "places/boulevards": ["tree-lined-avenue", "statue", "tree", "street-lamp", "signpost", "storefront"],
     "places/piers": ["pier", "fishing-rod", "fish", "wave", "ticket", "popcorn"],
     "places/malls": ["shopping-bag", "storefront", "dress", "gift", "sneaker"],
     "places/playgrounds": ["swing-set", "smiley", "sneaker", "shovel", "park-bench"],
-    "places/suburbs": ["row-houses", "house", "lawnmower", "picket-fence", "watering-can", "tree"],
+    "places/suburbs": ["suburban-house", "house", "lawnmower", "picket-fence", "row-houses", "watering-can"],
     "places/fountains": ["fountain", "statue", "coins", "shooting-star", "park-bench", "street-lamp"],
-    "places/waterfronts": ["pier", "anchor", "wave", "sailing-ship", "park-bench", "fish"]
+    "places/waterfronts": ["promenade", "anchor", "pier", "wave", "sailing-ship", "park-bench"]
   },
   "wishlist": [
     { "id": "statue", "motif": "figure statue on a stone plinth", "subjects": ["places/plazas", "places/town-squares", "places/parks", "places/boulevards", "places/fountains"] },

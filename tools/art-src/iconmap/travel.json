@@ -3,7 +3,7 @@
   "subjects": {
     "travel/airports": ["control-tower", "passport", "airplane", "suitcase", "ticket", "signpost"],
     "travel/airplanes": ["airplane", "control-tower", "ticket", "compass", "suitcase", "map"],
-    "travel/trains": ["steam-train", "ticket", "wheel", "alarm-clock", "suitcase", "map"],
+    "travel/trains": ["bullet-train", "steam-train", "ticket", "wheel", "alarm-clock", "suitcase"],
     "travel/road-trips": ["caravan", "car", "traffic-light", "steering-wheel", "map", "signpost"],
     "travel/cruises": ["cruise-ship", "anchor", "sailing-ship", "wave", "champagne-flutes", "palm-island"],
     "travel/luggage": ["suitcase", "padlock", "backpack", "airplane", "ticket", "map"],

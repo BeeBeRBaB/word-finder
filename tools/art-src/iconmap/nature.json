@@ -2,11 +2,11 @@
   "category": ["tree", "flower", "mountain", "leaf", "butterfly", "wave"],
   "subjects": {
     "nature/birds": ["bird", "owl", "tree", "leaf"],
-    "nature/insects": ["ladybug", "bee", "butterfly", "flower", "leaf", "sprout"],
+    "nature/insects": ["dragonfly", "ladybug", "bee", "butterfly", "flower", "leaf"],
     "nature/flowers": ["flower", "sprout", "bee", "butterfly", "watering-can", "leaf"],
     "nature/trees": ["tree", "acorn", "pine-tree", "leaf", "sprout", "bird"],
     "nature/ocean": ["wave", "seashell", "shark", "whale", "fish", "crab"],
-    "nature/rivers": ["river", "frog", "fishing-rod", "bridge", "fish", "mountain"],
+    "nature/rivers": ["river", "frog", "fishing-rod", "bridge", "dragonfly", "fish"],
     "nature/mountains": ["mountain", "snowflake", "volcano", "pine-tree", "compass", "signpost"],
     "nature/desert": ["cactus", "sun", "camel", "lizard", "pyramid", "palm-island"],
     "nature/rainforest": ["toucan", "frog", "monkey", "leaf", "tree", "bird"],

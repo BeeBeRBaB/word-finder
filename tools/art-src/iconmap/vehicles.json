@@ -14,7 +14,7 @@
     "vehicles/hot-air-balloons": ["hot-air-balloon", "mountain", "airplane", "balloons", "compass"],
     "vehicles/tyres": ["wheel", "wrench", "car", "steering-wheel", "traffic-cone", "signpost"],
     "vehicles/racing": ["race-car", "steering-wheel", "medal", "wheel", "traffic-cone"],
-    "vehicles/garages": ["garage", "wrench", "car", "gear", "wheel", "traffic-cone"],
+    "vehicles/garages": ["car-lift", "wrench", "car", "garage", "gear", "wheel"],
     "vehicles/vans": ["van", "cardboard-box", "wheel", "steering-wheel", "storefront", "traffic-cone"],
     "vehicles/scooters": ["scooter", "bicycle", "wheel", "battery", "street-lamp", "traffic-cone"],
     "vehicles/bulldozers": ["bulldozer", "hard-hat", "shovel", "traffic-cone", "gear", "wheel"],
