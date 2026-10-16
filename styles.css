@@ -682,6 +682,9 @@ body{position:fixed;inset:0;width:100%;height:100%}
 /* Sized so Constellation fits a phone's tile whole. */
 .bgmenu .bgtile{padding:7px 6px 8px}
 .bgmenu .bgtile .bgname{font-size:13.5px}
+/* The Animated menu's section headings, each across the whole row above its tiles. */
+.bggroup{grid-column:1/-1;margin:10px 2px -2px;font-family:var(--display);font-size:15px;font-weight:700;color:var(--text-strong)}
+.bggroup:first-child{margin-top:2px}
 /* Below that, as on a 360px phone, two columns rather than a cut name. */
 @container (max-width:335px){.bgmenu{grid-template-columns:repeat(2,minmax(0,1fr))}}
 /* The Theme page: a group per theme with its Light and Dark tiles, two groups to a row on a

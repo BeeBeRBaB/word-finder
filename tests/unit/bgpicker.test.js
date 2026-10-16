@@ -2,12 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { BACKGROUNDS } from '../../src/backgrounds.js';
 import { CHOICES } from '../../src/settings.js';
-import { manualMarkup, dropMarkup, modeNote, summaryMarkup, MODE_NOTES, KINDS } from '../../src/bgpicker.js';
+import { manualMarkup, dropMarkup, modeNote, summaryMarkup, movingSections, MODE_NOTES, MOVING_SECTIONS, KINDS } from '../../src/bgpicker.js';
 
 /** @param {string} html @param {string} name @returns {string[]} the radios' values, in order */
 const values = (html, name) => [...html.matchAll(new RegExp(`<input type="radio" name="${name}" value="([\\w-]+)">`, 'g'))].map(m => m[1]);
 
-test('a Still row then an Animated one, each a radio, a dropdown and its menu of that kind in registry order', () => {
+test('a Still row then an Animated one, each a radio, a dropdown and its menu of that kind, the Animated one by section', () => {
   const html = manualMarkup();
   const rows = html.split('<div class="row bgkind"').slice(1);
   assert.equal(rows.length, 2);
@@ -19,11 +19,26 @@ test('a Still row then an Animated one, each a radio, a dropdown and its menu of
     assert.ok(html.includes(`<div class="bgmenu" id="bgmenu-${kind}" role="radiogroup" aria-labelledby="bghead-${kind}" hidden>`));
   }
   assert.deepEqual(values(rows[0], 'bg-still'), BACKGROUNDS.filter(b => !b.animated).map(b => b.id));
-  assert.deepEqual(values(rows[1], 'bg-moving'), BACKGROUNDS.filter(b => b.animated).map(b => b.id));
+  assert.deepEqual(values(rows[1], 'bg-moving'), movingSections(BACKGROUNDS).flatMap(([, bgs]) => bgs.map(b => b.id)));
   assert.deepEqual(values(html, 'bg-still'), ['illustrated', 'pixel', 'scene', 'none']);
   assert.equal(values(html, 'bg-moving').length, BACKGROUNDS.length - 4);
   assert.equal((html.match(/<label class="tile bgtile"/g) ?? []).length, BACKGROUNDS.length);
   for (const b of BACKGROUNDS) assert.ok(html.includes(`<span class="bgname">${b.name}</span>`), `${b.id}: no name`);
+});
+
+test('the Animated menu is cut into sections, icon motions first, every background in exactly one', () => {
+  const sections = movingSections(BACKGROUNDS);
+  assert.deepEqual(sections.map(([name]) => name), ['Subject icons', ...MOVING_SECTIONS.map(([name]) => name)], 'nothing falls under More');
+  assert.deepEqual(sections[0][1], BACKGROUNDS.filter(b => b.animated && b.perDeal));
+  const ids = sections.flatMap(([, bgs]) => bgs.map(b => b.id));
+  assert.equal(new Set(ids).size, ids.length, 'a background in two sections');
+  assert.deepEqual([...ids].sort(), BACKGROUNDS.filter(b => b.animated).map(b => b.id).sort());
+  const listed = MOVING_SECTIONS.flatMap(([, list]) => list);
+  assert.equal(new Set(listed).size, listed.length, 'an id listed twice');
+  for (const id of listed) assert.ok(BACKGROUNDS.some(b => b.id === id && b.animated && !b.perDeal), `${id}: not an animated scene`);
+  const menu = manualMarkup().split('id="bgmenu-moving"')[1];
+  assert.deepEqual([...menu.matchAll(/<h3 class="bggroup">([^<]+)<\/h3>/g)].map(m => m[1]), sections.map(([name]) => name));
+  assert.ok(!manualMarkup().split('id="bgmenu-moving"')[0].includes('bggroup'), 'the Still menu has no sections');
 });
 
 test('every motion Subject motion can run has an option of its own', async () => {
@@ -39,6 +54,7 @@ test('a new registry entry gets an option in the right menu with no other change
   const rows = manualMarkup([...BACKGROUNDS, still, moving]).split('<div class="row bgkind"').slice(1);
   assert.equal(values(rows[0], 'bg-still').at(-1), 'test-bg');
   assert.equal(values(rows[1], 'bg-moving').at(-1), 'test-run');
+  assert.ok(rows[1].includes('<h3 class="bggroup">More</h3><label class="tile bgtile" data-bg="test-run">'), 'an unlisted scene goes under More');
   assert.ok(rows[0].includes('<span class="bgname">Test ground</span>') && rows[0].includes(still.glyph));
   assert.ok(!rows[1].includes('test-bg') && !rows[0].includes('test-run'));
 });
