@@ -1,13 +1,11 @@
 // Subject scene: the subject's icons composed into one still picture, re-laid out on resize.
-// The seed picks one of the subject's fixed variants (icon-scene.js). In the board corner it
-// draws the main icon alone, which the host's CSS sizes and fades like the category art.
+// The seed picks one of the subject's fixed variants (icon-scene.js).
 
 import { makeRng } from '../rng.js';
-import { CORNERS } from '../art.js';
 import { iconMarkup, iconsFor, layoutScene, sceneColors, variantOf, withHero } from './icon-scene.js';
 import { hostSize } from './frame-loop.js';
 
-/** @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number, corner?:boolean}} BackgroundOptions */
+/** @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number}} BackgroundOptions */
 
 const NS = 'http://www.w3.org/2000/svg';
 
@@ -25,15 +23,6 @@ export function start(host, opts) {
   const markup = new Map(ids.map(id => [id, iconMarkup(id)]));
   const svg = document.createElementNS(NS, 'svg');
   svg.setAttribute('aria-hidden', 'true');
-  if (opts.corner) {
-    // The corner and colour come from the variant; the colours are the category art's four.
-    const rng = makeRng(seed), k = rng.int(4), c = colors.length > 4 ? colors[1 + rng.int(4)] : colors[0];
-    svg.setAttribute('viewBox', '0 0 64 64');
-    svg.style.cssText = `--ax:${CORNERS[k][0]};--ay:${CORNERS[k][1]}`;
-    svg.innerHTML = `<g fill="${c}" color="${c}" data-icon="${ids[0]}">${markup.get(ids[0])}</g>`;
-    host.appendChild(svg);
-    return () => svg.remove();
-  }
   svg.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;overflow:hidden';
   host.appendChild(svg);
   let W = 0, H = 0;

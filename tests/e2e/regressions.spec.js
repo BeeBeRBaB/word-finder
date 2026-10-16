@@ -127,7 +127,7 @@ test('the board and background from a first visit come back offline', async ({ p
   });
   await openBoard(page, '/');
   const letters = await page.locator('#letters').textContent();
-  const drawn = page.locator('#bg canvas, #bgside canvas');
+  const drawn = page.locator('#bg canvas');
   await expect(drawn).not.toHaveCount(0);
   expect(await page.evaluate(controlled)).toBe(true);
   await expect.poll(() => page.evaluate(async () => {

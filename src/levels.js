@@ -3,7 +3,7 @@
 // catalog, so every device deals the same level. Changing a hash here, or adding a category
 // or subject, re-deals every account's unplayed levels.
 import { makeRng, fnv1a } from './rng.js';
-import { safeStore } from './storage.js';
+import { safeStore, isRecord } from './storage.js';
 import { DIFFICULTY_NAMES } from './scoring.js';
 import { PRESETS } from './layout.js';
 
@@ -58,8 +58,6 @@ const isText = (s) => typeof s === 'string' && s.length > 0;
 const isDifficulty = (d) => typeof d === 'string' && Object.keys(DIFFICULTY_NAMES).includes(d);
 /** A board width this build deals. @param {unknown} n @returns {n is number} */
 const isSize = (n) => Object.values(PRESETS).some(p => p.size === n);
-/** @param {unknown} o @returns {o is Record<string, unknown>} */
-const isRecord = (o) => !!o && typeof o === 'object' && !Array.isArray(o);
 
 /** @param {number} level @returns {void} */
 function checkLevel(level) {

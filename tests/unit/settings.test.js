@@ -10,7 +10,6 @@ test('a first visit gets the defaults', () => {
   assert.equal(DEFAULTS.difficulty, 'normal');
   assert.equal(DEFAULTS.play, 'random', 'levels are opt-in');
   assert.equal(DEFAULTS.bgmode, 'theme', 'each theme brings its own background');
-  assert.equal(DEFAULTS.area, 'full');
 });
 
 test('the background is chosen by theme, at random or by hand, and the choice is remembered', () => {
@@ -32,12 +31,10 @@ test('a record from before the mode keeps a background the player picked', () =>
   // A stored mode stands, whatever the art.
   assert.equal(from({ art: 'aurora', bgmode: 'theme' }).bgmode, 'theme');
   assert.equal(from({ art: 'illustrated', bgmode: 'manual' }).bgmode, 'manual');
-  // A stored area stays as it was; only a new player gets Full screen.
-  assert.equal(from({ art: 'aurora', area: 'list' }).area, 'list');
-  assert.equal(makeSettings({ store: memStore() }).get().area, 'full');
-  // A record from before the area had the art where Word list puts it.
-  assert.deepEqual([from({ art: 'pixel', sound: true }).area, from({ art: 'illustrated' }).area], ['list', 'list']);
-  assert.equal(from({ art: 'pixel', bgmode: 'manual' }).area, 'full', 'only a record from before the mode is migrated');
+  // The retired Background area is dropped, whichever it was, and nothing else with it.
+  const old = from({ bgmode: 'manual', art: 'aurora', area: 'list', sound: false });
+  assert.equal('area' in old, false);
+  assert.deepEqual([old.bgmode, old.art, old.sound], ['manual', 'aurora', false]);
 });
 
 test('the New game side is remembered, and only random or levels', () => {

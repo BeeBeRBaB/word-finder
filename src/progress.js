@@ -9,7 +9,7 @@
 // words not yet drawn this cycle; drawing the last one refills it and counts a cycle. That
 // is also why there is no "max word usage" threshold to tune: no word can be drawn twice
 // until every word has been drawn once.
-import { safeStore } from './storage.js';
+import { safeStore, isRecord } from './storage.js';
 
 export const KEY = 'wordfinder-progress-v1';
 
@@ -30,9 +30,6 @@ const empty = () => ({ v: 1, puzzles: 0, favourLeastSeen: true, bags: {}, sizes:
 
 /** @param {unknown} n @returns {n is number} */
 const isCount = (n) => typeof n === 'number' && Number.isFinite(n) && n >= 0;
-
-/** @param {unknown} o @returns {o is Record<string, unknown>} */
-const isRecord = (o) => !!o && typeof o === 'object' && !Array.isArray(o);
 
 /** Bytes to base64. Hand-rolled because this module runs in the browser, where `Buffer`
  * does not exist and `btoa` would need a binary string built first anyway.

@@ -1,15 +1,14 @@
-// WCAG contrast of what sits over a background, for every background x area x shape x look, a
+// WCAG contrast of what sits over a background, for every background x shape x look, a
 // theme in one flavour (the animations take their colours from the look, so each is run in it).
 // Each frame is captured at full opacity over a black and a white ground, which gives every
 // pixel's colour and coverage, so any host opacity is composited in the math. So is everything
 // the page paints between the background and the glyph (a halo, a plate, the see-through board
-// in Full screen, its pills), captured the same way. What counts is the ring within 2px of each
+// board, its pills), captured the same way. What counts is the ring within 2px of each
 // glyph, where legibility is decided. 95% of that ring must reach 4.5:1 for text (3:1 if large)
-// and 3:1 for icons. The board's letters are measured over a Full screen background and over the
-// still art in the board corner, whose "host opacity" is --art-board. Prints the highest host
+// and 3:1 for icons. The still art's "host opacity" is --art-board. Prints the highest host
 // opacity that would pass as well. Exits 1 if the stylesheet's opacity fails anywhere.
 //   node tools/sims/backgrounds/contrast.mjs
-//   ONLY=aurora,starfield MODES=dark AREAS=full SHAPES=phone LOOKS=sticker/dark node tools/sims/backgrounds/contrast.mjs
+//   ONLY=aurora,starfield MODES=dark SHAPES=phone LOOKS=sticker/dark node tools/sims/backgrounds/contrast.mjs
 //   NOHALO=1 strips text-shadow, to see what a halo is buying; CSS='...' adds a rule, to try one;
 //   RING=3 widens the ring; DEBUG=<dir> saves the masks and prints each box; SUBJECT=nature/fish deals it.
 import { chromium } from '@playwright/test';
@@ -21,7 +20,6 @@ import { findAndDrag } from '../../../tests/e2e/helpers.js';
 const list = (k, all) => (process.env[k] ? process.env[k].split(',') : all);
 const IDS = list('ONLY', BACKGROUNDS.filter(b => b.id !== 'none').map(b => b.id));
 const MODES = list('MODES', PREFS);
-const AREAS = list('AREAS', ['list', 'full']);
 const ALL_SHAPES = { desktop: [1440, 900], phone: [390, 664], landscape: [844, 390] };
 const SHAPES = list('SHAPES', Object.keys(ALL_SHAPES));
 // Each look carries its flavour, so MODES narrows the looks rather than adding a loop.
@@ -33,22 +31,14 @@ const WORKERS = Number(process.env.WORKERS || 3);
 const STEPS = [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 0.95, 1];
 const RING = Number(process.env.RING || 2);
 
-// What sits over the background in each area. Icons need 3:1, as non-text.
-const ROLES = {
-  list: ['.w', '#listhdr b', '#count', '#reveal'],
-  full: ['#kicker', '#category', '#subject', '#newbtn', '#appearance svg', '#catbtn svg'],
-  board: ['#letters .cell'],
-};
+// What sits over the background: the word list, the header and the board. Icons need 3:1, as non-text.
+const ROLES = ['.w', '#listhdr b', '#count', '#reveal', '#kicker', '#category', '#subject', '#newbtn', '#appearance svg', '#catbtn svg', '#letters .cell'];
 const ICONS = ['#appearance svg', '#catbtn svg'];
 
-// A background with a module runs in either area. Plain still art in Word list sits in the board
-// corner, under the letters, or in the landscape rail below the list, behind no text (run() skips
-// that). So does the Subject scene in Word list on a phone held upright.
 const jobs = [];
-for (const shape of SHAPES) for (const area of AREAS) for (const id of IDS) {
+for (const shape of SHAPES) for (const id of IDS) {
   const bg = BACKGROUNDS.find(b => b.id === id);
-  const corner = area === 'list' && (!bg?.file || (id === 'scene' && shape === 'phone'));
-  if (bg) jobs.push({ shape, area, bg, corner });
+  if (bg) jobs.push({ shape, bg });
 }
 
 console.log(`${jobs.length} jobs, each through ${LOOKS.length} looks: ${LOOKS.join(' ')}`);
@@ -81,9 +71,9 @@ function select() {
 /** @type {Record<string, number>} */
 const ceiling = {};
 
-/** One background x area x shape, through every look. */
+/** One background x shape, through every look. */
 async function run(job, math) {
-  const { shape, area, bg, corner } = job;
+  const { shape, bg } = job;
   const [w, h] = ALL_SHAPES[shape];
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, serviceWorkers: 'block', hasTouch: w < 600 });
   const page = await ctx.newPage();
@@ -95,26 +85,19 @@ async function run(job, math) {
     w.__freeze = () => { held = []; window.requestAnimationFrame = (cb) => { held.push(cb); return 0; }; };
     // Each held frame is released once: releasing one twice would start a second loop.
     w.__thaw = () => { window.requestAnimationFrame = raf; const h = held; held = []; for (const cb of h) raf(cb); };
-  }, JSON.stringify({ bgmode: 'manual', art: bg.id, area }));
+  }, JSON.stringify({ bgmode: 'manual', art: bg.id }));
   await page.goto(`${site.url}/?seed=1&subject=${SUBJECT}`);
   await page.waitForSelector('.cell');
-  // The module draws into the board corner (#art) for the Subject scene there, else into its host.
-  const host = corner ? '#art' : area === 'full' ? '#bg' : '#bgside';
-  const layer = bg.file && !corner ? `${host} > *` : '#art svg';
-  await page.waitForSelector(layer, { state: corner ? 'attached' : 'visible' });
-  if (corner && await page.getAttribute('#app', 'data-art') === 'rail') {
-    console.log(`skip ${bg.id.padEnd(13)} ${area.padEnd(4)} ${shape.padEnd(9)} in the rail, behind no text`);
-    await ctx.close();
-    return;
-  }
-  const roles = corner ? ROLES.board : [...ROLES.list, ...(area === 'full' ? [...ROLES.full, ...ROLES.board] : [])];
+  // A module draws into #bg; the still category art is #art's.
+  const layer = bg.file ? '#bg > *' : '#art svg';
+  await page.waitForSelector(layer, { state: 'visible' });
   // Four finds, one in each pill colour, before the list is faked: a find re-renders it.
   const words = (await page.locator('#list .w').allTextContents()).slice(0, 4);
   for (const w of words) await findAndDrag(page, w.trim().toUpperCase());
   await page.mouse.move(0, 0);
   await page.waitForTimeout(1200);   // the find's glow and confetti
   await page.evaluate(() => document.querySelectorAll('.w').forEach((e, i) => { if (i % 2) e.className = 'w done'; }));
-  const sel = roles.join(',');
+  const sel = ROLES.join(',');
   const tag = (css) => page.addStyleTag({ content: css });
   const ground = (c) => page.evaluate((c) => { document.documentElement.style.background = c; document.body.style.background = c; }, c);
   if (process.env.NOHALO) await tag('*{text-shadow:none!important}');
@@ -135,7 +118,7 @@ async function run(job, math) {
       return true;
     }, [look, layer]);
     if (moved && bg.file) await page.waitForSelector(`${layer}:not([data-old])`, { timeout: 5000 }).catch(() => {});
-    if (roles.includes(ROLES.board[0])) await page.evaluate(select);
+    await page.evaluate(select);
     const info = await page.evaluate(([sel, icons, layer]) => {
       const r = document.documentElement;
       return {
@@ -152,12 +135,12 @@ async function run(job, math) {
               x: Math.max(0, Math.floor(b.x) - 4), y: Math.max(0, Math.floor(b.y) - 4), w: Math.ceil(b.width) + 8, h: Math.ceil(b.height) + 8 };
           }),
       };
-    }, [sel, ICONS, bg.file && !corner ? host : '#art svg']);
+    }, [sel, ICONS, bg.file ? '#bg' : '#art svg']);
     // A host's opacity, or the still art's own (--art-board), which the frames below leave out.
     opacity = info.opacity;
     // Glyphs alone, in black on white.
     await ground('#ffffff');
-    const hideBg = await tag(`#bg,#bgside,#art{visibility:hidden!important} #settings,#toast{display:none}`);
+    const hideBg = await tag(`#bg,#art{visibility:hidden!important} #settings,#toast{display:none}`);
     let s = await tag(`body *{visibility:hidden!important} :is(${sel}),:is(${sel}) *{visibility:visible!important;color:#000!important;`
       + `text-shadow:none!important;border-color:transparent!important;background:transparent!important;box-shadow:none!important}`);
     const glyph = (await page.screenshot()).toString('base64');
@@ -169,25 +152,17 @@ async function run(job, math) {
     await s.evaluate(n => n.remove());
     // Everything painted over the background but the glyphs (a halo, a plate, the board, a pill),
     // over a black ground and a white one: what differs between them is how much shows through.
-    // Over corner art, the board's own surface is beneath the art, so it is left out here.
     const over = [];
     for (const c of ['#000000', '#ffffff']) {
       await ground(c);
-      s = await tag(`:is(${sel}){color:transparent!important}${corner ? ' #gridbox{background:none!important}' : ''}`);
+      s = await tag(`:is(${sel}){color:transparent!important}`);
       over.push((await page.screenshot()).toString('base64'));
       await s.evaluate(n => n.remove());
     }
-    // What the background is drawn on: the ground, or under corner art the board's surface.
-    let base = '';
-    if (corner) {
-      s = await tag('body *{visibility:hidden!important} #gridbox{visibility:visible!important} #gridbox *{visibility:hidden!important}');
-      base = (await page.screenshot()).toString('base64');
-      await s.evaluate(n => n.remove());
-    }
     await hideBg.evaluate(n => n.remove());
-    if (process.env.DEBUG) for (const [n, b] of [['glyph', glyph], ['over', over[0]]]) (await import('node:fs')).writeFileSync(`${process.env.DEBUG}/${bg.id}-${look.replace('/', '-')}-${area}-${shape}-${n}.png`, Buffer.from(b, 'base64'));
+    if (process.env.DEBUG) for (const [n, b] of [['glyph', glyph], ['over', over[0]]]) (await import('node:fs')).writeFileSync(`${process.env.DEBUG}/${bg.id}-${look.replace('/', '-')}-${shape}-${n}.png`, Buffer.from(b, 'base64'));
     // The background alone at full opacity, over black and over white.
-    s = await tag(`#app{visibility:hidden} #bgside,#art{visibility:visible} #settings,#toast{display:none} #bg,#bgside,#art svg{opacity:1!important}`);
+    s = await tag(`#app{visibility:hidden} #art{visibility:visible} #settings,#toast{display:none} #bg,#art svg{opacity:1!important}`);
     const frames = [];
     for (let f = 0; f < (bg.animated ? FRAMES : 1); f++) {
       if (bg.animated) {
@@ -204,7 +179,7 @@ async function run(job, math) {
     await ground('');
     if (bg.animated) await page.evaluate(() => /** @type {any} */ (window).__thaw());
 
-    const res = await math.evaluate(async ([glyphPng, overPngs, basePng, frames, info, steps, cur, ring, pillPng]) => {
+    const res = await math.evaluate(async ([glyphPng, overPngs, frames, info, steps, cur, ring, pillPng]) => {
       /** @param {string} b64 */
       const pixels = async (b64) => {
         const img = new Image(); img.src = `data:image/png;base64,${b64}`; await img.decode();
@@ -212,7 +187,6 @@ async function run(job, math) {
         x.drawImage(img, 0, 0); return { d: x.getImageData(0, 0, img.width, img.height).data, w: img.width, h: img.height };
       };
       const G = await pixels(glyphPng), O0 = await pixels(overPngs[0]), O1 = await pixels(overPngs[1]), P = await pixels(pillPng);
-      const U = basePng ? await pixels(basePng) : null;
       const F = await Promise.all(frames.map(async ([k, w]) => [await pixels(k), await pixels(w)]));
       /** @param {string} s */
       const parse = (s) => { const m = s.startsWith('#') ? [1, 3, 5].map(i => parseInt(s.slice(i, i + 2), 16)) : s.match(/[\d.]+/g).map(Number); return [m[0], m[1], m[2], m[3] ?? 1]; };
@@ -239,11 +213,10 @@ async function run(job, math) {
         F.forEach(([K, W], f) => {
           const by = steps.map(() => /** @type {number[]} */ ([]));
           for (const i of zone) {
-            const under = U ? [0, 1, 2].map(c => U.d[i * 4 + c]) : B;
-            const full = [0, 1, 2].map(c => K.d[i * 4 + c] + (W.d[i * 4 + c] - K.d[i * 4 + c]) / 255 * under[c]);
+            const full = [0, 1, 2].map(c => K.d[i * 4 + c] + (W.d[i * 4 + c] - K.d[i * 4 + c]) / 255 * B[c]);
             steps.forEach((a, k) => {
               // The background at opacity a, then whatever the page paints over it.
-              const px = full.map((v, c) => O0.d[i * 4 + c] + (O1.d[i * 4 + c] - O0.d[i * 4 + c]) / 255 * (under[c] + a * (v - under[c])));
+              const px = full.map((v, c) => O0.d[i * 4 + c] + (O1.d[i * 4 + c] - O0.d[i * 4 + c]) / 255 * (B[c] + a * (v - B[c])));
               const t = px.map((v, c) => T[c] * T[3] + v * (1 - T[3]));
               const lt = L(t), lp = L(px);
               by[k].push((Math.max(lt, lp) + 0.05) / (Math.min(lt, lp) + 0.05));
@@ -259,7 +232,7 @@ async function run(job, math) {
         const opens = zone.map(i => (O1.d[i * 4 + 1] - O0.d[i * 4 + 1]) / 255).sort((a, b) => b - a);
         return { sel: box.sel, need: box.need, score, max, frame: at, dbg: `zone ${zone.length} open p5 ${opens[Math.floor(opens.length * 0.05)]?.toFixed(2)} box ${box.x},${box.y},${box.w}x${box.h}` };
       });
-    }, [glyph, over, base, frames, info, [...new Set([...STEPS, opacity])].sort((a, b) => a - b), opacity, RING, pills]);
+    }, [glyph, over, frames, info, [...new Set([...STEPS, opacity])].sort((a, b) => a - b), opacity, RING, pills]);
     if (process.env.DEBUG) for (const r of res) console.log(look, r.sel, r.score.toFixed(2), r.dbg);
     for (const r of res) {
       const o = worst[r.sel] ??= { score: 99, at: '', need: r.need, max: 1 };
@@ -272,14 +245,13 @@ async function run(job, math) {
   const bad = rows.filter(([, v]) => v.score < v.need);
   failed += bad.length;
   const [lk, lv] = rows.reduce((a, b) => (b[1].score - b[1].need < a[1].score - a[1].need ? b : a));
-  // The board's letters get their own ceiling: in Full screen the board's solid share is tuned
-  // by it, and over corner art it is --art-board's.
+  // The board's letters get their own ceiling: the board's solid share is tuned by it.
   const cells = rows.filter(([k]) => k.startsWith('cell')), rest = rows.filter(([k]) => !k.startsWith('cell'));
   const top = (rs) => (rs.length ? Math.min(...rs.map(([, v]) => v.max)) : 1);
   const max = Math.min(top(cells), top(rest));
-  if (rest.length) ceiling[`${bg.id} ${area}`] = Math.min(ceiling[`${bg.id} ${area}`] ?? 1, top(rest));
-  if (cells.length) ceiling[`${bg.id} ${area} board`] = Math.min(ceiling[`${bg.id} ${area} board`] ?? 1, top(cells));
-  const lines = [`${bad.length ? 'FAIL' : 'ok  '} ${bg.id.padEnd(13)} ${area.padEnd(4)} ${shape.padEnd(9)} at ${opacity}: `
+  if (rest.length) ceiling[bg.id] = Math.min(ceiling[bg.id] ?? 1, top(rest));
+  if (cells.length) ceiling[`${bg.id} board`] = Math.min(ceiling[`${bg.id} board`] ?? 1, top(cells));
+  const lines = [`${bad.length ? 'FAIL' : 'ok  '} ${bg.id.padEnd(13)} ${shape.padEnd(9)} at ${opacity}: `
     + `lowest ${lv.score.toFixed(2)}/${lv.need} ${lk} (${lv.at}); passes up to ${max}`
     + (cells.length && rest.length ? `, the board's letters up to ${top(cells)}` : '')];
   for (const [k, v] of bad) lines.push(`     ${k} ${v.score.toFixed(2)} < ${v.need} at ${v.at}`);

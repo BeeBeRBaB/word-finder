@@ -115,7 +115,7 @@ test('the numbers shared between a module and the stylesheet agree', () => {
 test('the illustration tones in the stylesheet are art.js\'s', async () => {
   const { TONE } = await import('../../src/art.js');
   for (const [k, v] of Object.entries(TONE)) {
-    assert.equal(num(css, new RegExp(`#art \\.t-${k},#railart \\.t-${k}\\{fill-opacity:([\\d.]+)\\}`), `#art .t-${k}`), v, `tone ${k}`);
+    assert.equal(num(css, new RegExp(`#art \\.t-${k}\\{fill-opacity:([\\d.]+)\\}`), `#art .t-${k}`), v, `tone ${k}`);
   }
 });
 

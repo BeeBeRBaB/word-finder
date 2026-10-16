@@ -3,27 +3,27 @@ import { handPickedBackground, pickBackground } from './helpers.js';
 
 test.use({ serviceWorkers: 'block' });
 // The category art shows for the Illustrated and Pixel art backgrounds; a new player's Theme mode
-// may show another, so these start from Illustrated behind the word list.
+// may show another, so these start from Illustrated.
 test.beforeEach(({ page }) => handPickedBackground(page));
 
-test('desktop shows the category art beside the board, under the word list', async ({ page }) => {
+test('desktop shows the category art large in the page\'s bottom corner', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/?seed=1&subject=space/jupiter');
   await page.waitForSelector('#letters .cell');
-  await expect(page.locator('#app')).toHaveAttribute('data-art', 'rail');
-  await expect(page.locator('#railart svg')).toBeVisible();
-  await expect(page.locator('#railart svg')).toHaveAttribute('data-motif', 'space');
-  await expect(page.locator('#art')).toBeHidden();
-  // Never behind a letter: the rail art starts below the last word.
-  const list = await page.locator('#list').boundingBox(), art = await page.locator('#railart').boundingBox();
-  expect(/** @type {any} */ (art).y).toBeGreaterThanOrEqual(/** @type {any} */ (list).y + /** @type {any} */ (list).height);
+  await expect(page.locator('#art svg')).toBeVisible();
+  await expect(page.locator('#art svg')).toHaveAttribute('data-motif', 'space');
+  // It runs off the bottom right edge, past the board.
+  const art = /** @type {any} */ (await page.locator('#art svg').boundingBox());
+  const board = /** @type {any} */ (await page.locator('#gridbox').boundingBox());
+  expect(art.x + art.width).toBeGreaterThan(1440);
+  expect(art.y + art.height).toBeGreaterThan(900);
+  expect(art.x + art.width).toBeGreaterThan(board.x + board.width);
 });
 
-test('a phone shows it faintly behind the board instead', async ({ page }) => {
+test('a phone shows it faintly behind the board', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 664 });
   await page.goto('/?seed=1&subject=animals/dogs');
   await page.waitForSelector('#letters .cell');
-  await expect(page.locator('#app')).toHaveAttribute('data-art', 'board');
   await expect(page.locator('#art svg')).toHaveAttribute('data-motif', 'animals');
   await expect(page.locator('#art svg')).toBeVisible();
   // Under the letters, and it takes no clicks: a drag still starts on the grid.
@@ -37,7 +37,7 @@ test('a new subject redraws the art for its category', async ({ page }) => {
   await page.locator('#catbtn').click();
   await page.locator('#picker-select').selectOption('food');
   await page.locator('#picker-start').click();
-  await expect(page.locator('#railart svg')).toHaveAttribute('data-motif', 'food');
+  await expect(page.locator('#art svg')).toHaveAttribute('data-motif', 'food');
 });
 
 test('the Background page switches the art and is remembered', async ({ page }) => {
@@ -47,13 +47,12 @@ test('the Background page switches the art and is remembered', async ({ page }) 
   await page.locator('#appearance').click();
   await page.locator('#settings-bg').click();
   await pickBackground(page, 'pixel');
-  await expect(page.locator('#railart svg')).toHaveAttribute('data-kind', 'pixel');
+  await expect(page.locator('#art svg')).toHaveAttribute('data-kind', 'pixel');
   await pickBackground(page, 'none');
-  await expect(page.locator('#railart svg')).toHaveCount(0);
   await expect(page.locator('#art svg')).toHaveCount(0);
   await page.reload();
   await page.waitForSelector('#letters .cell');
-  await expect(page.locator('#railart svg')).toHaveCount(0);
+  await expect(page.locator('#art svg')).toHaveCount(0);
   await page.locator('#appearance').click();
   await expect(page.locator('#settings-bg')).toHaveAccessibleName('Background None');
   await page.locator('#settings-bg').click();

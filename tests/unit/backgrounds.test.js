@@ -78,12 +78,10 @@ test('a new palette restarts it, and a new deal restarts only a perDeal backgrou
   await sd.show('scene', host('bg'), OPTS);
   await sd.show('scene', host('bg'), { ...OPTS, seed: 2 });
   await sd.show('scene', host('bg'), { ...OPTS, seed: 2, subject: 'food/fruit' });
-  // The board corner is another host, so an orientation flip restarts the scene there.
-  await sd.show('scene', host('art'), { ...OPTS, seed: 2, subject: 'food/fruit', corner: true });
   await sd.show('drift', host('bg'), OPTS);
   await sd.show('drift', host('bg'), { ...OPTS, seed: 3 });
   assert.deepEqual(g.log, ['start subject-scene bg', 'stop subject-scene', 'start subject-scene bg', 'stop subject-scene',
-    'start subject-scene bg', 'stop subject-scene', 'start subject-scene art', 'stop subject-scene',
+    'start subject-scene bg', 'stop subject-scene',
     'start drifting-icons bg', 'stop drifting-icons', 'start drifting-icons bg']);
 });
 

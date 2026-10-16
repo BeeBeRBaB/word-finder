@@ -523,22 +523,18 @@ export const ILLUSTRATIONS = {
 /** @type {Record<string, number>} */
 export const TONE = { a: 0.72, b: 1, c: 0.4 };
 
-// Where the corner-anchored board art sits, [left, top] by artFor's `corner`: it bleeds a
-// tenth past two edges, so it reads as scenery rather than a stamp in the middle of the letters.
-export const CORNERS = [['-10%', '-10%'], ['32%', '-10%'], ['-10%', '32%'], ['32%', '32%']];
-
 /**
- * The art for a subject: its category's sprite, and a hue, mirror and corner that vary by
+ * The art for a subject: its category's sprite, and a hue and mirror that vary by
  * subject so two subjects in one category do not look identical. Null for an unknown category.
  * @param {string} subjectId e.g. 'space/jupiter'
- * @returns {{motif:string, rows:string[], hue:number, flip:boolean, corner:number}|null}
+ * @returns {{motif:string, rows:string[], hue:number, flip:boolean}|null}
  */
 export function artFor(subjectId) {
   const motif = categoryOf(subjectId);
   const rows = SPRITES[motif];
   if (!rows) return null;
   const h = stringHash(subjectId);
-  return { motif, rows, hue: h % 4 + 1, flip: ((h >>> 3) & 1) === 1, corner: (h >>> 5) % 4 };
+  return { motif, rows, hue: h % 4 + 1, flip: ((h >>> 3) & 1) === 1 };
 }
 
 /** The sprite as SVG rects in a 16x16 viewBox, one rect per filled pixel, mirrored if asked.

@@ -6,10 +6,9 @@ import { makeRng } from './rng.js';
 import { normalizeTheme } from './appearance.js';
 
 /**
- * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed:number, corner?:boolean}} BackgroundOptions
+ * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed:number}} BackgroundOptions
  * `colors` are the theme's six confetti colours, which the subject backgrounds draw in (the
  * others keep their own); `subject` and `seed` are the dealt puzzle's.
- * `corner` asks a scene for its main icon alone, placed by the host's CSS like the category art.
  */
 /** @typedef {{start:(host:HTMLElement, opts:BackgroundOptions)=>()=>void}} BackgroundModule */
 /**

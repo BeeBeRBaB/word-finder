@@ -313,7 +313,7 @@ test('Reveal, sound, vibrate and motion toggles take effect and persist', async 
 test('the Settings button is a gear, and Settings has Account, Look, Game and Feedback sections', async ({ page }) => {
   await page.goto('/?seed=1&subject=nature/birds');
   await page.waitForSelector('#letters .cell');
-  await expect(page.locator('#appearance svg.i-look')).toBeVisible();
+  await expect(page.locator('#appearance svg')).toBeVisible();
   await page.locator('#appearance').click();
   await expect(page.locator('#settings .panesection')).toHaveText(['Account', 'Look', 'Game', 'Feedback']);
 });

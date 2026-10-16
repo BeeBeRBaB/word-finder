@@ -17,15 +17,15 @@ test('every catalog category has a well-formed 16x16 sprite, and no sprite is or
 test('art is stable per subject, varies across subjects, and is null for an unknown category', () => {
   assert.deepEqual(artFor('space/jupiter'), artFor('space/jupiter'));
   const looks = new Set(['space/jupiter', 'space/mars', 'space/comets', 'space/galaxies', 'space/rockets', 'space/moons']
-    .map(id => { const a = /** @type {any} */ (artFor(id)); return `${a.hue}${a.flip}${a.corner}`; }));
+    .map(id => { const a = /** @type {any} */ (artFor(id)); return `${a.hue}${a.flip}`; }));
   assert.ok(looks.size >= 3, 'six subjects in one category should not all look alike');
   const a = /** @type {any} */ (artFor('space/jupiter'));
   assert.equal(a.motif, 'space');
-  assert.ok(a.hue >= 1 && a.hue <= 4 && a.corner >= 0 && a.corner <= 3);
+  assert.ok(a.hue >= 1 && a.hue <= 4);
   assert.equal(artFor('nonsense/thing'), null);
 });
 
-// A signed shift once made the corner negative for hashes above 2^31 (animals/dogs among
+// A signed shift once made a choice negative for hashes above 2^31 (animals/dogs among
 // them) and threw mid-deal, leaving the board "Unavailable". Every real subject, checked.
 test('every real subject gets art with in-range choices', async () => {
   const { readdirSync } = await import('node:fs');
@@ -36,7 +36,7 @@ test('every real subject gets art with in-range choices', async () => {
     for (const id of Object.keys(WORDS)) {
       const a = /** @type {any} */ (artFor(id));
       assert.ok(a, `no art for ${id}`);
-      assert.ok([0, 1, 2, 3].includes(a.corner) && [1, 2, 3, 4].includes(a.hue) && typeof a.flip === 'boolean', `${id}: ${JSON.stringify({ corner: a.corner, hue: a.hue, flip: a.flip })}`);
+      assert.ok([1, 2, 3, 4].includes(a.hue) && typeof a.flip === 'boolean', `${id}: ${JSON.stringify({ hue: a.hue, flip: a.flip })}`);
       n++;
     }
   }

@@ -1,7 +1,7 @@
 // Rendering. Everything here writes to the DOM and returns nothing; it holds no
 // state of its own, so what you see is a pure function of the arguments passed in.
 import { cap, lineIndices } from './puzzle.js';
-import { artFor, spriteRects, ILLUSTRATIONS, CORNERS } from './art.js';
+import { artFor, spriteRects, ILLUSTRATIONS } from './art.js';
 
 /**
  * @typedef {import('./puzzle.js').Puzzle} Puzzle
@@ -16,7 +16,7 @@ import { artFor, spriteRects, ILLUSTRATIONS, CORNERS } from './art.js';
  *   subject:HTMLElement, category:HTMLElement, win:HTMLElement, winmsg:HTMLElement,
  *   winstats:HTMLElement,
  *   picker:HTMLElement, winclose:HTMLElement, appearance:HTMLElement, solved:HTMLElement,
- *   art:HTMLElement, railart:HTMLElement,
+ *   art:HTMLElement,
  * }} Els
  */
 
@@ -143,7 +143,7 @@ export function renderList(els, puzzle, state, justFound) {
   });
 }
 
-/** Draw the subject's category art into both hosts; CSS and placeArt decide which shows.
+/** Draw the subject's category art into #art.
  * `style` is the Background setting: an illustration (pixel sprite where a category has none),
  * the pixel sprite, or nothing for any other choice (none, or a background module).
  * @param {Els} els @param {string} subjectId @param {string} style
@@ -151,29 +151,14 @@ export function renderList(els, puzzle, state, justFound) {
 export function renderArt(els, subjectId, style) {
   const a = artFor(subjectId);
   if (!a || (style !== 'illustrated' && style !== 'pixel')) {
-    // Only its own drawings: the Subject scene background can be drawing in the board corner.
-    for (const s of [...els.art.querySelectorAll('svg[data-kind]'), ...els.railart.querySelectorAll('svg[data-kind]')]) s.remove();
+    els.art.textContent = '';
     return;
   }
   const illo = style === 'illustrated' ? ILLUSTRATIONS[a.motif] : undefined;
-  const [left, top] = CORNERS[a.corner];
   const body = illo
     ? (a.flip ? `<g transform="translate(64 0) scale(-1 1)">${illo}</g>` : illo)
     : spriteRects(a.rows, a.flip);
   const kind = illo ? 'illustrated' : 'pixel';
-  const svg = (/** @type {string} */ fit, /** @type {string} */ css) =>
-    `<svg viewBox="0 0 ${illo ? 64 : 16} ${illo ? 64 : 16}" preserveAspectRatio="${fit}" class="hue-${a.hue}" data-motif="${a.motif}" data-kind="${kind}"${illo ? '' : ' shape-rendering="crispEdges"'}${css}>${body}</svg>`;
-  // The corner as variables, not left/top, so the Full screen area can place the art itself.
-  els.art.innerHTML = svg('xMidYMid meet', ` style="--ax:${left};--ay:${top}"`);
-  els.railart.innerHTML = svg(a.flip ? 'xMinYMax meet' : 'xMaxYMax meet', '');
-}
-
-// Below this the rail's spare height would show the sprite as a speck; the board takes it.
-const RAIL_ART_MIN = 110;
-
-/** Rail when the landscape rail has real room under the list, board otherwise. Measured, not
- * computed: the list's height depends on the words and the font.
- * @param {Els} els @param {LayoutDims} dims @returns {void} */
-export function placeArt(els, dims) {
-  els.app.dataset.art = dims.landscape && els.railart.clientHeight >= RAIL_ART_MIN ? 'rail' : 'board';
+  els.art.innerHTML = `<svg viewBox="0 0 ${illo ? 64 : 16} ${illo ? 64 : 16}" class="hue-${a.hue}" `
+    + `data-motif="${a.motif}" data-kind="${kind}"${illo ? '' : ' shape-rendering="crispEdges"'}>${body}</svg>`;
 }

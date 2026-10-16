@@ -6,14 +6,14 @@ import { loadCategory, loadSubject, SubjectLoadError } from './subjects.js';
 import { makeRng, resolveSeed, resolveTarget, stringHash } from './rng.js';
 import { buildPuzzle, cap, matchWord, snap, spanOf } from './puzzle.js';
 import { computeLayout, fillsScreen, pickPreset, PRESETS, mixFor } from './layout.js';
-import { applyLayout, renderGrid, renderList, renderPills, renderFoundCells, renderSolvedShape, renderArt, placeArt } from './view.js';
+import { applyLayout, renderGrid, renderList, renderPills, renderFoundCells, renderSolvedShape, renderArt } from './view.js';
 import { burst, pop } from './effects.js';
 import { makeStorage } from './storage.js';
 import { makeProgress, chooseSubject } from './progress.js';
 import { makeAppearance } from './appearance.js';
 import { makeSettings } from './settings.js';
 import { makePicker } from './picker.js';
-import { makeBackdrop, findBackground, resolveBackground, RANDOM_POOL } from './backgrounds.js';
+import { makeBackdrop, resolveBackground, RANDOM_POOL } from './backgrounds.js';
 import { manualMarkup, dropMarkup, modeNote, summaryMarkup, KINDS } from './bgpicker.js';
 import { makeSubpage } from './subpage.js';
 import { makePane } from './pane.js';
@@ -91,7 +91,7 @@ const els = {
   app: must('app'), hdr: must('hdr'), gridbox: must('gridbox'), pills: must('pills'), letters: must('letters'), fx: must('fx'),
   list: must('list'), side: must('side'), count: must('count'),
   subject: must('subject'), category: must('category'), win: must('win'), winmsg: must('winmsg'),
-  winstats: must('winstats'), art: must('art'), railart: must('railart'),
+  winstats: must('winstats'), art: must('art'),
   picker: must('picker'), winclose: must('winclose'), appearance: must('appearance'),
   solved: must('solved'),
 };
@@ -190,10 +190,9 @@ function newPuzzle(seed, subject, shape, useBag = true, dealt, level = null, bg)
   if (useBag) progress.noteDraw(subject.id, subject.words, puzzle.words);
   // Random picks again for a new deal, never the last pick; the same board dealt again keeps its own.
   const same = boardBg && seed === currentSeed && subject.id === subjectId;
-  const s = cfg.get();
   showBoard({ puzzle, found: {}, foundOrder: [], seed, subjectId: subject.id, size: shape.size,
     minCell: shape.minCell, category: subject.categoryName, level,
-    bg: bg ?? (same ? boardBg : resolveBackground('random', s.art, appearance.getTheme(), seed, boardBg)) });
+    bg: bg ?? (same ? boardBg : resolveBackground('random', '', appearance.getTheme(), seed, boardBg)) });
   sweep();
 }
 
@@ -217,7 +216,7 @@ function showBoard(b) {
   // A toast is about the board this replaces, and its Undo would restore over this one.
   hideToast();
   layout();   // a new puzzle object, so this rebuilds the cells, found ones and pills
-  showBackdrop();   // after layout: the scene's place depends on the orientation it settles
+  showBackdrop();
   list();
   persist();
 }
@@ -299,7 +298,6 @@ function addFinds(events) {
 /** @returns {void} */
 function layout() {
   if (!state.puzzle) return;
-  const wasLandscape = state.dims.landscape;
   const cs = getComputedStyle(els.app);
   const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
   const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
@@ -310,8 +308,6 @@ function layout() {
     header: els.hdr.offsetHeight,
   });
   applyLayout(els, state.dims);
-  placeArt(els, state.dims);
-  if (state.dims.landscape !== wasLandscape) showBackdrop();   // the scene moves between corner and rail
   // Unchanged means the rebuild would be byte-identical — true on nearly every resize
   // frame. Keyed on the puzzle object, not just its shape, or a new board at the same
   // size would keep the old letters. Size needs no check of its own: only newPuzzle
@@ -350,7 +346,6 @@ function list() {
   if (!state.puzzle) return;
   renderList(els, state.puzzle, state, justFound);
   revealBtn.disabled = state.foundOrder.length === state.puzzle.words.length;
-  placeArt(els, state.dims);   // the list's height decides whether the rail has room
 }
 
 let missTimer = 0;
@@ -905,9 +900,9 @@ function syncThemeColor() {
   const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
   if (themeColorMeta && bg) themeColorMeta.setAttribute('content', bg);
 }
-// One background runs at a time, behind the whole page or behind the word list.
+// One background runs at a time, behind the whole page.
 const backdrop = makeBackdrop();
-const bgFull = must('bg'), bgList = must('bgside');
+const bgHost = must('bg');
 /** The look's six confetti colours, read from the stylesheet so they follow the theme; the
  * subject backgrounds draw in them too. @returns {string[]} */
 function confettiColors() {
@@ -920,22 +915,19 @@ function shownBg() {
   const s = cfg.get();
   return s.bgmode === 'random' && boardBg ? boardBg : resolveBackground(s.bgmode, s.art, appearance.getTheme(), currentSeed);
 }
-/** Run the background showing in its area for the current deal; a still one stops it.
+/** Run the background showing for the current deal; a still one stops it.
  * @returns {void} */
 function showBackdrop() {
-  const s = cfg.get(), id = shownBg();
-  els.app.dataset.bgarea = s.area;
-  // With the list under the board, the still scene keeps the board corner as the category art does.
-  const corner = id === 'scene' && s.area !== 'full' && !state.dims.landscape;
-  // Whether anything is drawn behind the word list, and on Full screen the header: still art
-  // with Word list keeps to the board corner or below the list. The stylesheet rings text if so.
-  els.app.toggleAttribute('data-behind', s.area === 'full' ? id !== 'none' : !!findBackground(id).file && !corner);
+  const id = shownBg();
+  // Whether anything is drawn behind the page: the stylesheet rings the list's text and lets it
+  // through the board if so.
+  els.app.toggleAttribute('data-behind', id !== 'none');
   syncBg();
   if (!subjectId) return;   // nothing dealt yet; the deal calls again
-  void backdrop.show(id, corner ? els.art : s.area === 'full' ? bgFull : bgList, {
+  void backdrop.show(id, bgHost, {
     colors: confettiColors(),
     dark: document.documentElement.dataset.appearance !== 'light', reducedMotion: prefersReducedMotion(),
-    subject: subjectId, seed: currentSeed, corner,
+    subject: subjectId, seed: currentSeed,
   });
 }
 globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').addEventListener?.('change', showBackdrop);
@@ -959,7 +951,7 @@ function syncLook(theme, pref) {
   const on = /** @type {HTMLInputElement|null} */ (lookTiles.querySelector(`input[value="${lookId(theme, pref)}"]`));
   if (on) on.checked = true;
 }
-// The Background page: the mode, the area, and under Manual a Still and an Animated dropdown
+// The Background page: the mode, and under Manual a Still and an Animated dropdown
 // with a radio choosing which of the two shows.
 const bgManual = must('bg-manual'), bgNow = must('settings-bg-now'), bgNote = must('bgmode-note');
 bgManual.innerHTML = manualMarkup();
@@ -1019,7 +1011,7 @@ bgManual.addEventListener('keydown', (e) => {
 /** Draw the background showing now: the category art for a still one, and the backdrop.
  * @returns {void} */
 function applyBackground() {
-  if (subjectId) { renderArt(els, subjectId, shownBg()); placeArt(els, state.dims); }
+  if (subjectId) renderArt(els, subjectId, shownBg());
   showBackdrop();
 }
 /** A pick in either menu is the one that shows, so its row's radio checks too. @param {string} id @returns {void} */
@@ -1157,14 +1149,14 @@ els.appearance.addEventListener('click', () => {
   if (settingsPane.isOpen()) closeSettings(); else openSettings();
 });
 /** Show the stored settings in the pane's controls. Every control under [data-setting] is a
- * settings.js field: a checkbox (data-on/data-off map it to a two-value choice), a radio, a
- * select, or a .seg group of buttons. @returns {void} */
+ * settings.js field: a checkbox (data-on/data-off map it to a two-value choice), a select, or
+ * a .seg group of buttons. @returns {void} */
 function syncSettings() {
   const now = /** @type {Record<string, unknown>} */ (cfg.get());
   for (const el of settings.querySelectorAll('[data-setting]')) {
     const v = now[/** @type {HTMLElement} */ (el).dataset.setting ?? ''];
     if (el instanceof HTMLInputElement) {
-      el.checked = el.type === 'radio' ? el.value === v : el.dataset.on ? v === el.dataset.on : v === true;
+      el.checked = el.dataset.on ? v === el.dataset.on : v === true;
     }
     else if (el instanceof HTMLSelectElement) el.value = String(v);
     else for (const btn of el.querySelectorAll('button[data-value]')) {
@@ -1180,7 +1172,7 @@ function syncSettings() {
 function applySetting(key) {
   const now = cfg.get();
   if (key === 'art' || key === 'bgmode') applyBackground();
-  if (key === 'area' || key === 'motion') showBackdrop();
+  if (key === 'motion') showBackdrop();
   if (key === 'letters') { state.rendered = { puzzle: null, cell: 0 }; layout(); }
   if (key === 'reveal') els.app.dataset.reveal = now.reveal ? 'on' : 'off';
   if (key === 'motion') document.documentElement.dataset.motion = now.motion;
@@ -1204,7 +1196,7 @@ settings.addEventListener('change', (e) => {
   if (el instanceof HTMLInputElement && el.name.startsWith('bg-')) { pickBg(el.value); return; }
   if (el instanceof HTMLInputElement && el.name === 'bgkind') { pickBg(/** @type {any} */ (cfg.get())[el.value]); return; }
   if (!(el instanceof HTMLInputElement || el instanceof HTMLSelectElement) || !el.dataset.setting) return;
-  const value = el instanceof HTMLSelectElement || el.type === 'radio' ? el.value
+  const value = el instanceof HTMLSelectElement ? el.value
     : el.dataset.on ? (el.checked ? el.dataset.on : el.dataset.off) : el.checked;
   changeSetting(el.dataset.setting, value);
 });

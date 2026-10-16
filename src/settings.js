@@ -9,7 +9,7 @@ export const SETTINGS_KEY = 'wordfinder-settings-v1';
 const LEGACY_AUTO_KEY = 'wordfinder-autonext';
 
 /**
- * @typedef {{bgmode:'theme'|'random'|'manual', art:string, still:string, moving:string, area:'full'|'list', board:'auto'|'compact'|'full',
+ * @typedef {{bgmode:'theme'|'random'|'manual', art:string, still:string, moving:string, board:'auto'|'compact'|'full',
  *   difficulty:'normal'|'easy'|'hard', letters:'normal'|'large', motion:'system'|'reduce',
  *   sound:boolean, vibrate:boolean, reveal:boolean, autoNext:boolean, play:'random'|'levels'}} Settings
  *   bgmode: how the background is chosen (backgrounds.js resolveBackground); art is Manual's pick,
@@ -20,7 +20,7 @@ const LEGACY_AUTO_KEY = 'wordfinder-autonext';
 
 /** @type {Readonly<Settings>} */
 export const DEFAULTS = Object.freeze({
-  bgmode: 'theme', art: 'illustrated', still: 'illustrated', moving: 'drift', area: 'full', board: 'auto', difficulty: 'normal', letters: 'normal', motion: 'system',
+  bgmode: 'theme', art: 'illustrated', still: 'illustrated', moving: 'drift', board: 'auto', difficulty: 'normal', letters: 'normal', motion: 'system',
   sound: true, vibrate: true, reveal: true, autoNext: true, play: 'random',
 });
 
@@ -28,7 +28,6 @@ export const DEFAULTS = Object.freeze({
 export const CHOICES = Object.freeze({
   bgmode: ['theme', 'random', 'manual'], art: BACKGROUNDS.map(b => b.id),
   still: BACKGROUNDS.filter(b => !b.animated).map(b => b.id), moving: BACKGROUNDS.filter(b => b.animated).map(b => b.id),
-  area: ['full', 'list'],
   board: ['auto', 'compact', 'full'],
   difficulty: ['normal', 'easy', 'hard'], letters: ['normal', 'large'], motion: ['system', 'reduce'],
   play: ['random', 'levels'],
@@ -46,11 +45,7 @@ export function normalizeSettings(raw) {
   }
   for (const k of FLAGS) if (typeof r[k] === 'boolean') /** @type {any} */ (out)[k] = r[k];
   // A record from before the mode keeps a background the player picked: Manual, unless it is the default.
-  // One from before the area too keeps its art where it was, which is where Word list puts it.
-  if (!CHOICES.bgmode.some(v => v === r.bgmode)) {
-    out.bgmode = out.art === DEFAULTS.art ? 'theme' : 'manual';
-    if (!CHOICES.area.some(v => v === r.area)) out.area = 'list';
-  }
+  if (!CHOICES.bgmode.some(v => v === r.bgmode)) out.bgmode = out.art === DEFAULTS.art ? 'theme' : 'manual';
   // Manual's pick is the last pick of its kind, so the Still or Animated menu shows it.
   if (CHOICES.moving.includes(out.art)) out.moving = out.art; else out.still = out.art;
   return out;

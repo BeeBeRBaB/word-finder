@@ -5,6 +5,9 @@
 
 const KEY = 'wordfinder-save-v1';
 
+/** @param {unknown} o @returns {o is Record<string, unknown>} */
+export const isRecord = (o) => !!o && typeof o === 'object' && !Array.isArray(o);
+
 /**
  * @typedef {import('./puzzle.js').Placement} Placement
  * @typedef {{word:string,x0:number,y0:number,x1:number,y1:number,revealed?:boolean}} FoundWord
