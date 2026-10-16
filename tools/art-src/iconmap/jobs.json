@@ -9,7 +9,7 @@
     "jobs/chefs": ["chef-hat", "whisk", "cooking-pot", "dinner-plate", "apple", "leaf"],
     "jobs/farmers": ["tractor", "wheat-sheaf", "sprout", "watering-can", "shovel", "apple"],
     "jobs/builders": ["hard-hat", "wrench", "toolbox", "traffic-cone", "shovel", "pencil"],
-    "jobs/pilots": ["airplane", "compass", "map", "suitcase", "satellite"],
+    "jobs/pilots": ["pilot-cap", "airplane", "compass", "map", "suitcase", "satellite"],
     "jobs/veterinarians": ["pet-cone", "paw-print", "stethoscope", "rabbit", "bone", "pill"],
     "jobs/librarians": ["bookshelf", "book-stack", "owl", "lamp", "laptop", "pencil"],
     "jobs/mechanics": ["wrench", "car", "toolbox", "wheel", "gear", "steering-wheel"],

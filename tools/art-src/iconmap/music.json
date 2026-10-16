@@ -4,7 +4,7 @@
     "music/brass-instruments": ["trumpet", "drum", "violin", "microphone"],
     "music/string-instruments": ["violin", "guitar", "trumpet", "drum"],
     "music/woodwind-instruments": ["saxophone", "trumpet", "violin", "microphone", "drum"],
-    "music/percussion": ["drum-kit", "drum", "guitar", "trumpet", "microphone"],
+    "music/percussion": ["maracas", "drum-kit", "drum", "guitar", "trumpet", "microphone"],
     "music/keyboard-instruments": ["piano", "music-notes", "violin", "trumpet", "guitar", "microphone"],
     "music/guitars": ["guitar", "violin", "microphone", "drum"],
     "music/drums": ["drum-kit", "drum", "guitar", "microphone", "trumpet"],

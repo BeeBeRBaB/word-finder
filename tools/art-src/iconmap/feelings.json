@@ -6,7 +6,7 @@
     "feelings/friendship": ["speech-bubble", "handshake", "smartphone", "pillow", "heart"],
     "feelings/family": ["house", "hug", "tree", "camera", "cooking-pot", "bird"],
     "feelings/courage": ["lion", "shield", "mountain", "flexed-arm", "medal", "compass"],
-    "feelings/curiosity": ["magnifying-glass", "eye", "telescope", "microscope", "lightbulb", "map"],
+    "feelings/curiosity": ["question-mark", "magnifying-glass", "eye", "telescope", "microscope", "lightbulb"],
     "feelings/calm": ["meditating-figure", "pillow", "leaf", "crescent-moon", "candle"],
     "feelings/laughter": ["smiley", "theater-masks", "microphone", "television", "speech-bubble"],
     "feelings/gratitude": ["gift", "trophy", "invitation-card", "flower", "champagne-flutes", "medal"],
@@ -23,7 +23,7 @@
     "feelings/love": ["heart", "invitation-card", "hug", "flower", "quill", "gift"],
     "feelings/trust": ["handshake", "padlock", "shield", "speech-bubble", "heart"],
     "feelings/nervousness": ["worried-face", "butterfly", "brain", "alarm-clock", "heart"],
-    "feelings/missing-someone": ["invitation-card", "house", "hug", "suitcase", "airplane", "smartphone"],
+    "feelings/missing-someone": ["love-letter", "invitation-card", "house", "hug", "suitcase", "airplane"],
     "feelings/relief": ["smiley", "bandage", "pillow", "airplane"]
   },
   "wishlist": [

@@ -2,7 +2,7 @@
   "category": ["book-stack", "quill", "owl", "lamp", "armchair", "pencil"],
   "subjects": {
     "books/libraries": ["bookshelf", "open-book", "glossy-magazine", "book-stack", "lamp", "owl"],
-    "books/poetry": ["quill", "heart", "flower", "crescent-moon", "book-stack"],
+    "books/poetry": ["scroll", "quill", "heart", "flower", "crescent-moon", "book-stack"],
     "books/novels": ["open-book", "book-stack", "quill", "theater-masks", "armchair", "lamp"],
     "books/fairy-tales": ["castle", "magic-wand", "crown", "wizard-hat", "mushroom", "shield"],
     "books/mystery-novels": ["magnifying-glass", "eye", "street-lamp", "armchair", "candle", "book-stack"],

@@ -1,10 +1,10 @@
 {
   "category": ["balloons", "cake", "gift", "firework", "bunting", "champagne-flutes"],
   "subjects": {
-    "celebrations/birthdays": ["cake", "confetti-popper", "invitation-card", "cupcake", "balloons", "gift"],
+    "celebrations/birthdays": ["cake", "confetti-popper", "invitation-card", "cupcake", "party-hat", "balloons"],
     "celebrations/weddings": ["wedding-rings", "invitation-card", "sparkler", "heart", "flower", "dress"],
     "celebrations/anniversaries": ["wedding-rings", "heart", "flower", "champagne-flutes", "dinner-plate", "cake"],
-    "celebrations/new-year": ["confetti-popper", "sparkler", "firework", "champagne-flutes", "alarm-clock", "bunting"],
+    "celebrations/new-year": ["party-hat", "confetti-popper", "sparkler", "firework", "champagne-flutes", "alarm-clock"],
     "celebrations/fireworks": ["firework", "sparkler", "shooting-star", "crescent-moon", "champagne-flutes"],
     "celebrations/parades": ["confetti-popper", "drum", "trumpet", "bunting", "balloons", "firework"],
     "celebrations/carnivals": ["confetti-popper", "striped-tent", "ticket", "theater-masks", "popcorn", "balloons"],
@@ -12,7 +12,7 @@
     "celebrations/gift-giving": ["gift", "trophy", "invitation-card", "heart", "handshake", "medal"],
     "celebrations/cakes": ["cupcake", "cake", "candle", "bread", "balloons"],
     "celebrations/dancing": ["dancer", "dress", "drum", "violin", "guitar", "theater-masks"],
-    "celebrations/harvest-festivals": ["wheat-sheaf", "pumpkin", "apple", "bread", "leaf", "dinner-plate"],
+    "celebrations/harvest-festivals": ["pumpkin", "wheat-sheaf", "apple", "bread", "leaf", "dinner-plate"],
     "celebrations/balloons": ["balloons", "confetti-popper", "bunting", "gift", "cake", "champagne-flutes"],
     "celebrations/costumes": ["superhero-mask", "pumpkin", "theater-masks", "wizard-hat", "crown", "top-hat"],
     "celebrations/holidays": ["suitcase", "sun", "palm-island", "airplane", "gift", "map"],

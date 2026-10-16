@@ -16,7 +16,7 @@
     "school/lunchtime": ["lunchbox", "apple", "dinner-plate", "bread", "water-bottle", "cooking-pot"],
     "school/library": ["bookshelf", "book-stack", "owl", "armchair", "lamp"],
     "school/art-class": ["palette", "scissors", "paintbrush", "yarn-ball", "amphora", "thread-spool"],
-    "school/music-class": ["music-notes", "headphones", "drum", "guitar", "violin", "trumpet"],
+    "school/music-class": ["xylophone", "music-notes", "headphones", "drum", "guitar", "violin"],
     "school/gym-class": ["whistle", "sneaker", "traffic-cone", "flexed-arm", "soccer-ball", "water-bottle"],
     "school/report-cards": ["graded-paper", "medal", "speech-bubble", "quill", "apple", "chalkboard"],
     "school/school-uniforms": ["school-blazer", "shield", "thread-spool", "sneaker", "graduation-cap"],

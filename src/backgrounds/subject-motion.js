@@ -10,7 +10,8 @@ import { motionFor } from './icon-scene.js';
 export const MOTIONS = Object.freeze({
   drift: 'drifting-icons', parade: 'icon-parade', bloom: 'icon-bloom', wallpaper: 'icon-tiles',
   carousel: 'icon-orbit', swim: 'icon-swim', flutter: 'icon-flutter', fall: 'icon-fall',
-  bounce: 'icon-bounce', rise: 'icon-rise', pulse: 'icon-pulse',
+  bounce: 'icon-bounce', rise: 'icon-rise', pulse: 'icon-pulse', sway: 'icon-sway',
+  ripple: 'icon-ripple',
 });
 
 /**

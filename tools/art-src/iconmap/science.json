@@ -1,7 +1,7 @@
 {
   "category": ["atom", "microscope", "dna", "magnet", "lightbulb"],
   "subjects": {
-    "science/physics": ["atom", "magnet", "planet", "gear", "battery", "lightbulb"],
+    "science/physics": ["newtons-cradle", "atom", "magnet", "planet", "gear", "battery"],
     "science/chemistry": ["flask", "test-tubes", "molecule", "atom", "microscope", "lightbulb"],
     "science/biology": ["germ", "dna", "microscope", "brain", "bone", "sprout"],
     "science/energy": ["thermometer", "battery", "lightbulb", "gear", "atom", "candle"],
@@ -9,7 +9,7 @@
     "science/light": ["lightbulb", "candle", "lamp", "camera", "crescent-moon"],
     "science/sound": ["microphone", "siren", "drum", "trumpet", "speech-bubble"],
     "science/electricity": ["battery", "lightbulb", "lamp", "atom", "gear"],
-    "science/motion": ["wheel", "rocket", "sneaker", "soccer-ball", "planet", "gear"],
+    "science/motion": ["newtons-cradle", "wheel", "rocket", "sneaker", "soccer-ball", "planet"],
     "science/gravity": ["apple", "planet", "satellite", "crescent-moon", "rocket"],
     "science/measurement": ["ruler", "thermometer", "alarm-clock", "pencil", "chalkboard", "microscope"],
     "science/experiments": ["test-tubes", "magnifying-glass", "flask", "microscope", "chalkboard", "laptop"],

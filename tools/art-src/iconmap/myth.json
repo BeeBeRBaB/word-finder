@@ -10,7 +10,7 @@
     "myth/fairies": ["magic-wand", "mushroom", "flower", "butterfly", "leaf", "shooting-star"],
     "myth/giants": ["hammer", "flexed-arm", "mountain", "pine-tree", "castle"],
     "myth/spells": ["magic-wand", "potion-bottle", "wizard-hat", "candle", "eye", "owl"],
-    "myth/quests": ["map", "signpost", "compass", "mountain", "shield", "treasure-chest"],
+    "myth/quests": ["sword-in-stone", "map", "signpost", "compass", "mountain", "shield"],
     "myth/treasure": ["treasure-chest", "seashell", "crown", "map", "amphora", "palm-island"],
     "myth/sea-monsters": ["sea-serpent", "wave", "sailing-ship", "whale", "fish"],
     "myth/unicorns": ["unicorn", "horse", "rainbow", "shooting-star", "flower", "tree"],

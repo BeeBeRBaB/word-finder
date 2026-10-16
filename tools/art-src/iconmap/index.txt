@@ -6,6 +6,7 @@ alphabet-blocks: stacked wooden ABC letter blocks
 ambulance: ambulance with stripe, roof lights and plus
 ammonite: spiral ammonite fossil in cracked stone
 amphora: ancient two-handled vase with bands
+anatomical-heart: anatomical heart with aortic arch and vessels
 anchor: ship's anchor with rope
 apple: shiny apple with a leaf
 archery-target: archery target on an easel with an arrow
@@ -27,6 +28,7 @@ bed: bed with a quilt and headboard
 bee: fuzzy bumblebee in flight
 belt-buckle: coiled leather belt with a brass buckle
 bicycle: bicycle side view
+binoculars: pair of binoculars, front three-quarter view, with lens glints
 bird: round songbird on a branch
 bird-feeder: hanging tube bird feeder with perched songbird
 black-hole: black hole with a glowing warped disk
@@ -47,9 +49,11 @@ button: large four-hole button
 cactus: saguaro cactus in desert dunes at sunset
 cake: two-tier birthday cake with candles
 calculator: pocket calculator with operator keys
+calligraphy-nib: fountain pen nib finishing an ink flourish
 camel: laden camel with striped bundles and lantern
 camera: photo camera
 campfire: crackling campfire with logs
+camping-tent: A-frame camping tent with open door flap, guy ropes and a pine tree behind
 candle: lit pillar candle with dripping wax
 car: family car
 caravan: touring caravan with striped awning
@@ -70,13 +74,16 @@ classical-building: columned building with pediment and steps
 clipped-hedge: boxy clipped hedge with topiary ball and shears
 coat: belted trench coat
 coat-hanger: wooden coat hanger with a shirt draped on it
+code-window: editor window with </> brackets and code lines
 coffee-cup: steaming cup on a saucer
 coins: stack of gold coins
+color-wheel: colour wheel with a paintbrush resting on it
 colosseum: Roman colosseum with tiers of arches
 comb: wide-tooth comb crossed over a round brush
 comic-burst: jagged comic POW explosion burst
 compass: explorer's compass with a needle
 compost-bin: slatted compost bin with scraps and a worm
+computer-monitor: flat desktop monitor on a stand with a bright screen
 confetti-popper: party popper bursting with confetti and streamers
 constellation: Big Dipper stars joined on night sky
 construction-crane: tower crane lifting a steel girder
@@ -89,6 +96,7 @@ croissant: flaky croissant
 crown: jewelled royal crown
 cruise-ship: passenger cruise ship on the waves
 cupcake: frosted cupcake with sprinkles
+cycling-helmet: vented road-cycling helmet with straps
 dancer: figure dancing on tiptoe to music
 deer: stag with antlers
 diamond-ring: gold ring with a big diamond
@@ -96,6 +104,7 @@ dice: pair of dice
 dig-site: excavation layers with buried pot, bone and tools
 dinner-plate: plate with a fork and knife
 dinosaur: long-necked dinosaur
+directors-chair: folding director's chair with canvas seat and X legs
 dna: twisting double helix
 dog: floppy-eared dog with collar and tongue
 door: arched front door in a brick wall
@@ -128,12 +137,14 @@ flame: flickering cooking flame
 flask: bubbling conical lab flask
 flexed-arm: flexed arm showing a bicep
 flower: five-petal flower on a stem
+foot: bare foot seen from the sole with five toes
 footprints: pair of bare footprints
 forklift: forklift lifting a pallet of boxes
 fountain: tiered stone fountain with splashing water
 fox: red fox with a bushy tail
 framed-painting: ornate gilt-framed painting on a wall
 frog: frog sitting on a lily pad
+fruit-bowl: bowl heaped with banana, apple, grapes and a pear
 frying-pan: frying pan with a sizzling egg
 game-controller: video game controller
 garden-shed: plank shed with pent roof, padlock and tools
@@ -145,8 +156,10 @@ gift: wrapped present with a bow
 globe: desk globe on a stand
 glossy-magazine: magazine with a smiling cover star
 goblin: grinning goblin holding up a gold coin
+gold-pan: prospector gold pan tilted with water and glinting nuggets
 golf-cart: golf cart with a bag of clubs
 golf-flag: golf flag on a putting green
+gorilla: gorilla knuckle-walking with a lighter face
 graded-paper: marked worksheet with ticks, star and pencil
 graduation-cap: mortarboard with tassel and diploma
 greenhouse: glass greenhouse with tomato plant and seedlings
@@ -169,6 +182,7 @@ hot-air-balloon: striped hot-air balloon with basket
 hourglass: wooden hourglass with trickling sand
 house: little house with a glowing window
 hug: two figures in a warm hug
+ice-cream-sundae: tall glass sundae with scoops, whipped cream, cherry and wafer
 ice-skate: figure skating boot with a toothed blade
 invitation-card: envelope with a card peeking out
 jeans: blue denim jeans with rolled cuffs
@@ -177,6 +191,7 @@ jigsaw-piece: two interlocking jigsaw pieces
 kangaroo: kangaroo with a joey in its pouch
 keyboard-and-mouse: computer keyboard with a mouse beside it
 knight-helmet: plumed knight's helmet with visor
+ladybug: ladybird seen from above, spotted wing cases slightly open, antennae
 lamp: table lamp glowing
 laptop: open laptop showing code
 lawnmower: push lawnmower on striped grass
@@ -187,6 +202,7 @@ lightning-bolt: zigzag lightning bolt
 lion: lion with a full mane
 lizard: spotted gecko clinging to a rock
 longship: Viking longship with striped sail and shields
+love-letter: sealed envelope with heart wax seal and a floating heart
 lunchbox: open lunchbox with sandwich, apple, juice box
 lungs: pair of pink lungs with branching airways
 magic-lamp: genie lamp with a swirl of magic smoke
@@ -195,6 +211,7 @@ magnet: horseshoe magnet with a pull
 magnifying-glass: round magnifying glass with a handle
 mammoth: woolly mammoth with long curved tusks
 map: folded map with a dotted route to an X
+maracas: crossed pair of patterned maracas shaking
 marionette: wooden string puppet on a control bar
 medal: prize medal on a ribbon
 meditating-figure: cross-legged figure meditating inside calm rings
@@ -204,6 +221,7 @@ microchip: square chip with pins on every side
 microphone: handheld microphone
 microscope: lab microscope
 mitten: pair of knitted mittens
+moka-pot: eight-sided stovetop moka pot with handle and steam
 molecule: ball-and-stick molecule model
 monkey: monkey swinging from a branch
 mop-bucket: string mop in a soapy bucket
@@ -215,6 +233,7 @@ mouth: smiling lips with a tongue
 movie-camera: vintage cine camera on a tripod with two reels on top
 mushroom: spotted toadstool with a little one
 music-notes: pair of beamed music notes
+newtons-cradle: Newton's cradle with the end ball swung out
 nose: nose sniffing a flower
 octopus: cartoon octopus with curling tentacles
 open-book: open book with pages fanning up
@@ -227,11 +246,13 @@ palm-island: palm tree on a little sandy island
 panda: panda chewing bamboo
 paper-crane: folded origami paper crane
 park-bench: wooden park bench with iron ends
+party-hat: striped cone party hat with a pompom and a party horn unrolling beside it
 passport: open passport with globe emblem and stamp
 paw-print: animal paw print
 pencil: sharpened pencil
 penguin: standing penguin on an ice floe
 pet-cone: dog in a recovery cone with bandaged paw
+pharaoh-mask: golden pharaoh death mask with striped nemes and cobra
 phoenix: phoenix rising with flaming wings and tail
 piano: grand piano with the lid up
 pickaxe: miner's pickaxe
@@ -240,6 +261,7 @@ picnic-basket: wicker basket on a gingham blanket
 pier: seaside pier on stilts with lamps and kiosk
 pill: capsule and tablets
 pillow: fluffy pillow with a moon and zzz
+pilot-cap: pilot's peaked cap with winged badge
 pine-tree: tiered evergreen tree
 pizza-slice: pizza slice with pepperoni and cheese pull
 planet: ringed planet with a little moon
@@ -256,6 +278,7 @@ prize-wheel: spinning prize wheel with a pointer
 pumpkin: round pumpkin with a curly stem
 pyjamas: striped pyjamas and fluffy slippers
 pyramid: pyramids in the desert under the sun
+question-mark: big chunky question mark with a sparkle
 quill: quill pen and inkwell
 rabbit: sitting bunny
 race-car: open-wheel race car with speed lines
@@ -282,6 +305,7 @@ school-blazer: school blazer with crest and striped tie
 school-bus: yellow school bus side-on
 scissors: craft scissors with a glue stick and paper scraps
 scooter: kick scooter with T-bar handlebar
+scroll: half-open scroll with verse and a quill
 sea-serpent: sea serpent arching out of the waves
 seashell: spiral hermit-crab shell and a starfish
 secateurs: pruning secateurs snipping off a leafy sprig
@@ -313,6 +337,7 @@ spaghetti: fork twirling spaghetti over a bowl
 sparkler: hand-held sparkler throwing stars
 speech-bubble: chatting speech bubbles
 spider-web: friendly spider dangling from its web
+spine: S-curved spine of vertebrae with discs
 spiral-galaxy: two-armed spiral galaxy around a bright core
 spotlight: stage spotlight throwing a cone of light
 spray-can: tilted spray-paint can with mist and drips
@@ -340,6 +365,7 @@ superhero-mask: superhero eye mask with a flowing cape
 surfboard: surfboard riding a curling wave
 swim-goggles: swimming goggles
 swing-set: playground swing set with a slide
+sword-in-stone: sword standing in a rock, glowing
 taxi: yellow taxi cab with a roof sign
 teddy-bear: cuddly teddy bear
 telescope: telescope on a tripod aimed at a star
@@ -350,6 +376,7 @@ theater-masks: comedy and tragedy masks
 thermometer: clinical thermometer
 thread-spool: spool of thread with needle and button
 ticket: pair of admission tickets with a star
+tiger: striding tiger with bold stripes
 tomato: ripe tomato on the vine
 toolbox: open toolbox with tools
 tooth: smiling tooth with sparkles
@@ -370,9 +397,11 @@ twinkling-stars: big star and twinkles on a sky patch
 unicorn: unicorn head with a spiral horn
 uniform-jacket: navy uniform jacket with gold epaulettes
 van: panel van with parcels in open door
+village: small village of cottages with pitched roofs and a church spire on a hill
 violin: violin with bow
 volcano: erupting volcano with lava
 vr-headset: virtual-reality headset with a head strap
+walking-figure: pictogram person walking briskly, side-on facing right
 washing-machine: front-loading washing machine
 water-bottle: sports water bottle with droplets
 watering-can: watering can sprinkling
@@ -392,6 +421,7 @@ wizard-hat: pointy wizard hat with stars and a moon
 wolf: wolf sitting and howling at the moon
 worried-face: worried face with sweat drop
 wrench: adjustable wrench
+xylophone: toy xylophone with stepped bars and two mallets
 yarn-ball: ball of yarn with knitting needles
 yoga-figure: figure in tree pose on a yoga mat
 zipper: half-open zip with a pull tab
