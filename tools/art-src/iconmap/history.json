@@ -15,7 +15,7 @@
     "history/trade-routes": ["camel", "coins", "map", "treasure-chest", "storefront", "sailing-ship"],
     "history/industrial-revolution": ["factory", "steam-train", "gear", "thread-spool", "wheel", "lightbulb"],
     "history/knights": ["knight-helmet", "horse", "chess-knight", "shield", "castle", "crown"],
-    "history/museums": ["classical-building", "statue", "amphora", "paintbrush", "ticket", "bone"],
+    "history/museums": ["exhibit-case", "statue", "classical-building", "amphora", "paintbrush", "ticket"],
     "history/ancient-greece": ["classical-building", "statue", "scroll", "amphora", "theater-masks", "quill"],
     "history/silk-road": ["camel", "thread-spool", "map", "mountain", "compass", "coffee-cup"],
     "history/printing-press": ["printing-press", "scroll", "book-stack", "quill", "pencil", "gear"],

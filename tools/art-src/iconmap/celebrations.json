@@ -14,7 +14,7 @@
     "celebrations/dancing": ["dancer", "dress", "drum", "violin", "guitar", "theater-masks"],
     "celebrations/harvest-festivals": ["pumpkin", "wheat-sheaf", "apple", "bread", "leaf", "dinner-plate"],
     "celebrations/balloons": ["balloons", "confetti-popper", "bunting", "gift", "cake", "champagne-flutes"],
-    "celebrations/costumes": ["superhero-mask", "pumpkin", "theater-masks", "wizard-hat", "crown", "top-hat"],
+    "celebrations/costumes": ["costume-trunk", "pumpkin", "superhero-mask", "theater-masks", "wizard-hat", "crown"],
     "celebrations/holidays": ["suitcase", "sun", "palm-island", "airplane", "gift", "map"],
     "celebrations/toasting": ["champagne-flutes", "microphone", "heart", "handshake", "bunting"],
     "celebrations/reunions": ["hug", "picnic-basket", "family-group", "handshake", "smiley", "camera"],

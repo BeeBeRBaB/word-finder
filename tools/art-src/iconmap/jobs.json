@@ -16,7 +16,7 @@
     "jobs/hairdressers": ["hair-dryer", "scissors", "comb", "storefront", "armchair", "handshake"],
     "jobs/scientists": ["lab-coat", "flask", "microscope", "atom", "dna", "telescope"],
     "jobs/engineers": ["gear", "wrench", "hard-hat", "lightning-bolt", "robot", "laptop"],
-    "jobs/artists": ["palette", "paintbrush", "pencil", "amphora", "chalkboard"],
+    "jobs/artists": ["painter", "palette", "paintbrush", "pencil", "amphora", "chalkboard"],
     "jobs/office-workers": ["office-desk", "laptop", "coffee-cup", "smartphone", "handshake", "alarm-clock"],
     "jobs/shopkeepers": ["storefront", "handshake", "gift", "apple", "bread"],
     "jobs/dentists": ["toothbrush", "tooth", "smiley", "pill", "first-aid-kit"],
@@ -24,7 +24,7 @@
     "jobs/electricians": ["plug-socket", "toolbox", "hard-hat", "lightning-bolt", "lightbulb", "battery"],
     "jobs/postal-workers": ["mailbox", "invitation-card", "signpost", "map", "gift", "handshake"],
     "jobs/bakers": ["bread", "wheat-sheaf", "chef-hat", "whisk", "croissant", "cake"],
-    "jobs/photographers": ["camera", "eye", "smartphone", "mountain", "laptop"]
+    "jobs/photographers": ["photographer", "camera", "eye", "smartphone", "mountain", "laptop"]
   },
   "wishlist": [
     { "id": "wrench", "motif": "adjustable spanner", "subjects": ["jobs/mechanics", "jobs/plumbers", "jobs/builders", "jobs/engineers"] },

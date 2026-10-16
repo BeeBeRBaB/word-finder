@@ -9,7 +9,7 @@
     "art/pottery": ["potters-wheel", "amphora", "coffee-cup", "paintbrush", "pencil"],
     "art/ceramics": ["potters-wheel", "amphora", "dinner-plate", "coffee-cup", "paintbrush"],
     "art/photography": ["camera", "film-reel", "eye", "mountain"],
-    "art/printmaking": ["printing-press", "quill", "paintbrush", "pencil", "camera"],
+    "art/printmaking": ["lino-roller", "printing-press", "quill", "paintbrush", "pencil", "camera"],
     "art/color-theory": ["color-wheel", "palette", "paintbrush", "pencil", "camera", "quill"],
     "art/galleries": ["framed-painting", "classical-building", "ticket", "amphora", "paintbrush", "camera"],
     "art/crafts": ["scissors", "thread-spool", "yarn-ball", "bunting", "gift", "paintbrush"],
