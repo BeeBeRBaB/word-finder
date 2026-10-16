@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { openBoard, handPickedBackground, findAndDrag } from './helpers.js';
-import { findBackground, resolveBackground } from '../../src/backgrounds.js';
+import { openBoard, handPickedBackground, findAndDrag, pickBackground } from './helpers.js';
+import { BACKGROUNDS, findBackground, resolveBackground } from '../../src/backgrounds.js';
 import { MOTIONS } from '../../src/backgrounds/subject-motion.js';
 import { motionFor } from '../../src/backgrounds/icon-scene.js';
 
@@ -29,9 +29,12 @@ async function openPage(page) {
   await expect(page.locator('#settings-bgpage')).toBeVisible();
 }
 /** @param {Page} page @param {string} mode */
-const mode = (page, mode) => page.locator(`#settings-bgpage [data-setting="bgmode"] [data-value="${mode}"]`);
-/** The background showing, as the page's checked tile says. @param {Page} page */
-const checked = (page) => page.locator('#bg-tiles input:checked').inputValue();
+const setMode = (page, mode) => page.locator('#settings-bgmode').selectOption(mode);
+/** The background showing, as the Settings row names it. @param {Page} page @returns {Promise<string>} */
+const checked = async (page) => {
+  const name = await page.locator('#settings-bg-now .bgname').textContent();
+  return BACKGROUNDS.find(b => b.name === name)?.id ?? '';
+};
 /** What the page draws, by the kind of background: a canvas, the scene, the category art, or nothing.
  * @param {Page} page */
 const drawn = (page) => page.evaluate(() => {
@@ -53,36 +56,68 @@ const kindOf = (id) => {
   return bg.animated ? 'animated' : bg.file ? 'scene' : bg.id;
 };
 
-test('the Background page has the mode, the area, and Still and Animated groups of tiles', async ({ page }) => {
+test('the Background page has the mode, the area, and under Manual a Still and an Animated dropdown', async ({ page }) => {
   await page.goto('/?seed=1&subject=space/jupiter');
   await openPage(page);
   await expect(page.locator('#settings-body')).toBeHidden();
-  // A new player: each theme's own background, on the whole page.
-  await expect(page.getByRole('group', { name: 'Choose' }).getByRole('button')).toHaveText(['Theme', 'Random', 'Manual']);
-  await expect(mode(page, 'theme')).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('#bgmode-note')).toHaveText('Each theme comes with its own background.');
+  // Focus lands on the title, not the mode's select, which an iPhone would open at once.
+  await expect(page.locator('#bg-title')).toBeFocused();
+  // A new player: each theme's own background, on the whole page, and no dropdowns.
+  const mode = page.getByRole('combobox', { name: 'Choose' });
+  await expect(mode.locator('option')).toHaveText(['Theme', 'Random', 'Manual']);
+  await expect(mode).toHaveValue('theme');
+  await expect(page.locator('#bgmode-note')).toHaveText('Each theme comes with its own background. Now: Starfield.');
   await expect(page.locator('#settings-bgpage [data-setting="area"] [data-value="full"]')).toHaveAttribute('aria-pressed', 'true');
-  const still = page.getByRole('group', { name: 'Still' }), moving = page.getByRole('group', { name: 'Animated' });
-  await expect(still.getByRole('radio')).toHaveCount(4);
-  await expect(moving.getByRole('radio')).toHaveCount(15);
+  await expect(page.locator('#bg-manual')).toBeHidden();
+  await mode.selectOption('manual');
+  await expect(page.locator('#bgmode-note')).toHaveText('Pick a still and an animated one, and which of the two shows.');
+  // Manual shows its stored pick, the default Illustrated, which is still, so Still's radio is on.
+  const stillRadio = page.getByRole('radio', { name: 'Still', exact: true }), movingRadio = page.getByRole('radio', { name: 'Animated', exact: true });
+  await expect(stillRadio).toBeChecked();
+  await expect(movingRadio).not.toBeChecked();
+  const stillDrop = page.getByRole('button', { name: 'Still Illustrated' }), movingDrop = page.getByRole('button', { name: 'Animated Drifting icons' });
+  await expect(stillDrop).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.locator('#settings-bg-now .bgname')).toHaveText('Illustrated');
+  // A menu per kind, every registry entry in one of them, its pick checked and focused on opening.
+  await movingDrop.click();
+  const moving = page.getByRole('radiogroup', { name: 'Animated' });
+  await expect(moving).toBeVisible();
+  await expect(moving.getByRole('radio')).toHaveCount(23);
+  await expect(moving.getByRole('radio', { name: 'Drifting icons' })).toBeChecked();
+  await expect(moving.getByRole('radio', { name: 'Drifting icons' })).toBeFocused();
+  await expect(page.locator('.bgtile')).toHaveCount(BACKGROUNDS.length);
+  // Opening one closes the other.
+  await stillDrop.click();
+  await expect(moving).toBeHidden();
+  const still = page.getByRole('radiogroup', { name: 'Still' });
   expect(await still.locator('.bgtile').evaluateAll(ts => ts.map(t => t.getAttribute('data-bg')))).toEqual(['illustrated', 'pixel', 'scene', 'none']);
-  await expect(page.locator('.bgtile')).toHaveCount(19);
-  await expect(page.locator('.bgbadge')).toHaveCount(0);
-  // Phosphor's Starfield is showing, so it is checked, and has focus for the arrow keys.
-  await expect(page.locator('.bgtile[data-bg="starfield"] input')).toBeChecked();
-  await expect(page.locator('.bgtile[data-bg="starfield"] input')).toBeFocused();
-  // One set of radios across both groups: the arrows run from the last Still tile to the first Animated one.
-  await page.locator('.bgtile[data-bg="none"] input').focus();
+  // The arrows move the pick within the menu and leave it open; Enter closes it on the dropdown.
   await page.keyboard.press('ArrowRight');
-  await expect(page.locator('.bgtile[data-bg="drift"] input')).toBeChecked();
-  await expect(page.locator('.bgtile[data-bg="drift"] input')).toBeFocused();
-  await page.keyboard.press('ArrowLeft');
-  await expect(page.locator('.bgtile[data-bg="none"] input')).toBeChecked();
-  await expect(mode(page, 'manual')).toHaveAttribute('aria-pressed', 'true');
-  // Every tile and button is a 44px target.
-  const heights = await page.locator('#settings-bgpage .bgtile, #settings-bgpage .seg button').evaluateAll(ts => ts.map(t => t.getBoundingClientRect().height));
-  expect(heights).toHaveLength(24);
-  for (const h of heights) expect(h).toBeGreaterThanOrEqual(44);
+  await expect(still.getByRole('radio', { name: 'Pixel art' })).toBeChecked();
+  await expect(still).toBeVisible();
+  await expect(page.locator('#settings-bg-now .bgname')).toHaveText('Pixel art');
+  await page.keyboard.press('Enter');
+  await expect(still).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Still Pixel art' })).toBeFocused();
+  // Escape closes a menu and not the pane.
+  await page.keyboard.press('Enter');
+  await expect(still).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(still).toBeHidden();
+  await expect(page.locator('#settings-bgpage')).toBeVisible();
+  // Every option, radio, dropdown and button is a 44px target, in the list menu and the tiles.
+  for (const menu of ['list', 'tiles']) {
+    await page.locator('#settings-bgpage').evaluate((p, m) => { p.dataset.menu = m; }, menu);
+    for (const kind of ['still', 'moving']) {
+      await page.locator(`#bgdrop-${kind}`).click();
+      const heights = await page.locator(`#bgmenu-${kind} .bgtile, #settings-bgpage .bgpick, #settings-bgpage .bgdrop, #settings-bgpage select, #settings-bgpage .seg button`)
+        .evaluateAll(ts => ts.map(t => t.getBoundingClientRect().height));
+      expect(heights).toHaveLength((kind === 'still' ? 4 : 23) + 7);
+      for (const h of heights) expect(h).toBeGreaterThanOrEqual(44);
+      // Each name shows whole, none cut short.
+      expect(await page.locator(`#bgmenu-${kind} .bgname`).evaluateAll(ns => ns.filter(n => n.scrollWidth > n.clientWidth).map(n => n.textContent))).toEqual([]);
+    }
+  }
 });
 
 test('Theme mode shows each theme\'s own background, in either flavour, and follows a change of theme', async ({ page }) => {
@@ -104,18 +139,24 @@ test('Theme mode shows each theme\'s own background, in either flavour, and foll
   await page.locator('#theme-back').click();
   await expect(page.locator('#settings-bg')).toHaveAccessibleName('Background Constellation Theme');
   await page.locator('#settings-bg').click();
-  await expect(page.locator('.bgtile[data-bg="constellation"] input')).toBeChecked();
+  await expect(page.locator('#bgmode-note')).toHaveText('Each theme comes with its own background. Now: Constellation.');
 });
 
-test('picking a tile makes it the Manual choice, even the one Theme already shows', async ({ page }) => {
+test('the radio chooses which pick shows, and a pick in a menu switches the radio to it', async ({ page }) => {
   await page.goto('/?seed=1&subject=space/jupiter');
   await openPage(page);
-  await page.locator('.bgtile[data-bg="starfield"]').click();
-  await expect(mode(page, 'manual')).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('#bgmode-note')).toHaveText('The one you pick below.');
-  await mode(page, 'theme').click();
-  await page.locator('.bgtile[data-bg="aurora"]').click();
-  await expect(mode(page, 'manual')).toHaveAttribute('aria-pressed', 'true');
+  await setMode(page, 'manual');
+  await pickBackground(page, 'aurora');
+  await expect(page.getByRole('radiogroup', { name: 'Animated' })).toBeHidden();   // a pick by pointer closes the menu
+  await expect(page.getByRole('radio', { name: 'Animated', exact: true })).toBeChecked();
+  await expect(page.locator('#bg canvas')).toHaveCount(1);
+  await expect(page.getByRole('button', { name: 'Animated Aurora' })).toBeVisible();
+  // Back to Still: its own pick shows again, and Aurora stays Animated's pick.
+  await page.getByRole('radio', { name: 'Still', exact: true }).check();
+  await expect(page.locator('#bg canvas')).toHaveCount(0);
+  await expect(page.locator('#art svg[data-kind="illustrated"], #railart svg[data-kind="illustrated"]')).not.toHaveCount(0);
+  await page.getByRole('radio', { name: 'Animated', exact: true }).check();
+  await expect(page.locator('#bg canvas')).toHaveCount(1);
   await page.locator('#bg-back').click();
   await expect(page.locator('#settings-bg')).toHaveAccessibleName('Background Aurora');
   // A new theme leaves a Manual pick alone.
@@ -124,23 +165,27 @@ test('picking a tile makes it the Manual choice, even the one Theme already show
   await page.locator('#theme-back').click();
   await expect(page.locator('#settings-bg')).toHaveAccessibleName('Background Aurora');
   await expect(page.locator('#bg canvas')).toHaveCount(1);
-  // Theme again shows the theme's own, and Manual keeps its pick for later.
+  // Theme again shows the theme's own, and Manual keeps both picks for later.
   await page.locator('#settings-bg').click();
-  await mode(page, 'theme').click();
-  await expect(page.locator('.bgtile[data-bg="illustrated"] input')).toBeChecked();
+  await setMode(page, 'theme');
+  await expect(page.locator('#bgmode-note')).toHaveText('Each theme comes with its own background. Now: Illustrated.');
   await expect(page.locator('#bg canvas')).toHaveCount(0);
-  await mode(page, 'manual').click();
-  await expect(page.locator('.bgtile[data-bg="aurora"] input')).toBeChecked();
+  await setMode(page, 'manual');
+  await expect(page.getByRole('radio', { name: 'Animated', exact: true })).toBeChecked();
+  await pickBackground(page, 'scene');
   await page.reload();
   await page.locator('#appearance').click();
-  await expect(page.locator('#settings-bg')).toHaveAccessibleName('Background Aurora');
+  await expect(page.locator('#settings-bg')).toHaveAccessibleName('Background Subject scene');
+  await page.locator('#settings-bg').click();
+  await expect(page.getByRole('button', { name: 'Still Subject scene' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Animated Aurora' })).toBeVisible();
 });
 
 test('Random picks again for every new game, and Undo and a reload keep the board\'s own pick', async ({ page }) => {
   await openBoard(page, '/');   // no ?seed=, so a reload puts the saved board back
   await openPage(page);
-  await mode(page, 'random').click();
-  await expect(page.locator('#bgmode-note')).toHaveText('A new background with every game.');
+  await setMode(page, 'random');
+  await expect(page.locator('#bgmode-note')).toHaveText(/^A new background with every game\. Now: /);
   const first = await checked(page);
   expect(first).not.toBe('none');
   await expect.poll(() => drawn(page)).toBe(kindOf(first));
@@ -191,7 +236,7 @@ test('an animated background runs behind the word list, then the whole page, and
   await handPickedBackground(page);
   await page.goto('/?seed=1&subject=space/jupiter');
   await openPage(page);
-  await page.locator('.bgtile[data-bg="aurora"]').click();
+  await pickBackground(page, 'aurora');
   await expect(page.locator('#bgside canvas')).toHaveCount(1);
   await expect(page.locator('#bg canvas')).toHaveCount(0);
   await page.locator('#settings-bgpage [data-setting="area"] [data-value="full"]').click();
@@ -206,7 +251,7 @@ test('an animated background runs behind the word list, then the whole page, and
   });
   expect(top).toBe(true);
   await openPage(page);
-  await page.locator('.bgtile[data-bg="pixel"]').click();
+  await pickBackground(page, 'pixel');
   await expect(page.locator('#bg canvas, #bgside canvas')).toHaveCount(0);
 });
 
@@ -221,14 +266,14 @@ test('text keeps its ground-colour ring only where something is drawn behind it'
   await page.locator('#list .w').first().waitFor();
   expect(await ring('#list .w')).toBe(false);   // still art keeps to the board corner or below the list
   await openPage(page);
-  await page.locator('.bgtile[data-bg="aurora"]').click();
+  await pickBackground(page, 'aurora');
   expect(await ring('#list .w')).toBe(true);
   expect(await ring('#subject')).toBe(false);   // Word list: nothing behind the header
   await page.locator('#settings-bgpage [data-setting="area"] [data-value="full"]').click();
-  await page.locator('.bgtile[data-bg="none"]').click();
+  await pickBackground(page, 'none');
   expect(await ring('#list .w')).toBe(false);
   expect(await ring('#subject')).toBe(false);
-  await page.locator('.bgtile[data-bg="illustrated"]').click();   // large, behind everything
+  await pickBackground(page, 'illustrated');   // large, behind everything
   expect(await ring('#list .w')).toBe(true);
   expect(await ring('#subject')).toBe(false);
   const hdr = await page.locator('#hdr').evaluate((el) => {
@@ -242,7 +287,7 @@ test('text keeps its ground-colour ring only where something is drawn behind it'
 test('the choice and area are remembered, and a new deal keeps the background running', async ({ page }) => {
   await page.goto('/?seed=1&subject=space/jupiter');
   await openPage(page);
-  await page.locator('.bgtile[data-bg="starfield"]').click();
+  await pickBackground(page, 'starfield');
   await page.locator('#settings-bgpage [data-setting="area"] [data-value="full"]').click();
   await page.reload();
   await expect(page.locator('#bg canvas')).toHaveCount(1);
@@ -260,7 +305,7 @@ test('a background that could not load draws once the device is back online', as
   await page.route(/\/src\/backgrounds\/aurora-drift\.js/, route => route.abort('internetdisconnected'));
   const failed = page.waitForEvent('requestfailed', r => r.url().includes('aurora-drift.js'));
   await openPage(page);
-  await page.locator('.bgtile[data-bg="aurora"]').click();
+  await pickBackground(page, 'aurora');
   await failed;
   await page.unroute(/\/src\/backgrounds\/aurora-drift\.js/);
   // Again until the failed load has settled: one asked for while it is still failing fails with it.
@@ -347,9 +392,9 @@ test('the subject backgrounds draw the subject\'s icons, and a new deal draws th
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto('/?seed=1&subject=space/jupiter');
   await openPage(page);
-  await expect(page.getByRole('group', { name: 'Still' }).locator('.bgtile[data-bg="scene"]')).toHaveCount(1);
-  await expect(page.getByRole('group', { name: 'Animated' }).locator('.bgtile[data-bg="drift"]')).toHaveCount(1);
-  await page.locator('.bgtile[data-bg="scene"]').click();
+  await expect(page.locator('#bgmenu-still .bgtile[data-bg="scene"]')).toHaveCount(1);
+  await expect(page.locator('#bgmenu-moving .bgtile[data-bg="drift"]')).toHaveCount(1);
+  await pickBackground(page, 'scene');
   // Behind the list in the rail: a picture of several icons, and no category art in the corner.
   await expect(page.locator('#bgside > svg g')).not.toHaveCount(0);
   await expect(page.locator('#art svg, #railart svg')).toHaveCount(0);
@@ -363,7 +408,7 @@ test('the subject backgrounds draw the subject\'s icons, and a new deal draws th
   expect(await ownIcons(page, '#bgside')).toBe(true);
 
   await openPage(page);
-  await page.locator('.bgtile[data-bg="drift"]').click();
+  await pickBackground(page, 'drift');
   await expect(page.locator('#bgside > canvas')).toHaveCount(1);
   await expect(page.locator('#bgside > svg')).toHaveCount(0);
   await expect.poll(() => painted(page, '#bgside > canvas')).toBe(true);
@@ -387,7 +432,7 @@ test('Subject motion runs the motion its subject is mapped to, and a new subject
   expect(moduleOf('nature/fish')).not.toBe(moduleOf('space/rockets'));
   await page.goto('/?seed=1&subject=nature/fish');
   await openPage(page);
-  await page.locator('.bgtile[data-bg="motion"]').click();
+  await pickBackground(page, 'motion');
   await expect(page.locator('#bgside > canvas')).toHaveCount(1);
   await expect.poll(() => painted(page, '#bgside > canvas')).toBe(true);
   expect(loaded).toEqual([moduleOf('nature/fish')]);
@@ -402,7 +447,7 @@ test('on a phone with Word list the scene keeps the board corner, and moves to t
   await page.setViewportSize({ width: 390, height: 664 });
   await page.goto('/?seed=1&subject=space/jupiter');
   await openPage(page);
-  await page.locator('.bgtile[data-bg="scene"]').click();
+  await pickBackground(page, 'scene');
   await page.locator('#bg-back').click();
   await page.locator('#settings-back').click();
   // One icon in the corner, faded like the category art, and nothing behind the list.
@@ -424,7 +469,7 @@ test('on a phone with Word list the scene keeps the board corner, and moves to t
   await expect(page.locator('#bgside > *')).toHaveCount(0);
   // Back to Illustrated: the category art takes the corner again.
   await openPage(page);
-  await page.locator('.bgtile[data-bg="illustrated"]').click();
+  await pickBackground(page, 'illustrated');
   await expect(page.locator('#art > svg')).toHaveCount(1);
   expect(await page.locator('#art > svg').getAttribute('data-kind')).toBe('illustrated');
 });
@@ -437,20 +482,20 @@ test('the Settings row shows the background in use and how it was chosen', async
   await expect(row.locator('.bgtag')).toHaveText('Theme');
   await expect(row.locator('svg.bgglyph')).toHaveCount(1);
   await row.click();
-  await mode(page, 'random').click();
-  const pick = await checked(page);
-  const name = await page.locator(`.bgtile[data-bg="${pick}"] .bgname`).textContent();
+  await setMode(page, 'random');
+  const name = findBackground(await checked(page)).name;
+  await expect(page.locator('#bgmode-note')).toHaveText(`A new background with every game. Now: ${name}.`);
   await page.locator('#bg-back').click();
   await expect(row.locator('.bgname')).toHaveText(name ?? '');
   await expect(row.locator('.bgtag')).toHaveText('Random');
   await row.click();
-  await page.locator('.bgtile[data-bg="constellation"]').click();
+  await pickBackground(page, 'constellation');
   await page.locator('#bg-back').click();
   await expect(row.locator('.bgname')).toHaveText('Constellation');
   await expect(row.locator('.bgtag')).toHaveCount(0);   // Manual: the player's own pick needs no tag
   // The longest name and its tag fit without being cut short.
   await row.click();
-  await mode(page, 'theme').click();
+  await setMode(page, 'theme');
   await page.locator('#bg-back').click();
   await page.locator('#settings-theme').click();
   await page.locator('.looktile[data-look="graphite/dark"]').click();
@@ -478,7 +523,7 @@ test('in Full screen the background shows through the board but not through its 
     return c;
   });
   await openPage(page);
-  await page.locator('.bgtile[data-bg="aurora"]').click();
+  await pickBackground(page, 'aurora');
   expect(await alpha('#gridbox')).toBe(1);   // Word list: the board stays solid
   await page.locator('#settings-bgpage [data-setting="area"] [data-value="full"]').click();
   const a = await alpha('#gridbox');
@@ -494,25 +539,31 @@ test('in Full screen the background shows through the board but not through its 
   expect(pill.image).toContain('linear-gradient');
   // Nothing behind it: the board is solid again.
   await openPage(page);
-  await page.locator('.bgtile[data-bg="none"]').click();
+  await pickBackground(page, 'none');
   expect(await alpha('#gridbox')).toBe(1);
 });
 
-test('at 320 wide the Background page stacks each label over its switch, and nothing runs off the card', async ({ page }) => {
+test('at 320 wide the Background page stacks each label over its control, and nothing runs off the card', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 568 });
   await page.goto('/?seed=1&subject=sports/golf');
   await openPage(page);
+  await setMode(page, 'manual');
+  await page.locator('#bgdrop-moving').click();
   const edges = await page.evaluate(() => {
     const card = /** @type {HTMLElement} */ (document.getElementById('settingscard'));
     const right = card.getBoundingClientRect().right - parseFloat(getComputedStyle(card).paddingRight);
-    const buttons = [...document.querySelectorAll('#settings-bgpage .seg button')].map(b => b.getBoundingClientRect().right);
-    return { scroll: card.scrollWidth, client: card.clientWidth, right, widest: Math.max(...buttons) };
+    const controls = [...document.querySelectorAll('#settings-bgpage :is(.seg button, select, .bgdrop, .bgmenu:not([hidden]) .bgtile)')].map(b => b.getBoundingClientRect().right);
+    return { scroll: card.scrollWidth, client: card.clientWidth, right, widest: Math.max(...controls), count: controls.length };
   });
+  expect(edges.count).toBe(2 + 1 + 2 + 23);
   expect(edges.scroll).toBeLessThanOrEqual(edges.client);
   expect(edges.widest).toBeLessThanOrEqual(edges.right + 0.5);
   const label = await page.locator('#lbl-bgmode').boundingBox();
-  const manual = await page.locator('#settings-bgpage [data-setting="bgmode"] [data-value="manual"]').boundingBox();
-  expect((manual?.y ?? 0)).toBeGreaterThanOrEqual((label?.y ?? 0) + (label?.height ?? 0));
+  const select = await page.locator('#settings-bgmode').boundingBox();
+  expect((select?.y ?? 0)).toBeGreaterThanOrEqual((label?.y ?? 0) + (label?.height ?? 0));
+  const radio = await page.locator('.bgkind[data-kind="moving"] .bgpick').boundingBox();
+  const drop = await page.locator('#bgdrop-moving').boundingBox();
+  expect((drop?.y ?? 0)).toBeGreaterThanOrEqual((radio?.y ?? 0) + (radio?.height ?? 0));
 });
 
 test('Subject motion\'s one large school starts beside the board, so a reduced-motion frame shows it', async ({ page }) => {

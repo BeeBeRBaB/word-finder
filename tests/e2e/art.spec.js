@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { handPickedBackground } from './helpers.js';
+import { handPickedBackground, pickBackground } from './helpers.js';
 
 test.use({ serviceWorkers: 'block' });
 // The category art shows for the Illustrated and Pixel art backgrounds; a new player's Theme mode
@@ -46,9 +46,9 @@ test('the Background page switches the art and is remembered', async ({ page }) 
   await page.waitForSelector('#letters .cell');
   await page.locator('#appearance').click();
   await page.locator('#settings-bg').click();
-  await page.locator('.bgtile[data-bg="pixel"]').click();
+  await pickBackground(page, 'pixel');
   await expect(page.locator('#railart svg')).toHaveAttribute('data-kind', 'pixel');
-  await page.locator('.bgtile[data-bg="none"]').click();
+  await pickBackground(page, 'none');
   await expect(page.locator('#railart svg')).toHaveCount(0);
   await expect(page.locator('#art svg')).toHaveCount(0);
   await page.reload();
@@ -57,7 +57,7 @@ test('the Background page switches the art and is remembered', async ({ page }) 
   await page.locator('#appearance').click();
   await expect(page.locator('#settings-bg')).toHaveAccessibleName('Background None');
   await page.locator('#settings-bg').click();
-  await expect(page.locator('.bgtile[data-bg="none"] input')).toBeChecked();
+  await expect(page.getByRole('button', { name: 'Still None' })).toBeVisible();
 });
 
 test('Reveal a word finds one hidden word, and the last one wins', async ({ page }) => {

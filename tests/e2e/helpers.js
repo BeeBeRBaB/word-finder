@@ -186,3 +186,15 @@ export async function handPickedBackground(page) {
     }
   });
 }
+
+/** Pick a background as a player does on the Background page: Manual, the dropdown of its kind,
+ * then its option. @param {Page} page @param {string} id */
+export async function pickBackground(page, id) {
+  const mode = page.locator('#settings-bgmode');
+  if (await mode.inputValue() !== 'manual') await mode.selectOption('manual');
+  const { BACKGROUNDS } = await import('../../src/backgrounds.js');
+  const kind = BACKGROUNDS.find(b => b.id === id)?.animated ? 'moving' : 'still';
+  const drop = page.locator(`#bgdrop-${kind}`);
+  if (await drop.getAttribute('aria-expanded') !== 'true') await drop.click();
+  await page.locator(`#bgmenu-${kind} .bgtile[data-bg="${id}"]`).click();
+}

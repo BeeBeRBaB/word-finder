@@ -14,7 +14,7 @@ import { makeAppearance } from './appearance.js';
 import { makeSettings } from './settings.js';
 import { makePicker } from './picker.js';
 import { makeBackdrop, findBackground, resolveBackground, RANDOM_POOL } from './backgrounds.js';
-import { tilesMarkup, summaryMarkup, MODE_NOTES } from './bgpicker.js';
+import { manualMarkup, dropMarkup, modeNote, summaryMarkup, KINDS } from './bgpicker.js';
 import { makeSubpage } from './subpage.js';
 import { makePane } from './pane.js';
 import { tilesMarkup as lookTilesMarkup, summaryMarkup as lookSummaryMarkup, readLooks, varsOf, lookId } from './lookpicker.js';
@@ -959,25 +959,70 @@ function syncLook(theme, pref) {
   const on = /** @type {HTMLInputElement|null} */ (lookTiles.querySelector(`input[value="${lookId(theme, pref)}"]`));
   if (on) on.checked = true;
 }
-// The Background page: the mode, the area, and a tile per background, Still and Animated.
-const bgTiles = must('bg-tiles'), bgNow = must('settings-bg-now'), bgNote = must('bgmode-note');
-bgTiles.innerHTML = tilesMarkup();
-/** The Background row's summary, the note on the mode, and the checked tile: the background
- * showing now, whichever way it was chosen. @returns {void} */
+// The Background page: the mode, the area, and under Manual a Still and an Animated dropdown
+// with a radio choosing which of the two shows.
+const bgManual = must('bg-manual'), bgNow = must('settings-bg-now'), bgNote = must('bgmode-note');
+bgManual.innerHTML = manualMarkup();
+/** The Background row's summary, the note on the mode, and under Manual the two dropdowns,
+ * their menus' checked options and the radio of the kind showing. @returns {void} */
 function syncBg() {
-  const mode = cfg.get().bgmode, id = shownBg();
-  bgNow.innerHTML = summaryMarkup(id, mode);
-  bgNote.textContent = MODE_NOTES[mode];
-  const on = bgTiles.querySelector(`input[value="${id}"]`);
-  if (on instanceof HTMLInputElement) on.checked = true;
+  const s = cfg.get(), id = shownBg();
+  bgNow.innerHTML = summaryMarkup(id, s.bgmode);
+  bgNote.textContent = modeNote(s.bgmode, id);
+  bgManual.hidden = s.bgmode !== 'manual';
+  if (bgManual.hidden) closeBgMenu(false);
+  for (const [kind] of KINDS) {
+    must(`bgnow-${kind}`).innerHTML = dropMarkup(s[kind]);
+    const on = bgManual.querySelector(`input[name="bg-${kind}"][value="${s[kind]}"]`);
+    if (on instanceof HTMLInputElement) on.checked = true;
+    const radio = bgManual.querySelector(`input[name="bgkind"][value="${kind}"]`);
+    if (radio instanceof HTMLInputElement) radio.checked = s.art === s[kind];
+  }
 }
+/** Close the open menu, if any, and focus its dropdown when `refocus`. @param {boolean} [refocus] @returns {void} */
+function closeBgMenu(refocus = true) {
+  const open = bgManual.querySelector('.bgdrop[aria-expanded="true"]');
+  if (!open) return;
+  open.setAttribute('aria-expanded', 'false');
+  must(open.getAttribute('aria-controls') ?? '').hidden = true;
+  if (refocus) /** @type {HTMLElement} */ (open).focus({ preventScroll: true });
+}
+/** Open a dropdown's menu, closing the other, with focus on its checked option. @param {Element} drop @returns {void} */
+function openBgMenu(drop) {
+  closeBgMenu(false);
+  drop.setAttribute('aria-expanded', 'true');
+  const menu = must(drop.getAttribute('aria-controls') ?? '');
+  menu.hidden = false;
+  const on = /** @type {HTMLElement|null} */ (menu.querySelector('input:checked'));
+  on?.focus({ preventScroll: true });
+  // The menu's top, then its pick, which a long one-column menu can hold below the fold.
+  menu.scrollIntoView?.({ block: 'nearest' });
+  on?.closest('.bgtile')?.scrollIntoView?.({ block: 'nearest' });
+}
+bgManual.addEventListener('click', (e) => {
+  const drop = e.target instanceof Element ? e.target.closest('.bgdrop') : null;
+  if (drop) { if (drop.getAttribute('aria-expanded') === 'true') closeBgMenu(); else openBgMenu(drop); return; }
+  if (!(e.target instanceof HTMLInputElement && e.target.name.startsWith('bg-'))) return;
+  // The checked option too, which fires no change: it is that kind's pick, and may not be showing.
+  pickBg(e.target.value);
+  // A pick by pointer closes its menu; the arrow keys move through it.
+  if (e instanceof MouseEvent && e.detail > 0) closeBgMenu();
+});
+// Escape closes an open menu rather than the pane; Enter on an option closes it too.
+bgManual.addEventListener('keydown', (e) => {
+  const inMenu = e.target instanceof HTMLInputElement && e.target.name.startsWith('bg-');
+  if (!(e.key === 'Escape' || (e.key === 'Enter' && inMenu)) || !bgManual.querySelector('.bgdrop[aria-expanded="true"]')) return;
+  e.preventDefault();
+  e.stopPropagation();
+  closeBgMenu();
+});
 /** Draw the background showing now: the category art for a still one, and the backdrop.
  * @returns {void} */
 function applyBackground() {
   if (subjectId) { renderArt(els, subjectId, shownBg()); placeArt(els, state.dims); }
   showBackdrop();
 }
-/** A tile is the player's own pick, so it is Manual from then on. @param {string} id @returns {void} */
+/** A pick in either menu is the one that shows, so its row's radio checks too. @param {string} id @returns {void} */
 function pickBg(id) {
   const s = cfg.get();
   if (s.bgmode === 'manual' && s.art === id) return;
@@ -994,6 +1039,8 @@ const appearance = makeAppearance({
 appearance.start();
 const bgPage = makeSubpage({
   card: must('settingscard'), page: must('settings-bgpage'), row: must('settings-bg'), back: must('bg-back'), name: 'background',
+  // The title, not the mode: focusing a select from a tap opens it at once on an iPhone.
+  onOpen: () => closeBgMenu(false), focus: () => must('bg-title'),
 });
 const lookPage = makeSubpage({
   card: must('settingscard'), page: must('settings-themepage'), row: must('settings-theme'), back: must('theme-back'), name: 'theme',
@@ -1145,8 +1192,6 @@ function changeSetting(key, value) {
   applySetting(key);
 }
 settings.addEventListener('click', (e) => {
-  // A click on the checked tile too: under Theme or Random it makes that background the Manual pick.
-  if (e.target instanceof HTMLInputElement && e.target.name === 'art') { pickBg(e.target.value); return; }
   const btn = e.target instanceof Element ? e.target.closest('.seg[data-setting] button[data-value]') : null;
   if (!btn) return;
   const group = /** @type {HTMLElement} */ (btn.closest('[data-setting]'));
@@ -1156,7 +1201,8 @@ settings.addEventListener('change', (e) => {
   const el = e.target;
   if (el === leastBox) { progress.setFavourLeastSeen(leastBox.checked); return; }
   if (el instanceof HTMLInputElement && el.name === 'look') { const [t, p] = el.value.split('/'); appearance.setLook(t, p); return; }
-  if (el instanceof HTMLInputElement && el.name === 'art') { pickBg(el.value); return; }
+  if (el instanceof HTMLInputElement && el.name.startsWith('bg-')) { pickBg(el.value); return; }
+  if (el instanceof HTMLInputElement && el.name === 'bgkind') { pickBg(/** @type {any} */ (cfg.get())[el.value]); return; }
   if (!(el instanceof HTMLInputElement || el instanceof HTMLSelectElement) || !el.dataset.setting) return;
   const value = el instanceof HTMLSelectElement || el.type === 'radio' ? el.value
     : el.dataset.on ? (el.checked ? el.dataset.on : el.dataset.off) : el.checked;

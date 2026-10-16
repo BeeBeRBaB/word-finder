@@ -103,3 +103,21 @@ test('get() is a copy', () => {
   assert.equal(s.get().sound, true);
   for (const [k, list] of Object.entries(CHOICES)) assert.equal(/** @type {any} */ (DEFAULTS)[k], list[0], `${k}: default is not first`);
 });
+
+test('Manual keeps a still and an animated pick, and its own pick is always one of them', () => {
+  assert.deepEqual([DEFAULTS.still, DEFAULTS.moving], ['illustrated', 'drift']);
+  assert.deepEqual(CHOICES.still, ['illustrated', 'pixel', 'scene', 'none']);
+  assert.ok(CHOICES.moving.includes('ripple') && !CHOICES.moving.includes('pixel'));
+  // A record from before the two picks puts its art in its kind's.
+  assert.deepEqual([normalizeSettings({ art: 'aurora' }).moving, normalizeSettings({ art: 'aurora' }).still], ['aurora', 'illustrated']);
+  assert.deepEqual([normalizeSettings({ art: 'none' }).still, normalizeSettings({ art: 'none' }).moving], ['none', 'drift']);
+  // A pick of the wrong kind is no pick.
+  assert.equal(normalizeSettings({ still: 'aurora', art: 'pixel' }).still, 'pixel');
+  assert.equal(normalizeSettings({ moving: 'pixel', art: 'pixel' }).moving, 'drift');
+  const s = makeSettings({ store: memStore() });
+  s.set('art', 'bokeh');
+  s.set('art', 'scene');
+  assert.deepEqual([s.get().art, s.get().still, s.get().moving], ['scene', 'scene', 'bokeh'], 'each kind keeps its last pick');
+  s.set('art', s.get().moving);
+  assert.equal(s.get().art, 'bokeh');
+});

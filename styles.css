@@ -626,7 +626,7 @@ body{position:fixed;inset:0;width:100%;height:100%}
 .paneclose:hover{color:var(--text-strong)}
 /* Opening a pane focuses its title rather than its first control: focusing a select from a
    tap opens it at once on an iPhone. The title is not a control, so it draws no ring. */
-#settings-title:focus,#picker-title:focus{outline:none}
+#settings-title:focus,#picker-title:focus,#bg-title:focus{outline:none}
 /* Back replaces the close cross only where Settings is a full-screen page. */
 .paneback{display:none;align-items:center;gap:2px;min-height:44px;margin:0 0 0 -10px;padding:0 10px 0 4px;border:none;background:transparent;
   color:var(--accent-text);font-family:inherit;font-weight:700;font-size:16px;cursor:pointer}
@@ -637,7 +637,7 @@ body{position:fixed;inset:0;width:100%;height:100%}
    for a three-way switch, whatever made it narrow. */
 .panegroup{display:flex;flex-direction:column;gap:6px;min-width:0;container-type:inline-size}
 .panegroup + .panegroup{padding-top:12px;border-top:1px solid var(--border)}
-.panesection,.lookhead,.bghead{margin:0 0 2px;font-family:var(--display);font-size:15px;font-weight:700;color:var(--text-strong)}
+.panesection,.lookhead{margin:0 0 2px;font-family:var(--display);font-size:15px;font-weight:700;color:var(--text-strong)}
 .row{display:grid;grid-template-columns:92px minmax(0,1fr);align-items:center;column-gap:10px}
 @container (max-width:335px){.row{grid-template-columns:minmax(0,1fr);row-gap:4px}}
 .panenote{margin:0;font-size:13px;line-height:1.35;color:var(--hint)}
@@ -668,8 +668,11 @@ body{position:fixed;inset:0;width:100%;height:100%}
 .subpage{display:flex;flex-direction:column;gap:12px}
 .subpage[hidden]{display:none}
 .subpage .paneback{display:flex}
-/* A container like .panegroup, so its rows stack their labels too where a three-way switch would not fit. */
+/* A container like .panegroup, so its rows stack their labels too where a three-way switch would not fit.
+   Its label column fits a radio and ANIMATED. */
 #settings-bgpage{container-type:inline-size}
+#settings-bgpage .row{grid-template-columns:112px minmax(0,1fr)}
+@container (max-width:335px){#settings-bgpage .row{grid-template-columns:minmax(0,1fr)}}
 /* Tiles on the Theme and Background pages. The radio stays in the tab order and the tile
    draws its focus and check. */
 .tile{position:relative;display:flex;flex-direction:column;gap:4px;min-width:0;padding:7px 8px 8px;
@@ -683,12 +686,31 @@ body{position:fixed;inset:0;width:100%;height:100%}
 .tile:has(input:checked)::before{content:'';position:absolute;z-index:1;top:16px;right:20px;width:5px;height:9px;
   border:solid var(--accent-ink);border-width:0 2.2px 2.2px 0;transform:rotate(45deg)}
 .tile:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
-.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px}
 .bgtile .bgglyph{display:block;width:100%;height:auto;aspect-ratio:3/2;box-sizing:border-box;margin-bottom:2px;padding:6px;border-radius:9px;background:var(--bg)}
 .bgtile .bgname{font-weight:700;font-size:14.5px;line-height:1.2;color:var(--text-strong);white-space:normal}
-/* The Background page's tiles in two groups, Still and Animated, each under its heading. */
-#bg-tiles{display:flex;flex-direction:column;gap:14px}
-.bggroup{display:flex;flex-direction:column;gap:6px;min-width:0}
+/* The Background page under Manual: a row per kind, its radio in the label column and its
+   dropdown beside it, and the dropdown's menu under the row while open. */
+#bg-manual{display:flex;flex-direction:column;gap:8px}
+#bg-manual[hidden]{display:none}
+.bgpick{display:flex;align-items:center;gap:8px;min-height:44px;cursor:pointer}
+.bgpick input{width:20px;height:20px;flex:none;margin:0;accent-color:var(--accent);cursor:pointer}
+.bgdrop[aria-expanded="true"]{border-color:var(--accent)}
+.bgdrop[aria-expanded="true"] .navchev{transform:rotate(180deg)}
+.bgmenu{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;padding:8px;
+  border:1.5px solid var(--accent);border-radius:14px}
+.bgmenu[hidden]{display:none}
+/* Sized so Constellation fits a phone's tile whole. */
+.bgmenu .bgtile{padding:7px 6px 8px}
+.bgmenu .bgtile .bgname{font-size:13.5px}
+/* The list menu: a row per option, its picture beside its name, in as many columns as fit. */
+#settings-bgpage[data-menu="list"] .bgmenu{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+#settings-bgpage[data-menu="list"] .bgtile{flex-direction:row;align-items:center;gap:10px;min-height:44px;box-sizing:border-box;padding:4px 8px 4px 5px;border-radius:12px}
+#settings-bgpage[data-menu="list"] .bgtile .bgglyph{width:42px;height:28px;flex:none;margin:0;padding:3px;border-radius:7px}
+#settings-bgpage[data-menu="list"] .bgtile .bgname{font-size:14px}
+@container (max-width:335px){#settings-bgpage[data-menu="list"] .bgtile .bgname{font-size:13px}}
+/* The check sits on the picture's corner, leaving the name its whole width. */
+#settings-bgpage[data-menu="list"] .bgtile:has(input:checked)::after{top:50%;right:auto;left:34px;margin-top:1px;width:16px;height:16px;box-shadow:0 0 0 2px var(--surface)}
+#settings-bgpage[data-menu="list"] .bgtile:has(input:checked)::before{top:50%;right:auto;left:40px;margin-top:4px;width:4px;height:7px;border-width:0 2px 2px 0}
 /* The Theme page: a group per theme with its Light and Dark tiles, two groups to a row on a
    phone and four where the card is wide (below). */
 #theme-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}
@@ -754,9 +776,10 @@ label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12
    native chevron, so the wrapper draws one back — without it the control reads as a
    text input and nothing says it opens. */
 #picker-field{position:relative;margin-bottom:20px}
-#picker-field::after{content:'';position:absolute;right:18px;top:50%;width:9px;height:9px;margin-top:-7px;
+.selfield{position:relative}
+#picker-field::after,.selfield::after{content:'';position:absolute;right:18px;top:50%;width:9px;height:9px;margin-top:-7px;
   border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);pointer-events:none}
-#picker-select{appearance:none;-webkit-appearance:none;width:100%;box-sizing:border-box;display:block;
+#picker-select,#settings-bgmode{appearance:none;-webkit-appearance:none;width:100%;box-sizing:border-box;display:block;
   background:var(--bg);color:var(--text);border:1.5px solid var(--muted);border-radius:12px;
   padding:11px 40px 11px 14px;font-family:inherit;font-size:15px;min-height:44px;cursor:pointer}
 #picker-error{margin:-12px 0 16px;text-align:left}
@@ -786,10 +809,10 @@ label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12
    everything else. */
 @media (pointer:fine){
   @supports (appearance:base-select){
-    #picker-select,#picker-select::picker(select){appearance:base-select}
+    :is(#picker-select,#settings-bgmode),:is(#picker-select,#settings-bgmode)::picker(select){appearance:base-select}
     /* The wrapper already draws a chevron. */
-    #picker-select::picker-icon{display:none}
-    #picker-select::picker(select){margin-top:6px;padding:6px;
+    :is(#picker-select,#settings-bgmode)::picker-icon{display:none}
+    :is(#picker-select,#settings-bgmode)::picker(select){margin-top:6px;padding:6px;
       background:var(--bg);color:var(--text);border:1.5px solid var(--accent);border-radius:12px;
       box-shadow:var(--card-shadow);overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--muted) transparent}
     /* No author max-height: the UA's own stretch sizing keeps the list below its control
@@ -808,14 +831,14 @@ label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12
       grid-template-columns:repeat(2,minmax(0,1fr));column-gap:4px;align-content:start}
     /* #picker in front: the shared option rule below has equal specificity and comes later. */
     #picker #picker-select option{min-height:28px;block-size:28px;padding:0 10px;line-height:28px}
-    #picker-select option::checkmark{display:none}
-    #picker-select option{box-sizing:border-box;min-height:40px;padding:8px 12px;border-radius:8px;
+    :is(#picker-select,#settings-bgmode) option::checkmark{display:none}
+    :is(#picker-select,#settings-bgmode) option{box-sizing:border-box;min-height:40px;padding:8px 12px;border-radius:8px;
       font-size:15px;color:var(--text);background:transparent;cursor:pointer}
-    #picker-select option:hover,#picker-select option:focus-visible{background:var(--accent-wash);outline:none}
-    #picker-select option:checked{color:var(--accent-text);font-weight:700}
+    :is(#picker-select,#settings-bgmode) option:hover,:is(#picker-select,#settings-bgmode) option:focus-visible{background:var(--accent-wash);outline:none}
+    :is(#picker-select,#settings-bgmode) option:checked{color:var(--accent-text);font-weight:700}
     /* Accent text on the wash is 4.33:1 in Phosphor light; the strongest text colour is not. */
-    #picker-select option:checked:is(:hover,:focus-visible){color:var(--text-strong)}
-    #picker-select option:disabled{color:var(--muted);cursor:default;background:transparent}
+    :is(#picker-select,#settings-bgmode) option:checked:is(:hover,:focus-visible){color:var(--text-strong)}
+    :is(#picker-select,#settings-bgmode) option:disabled{color:var(--muted);cursor:default;background:transparent}
   }
 }
 /* After both cards' own rules on purpose: their `padding` and `border` shorthands would
@@ -864,6 +887,8 @@ label[for="picker-select"]{display:block;font-family:var(--utility);font-size:12
     margin:0 calc(-18px - env(safe-area-inset-right)) 0 calc(-18px - env(safe-area-inset-left));
     padding:calc(6px + env(safe-area-inset-top)) calc(18px + env(safe-area-inset-right)) 6px calc(18px + env(safe-area-inset-left))}
   #settingscard .panehead h2{text-align:center;font-size:18px}
+  /* What scrolls into view clears the sticky header. */
+  #settingscard{scroll-padding-top:calc(64px + env(safe-area-inset-top))}
   .paneback{display:flex}
   #settings-close,.subpage .paneclose{display:none}
   /* Balances Back so the title sits in the middle. */

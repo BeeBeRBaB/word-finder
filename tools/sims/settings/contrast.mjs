@@ -11,8 +11,10 @@ import { THEMES as ALL_THEMES, PREFS } from '../../../src/appearance.js';
 const list = (k, all) => (process.env[k] ? process.env[k].split(',') : all);
 const THEMES = list('THEMES', ALL_THEMES);
 const MODES = list('MODES', PREFS);
-// The main page, then each subpage through the row that opens it.
-const PAGES = [['main', null], ['theme', '#settings-theme'], ['background', '#settings-bg']];
+// The main page, then each subpage through the row that opens it, and Background under Manual
+// with the Animated menu open on its pick.
+const manual = async (page) => { await page.selectOption('#settings-bgmode', 'manual'); await page.click('#bgdrop-moving'); };
+const PAGES = [['main', null], ['theme', '#settings-theme'], ['background', '#settings-bg'], ['background menu', '#settings-bg', manual]];
 
 const site = await serve();
 const browser = await chromium.launch();
@@ -23,9 +25,10 @@ for (const [w, h] of [[390, 844], [1440, 900]]) for (const mode of MODES) for (c
   await page.addInitScript(([m, t]) => { localStorage.setItem('wordfinder-appearance', m); localStorage.setItem('wordfinder-theme', t); }, [mode, theme]);
   await page.goto(site.url + '/?subject=sports/golf'); await page.waitForSelector('.cell');
   const out = [];
-  for (const [name, row] of PAGES) {
+  for (const [name, row, setup] of PAGES) {
     await page.click('#appearance');
     if (row) await page.click(row);
+    if (setup) await setup(page);
     out.push(await page.evaluate((name) => {
       const rgba = s => { const m = s.match(/[\d.]+/g).map(Number); return [m[0], m[1], m[2], m[3] ?? 1]; };
       const over = (a, b) => [0, 1, 2].map(i => a[i] * a[3] + b[i] * (1 - a[3])).concat(1);
@@ -58,6 +61,7 @@ for (const [w, h] of [[390, 844], [1440, 900]]) for (const mode of MODES) for (c
       return { low, bad };
     }, name));
     await page.keyboard.press('Escape');
+    if (setup) await page.keyboard.press('Escape');   // the first closed the menu
   }
   const bad = out.flatMap(o => o.bad);
   failed += bad.length;
