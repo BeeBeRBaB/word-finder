@@ -23,7 +23,7 @@
     "jobs/plumbers": ["pipes", "wrench", "toolbox", "faucet", "washing-machine", "fountain"],
     "jobs/electricians": ["plug-socket", "toolbox", "hard-hat", "lightning-bolt", "lightbulb", "battery"],
     "jobs/postal-workers": ["mailbox", "invitation-card", "signpost", "map", "gift", "handshake"],
-    "jobs/bakers": ["bread", "wheat-sheaf", "chef-hat", "whisk", "croissant", "cake"],
+    "jobs/bakers": ["baker", "wheat-sheaf", "chef-hat", "whisk", "croissant", "bread"],
     "jobs/photographers": ["photographer", "camera", "eye", "smartphone", "mountain", "laptop"]
   },
   "wishlist": [

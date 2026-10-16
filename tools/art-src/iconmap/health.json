@@ -9,7 +9,7 @@
     "health/walking": ["walking-figure", "footprints", "sneaker", "signpost", "map", "park-bench"],
     "health/hydration": ["water-bottle", "faucet", "fountain", "coffee-cup", "heart"],
     "health/vitamins": ["pill", "apple", "heart", "stethoscope"],
-    "health/dentists": ["tooth", "toothbrush", "smiley", "stethoscope", "heart"],
+    "health/dentists": ["dentist-chair", "toothbrush", "tooth", "smiley", "stethoscope", "heart"],
     "health/first-aid": ["first-aid-kit", "bandage", "siren", "stethoscope", "heart"],
     "health/hand-washing": ["faucet", "microscope", "heart", "stethoscope", "first-aid-kit"],
     "health/rest-days": ["couch-blanket", "hammock", "armchair", "pillow", "palm-island", "coffee-cup"],

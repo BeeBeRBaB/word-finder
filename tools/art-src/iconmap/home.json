@@ -7,7 +7,7 @@
     "home/dining-room": ["dinner-plate", "chandelier", "champagne-flutes", "candle", "flower", "coffee-cup"],
     "home/furniture": ["armchair", "bed", "park-bench", "pillow", "book-stack", "lamp"],
     "home/cleaning": ["mop-bucket", "washing-machine", "armchair", "lamp", "pillow"],
-    "home/laundry": ["washing-machine", "dress", "pillow", "armchair"],
+    "home/laundry": ["laundry-basket", "washing-machine", "dress", "pillow", "armchair"],
     "home/tools": ["toolbox", "wrench", "hammer", "saw", "gear", "shovel"],
     "home/storage": ["cardboard-box", "padlock", "suitcase", "treasure-chest", "armchair", "lamp"],
     "home/decorating": ["paint-roller", "palette", "paintbrush", "flower", "candle", "pillow"],
@@ -18,13 +18,13 @@
     "home/doors": ["door", "padlock", "armchair", "lamp", "book-stack", "candle"],
     "home/plumbing": ["pipes", "wrench", "faucet", "gear", "washing-machine", "armchair"],
     "home/electrical": ["plug-socket", "battery", "lightbulb", "lamp", "gear"],
-    "home/carpentry": ["saw", "hammer", "pencil", "park-bench", "tree", "armchair"],
-    "home/bedding": ["pillow", "bed", "crescent-moon", "yarn-ball", "thread-spool"],
+    "home/carpentry": ["workbench", "hammer", "saw", "pencil", "park-bench", "tree"],
+    "home/bedding": ["duvet-bed", "bed", "pillow", "crescent-moon", "yarn-ball", "thread-spool"],
     "home/curtains": ["window", "armchair", "pillow", "lamp", "candle"],
     "home/home-office": ["office-desk", "laptop", "smartphone", "pencil", "book-stack", "lamp"],
     "home/garage": ["garage", "wrench", "car", "padlock", "toolbox", "lawnmower"],
     "home/fireplace": ["fireplace", "flame", "candle", "armchair", "pillow", "book-stack"],
-    "home/sewing": ["thread-spool", "scissors", "yarn-ball", "dress", "lamp"]
+    "home/sewing": ["sewing-machine", "scissors", "thread-spool", "yarn-ball", "dress", "lamp"]
   },
   "wishlist": [
     {"id": "bed", "motif": "bed with a headboard, quilt and pillows", "subjects": ["home/bedroom", "home/bedding", "home/furniture"]},

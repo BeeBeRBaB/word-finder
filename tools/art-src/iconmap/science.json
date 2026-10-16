@@ -13,7 +13,7 @@
     "science/gravity": ["apple", "planet", "satellite", "crescent-moon", "rocket"],
     "science/measurement": ["ruler", "thermometer", "alarm-clock", "pencil", "chalkboard", "microscope"],
     "science/experiments": ["test-tubes", "magnifying-glass", "flask", "microscope", "chalkboard", "laptop"],
-    "science/dinosaurs": ["dinosaur", "ammonite", "bone", "shovel", "leaf", "microscope"],
+    "science/dinosaurs": ["fossil-dig", "dinosaur", "ammonite", "bone", "shovel", "leaf"],
     "science/fossils": ["ammonite", "magnifying-glass", "dinosaur", "bone", "shovel", "leaf"],
     "science/genetics": ["dna", "microscope", "sprout", "flower"],
     "science/microscopes": ["microscope", "magnifying-glass", "germ", "eye", "lightbulb", "dna"],

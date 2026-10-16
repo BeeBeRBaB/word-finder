@@ -24,7 +24,7 @@
     "food/tea": ["teapot", "coffee-cup", "leaf", "bee", "cake", "flower"],
     "food/chocolate": ["chocolate-bar", "cake", "coffee-cup", "gift", "dinner-plate"],
     "food/picnics": ["picnic-basket", "park-bench", "butterfly", "apple", "tree", "bee"],
-    "food/markets": ["market-stall", "picnic-basket", "shopping-cart", "storefront", "apple", "bread"]
+    "food/markets": ["produce-crate", "picnic-basket", "shopping-cart", "market-stall", "storefront", "apple"]
   },
   "wishlist": [
     {"id": "pizza-slice", "motif": "pizza slice with pepperoni and a cheese pull", "subjects": ["food/pizza"]},

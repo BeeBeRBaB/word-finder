@@ -7,7 +7,7 @@
     "clothing/jeans": ["jeans", "coat-hanger", "zipper", "thread-spool", "washing-machine", "sneaker"],
     "clothing/dresses": ["dress", "coat-hanger", "thread-spool", "top-hat", "sneaker"],
     "clothing/knitting": ["yarn-ball", "sheep", "scarf", "mitten", "sock", "thread-spool"],
-    "clothing/sewing": ["thread-spool", "scissors", "button", "fabric-bolt", "dress", "yarn-ball"],
+    "clothing/sewing": ["thread-spool", "scissors", "button", "fabric-bolt", "sewing-machine", "dress"],
     "clothing/fabrics": ["fabric-bolt", "scissors", "sheep", "thread-spool", "yarn-ball", "dress"],
     "clothing/buttons": ["button", "coat", "thread-spool", "dress", "top-hat", "yarn-ball"],
     "clothing/zips": ["zipper", "thread-spool", "dress", "sneaker", "top-hat"],

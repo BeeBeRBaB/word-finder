@@ -10,11 +10,11 @@
     "garden/watering": ["watering-can", "flower", "sprout", "leaf"],
     "garden/garden-tools": ["shovel", "wheelbarrow", "watering-can", "sprout", "flower"],
     "garden/plant-pots": ["plant-pot", "amphora", "flower", "sprout", "watering-can"],
-    "garden/herbs": ["herb-bunch", "plant-pot", "leaf", "sprout", "coffee-cup", "cooking-pot"],
+    "garden/herbs": ["herb-pots", "plant-pot", "herb-bunch", "leaf", "sprout", "coffee-cup"],
     "garden/bees": ["bee", "flower", "crown", "leaf"],
     "garden/bird-feeders": ["bird-feeder", "bird", "tree", "flower", "leaf"],
     "garden/garden-sheds": ["garden-shed", "shovel", "watering-can", "tree", "flower"],
-    "garden/garden-ponds": ["frog", "fish", "flower", "fountain", "leaf"],
+    "garden/garden-ponds": ["lily-pad-pond", "frog", "fish", "flower", "fountain", "leaf"],
     "garden/raised-beds": ["raised-bed", "carrot", "wheelbarrow", "sprout", "shovel", "flower"],
     "garden/mulching": ["wheelbarrow", "compost-bin", "leaf", "tree", "mushroom", "shovel"],
     "garden/pruning": ["secateurs", "tree", "leaf", "flower", "sprout"],
@@ -23,7 +23,7 @@
     "garden/garden-fencing": ["picket-fence", "flower", "tree", "rabbit", "sprout"],
     "garden/trellises": ["trellis", "leaf", "flower", "sprout", "watering-can"],
     "garden/garden-paths": ["stepping-stones", "flower", "park-bench", "tree", "signpost"],
-    "garden/cold-frames": ["greenhouse", "sprout", "leaf", "watering-can", "flower"],
+    "garden/cold-frames": ["cold-frame", "greenhouse", "sprout", "leaf", "watering-can", "flower"],
     "garden/window-boxes": ["window-box", "plant-pot", "flower", "leaf", "watering-can", "sprout"]
   },
   "wishlist": [

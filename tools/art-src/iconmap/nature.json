@@ -24,7 +24,7 @@
     "nature/farms": ["wheat-sheaf", "pumpkin", "tractor", "sprout", "apple", "shovel"],
     "nature/forests": ["acorn", "fox", "deer", "pine-tree", "owl", "tree"],
     "nature/caves": ["cave-mouth", "bat", "pickaxe", "mountain", "compass", "tree"],
-    "nature/sky": ["rainbow", "sun", "crescent-moon", "shooting-star", "planet", "telescope"]
+    "nature/sky": ["kite", "sun", "rainbow", "crescent-moon", "shooting-star", "planet"]
   },
   "wishlist": [
     {"id": "sun", "motif": "bright sun with rays", "subjects": ["nature/weather", "nature/desert", "nature/seasons", "nature/sky"]},
