@@ -12,7 +12,7 @@
     "school/sports-day": ["trophy", "stopwatch", "whistle", "medal", "sneaker", "bunting"],
     "school/assemblies": ["trophy", "music-notes", "microphone", "speech-bubble", "medal", "bunting"],
     "school/school-trips": ["school-bus", "backpack", "map", "camera", "ticket", "amphora"],
-    "school/stationery": ["scissors", "ruler", "pencil", "quill", "magnet", "chalkboard"],
+    "school/stationery": ["pencil", "scissors", "ruler", "quill", "magnet", "chalkboard"],
     "school/lunchtime": ["lunchbox", "apple", "dinner-plate", "bread", "water-bottle", "cooking-pot"],
     "school/library": ["bookshelf", "book-stack", "owl", "armchair", "lamp"],
     "school/art-class": ["palette", "scissors", "paintbrush", "yarn-ball", "amphora", "thread-spool"],

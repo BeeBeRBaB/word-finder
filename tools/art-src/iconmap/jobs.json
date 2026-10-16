@@ -20,7 +20,7 @@
     "jobs/office-workers": ["laptop", "coffee-cup", "smartphone", "handshake", "alarm-clock", "pencil"],
     "jobs/shopkeepers": ["storefront", "handshake", "gift", "apple", "bread"],
     "jobs/dentists": ["toothbrush", "tooth", "smiley", "pill", "first-aid-kit"],
-    "jobs/plumbers": ["wrench", "toolbox", "faucet", "washing-machine", "fountain", "gear"],
+    "jobs/plumbers": ["pipes", "wrench", "toolbox", "faucet", "washing-machine", "fountain"],
     "jobs/electricians": ["toolbox", "hard-hat", "lightning-bolt", "lightbulb", "battery", "lamp"],
     "jobs/postal-workers": ["invitation-card", "signpost", "map", "gift", "handshake"],
     "jobs/bakers": ["bread", "wheat-sheaf", "chef-hat", "whisk", "croissant", "cake"],

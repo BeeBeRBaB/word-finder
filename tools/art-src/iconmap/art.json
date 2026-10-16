@@ -3,7 +3,7 @@
   "subjects": {
     "art/drawing": ["sketchbook", "pencil", "quill", "chalkboard", "paintbrush"],
     "art/painting": ["palette", "easel-canvas", "framed-painting", "paintbrush", "pencil", "mountain"],
-    "art/watercolor": ["palette", "easel-canvas", "paintbrush", "flower", "pencil", "quill"],
+    "art/watercolor": ["paintbrush", "palette", "easel-canvas", "flower", "pencil", "quill"],
     "art/oil-painting": ["easel-canvas", "palette", "framed-painting", "paintbrush", "mountain", "pencil"],
     "art/sculpture": ["statue", "fountain", "amphora", "pencil", "paintbrush"],
     "art/pottery": ["amphora", "coffee-cup", "paintbrush", "pencil"],
@@ -15,7 +15,7 @@
     "art/crafts": ["scissors", "thread-spool", "yarn-ball", "bunting", "gift", "paintbrush"],
     "art/textiles": ["thread-spool", "yarn-ball", "dress", "armchair"],
     "art/calligraphy": ["calligraphy-nib", "quill", "pencil", "paintbrush", "chalkboard"],
-    "art/animation": ["sketchbook", "film-reel", "television", "pencil", "laptop", "camera"],
+    "art/animation": ["film-reel", "sketchbook", "television", "pencil", "laptop", "camera"],
     "art/architecture": ["classical-building", "set-square", "stained-glass-window", "castle", "pyramid", "pencil"],
     "art/illustration": ["sketchbook", "pencil", "book-stack", "paintbrush", "quill", "lightbulb"],
     "art/graphic-design": ["set-square", "laptop", "pencil", "smartphone", "paintbrush"],

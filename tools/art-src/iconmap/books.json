@@ -1,13 +1,13 @@
 {
   "category": ["book-stack", "quill", "owl", "lamp", "armchair", "pencil"],
   "subjects": {
-    "books/libraries": ["bookshelf", "open-book", "glossy-magazine", "book-stack", "lamp", "owl"],
+    "books/libraries": ["bookshelf", "open-book", "newspaper", "glossy-magazine", "book-stack", "lamp"],
     "books/poetry": ["scroll", "quill", "heart", "flower", "crescent-moon", "book-stack"],
     "books/novels": ["open-book", "book-stack", "quill", "theater-masks", "armchair", "lamp"],
     "books/fairy-tales": ["castle", "magic-wand", "crown", "wizard-hat", "mushroom", "shield"],
     "books/mystery-novels": ["magnifying-glass", "eye", "street-lamp", "armchair", "candle", "book-stack"],
     "books/comic-books": ["comic-burst", "superhero-mask", "speech-bubble", "paintbrush", "pencil", "quill"],
-    "books/newspapers": ["printing-press", "camera", "pencil", "microphone", "alarm-clock", "coffee-cup"],
+    "books/newspapers": ["newspaper", "printing-press", "camera", "pencil", "microphone", "alarm-clock"],
     "books/handwriting": ["quill", "invitation-card", "alphabet-blocks", "pencil", "chalkboard", "lamp"],
     "books/grammar": ["alphabet-blocks", "chalkboard", "speech-bubble", "pencil", "book-stack", "quill"],
     "books/bookshops": ["bookshelf", "storefront", "book-stack", "gift", "quill", "armchair"],
@@ -15,16 +15,16 @@
     "books/publishing": ["printing-press", "hardcover-book", "book-stack", "handshake", "laptop", "pencil"],
     "books/bookbinding": ["hardcover-book", "printing-press", "thread-spool", "book-stack", "paintbrush", "pencil"],
     "books/reading-aloud": ["open-book", "teddy-bear", "speech-bubble", "pillow", "crescent-moon", "book-stack"],
-    "books/dictionaries": ["magnifying-glass", "open-book", "alphabet-blocks", "book-stack", "speech-bubble", "owl"],
+    "books/dictionaries": ["reference-book", "magnifying-glass", "open-book", "alphabet-blocks", "book-stack", "speech-bubble"],
     "books/book-clubs": ["open-book", "speech-bubble", "coffee-cup", "book-stack", "armchair", "dinner-plate"],
     "books/graphic-novels": ["comic-burst", "superhero-mask", "pencil", "paintbrush", "speech-bubble", "book-stack"],
     "books/short-stories": ["open-book", "quill", "lightbulb", "book-stack", "armchair", "coffee-cup"],
     "books/memoirs": ["invitation-card", "quill", "camera", "suitcase", "heart", "book-stack"],
     "books/picture-books": ["open-book", "alphabet-blocks", "teddy-bear", "rabbit", "paintbrush", "crescent-moon"],
     "books/book-covers": ["hardcover-book", "paintbrush", "laptop", "camera", "book-stack", "pencil"],
-    "books/proofreading": ["magnifying-glass", "pencil", "eye", "laptop", "book-stack", "quill"],
+    "books/proofreading": ["marked-up-page", "magnifying-glass", "pencil", "eye", "laptop", "book-stack"],
     "books/magazines": ["glossy-magazine", "camera", "dress", "speech-bubble", "paintbrush", "book-stack"],
-    "books/encyclopedias": ["magnifying-glass", "open-book", "globe", "book-stack", "map", "owl"]
+    "books/encyclopedias": ["book-stack", "magnifying-glass", "open-book", "globe", "map", "owl"]
   },
   "wishlist": [
     { "id": "open-book", "motif": "open book with pages fanning up", "subjects": ["books/libraries", "books/novels", "books/short-stories", "books/dictionaries", "books/reading-aloud", "books/book-clubs", "books/picture-books", "books/encyclopedias", "books/storytelling"] },

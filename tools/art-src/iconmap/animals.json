@@ -24,7 +24,7 @@
     "animals/jellyfish": ["jellyfish", "seashell", "wave", "fish", "whale", "crab"],
     "animals/octopus": ["octopus", "wave", "brain", "fish", "crab"],
     "animals/dinosaurs": ["dinosaur", "bone", "shovel", "microscope", "mountain", "leaf"],
-    "animals/nocturnal-animals": ["bat", "owl", "crescent-moon", "shooting-star", "eye", "pine-tree"]
+    "animals/nocturnal-animals": ["owl", "bat", "crescent-moon", "shooting-star", "eye", "pine-tree"]
   },
   "wishlist": [
     {"id": "dog", "motif": "floppy-eared puppy with a collar", "subjects": ["animals/dogs"]},

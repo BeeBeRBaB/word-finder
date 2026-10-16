@@ -21,7 +21,7 @@
     "history/printing-press": ["printing-press", "scroll", "book-stack", "quill", "pencil", "gear"],
     "history/lighthouses": ["lighthouse", "wave", "sailing-ship", "crescent-moon", "map"],
     "history/windmills": ["windmill", "bread", "gear", "sprout", "shovel"],
-    "history/clockmakers": ["magnifying-glass", "alarm-clock", "gear", "lamp", "quill"],
+    "history/clockmakers": ["grandfather-clock", "magnifying-glass", "alarm-clock", "gear", "lamp", "quill"],
     "history/covered-wagons": ["covered-wagon", "campfire", "horse", "signpost", "mountain", "compass"],
     "history/gold-rush": ["gold-pan", "pickaxe", "covered-wagon", "shovel", "treasure-chest", "mountain"],
     "history/railroads": ["steam-train", "ticket", "wheel", "suitcase", "signpost"]

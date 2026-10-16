@@ -8,7 +8,7 @@ Run everything from any directory; paths resolve from each script.
 
 | File | What it is | Run |
 | --- | --- | --- |
-| `icons/gen1.mjs`–`gen22.mjs` | One generator per committed `partN.json` (round 1 is 1–6, round 2 is 7–14, round 3 is 15–17, round 4 is 18–22). Each rebuilds its part byte-for-byte. | `node tools/art-src/generators/icons/gen7.mjs [out.json]` (no arg overwrites `../icons/part7.json`) |
+| `icons/gen1.mjs`–`gen27.mjs` | One generator per committed `partN.json` (round 1 is 1–6, round 2 is 7–14, round 3 is 15–17, round 4 is 18–22, round 5 is 23–27). Each rebuilds its part byte-for-byte. | `node tools/art-src/generators/icons/gen7.mjs [out.json]` (no arg overwrites `../icons/part7.json`) |
 | `icons/p2lib.mjs` | Geometry helpers that `gen2.mjs` imports. | — |
 | `icons/round2-report.json` | The round-2 drawing agents' reports: skips (`paint-palette` = `palette`, `envelope` = `invitation-card`; map those subjects to the drawn icon when merging), near-duplicate calls, and faint-preview tips. | read it |
 
@@ -38,3 +38,4 @@ in `../icons/facing.json`, so the motions mirror it to face the way it moves.
 | `iconmap/<category>.json` | Each category's icons and each subject's 4–6 icons, hero first. | `node tools/art-src/iconmap/check.mjs <category>` |
 | `iconmap/merge.mjs` | Puts every newly drawn wishlist icon in front of the icons of the subjects that asked for it (most-requested first, capped at 6), and rebuilds `index.txt`. Re-running changes nothing. | `node tools/art-src/iconmap/merge.mjs` |
 | `iconmap/emit.mjs` | Writes the lazy `src/backgrounds/icons.js` (every mapped icon, and `FACING` from `icons/facing.json`) and `subject-icons.js` (the maps). `--check` exits 1 when they are stale; the unit suite runs it. | `node tools/art-src/iconmap/emit.mjs [--check]` |
+| `iconmap/coverage.mjs` | Writes a Markdown table of every subject's still and animated backgrounds, by category and subject, and which subjects still share their first icon with another. | `node tools/art-src/iconmap/coverage.mjs [out.md]` |

@@ -1,7 +1,7 @@
 {
   "category": ["dress", "top-hat", "sneaker", "thread-spool", "yarn-ball"],
   "subjects": {
-    "clothing/shoes": ["boot", "belt-buckle", "sneaker", "top-hat", "dress", "thread-spool"],
+    "clothing/shoes": ["sneaker", "boot", "belt-buckle", "top-hat", "dress", "thread-spool"],
     "clothing/hats": ["top-hat", "wizard-hat", "graduation-cap", "crown"],
     "clothing/coats": ["coat", "coat-hanger", "button", "top-hat", "thread-spool", "dress"],
     "clothing/jeans": ["jeans", "coat-hanger", "zipper", "thread-spool", "washing-machine", "sneaker"],

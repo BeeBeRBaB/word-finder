@@ -2,12 +2,13 @@
   "left": ["bee", "bird", "cat", "chess-knight", "deer", "fish", "fox", "rabbit", "sheep",
     "whale", "wheelbarrow"],
   "right": ["airplane", "ambulance", "asteroid", "bear", "bicycle", "boot", "broomstick",
-    "bulldozer", "camel", "car", "caravan", "covered-wagon", "cruise-ship",
+    "bulldozer", "camel", "car", "caravan", "convertible", "covered-wagon", "cruise-ship",
     "cycling-helmet", "dancer", "dinosaur", "double-decker-bus", "dragon", "elephant",
     "field-mouse", "fire-engine", "forklift", "germ", "golf-cart", "griffin", "helicopter",
-    "horse", "kangaroo", "lawnmower", "longship", "mammoth", "mermaid", "motorbike",
-    "paper-crane", "pram", "race-car", "rickshaw", "rocket", "runner", "sailing-ship",
-    "school-bus", "scooter", "sea-serpent", "shark", "shooting-star", "snake", "sneaker",
-    "snowmobile", "sock", "steam-train", "stunt-jump", "submarine", "tiger", "tractor",
-    "truck", "unicorn", "van", "walking-figure", "wave", "wheel", "wolf"]
+    "hiker", "horse", "kangaroo", "lawnmower", "longship", "mammoth", "mermaid",
+    "motorbike", "paper-crane", "pram", "race-car", "rickshaw", "rocket", "runner",
+    "sailing-ship", "school-bus", "scooter", "sea-serpent", "shark", "shooting-star",
+    "shopping-cart", "snake", "sneaker", "snowmobile", "sock", "steam-train", "stunt-jump",
+    "submarine", "tiger", "tractor", "truck", "unicorn", "van", "walking-figure", "wave",
+    "wheel", "wolf"]
 }

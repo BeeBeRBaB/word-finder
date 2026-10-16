@@ -31,7 +31,7 @@
     "tech/virtual-reality": ["vr-headset", "eye", "game-controller", "laptop", "gear"],
     "tech/smart-home": ["padlock", "wifi-signal", "lightbulb", "smartphone", "lamp", "siren"],
     "tech/cybersecurity": ["padlock", "shield", "eye", "laptop", "smartphone", "gear"],
-    "tech/streaming": ["headphones", "wifi-signal", "television", "film-reel", "popcorn", "laptop"]
+    "tech/streaming": ["play-screen", "headphones", "wifi-signal", "television", "film-reel", "popcorn"]
   },
   "wishlist": [
     {

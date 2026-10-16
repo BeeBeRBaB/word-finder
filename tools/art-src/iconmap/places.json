@@ -3,7 +3,7 @@
   "subjects": {
     "places/streets": ["street-lamp", "signpost", "traffic-cone", "storefront"],
     "places/skyscrapers": ["skyscraper", "construction-crane", "street-lamp", "traffic-cone", "storefront", "signpost"],
-    "places/markets": ["storefront", "apple", "bread", "street-lamp"],
+    "places/markets": ["market-stall", "storefront", "apple", "bread", "street-lamp"],
     "places/parks": ["park-bench", "statue", "lawnmower", "tree", "flower", "paw-print"],
     "places/bridges": ["bridge", "wave", "street-lamp", "traffic-cone", "signpost"],
     "places/harbors": ["anchor", "construction-crane", "lighthouse", "sailing-ship", "fish", "wave"],

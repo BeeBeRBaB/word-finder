@@ -10,7 +10,7 @@
     "food/kitchen": ["chef-hat", "whisk", "frying-pan", "soup-bowl", "cooking-pot", "dinner-plate"],
     "food/baking": ["whisk", "wheat-sheaf", "chef-hat", "cupcake", "croissant", "bread"],
     "food/fruit": ["fruit-bowl", "apple", "tree", "leaf", "storefront", "dinner-plate"],
-    "food/vegetables": ["carrot", "tomato", "sprout", "leaf", "shovel", "cooking-pot"],
+    "food/vegetables": ["tomato", "carrot", "sprout", "leaf", "shovel", "cooking-pot"],
     "food/herbs": ["herb-bunch", "mortar-pestle", "leaf", "sprout", "watering-can", "flower"],
     "food/spices": ["mortar-pestle", "herb-bunch", "cooking-pot", "leaf", "dinner-plate", "sprout"],
     "food/cheese": ["cheese-wedge", "bread", "champagne-flutes", "dinner-plate", "cooking-pot"],
@@ -24,7 +24,7 @@
     "food/tea": ["coffee-cup", "leaf", "bee", "cake", "flower"],
     "food/chocolate": ["chocolate-bar", "cake", "coffee-cup", "gift", "dinner-plate"],
     "food/picnics": ["picnic-basket", "park-bench", "butterfly", "apple", "tree", "bee"],
-    "food/markets": ["picnic-basket", "storefront", "apple", "bread", "fish", "dinner-plate"]
+    "food/markets": ["market-stall", "picnic-basket", "shopping-cart", "storefront", "apple", "bread"]
   },
   "wishlist": [
     {"id": "pizza-slice", "motif": "pizza slice with pepperoni and a cheese pull", "subjects": ["food/pizza"]},

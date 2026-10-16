@@ -20,10 +20,10 @@
     "sports/sailing": ["anchor", "sailing-ship", "wave", "compass", "lighthouse", "map"],
     "sports/fishing": ["fishing-rod", "fish", "wave", "pine-tree", "crab"],
     "sports/camping": ["camping-tent", "campfire", "backpack", "pine-tree", "compass", "crescent-moon"],
-    "sports/hiking": ["backpack", "signpost", "mountain", "map", "compass", "water-bottle"],
+    "sports/hiking": ["hiker", "backpack", "signpost", "mountain", "map", "compass"],
     "sports/chess": ["chess-knight", "stopwatch", "crown", "castle", "brain", "medal"],
     "sports/card-games": ["playing-cards", "dice", "heart", "crown", "medal"],
-    "sports/board-games": ["stopwatch", "jigsaw-piece", "dice", "chess-knight", "brain", "medal"],
+    "sports/board-games": ["dice", "stopwatch", "jigsaw-piece", "chess-knight", "brain", "medal"],
     "sports/puzzles": ["jigsaw-piece", "magnifying-glass", "lightbulb", "brain", "pencil", "eye"]
   },
   "wishlist": [

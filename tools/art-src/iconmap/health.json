@@ -20,11 +20,11 @@
     "health/swimming": ["swim-goggles", "stopwatch", "lungs", "wave", "medal", "heart"],
     "health/meal-prep": ["cooking-pot", "dinner-plate", "apple", "heart"],
     "health/breathing-exercises": ["lungs", "flower", "candle", "brain", "heart"],
-    "health/sunscreen": ["sun", "palm-island", "wave", "water-bottle", "heart"],
-    "health/hiking": ["sun", "mountain", "compass", "map", "pine-tree", "signpost"],
+    "health/sunscreen": ["sunscreen-bottle", "sun", "palm-island", "wave", "water-bottle", "heart"],
+    "health/hiking": ["hiker", "sun", "mountain", "compass", "map", "pine-tree"],
     "health/napping": ["bed", "pillow", "armchair", "alarm-clock", "heart"],
     "health/self-care": ["bathtub", "candle", "book-stack", "coffee-cup", "flower", "smiley"],
-    "health/grocery-shopping": ["storefront", "apple", "bread", "heart"]
+    "health/grocery-shopping": ["shopping-cart", "storefront", "apple", "bread", "heart"]
   },
   "wishlist": [
     { "id": "vegetables", "motif": "carrot and broccoli bunch with a leafy top", "subjects": ["health/healthy-eating", "health/grocery-shopping", "health/meal-prep"] },
