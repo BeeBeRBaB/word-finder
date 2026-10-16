@@ -17,11 +17,11 @@
     "home/windows": ["window", "lamp", "candle", "armchair", "pillow"],
     "home/doors": ["door", "padlock", "armchair", "lamp", "book-stack", "candle"],
     "home/plumbing": ["pipes", "wrench", "faucet", "gear", "washing-machine", "armchair"],
-    "home/electrical": ["battery", "lightbulb", "lamp", "gear"],
+    "home/electrical": ["plug-socket", "battery", "lightbulb", "lamp", "gear"],
     "home/carpentry": ["saw", "hammer", "pencil", "park-bench", "tree", "armchair"],
     "home/bedding": ["pillow", "bed", "crescent-moon", "yarn-ball", "thread-spool"],
     "home/curtains": ["window", "armchair", "pillow", "lamp", "candle"],
-    "home/home-office": ["laptop", "smartphone", "pencil", "book-stack", "lamp"],
+    "home/home-office": ["office-desk", "laptop", "smartphone", "pencil", "book-stack", "lamp"],
     "home/garage": ["garage", "wrench", "car", "padlock", "toolbox", "lawnmower"],
     "home/fireplace": ["fireplace", "flame", "candle", "armchair", "pillow", "book-stack"],
     "home/sewing": ["thread-spool", "scissors", "yarn-ball", "dress", "lamp"]

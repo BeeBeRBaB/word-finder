@@ -9,7 +9,7 @@
     "nature/rivers": ["river", "frog", "fishing-rod", "bridge", "fish", "mountain"],
     "nature/mountains": ["mountain", "snowflake", "volcano", "pine-tree", "compass", "signpost"],
     "nature/desert": ["cactus", "sun", "camel", "lizard", "pyramid", "palm-island"],
-    "nature/rainforest": ["frog", "monkey", "leaf", "tree", "bird", "butterfly"],
+    "nature/rainforest": ["toucan", "frog", "monkey", "leaf", "tree", "bird"],
     "nature/weather": ["rain-cloud", "sun", "snowflake", "rainbow", "mountain", "wave"],
     "nature/seasons": ["four-seasons-tree", "sun", "snowflake", "wheat-sheaf", "acorn", "pumpkin"],
     "nature/rocks": ["rocks", "volcano", "cave-mouth", "pickaxe", "mountain", "shovel"],
