@@ -3,7 +3,7 @@
   "subjects": {
     "health/exercise": ["dumbbell", "stopwatch", "stretching-figure", "flexed-arm", "sneaker", "water-bottle"],
     "health/healthy-eating": ["apple", "dinner-plate", "leaf", "fish", "bread", "heart"],
-    "health/sleep": ["crescent-moon", "bed", "pillow", "alarm-clock", "lamp", "heart"],
+    "health/sleep": ["sleep-mask", "bed", "crescent-moon", "pillow", "alarm-clock", "lamp"],
     "health/stretching": ["stretching-figure", "flexed-arm", "sneaker", "heart", "water-bottle"],
     "health/yoga": ["yoga-figure", "stretching-figure", "spine", "flower", "candle", "heart"],
     "health/walking": ["walking-figure", "footprints", "sneaker", "signpost", "map", "park-bench"],
@@ -15,15 +15,15 @@
     "health/rest-days": ["couch-blanket", "hammock", "armchair", "pillow", "palm-island", "coffee-cup"],
     "health/posture": ["book-on-head", "spine", "laptop", "armchair", "heart", "stethoscope"],
     "health/meditation": ["meditating-figure", "lungs", "candle", "brain", "flower", "heart"],
-    "health/running": ["runner", "stopwatch", "footprints", "sneaker", "medal", "water-bottle"],
-    "health/cycling": ["bicycle", "wheel", "gear", "water-bottle", "mountain", "heart"],
+    "health/running": ["running-shoes", "stopwatch", "footprints", "runner", "sneaker", "medal"],
+    "health/cycling": ["exercise-bike", "bicycle", "wheel", "gear", "water-bottle", "mountain"],
     "health/swimming": ["swim-goggles", "stopwatch", "lungs", "wave", "medal", "heart"],
     "health/meal-prep": ["cooking-pot", "dinner-plate", "apple", "heart"],
     "health/breathing-exercises": ["breathing-circle", "lungs", "flower", "candle", "brain", "heart"],
     "health/sunscreen": ["sunscreen-bottle", "sun", "palm-island", "wave", "water-bottle", "heart"],
-    "health/hiking": ["hiker", "sun", "mountain", "compass", "map", "pine-tree"],
+    "health/hiking": ["hiking-boots", "sun", "hiker", "mountain", "compass", "map"],
     "health/napping": ["dozing-chair", "bed", "hammock", "pillow", "armchair", "alarm-clock"],
-    "health/self-care": ["bathtub", "candle", "book-stack", "coffee-cup", "flower", "smiley"],
+    "health/self-care": ["spa-candles", "bathtub", "candle", "book-stack", "coffee-cup", "flower"],
     "health/grocery-shopping": ["shopping-cart", "storefront", "apple", "bread", "heart"]
   },
   "wishlist": [

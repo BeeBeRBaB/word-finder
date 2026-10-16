@@ -17,11 +17,11 @@
     "travel/taxis": ["taxi", "coins", "traffic-light", "steering-wheel", "smartphone", "street-lamp"],
     "travel/buses": ["double-decker-bus", "ticket", "steering-wheel", "wheel", "signpost", "suitcase"],
     "travel/bicycles": ["bicycle", "wheel", "gear", "water-bottle", "mountain", "signpost"],
-    "travel/national-parks": ["camping-tent", "mountain", "pine-tree", "signpost", "bird", "flower"],
+    "travel/national-parks": ["park-sign", "camping-tent", "mountain", "pine-tree", "signpost", "bird"],
     "travel/museums": ["gallery-frame", "classical-building", "amphora", "paintbrush", "bone", "ticket"],
     "travel/currency": ["coins", "treasure-chest", "storefront", "handshake", "suitcase", "airplane"],
     "travel/islands": ["palm-island", "anchor", "seashell", "treasure-chest", "lighthouse", "wave"],
-    "travel/ferries": ["cruise-ship", "anchor", "sailing-ship", "lighthouse", "wave", "ticket"],
+    "travel/ferries": ["car-ferry", "anchor", "cruise-ship", "sailing-ship", "lighthouse", "wave"],
     "travel/resorts": ["sun-lounger", "service-bell", "palm-island", "champagne-flutes", "wave", "pillow"],
     "travel/landmarks": ["landmark-tower", "castle", "pyramid", "fountain", "camera", "map"],
     "travel/road-signs": ["road-sign", "car", "traffic-light", "signpost", "traffic-cone", "steering-wheel"]

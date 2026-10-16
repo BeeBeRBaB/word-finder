@@ -80,6 +80,7 @@ candlestick-phone: antique candlestick telephone with earpiece hanging on its ho
 caption-screen: screen showing a scene with a subtitle bar at the bottom
 car: family car
 car-engine: V8 car engine from the front: air filter, valve covers, fan and belt
+car-ferry: car ferry with a lowered bow ramp and cars on deck
 car-lift: car raised on a two-post garage lift above a toolbox and wrench
 caravan: touring caravan with striped awning
 cardboard-box: stacked cardboard moving boxes
@@ -99,6 +100,7 @@ chess-knight: chess knight piece
 chest-of-drawers: chest of drawers, open drawer with a sock, lamp and picture on top
 chocolate-bar: chocolate bar with a corner snapped off
 choir-singers: three choir singers in robes singing from folders
+circuit-bulb: battery, switch and glowing bulb in a simple circuit
 clapperboard: film clapperboard with striped arm snapping shut
 classical-building: columned building with pediment and steps
 clipped-hedge: boxy clipped hedge with topiary ball and shears
@@ -140,6 +142,7 @@ croissant: flaky croissant
 crown: jewelled royal crown
 cruise-ship: passenger cruise ship on the waves
 cupcake: frosted cupcake with sprinkles
+curly-braces: bold curly braces with a cursor and a code line on a dark tile
 curtains: window with drapes held by tiebacks, curtain rod with finials, scalloped pelmet
 cycling-helmet: vented road-cycling helmet with straps
 dancer: figure dancing on tiptoe to music
@@ -177,11 +180,13 @@ elephant: elephant trumpeting with trunk raised
 elf: elf with pointed ears and hood holding a bow
 embroidery-hoop: embroidery hoop with stitched flower and needle
 exam-desk: school desk with a ticked exam paper, pencil, eraser and a wall clock
+exercise-bike: stationary exercise bike with flywheel, display and water bottle
 exhibit-case: museum glass case on a plinth with a vase, label and rope barrier
 eye: eye with lashes
 fabric-bolt: three patterned rolls of cloth
 factory: brick factory with sawtooth roof and smoking chimneys
 fairy: little fairy with gossamer wings and a star wand
+falling-feather: feather and heavy ball falling side by side with arrows
 family-group: two adults and a child holding hands
 farmer: farmer in a straw hat and dungarees with a pitchfork beside wheat stalks
 faucet: tap with water running
@@ -200,6 +205,7 @@ fishing-rod: fishing rod with a bobber and a line
 fizzy-drink: fizzy drink with straw, ice, bubbles and a lemon slice
 flame: flickering cooking flame
 flask: bubbling conical lab flask
+flatbed-trailer: car towing a flatbed trailer with strapped crates
 flexed-arm: flexed arm showing a bicep
 floating-castle: fairy-tale castle on a floating rock island with hanging roots and clouds
 flower: five-petal flower on a stem
@@ -261,8 +267,10 @@ heraldic-shield: knight shield with rampant lion, diagonal band, lance and penna
 herb-bunch: bunch of fresh herbs tied with twine
 herb-pots: three terracotta herb pots with labels on a windowsill
 hiker: pictogram hiker with backpack and pole striding uphill
+hiking-boots: pair of laced hiking boots with lug soles and a trail sign
 hockey-stick: taped hockey stick and puck on ice
 holiday-wreath: evergreen wreath with a big bow, berries, baubles and a star of light
+hopscotch: chalk hopscotch grid with numbered squares, a stone and chalk
 horse: galloping horse with a flowing mane
 hot-air-balloon: striped hot-air balloon with basket
 hourglass: wooden hourglass with trickling sand
@@ -279,6 +287,7 @@ jellyfish: jellyfish with frilly arms and tentacles
 jigsaw-piece: two interlocking jigsaw pieces
 kangaroo: kangaroo with a joey in its pouch
 keyboard-and-mouse: computer keyboard with a mouse beside it
+kid-computer: child with headphones coding at a desktop computer
 kiln: brick kiln with open arched door, glowing pots and chimney
 kite: diamond kite with cross spars and bow tail among clouds
 knight-helmet: plumed knight's helmet with visor
@@ -323,6 +332,7 @@ market-stall: awninged market stall with crates of produce
 medal: prize medal on a ribbon
 meditating-figure: cross-legged figure meditating inside calm rings
 mermaid: mermaid sitting on a rock in the waves
+meteor-shower: meteors streaking down-left with fiery tails over a hill
 metro-train: subway train leaving a round tunnel
 microchip: square chip with pins on every side
 microphone: handheld microphone
@@ -352,6 +362,7 @@ office-desk: a home-office desk with a monitor, desk lamp, mug and chair
 office-worker: person typing on a laptop at a desk with lanyard badge, coffee and papers
 open-book: open book with pages fanning up
 opera-glasses: ornate opera glasses on a handle
+orbit-path: planet with a moon on a tilted dashed orbit and a star
 oven: kitchen range with pots on the hob and a glowing oven window
 owl: wide-eyed owl on a branch
 padlock: closed padlock with a key
@@ -364,6 +375,7 @@ palm-island: palm tree on a little sandy island
 panda: panda chewing bamboo
 paper-crane: folded origami paper crane
 park-bench: wooden park bench with iron ends
+park-sign: wooden national park entrance sign with a carved mountain and pine
 party-hat: striped cone party hat with a pompom and a party horn unrolling beside it
 passport: open passport with globe emblem and stamp
 paw-print: animal paw print
@@ -390,6 +402,7 @@ pirate-hat: pirate tricorn hat with skull and crossbones
 pizza-slice: pizza slice with pepperoni and cheese pull
 planet: ringed planet with a little moon
 planet-earth: blue Earth with clouds and a moon
+plant-cell: plant cell with wall, nucleus, chloroplasts and vacuole
 plant-pot: terracotta pot with a seedling and a saucer
 play-screen: widescreen display with a big play triangle and progress bar
 playing-cards: fanned hand of four suit cards
@@ -419,6 +432,7 @@ race-car: open-wheel race car with speed lines
 rain-cloud: fat rain cloud with falling drops and the sun peeking out behind
 rainbow: arched rainbow between two clouds
 raised-bed: plank raised bed with lettuces and carrot tops
+ramp-car: toy car rolling down a wooden ramp with a path arrow
 red-carpet: red carpet lined with velvet ropes
 red-planet: rusty red planet with ice cap and moons
 reference-book: thick reference dictionary with thumb-index tabs and A-Z spine
@@ -438,6 +452,7 @@ row-houses: terrace of three joined houses with different coloured doors
 rug: fringed patterned rug seen at an angle
 ruler: wooden ruler with a protractor
 runner: figure sprinting right with speed lines
+running-shoes: pair of running trainers with stripe, laces and chunky tread
 safety-goggles: vented lab safety goggles with strap beside a small flask
 sailboat: small sailing dinghy heeling on waves with mainsail and jib
 sailing-ship: tall ship with billowing sails
@@ -474,6 +489,7 @@ skeleton: friendly cartoon skeleton or x-ray showing a spine and ribs
 sketchbook: open sketchbook with a doodle and an eraser
 skis: crossed skis and poles in snow
 skyscraper: glass skyscraper with spire between two towers
+sleep-mask: padded sleep mask with closed-eye lashes and Z z
 smart-house: house with wifi symbol, phone app and thermostat dial
 smartphone: smartphone with app icons, buzzing
 smartwatch: smartwatch showing a heart and heartbeat
@@ -488,6 +504,7 @@ sock: striped sock
 solar-system: sun with planets on curved orbit lines
 sound-waves: speaker cone sending curved sound waves over a waveform
 soup-bowl: steaming bowl of soup with a spoon
+spa-candles: three pillar candles with a rolled towel, flower and stone
 space-station: orbital space station with solar wings above the curve of Earth
 spaghetti: fork twirling spaghetti over a bowl
 sparkler: hand-held sparkler throwing stars
@@ -564,6 +581,7 @@ treble-clef: bold treble clef on a five-line staff with two beamed notes
 tree: round leafy tree
 tree-lined-avenue: boulevard in perspective lined with round trees and lamps
 trellis: diamond lattice trellis with a flowering vine
+trip-backpack: school backpack with bottle, lunch box and map
 troll: troll peeking over a stone bridge
 trophy: gold cup trophy
 truck: articulated lorry with box trailer

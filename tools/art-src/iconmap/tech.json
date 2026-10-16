@@ -18,7 +18,7 @@
     "tech/cameras": ["camera-lens", "camera", "film-reel", "eye", "smartphone"],
     "tech/video-games": ["game-controller", "treasure-chest", "shield", "medal", "television", "laptop"],
     "tech/social-media": ["speech-bubble", "heart", "smiley", "camera", "smartphone"],
-    "tech/coding": ["code-window", "laptop", "lightbulb", "gear", "smartphone"],
+    "tech/coding": ["curly-braces", "code-window", "laptop", "lightbulb", "gear", "smartphone"],
     "tech/batteries": ["battery", "lightbulb", "smartphone", "laptop"],
     "tech/screens": ["computer-monitor", "desktop-computer", "television", "laptop", "smartphone", "lightbulb"],
     "tech/headphones": ["headphones", "microphone", "guitar", "drum", "smartphone"],

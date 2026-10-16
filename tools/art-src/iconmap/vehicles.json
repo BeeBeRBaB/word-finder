@@ -20,7 +20,7 @@
     "vehicles/bulldozers": ["bulldozer", "hard-hat", "shovel", "traffic-cone", "gear", "wheel"],
     "vehicles/cranes": ["construction-crane", "hard-hat", "traffic-cone", "gear", "wheel", "steering-wheel"],
     "vehicles/forklifts": ["forklift", "hard-hat", "cardboard-box", "gear", "traffic-cone", "wheel"],
-    "vehicles/trailers": ["caravan", "car", "wheel", "suitcase", "pine-tree", "steering-wheel"],
+    "vehicles/trailers": ["flatbed-trailer", "car", "caravan", "wheel", "suitcase", "pine-tree"],
     "vehicles/convertibles": ["convertible", "sun", "car", "steering-wheel", "wheel", "palm-island"],
     "vehicles/golf-carts": ["golf-cart", "golf-flag", "steering-wheel", "battery", "tree", "wheel"],
     "vehicles/snowmobiles": ["snowmobile", "snowflake", "mountain", "pine-tree", "compass", "signpost"],
