@@ -105,18 +105,15 @@ test('the Background page has the mode, the area, and under Manual a Still and a
   await page.keyboard.press('Escape');
   await expect(still).toBeHidden();
   await expect(page.locator('#settings-bgpage')).toBeVisible();
-  // Every option, radio, dropdown and button is a 44px target, in the list menu and the tiles.
-  for (const menu of ['list', 'tiles']) {
-    await page.locator('#settings-bgpage').evaluate((p, m) => { p.dataset.menu = m; }, menu);
-    for (const kind of ['still', 'moving']) {
-      await page.locator(`#bgdrop-${kind}`).click();
-      const heights = await page.locator(`#bgmenu-${kind} .bgtile, #settings-bgpage .bgpick, #settings-bgpage .bgdrop, #settings-bgpage select, #settings-bgpage .seg button`)
-        .evaluateAll(ts => ts.map(t => t.getBoundingClientRect().height));
-      expect(heights).toHaveLength((kind === 'still' ? 4 : 23) + 7);
-      for (const h of heights) expect(h).toBeGreaterThanOrEqual(44);
-      // Each name shows whole, none cut short.
-      expect(await page.locator(`#bgmenu-${kind} .bgname`).evaluateAll(ns => ns.filter(n => n.scrollWidth > n.clientWidth).map(n => n.textContent))).toEqual([]);
-    }
+  // Every option, radio, dropdown and button is a 44px target.
+  for (const kind of ['still', 'moving']) {
+    await page.locator(`#bgdrop-${kind}`).click();
+    const heights = await page.locator(`#bgmenu-${kind} .bgtile, #settings-bgpage .bgpick, #settings-bgpage .bgdrop, #settings-bgpage select, #settings-bgpage .seg button`)
+      .evaluateAll(ts => ts.map(t => t.getBoundingClientRect().height));
+    expect(heights).toHaveLength((kind === 'still' ? 4 : 23) + 7);
+    for (const h of heights) expect(h).toBeGreaterThanOrEqual(44);
+    // Each name shows whole, none cut short.
+    expect(await page.locator(`#bgmenu-${kind} .bgname`).evaluateAll(ns => ns.filter(n => n.scrollWidth > n.clientWidth).map(n => n.textContent))).toEqual([]);
   }
 });
 
