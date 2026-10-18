@@ -36,7 +36,7 @@ export function applyLayout(els, dims) {
     els.app.removeAttribute('data-landscape');
     els.app.style.gridTemplateColumns = '1fr';
   }
-  // Portrait: full width, so the list lines up with the kicker above it rather than
+  // Portrait: full width, so the list lines up with the title above it rather than
   // with the narrower centred grid. Landscape: the rail is its own column.
   els.side.style.width = dims.landscape ? dims.sideWidth + 'px' : '100%';
   els.list.style.gridTemplateColumns = dims.listColumns;

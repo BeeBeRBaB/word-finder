@@ -24,10 +24,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- Three faces, one request. Atkinson Hyperlegible reads the grid and the list —
+<!-- Two faces, one request. Atkinson Hyperlegible reads the grid and the list —
      disambiguating I/l/1 and O/0 is exactly the job. Cross-origin, so sw.js cannot
      precache them; `display=swap` keeps first paint on the fallback rather than blank. -->
-<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Space+Grotesk:wght@500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -35,11 +35,9 @@
 <div id="bg" aria-hidden="true"></div>
 <div id="app">
   <div id="hdr">
-    <!-- The category is its own element, not a ::before on #subject: #subject's
-         textContent has to stay the bare name (gameplay.spec.js compares it across two
-         loads of one seed), and its underline must mark the name only. It sits on the
-         label line, at label size, so the subject name has its row to itself. -->
-    <div id="titles"><div id="kickerline"><span id="kicker">WORD FINDER</span><span id="category"></span></div>
+    <!-- The category is its own element, a chip above the name: #subject's textContent has to
+         stay the bare name (gameplay.spec.js compares it across two loads of one seed). -->
+    <div id="titles"><div id="kickerline"><span id="category"></span></div>
       <div id="subjectline"><span id="subject">Loading…</span></div></div>
     <div id="actions">
       <button id="appearance" type="button" aria-haspopup="dialog" aria-controls="settings" title="Settings" aria-label="Settings">
@@ -55,7 +53,7 @@
        one (mid-update) never draws an unsized, full-opacity sprite over the board. -->
   <div id="gridbox"><div id="art" aria-hidden="true" hidden></div><div id="pills"></div><div id="letters"></div><div id="fx"></div></div>
   <div id="side">
-    <div id="listhdr"><b>WORDS</b><span id="count"></span><button id="reveal" type="button" aria-label="Reveal a word">Reveal<span class="when-wide"> a word</span></button></div>
+    <div id="listhdr"><span id="count"></span><button id="reveal" type="button" aria-label="Reveal a word">Reveal<span class="when-wide"> a word</span></button></div>
     <div id="list"></div>
   </div>
 </div>
@@ -72,7 +70,7 @@
        not hear 5, 4, 3...; #winstats announces the countdown once instead. -->
   <div id="winnext" hidden><div id="winnextline"><span aria-hidden="true">Next puzzle in <b id="wincount">5</b></span>
     <button id="winstay" type="button">Stay here</button></div><div id="winbar" aria-hidden="true"><i></i></div></div>
-  <button id="winbtn" type="button">Play a new game &#8594;</button>
+  <button id="winbtn" type="button">New game</button>
 </div></div>
 <!-- Offered after a one-click deal replaced a board in progress. The announcement goes
      through #toast-live, which is always rendered; the toast itself is hidden between offers. -->
