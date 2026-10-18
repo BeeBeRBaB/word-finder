@@ -34,7 +34,10 @@ for (const t of THEMES) for (const m of ['light', 'dark']) {
   const checks = [['text/surface', parse(p.text), S, 4.5], ['text/bg', parse(p.text), B, 4.5], ['strong/bg', parse(p.strong), B, 4.5], ['muted/bg', parse(p.muted), B, 4.5], ['muted/surface', parse(p.muted), S, 4.5],
     ['label/bg', parse(p.label), B, 4.5], ['hint/bg', parse(p.hint), B, 4.5], ['hint/surface (the Settings card)', parse(p.hint), S, 4.5], ['accentText/bg', parse(p.accentText), B, 4.5], ['accentText/surface', parse(p.accentText), S, 4.5], ['accentInk/accent', parse(p.accentInk), parse(p.accent), 4.5],
     ['accent/surface (control edge)', parse(p.accent), S, 3], ['done/bg', over(p.done, p.bg), B, 4.5], ['text on sel', parse(p.text), over(p.sel, p.surface), 4.5],
-    ...p.pills.map((c, i) => [`foundText on pill${i + 1}`, parse(p.foundText), over(c, p.surface), 4.5])];
+    ...p.pills.map((c, i) => [`foundText on pill${i + 1}`, parse(p.foundText), over(c, p.surface), 4.5]),
+    // The board over a background is --surface at 90% (styles.css): its letters must pass over the
+    // darkest and the lightest background there can be, which bounds every other.
+    ...['#000000', '#ffffff'].map(g => [`text on the board over ${g}`, parse(p.text), over(`rgba(${S.slice(0, 3).join(',')},.9)`, g), 4.5])];
   for (const [n, a, b, min] of checks) { const r = cr(a, b); if (r < min) { console.log(`FAIL ${t}/${m} ${n} ${r.toFixed(2)} < ${min}`); fail++; } }
   const [h, , l] = hsl(p.bg); const rgb = parse(p.bg).slice(0, 3); const chroma = (Math.max(...rgb) - Math.min(...rgb)) / 255;
   out.push({ t, m, bg: p.bg, hue: Math.round(h), sat: +chroma.toFixed(2), light: +l.toFixed(2) });

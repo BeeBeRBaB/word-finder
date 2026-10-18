@@ -13,7 +13,7 @@ import { makeProgress, chooseSubject } from './progress.js';
 import { makeAppearance } from './appearance.js';
 import { makeSettings } from './settings.js';
 import { makePicker } from './picker.js';
-import { makeBackdrop, resolveBackground, RANDOM_POOL } from './backgrounds.js';
+import { makeBackdrop, resolveBackground, lookOf, RANDOM_POOL } from './backgrounds.js';
 import { manualMarkup, dropMarkup, modeNote, summaryMarkup, KINDS } from './bgpicker.js';
 import { makeSubpage } from './subpage.js';
 import { makePane } from './pane.js';
@@ -924,9 +924,11 @@ function showBackdrop() {
   els.app.toggleAttribute('data-behind', id !== 'none');
   syncBg();
   if (!subjectId) return;   // nothing dealt yet; the deal calls again
+  // Its own ground and colours, whatever the theme. Subject motion paints its motion's ground.
+  const look = lookOf(id);
   void backdrop.show(id, bgHost, {
-    colors: confettiColors(),
-    dark: document.documentElement.dataset.appearance !== 'light', reducedMotion: prefersReducedMotion(),
+    colors: [...look.colors], dark: look.dark, reducedMotion: prefersReducedMotion(),
+    ground: id === 'none' ? '' : id === 'motion' ? undefined : look.ground, lookOf,
     subject: subjectId, seed: currentSeed,
   });
 }
@@ -1224,7 +1226,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 // Styles or fonts that land after boot change the chrome around the board; re-measure once.
-// The backdrop again too: WebKit can boot before the stylesheet, with no confetti colours yet.
+// The backdrop again too: a size or a font that landed late.
 window.addEventListener('load', () => { onResize(); syncThemeColor(); showBackdrop(); });
 window.addEventListener('resize', onResize);
 // The header's height sizes the portrait grid, and a name, a late font or a turn changes it after

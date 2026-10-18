@@ -25,7 +25,10 @@ export function start(host, opts) {
     if (!live || started) return;
     started = true;
     removeEventListener('online', load);
-    stop = m.start(host, opts);
+    // The motion's own look, not this background's.
+    const look = opts.lookOf?.(MOTIONS[id] ? id : 'drift');
+    if (look) host.style.background = look.ground;
+    stop = m.start(host, look ? { ...opts, colors: [...look.colors], dark: look.dark } : opts);
   }, () => {});
   addEventListener('online', load);
   load();

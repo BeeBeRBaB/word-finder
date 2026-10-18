@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync } from 'node:fs';
-import { BACKGROUNDS, findBackground, makeBackdrop, importBackground, resolveBackground, RANDOM_POOL, THEME_BACKGROUNDS } from '../../src/backgrounds.js';
+import { BACKGROUNDS, findBackground, makeBackdrop, importBackground, resolveBackground, RANDOM_POOL, THEME_BACKGROUNDS, LOOKS, LOOK_OF, lookOf } from '../../src/backgrounds.js';
 
 const OPTS = { colors: ['#111111', '#222222'], dark: true, reducedMotion: false, subject: 'space/jupiter', seed: 1 };
 /** @param {string} id */
@@ -169,4 +169,17 @@ test('Random picks by the seed from every background but None, and never the las
   assert.equal(clock.size, RANDOM_POOL.length);
   assert.equal(resolveBackground('random', '', '', 9, 'solo', ['solo']), 'solo', 'a pool of one has nothing else to pick');
   assert.equal(resolveBackground('random', '', '', 9, 'a', ['a', 'b']), 'b');
+});
+
+test('every background but None wears exactly one look, and every look is whole', () => {
+  const listed = Object.values(LOOK_OF).flat();
+  const ids = BACKGROUNDS.map(b => b.id).filter(id => id !== 'none');
+  assert.deepEqual(listed.slice().sort(), ids.slice().sort(), 'each background once, and no stale ids');
+  assert.deepEqual(Object.keys(LOOK_OF).sort(), Object.keys(LOOKS).sort());
+  for (const [name, look] of Object.entries(LOOKS)) {
+    assert.equal(look.colors.length, 6, name);
+    for (const c of look.colors) assert.match(c, /^#[0-9a-f]{6}$/, `${name} ${c}`);
+    assert.equal(typeof look.dark, 'boolean', name);
+  }
+  assert.equal(lookOf('koi'), LOOKS.ocean);
 });

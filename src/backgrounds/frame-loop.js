@@ -18,11 +18,32 @@ export function hostCanvas(host, pixelated = false) {
   const cv = document.createElement('canvas');
   const ctx = cv.getContext('2d');
   if (!ctx) return null;
+  liftAlpha(ctx);
   cv.setAttribute('aria-hidden', 'true');
   cv.style.cssText = 'position:absolute;left:0;top:0;display:block;pointer-events:none;'
     + (pixelated ? 'image-rendering:crisp-edges;image-rendering:pixelated' : 'width:100%;height:100%');
   host.appendChild(cv);
   return { cv, ctx };
+}
+
+/** How far liftAlpha raises a translucent stroke: alpha a draws at 1 - (1 - a)^LIFT. */
+export const LIFT = 2;
+const ALPHA = globalThis.CanvasRenderingContext2D && Object.getOwnPropertyDescriptor(CanvasRenderingContext2D.prototype, 'globalAlpha');
+
+/**
+ * Every background was drawn to sit faint behind the game, mostly through globalAlpha; on its own
+ * ground at full strength it wants more. This lifts each alpha set on `ctx` (0 and 1 stay put)
+ * and reads back the alpha that was set, so `globalAlpha *= k` still composes.
+ * @param {CanvasRenderingContext2D} ctx @returns {void}
+ */
+export function liftAlpha(ctx) {
+  if (!ALPHA?.get || !ALPHA.set) return;
+  const { get, set } = ALPHA;
+  Object.defineProperty(ctx, 'globalAlpha', {
+    configurable: true,
+    get() { return 1 - (1 - get.call(this)) ** (1 / LIFT); },
+    set(a) { set.call(this, 1 - (1 - Math.min(1, Math.max(0, +a))) ** LIFT); },
+  });
 }
 
 /** The host's size in CSS pixels, or the window's while the host has none (not laid out yet).

@@ -6,15 +6,18 @@ import { makeRng } from './rng.js';
 import { normalizeTheme } from './appearance.js';
 
 /**
- * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed:number}} BackgroundOptions
- * `colors` are the theme's six confetti colours, which the subject backgrounds draw in (the
- * others keep their own); `subject` and `seed` are the dealt puzzle's.
+ * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed:number, ground?:string,
+ *   lookOf?:(id:string) => Look}} BackgroundOptions
+ * `colors` are the background's own six colours and `dark` whether its ground is dark (`lookOf`),
+ * the same in every theme; `subject` and `seed` are the dealt puzzle's. `ground` is painted on the
+ * host when the background starts (left as it is when absent: Subject motion paints its motion's,
+ * through `lookOf`, passed in so an older copy of this file cannot break its import).
  */
 /** @typedef {{start:(host:HTMLElement, opts:BackgroundOptions)=>()=>void}} BackgroundModule */
 /**
  * @typedef {{id:string, name:string, animated:boolean, file?:string, glyph:string, perDeal?:boolean}} Background
  * `file` is the module under src/backgrounds/; `glyph` is the picker tile's picture, the inner
- * markup of a 48x32 SVG whose g1..g4 classes take the theme's confetti colours. `perDeal`
+ * markup of a 48x32 SVG whose g1..g4 classes take its look's first four colours. `perDeal`
  * restarts it for every new subject or seed; the others keep running across deals.
  */
 
@@ -376,6 +379,86 @@ export const BACKGROUNDS = Object.freeze([
     glyph: '<circle class="ln" cx="24" cy="16" r="10"/><path class="ln" d="M17 23l14-14"/>' },
 ]);
 
+/**
+ * @typedef {{ground:string, dark:boolean, colors:readonly string[]}} Look
+ * A background's own colours, whatever the theme: `ground` is #bg's CSS background, `dark`
+ * whether it is a dark one, and `colors` the six a background draws in.
+ */
+/** @type {Readonly<Record<string, Look>>} */
+export const LOOKS = Object.freeze({
+  night: { ground: 'radial-gradient(120% 90% at 75% 15%,#2c1c78 0%,#120c3c 50%,#05040f 100%)', dark: true,
+    colors: ['#ff5ca8', '#ffd23f', '#3ee8ff', '#7dff8a', '#ff8a3d', '#d4a5ff'] },
+  ocean: { ground: 'linear-gradient(180deg,#0a6a9a 0%,#06456f 50%,#021f3d 100%)', dark: true,
+    colors: ['#ff7a45', '#ffd166', '#3df5d0', '#ff5c8a', '#b5ecff', '#c3ff5a'] },
+  sky: { ground: 'linear-gradient(180deg,#3fb3ff 0%,#8fd6ff 55%,#e3f6ff 100%)', dark: false,
+    colors: ['#e5243b', '#ff8c00', '#ffcc00', '#13a26b', '#173a7a', '#ff3d9a'] },
+  forest: { ground: 'linear-gradient(180deg,#145a3a 0%,#0b3a24 55%,#04190e 100%)', dark: true,
+    colors: ['#ffe14d', '#ff8f3d', '#a6ff6b', '#ff6b8b', '#6be4ff', '#fff4d6'] },
+  sand: { ground: 'linear-gradient(180deg,#ffe2a1 0%,#ffc370 60%,#f3a15a 100%)', dark: false,
+    colors: ['#c1121f', '#7b2cbf', '#0067a3', '#1f7a3a', '#4a2511', '#e5007a'] },
+  arcade: { ground: 'radial-gradient(130% 100% at 50% 0%,#1d1640 0%,#0a0818 55%,#030208 100%)', dark: true,
+    colors: ['#ff2e88', '#00f0ff', '#fff200', '#39ff14', '#ff7a00', '#c06bff'] },
+  paper: { ground: 'linear-gradient(160deg,#fffaf0 0%,#fbecc8 100%)', dark: false,
+    colors: ['#e0262f', '#1f4fd8', '#f08c00', '#11924a', '#7b2fd6', '#d81b72'] },
+  blueprint: { ground: 'linear-gradient(180deg,#1565c8 0%,#0b3f8f 100%)', dark: true,
+    colors: ['#ffffff', '#a8e6ff', '#ffd23f', '#ff9ec2', '#86ffd6', '#d6ecff'] },
+  sunset: { ground: 'linear-gradient(180deg,#ff8a5c 0%,#d63c7e 45%,#5a1a8c 75%,#1e0b45 100%)', dark: true,
+    colors: ['#ffe66d', '#ffffff', '#ffb02e', '#5ee2ff', '#ff4fa8', '#b8f2e6'] },
+  candy: { ground: 'linear-gradient(135deg,#ffc6e4 0%,#ffe9a8 50%,#b8e6ff 100%)', dark: false,
+    colors: ['#e0115f', '#6a1fd1', '#0a7fd9', '#0f9b58', '#ff6a00', '#2a1a5e'] },
+  neon: { ground: 'radial-gradient(120% 90% at 30% 20%,#4b16b8 0%,#1f0759 55%,#0b0222 100%)', dark: true,
+    colors: ['#ff3fa4', '#3fd8ff', '#ffe03f', '#7dffd4', '#ff9d2e', '#ffffff'] },
+  ember: { ground: 'radial-gradient(120% 90% at 50% 100%,#6b1a0a 0%,#2e0806 55%,#120303 100%)', dark: true,
+    colors: ['#ff5a1f', '#ffb703', '#ffe8a3', '#ff3d7f', '#ff8c42', '#ffd6a5'] },
+  chalk: { ground: 'linear-gradient(180deg,#2c5a46 0%,#1b3b2e 100%)', dark: true,
+    colors: ['#ffffff', '#ffe066', '#ffa3c2', '#a5e8ff', '#c2f58f', '#ffbd7a'] },
+  ice: { ground: 'linear-gradient(180deg,#bfe4ff 0%,#eef8ff 100%)', dark: false,
+    colors: ['#0353a4', '#e0263f', '#6a1fb0', '#008f8f', '#e86a00', '#1b2440'] },
+  lab: { ground: 'radial-gradient(120% 90% at 50% 30%,#0f5260 0%,#062a33 55%,#020f13 100%)', dark: true,
+    colors: ['#00f5d4', '#fee440', '#ff5cbf', '#b98cff', '#3fc8ff', '#ffffff'] },
+  steel: { ground: 'linear-gradient(180deg,#34495e 0%,#1a2633 60%,#0c131b 100%)', dark: true,
+    colors: ['#ffb703', '#ff7b1c', '#8fd8ff', '#ff4b5c', '#7ff0c8', '#f1faee'] },
+});
+
+/** Which look each background wears, by look. A background left out wears night.
+ * @type {Readonly<Record<string, readonly string[]>>} */
+export const LOOK_OF = Object.freeze({
+  night: ['starfield', 'aurora', 'constellation', 'galaxy', 'meteors', 'orrery', 'planet', 'black-hole', 'moon-phases',
+    'fireworks', 'snow', 'rainy-window', 'lighthouse', 'spiderweb', 'traffic', 'trails', 'smoke', 'fireflies', 'warp',
+    'solar', 'skyline'],
+  ocean: ['rain', 'waves', 'caustics', 'koi', 'puddles', 'river', 'jellyfish', 'kelp', 'aquarium', 'bubbles', 'swim',
+    'ripple', 'whirlpool'],
+  sky: ['sunbeams', 'clouds', 'paper-planes', 'kites', 'balloons', 'day-night', 'sunflower', 'windmills', 'ferris',
+    'train-window', 'flag', 'tree', 'flutter', 'flock', 'fountain', 'rise', 'drift'],
+  forest: ['vines', 'slime', 'leaves', 'card-cascade', 'dice', 'reversi', 'chess', 'billiards', 'bloom', 'fall', 'sway'],
+  sand: ['dunes', 'zen-garden', 'ants', 'shoreline', 'hourglass', 'cracks', 'roll', 'conveyor'],
+  arcade: ['pong', 'snake', 'breakout', 'invaders', 'asteroids', 'pinball', 'maze-chase', 'light-cycles', 'pegboard',
+    'dominoes', 'blocks', 'maze', 'pixel', 'letterrain', 'ticker', 'heart-monitor', 'oscilloscope', 'radar', 'equalizer',
+    'wireframe', 'mystify', 'life', 'automaton', 'confetti'],
+  paper: ['hanoi', 'slide-puzzle', 'sudoku', 'tangram', 'tiles', 'crossword', 'typewriter', 'word-hunt', 'anagrams',
+    'word-swarm', 'weather-map', 'rail-map', 'sorting', 'ink', 'marbling', 'brushstrokes', 'drips', 'weave',
+    'cross-stitch', 'halftone', 'contours', 'penrose', 'truchet', 'string-art', 'spirograph', 'dragon-curve',
+    'chaos-game', 'illustrated', 'stack', 'flip'],
+  blueprint: ['blueprint', 'gears', 'kinetic', 'newtons-cradle', 'pendulums'],
+  sunset: ['hills', 'lanterns', 'low-poly', 'synthwave', 'ribbons', 'wave', 'juggle'],
+  candy: ['parade', 'wallpaper', 'carousel', 'bounce', 'pulse', 'trail', 'motion', 'scene', 'kaleido', 'blobs'],
+  neon: ['plasma', 'voronoi', 'honeycomb', 'flowfield', 'mandala', 'moire', 'shimmer', 'bokeh', 'neon', 'interference',
+    'attractor'],
+  ember: ['embers', 'marble-run', 'metronomes'],
+  chalk: ['chalkboard'],
+  ice: ['frost'],
+  lab: ['turing', 'sand', 'iron-filings', 'double-pendulum', 'dna', 'molecules', 'cells', 'chladni', 'cloud-chamber',
+    'circuit'],
+  steel: ['clocks', 'abacus', 'pipes', 'slinky'],
+});
+
+const LOOK_BY_ID = new Map(Object.entries(LOOK_OF).flatMap(([look, ids]) => ids.map(id => [id, look])));
+
+/** A background's own look, whatever the theme. @param {string} id @returns {Look} */
+export function lookOf(id) {
+  return LOOKS[LOOK_BY_ID.get(id) ?? 'night'];
+}
+
 /** @param {unknown} id @param {readonly Background[]} [list] @returns {Background} */
 export function findBackground(id, list = BACKGROUNDS) {
   return list.find(b => b.id === id) ?? list[0];
@@ -442,6 +525,7 @@ export function makeBackdrop(deps = {}) {
       const next = bg.file && host ? `${bg.id}|${host.id}|${opts.dark}|${opts.reducedMotion}|${opts.colors}${deal}` : '';
       if (next && next === key && stop) return true;
       halt();
+      if (host && opts.ground !== undefined) host.style.background = opts.ground;
       if (!next || !bg.file || !host) return false;
       const my = gen;
       key = next;

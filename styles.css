@@ -37,9 +37,6 @@
   --found-shadow:0 0 10px var(--glow); --board-outline:none; --board-outline-offset:0px; --board-texture:none;
   --pill-ring-1:inset 0 0 0 1px var(--pill-edge); --pill-ring-2:inset 0 0 0 1px var(--pill-edge);
   --pill-ring-3:inset 0 0 0 1px var(--pill-edge); --pill-ring-4:inset 0 0 0 1px var(--pill-edge);
-  /* Category art: its densest tone's opacity. Backgrounds: the opacity of #bg, and how solid
-     the board stays over one. */
-  --art-board:.18; --backdrop-full:.6; --board-solid:65%;
 }
 /* An orange light enough to feel warm on paper cannot carry white button text, so
    --accent is measured against the white --accent-ink it is actually read on (5.08:1),
@@ -64,7 +61,6 @@
   --found-shadow:0 0 10px var(--glow); --board-outline:none; --board-outline-offset:0px; --board-texture:none;
   --pill-ring-1:inset 0 0 0 1px var(--pill-edge); --pill-ring-2:inset 0 0 0 1px var(--pill-edge);
   --pill-ring-3:inset 0 0 0 1px var(--pill-edge); --pill-ring-4:inset 0 0 0 1px var(--pill-edge);
-  --art-board:.4; --backdrop-full:1; --board-solid:60%;
 }
 /* Six more themes, each with its own fixed colours. Same token names as Phosphor's blocks,
    and the same shape: the bare [data-theme] selector is the dark default, and the
@@ -84,7 +80,6 @@
   --ctl-edge:var(--border); --ctl-width:1px; --ctl-shadow:none; --found-shadow:none;
   --board-outline:1px solid var(--border); --board-outline-offset:4px; --board-texture:none;
   --pill-ring-1:none; --pill-ring-2:none; --pill-ring-3:none; --pill-ring-4:none;
-  --art-board:.18; --backdrop-full:.6; --board-solid:65%;
 }
 :root[data-theme="broadsheet"][data-appearance="light"]{
   color-scheme:light; --bg:#efe6a0; --surface:#fffcea; --border:#1c1a10; --text:#1c1a10;
@@ -100,7 +95,6 @@
   --ctl-shadow:none; --found-shadow:none; --board-outline:1px solid var(--border);
   --board-outline-offset:4px; --board-texture:none; --pill-ring-1:none; --pill-ring-2:none;
   --pill-ring-3:none; --pill-ring-4:none;
-  --art-board:.4; --backdrop-full:1; --board-solid:60%;
 }
 :root[data-theme="sticker"], :root[data-theme="sticker"][data-appearance="dark"]{
   color-scheme:dark; --bg:#211756; --surface:#2c2266; --border:#0a0620; --text:#f0ebff;
@@ -117,7 +111,6 @@
   --board-outline-offset:0px; --board-texture:none; --pill-ring-1:inset 0 0 0 2px #07040f;
   --pill-ring-2:inset 0 0 0 2px #07040f; --pill-ring-3:inset 0 0 0 2px #07040f;
   --pill-ring-4:inset 0 0 0 2px #07040f;
-  --art-board:.18; --backdrop-full:.6; --board-solid:65%;
 }
 :root[data-theme="sticker"][data-appearance="light"]{
   color-scheme:light; --bg:#c4c2fa; --surface:#ffffff; --border:#1d1638; --text:#1d1638;
@@ -134,7 +127,6 @@
   --board-outline-offset:0px; --board-texture:none; --pill-ring-1:inset 0 0 0 2px #1d1638;
   --pill-ring-2:inset 0 0 0 2px #1d1638; --pill-ring-3:inset 0 0 0 2px #1d1638;
   --pill-ring-4:inset 0 0 0 2px #1d1638;
-  --art-board:.4; --backdrop-full:1; --board-solid:60%;
 }
 :root[data-theme="drafting"], :root[data-theme="drafting"][data-appearance="dark"]{
   color-scheme:dark; --bg:#002f56; --surface:#113e66; --border:#326893; --text:#dee9f6;
@@ -152,7 +144,6 @@
   --board-texture:linear-gradient(rgba(127,211,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(127,211,255,.07) 1px,transparent 1px);
   --pill-ring-1:inset 0 0 0 1.5px #ffbe46; --pill-ring-2:inset 0 0 0 1.5px #5adcff;
   --pill-ring-3:inset 0 0 0 1.5px #ff786e; --pill-ring-4:inset 0 0 0 1.5px #aae65a;
-  --art-board:.18; --backdrop-full:.6; --board-solid:65%;
 }
 :root[data-theme="drafting"][data-appearance="light"]{
   color-scheme:light; --bg:#95c5e2; --surface:#eff9fd; --border:#4b81a5; --text:#0f2430;
@@ -170,7 +161,6 @@
   --board-texture:linear-gradient(rgba(10,95,138,.10) 1px,transparent 1px),linear-gradient(90deg,rgba(10,95,138,.10) 1px,transparent 1px);
   --pill-ring-1:inset 0 0 0 1.5px #b87108; --pill-ring-2:inset 0 0 0 1.5px #0b7fa3;
   --pill-ring-3:inset 0 0 0 1.5px #b8332f; --pill-ring-4:inset 0 0 0 1.5px #4f8a12;
-  --art-board:.55; --backdrop-full:1; --board-solid:60%;
 }
 :root[data-theme="grove"], :root[data-theme="grove"][data-appearance="dark"]{
   color-scheme:dark; --bg:#14301f; --surface:#1b3a27; --border:#3a5c44; --text:#e4ebd6;
@@ -187,7 +177,6 @@
   --ctl-edge:var(--accent); --ctl-width:1.5px; --ctl-shadow:none; --found-shadow:none;
   --board-outline:none; --board-outline-offset:0px; --board-texture:none; --pill-ring-1:none;
   --pill-ring-2:none; --pill-ring-3:none; --pill-ring-4:none;
-  --art-board:.18; --backdrop-full:.6; --board-solid:65%;
 }
 :root[data-theme="grove"][data-appearance="light"]{
   color-scheme:light; --bg:#bfe3bd; --surface:#f5fbf0; --border:#93b98a; --text:#1e2e1b;
@@ -203,7 +192,6 @@
   --ctl-edge:var(--accent); --ctl-width:1.5px; --ctl-shadow:none; --found-shadow:none;
   --board-outline:none; --board-outline-offset:0px; --board-texture:none; --pill-ring-1:none;
   --pill-ring-2:none; --pill-ring-3:none; --pill-ring-4:none;
-  --art-board:.55; --backdrop-full:1; --board-solid:60%;
 }
 :root[data-theme="plum"], :root[data-theme="plum"][data-appearance="dark"]{
   color-scheme:dark; --bg:#43173b; --surface:#4f2146; --border:#74406a; --text:#f5e4ee;
@@ -220,7 +208,6 @@
   --ctl-edge:var(--accent); --ctl-width:1.5px; --ctl-shadow:none; --found-shadow:none;
   --board-outline:none; --board-outline-offset:0px; --board-texture:none; --pill-ring-1:none;
   --pill-ring-2:none; --pill-ring-3:none; --pill-ring-4:none;
-  --art-board:.18; --backdrop-full:.6; --board-solid:65%;
 }
 :root[data-theme="plum"][data-appearance="light"]{
   color-scheme:light; --bg:#ecbfdc; --surface:#fdf3f8; --border:#d49bbd; --text:#2d1530;
@@ -237,7 +224,6 @@
   --ctl-edge:var(--accent); --ctl-width:1.5px; --ctl-shadow:none; --found-shadow:none;
   --board-outline:none; --board-outline-offset:0px; --board-texture:none; --pill-ring-1:none;
   --pill-ring-2:none; --pill-ring-3:none; --pill-ring-4:none;
-  --art-board:.4; --backdrop-full:1; --board-solid:60%;
 }
 :root[data-theme="graphite"], :root[data-theme="graphite"][data-appearance="dark"]{
   color-scheme:dark; --bg:#23272c; --surface:#2f3339; --border:#51555c; --text:#e6e8eb;
@@ -253,7 +239,6 @@
   --ctl-edge:var(--accent); --ctl-width:1.5px; --ctl-shadow:none; --found-shadow:none;
   --board-outline:none; --board-outline-offset:0px; --board-texture:none; --pill-ring-1:none;
   --pill-ring-2:none; --pill-ring-3:none; --pill-ring-4:none;
-  --art-board:.18; --backdrop-full:.6; --board-solid:65%;
 }
 :root[data-theme="graphite"][data-appearance="light"]{
   color-scheme:light; --bg:#b8bec5; --surface:#f1f4f6; --border:#757b81; --text:#1f2225;
@@ -271,7 +256,6 @@
   --board-outline:none; --board-outline-offset:0px; --board-texture:none;
   --pill-ring-1:inset 0 0 0 1.5px #8FA10F; --pill-ring-2:inset 0 0 0 1.5px #D9731C;
   --pill-ring-3:inset 0 0 0 1.5px #2F6FE0; --pill-ring-4:inset 0 0 0 1.5px #C42E2E;
-  --art-board:.55; --backdrop-full:1; --board-solid:60%;
 }
 
 /* Lock the viewport: no page scroll or rubber-band on iPad / iOS standalone. */
@@ -435,36 +419,30 @@ body{position:fixed;inset:0;width:100%;height:100%}
 /* Category art (art.js): #art sits first in #gridbox but is fixed to the page, large in its
    bottom corner behind everything. */
 #art{display:block;position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
-#art svg{position:absolute;right:-4vmin;bottom:-4vmin;width:min(72vmin,640px);height:min(72vmin,640px);opacity:var(--art-board)}
+#art svg{position:absolute;right:-4vmin;bottom:-4vmin;width:min(72vmin,640px);height:min(72vmin,640px)}
+/* The two stills differ in kind, not just drawing: Illustrated is a flat poster, big soft shapes
+   behind a smooth picture; Pixel art is an 8-bit screen, a checker of big pixels and the sprite
+   tiled across it behind a giant one. view.js renderArt sets the layers and colours inline. */
+#art[data-kind="pixel"] svg{image-rendering:pixelated}
 #app[data-landscape] #side{display:flex;flex-direction:column}
 /* Backgrounds (backgrounds.js): #bg fills the page behind #app. z-index:-1 puts it under the
    page's content and over the body's ground; a module fills its host, so it needs a box even while empty. */
-#bg{position:fixed;inset:0;opacity:var(--backdrop-full);pointer-events:none;overflow:hidden;z-index:-1}
+#bg{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:-1}
 #side{position:relative}
 /* Portrait: the list's row takes the spare height. */
 #app:not([data-landscape]){grid-template-rows:auto auto 1fr}
-/* The background shows through the board, fainter than around it, and with no ring or blur on
-   the letters. A browser without color-mix keeps the board solid rather than clear. */
+/* The game sits on cards over a background, which keeps its own colours whatever the theme: the
+   header and the word list on solid plates of the ground, whose small coloured text a see-through
+   plate took under AA over some backgrounds, and the board on its surface at 90%, which its
+   letters pass over all of them (tools/sims/backgrounds/contrast.mjs). A spread shadow draws a
+   plate's margin, so nothing moves; the spread adds its 6px to the corner, which comes out at the
+   board's radius, or square where the board's is 2px. A browser without color-mix keeps the board
+   solid. */
+#app[data-behind] #side{align-self:start}
+#hdr,#app[data-behind] #side{background-color:var(--bg);border-radius:max(0px,var(--radius-board) - 6px);box-shadow:0 0 0 6px var(--bg)}
 @supports (background-color:color-mix(in srgb,red 50%,transparent)){
-  #app[data-behind] #gridbox{background-color:color-mix(in srgb,var(--surface) var(--board-solid),transparent)}
+  #app[data-behind] #gridbox{background-color:color-mix(in srgb,var(--surface) 90%,transparent)}
 }
-/* Text over a background keeps a 2.5px ring of the ground colour, so a star or a glow passing
-   behind a letter never takes it under AA; tools/sims/backgrounds/contrast.mjs measures it.
-   Only where main.js says something is drawn behind: otherwise it is 24 shadows per glyph
-   painted for nothing. */
-#app[data-behind] :is(#side,#side button){text-shadow:
-  1.25px 0 var(--bg),0.88px 0.88px var(--bg),0 1.25px var(--bg),-0.88px 0.88px var(--bg),-1.25px 0 var(--bg),-0.88px -0.88px var(--bg),0 -1.25px var(--bg),0.88px -0.88px var(--bg),
-  2.5px 0 var(--bg),2.31px 0.96px var(--bg),1.77px 1.77px var(--bg),0.96px 2.31px var(--bg),0 2.5px var(--bg),-0.96px 2.31px var(--bg),-1.77px 1.77px var(--bg),-2.31px 0.96px var(--bg),
-  -2.5px 0 var(--bg),-2.31px -0.96px var(--bg),-1.77px -1.77px var(--bg),-0.96px -2.31px var(--bg),0 -2.5px var(--bg),0.96px -2.31px var(--bg),1.77px -1.77px var(--bg),2.31px -0.96px var(--bg)}
-/* The header sits on a plate of the ground instead. Its icons cannot take a text-shadow, and the
-   ring blurred the small label on an iPhone and, in WebKit, painted over the name's underline.
-   A spread shadow draws the plate's margin, so nothing in the header moves; the spread adds its 6px
-   to the corner, which comes out at the board's radius, or square where the board's is 2px. */
-#hdr{background-color:var(--bg);border-radius:max(0px,var(--radius-board) - 6px);box-shadow:0 0 0 6px var(--bg)}
-.hue-1{fill:var(--confetti-2);color:var(--confetti-2)}
-.hue-2{fill:var(--confetti-3);color:var(--confetti-3)}
-.hue-3{fill:var(--confetti-4);color:var(--confetti-4)}
-.hue-4{fill:var(--confetti-5);color:var(--confetti-5)}
 /* Illustration tones, as shares of the art's opacity: art.js TONE, which the pixel sprites and
    the background icons use inline. */
 #art .t-a{fill-opacity:.72}
@@ -717,12 +695,12 @@ body{position:fixed;inset:0;width:100%;height:100%}
 .navnow .lookpill.p1{top:calc(50% - 2.5px)}
 .navnow .lookrail{gap:2px}
 .navnow .lookrail i{height:3px}
-/* Tile pictures take the theme's confetti colours. */
-.bgglyph .g1{fill:var(--confetti-1)}
-.bgglyph .g2{fill:var(--confetti-2)}
-.bgglyph .g3{fill:var(--confetti-3)}
-.bgglyph .g4{fill:var(--confetti-4)}
-.bgglyph .ln{fill:none;stroke:var(--text);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+/* Tile pictures take their background's own colours (bgpicker.js), None the theme's confetti colours. */
+.bgglyph .g1{fill:var(--g1,var(--confetti-1))}
+.bgglyph .g2{fill:var(--g2,var(--confetti-2))}
+.bgglyph .g3{fill:var(--g3,var(--confetti-3))}
+.bgglyph .g4{fill:var(--g4,var(--confetti-4))}
+.bgglyph .ln{fill:none;stroke:var(--gl,var(--text));stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 /* Capped, and genuinely scrollable. The card holds a mode switch, a field and two buttons,
    and a short landscape phone leaves ~300px of usable height. box-sizing matters: without it the cap applies to
    the CONTENT box, so 60px of padding and 2px of border sat outside it and the card ended

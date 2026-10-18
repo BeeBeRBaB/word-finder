@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { BACKGROUNDS } from '../../src/backgrounds.js';
+import { BACKGROUNDS, lookOf } from '../../src/backgrounds.js';
 import { CHOICES } from '../../src/settings.js';
 import { manualMarkup, dropMarkup, modeNote, summaryMarkup, movingSections, MODE_NOTES, MOVING_SECTIONS, KINDS } from '../../src/bgpicker.js';
 
@@ -60,7 +60,10 @@ test('a new registry entry gets an option in the right menu with no other change
 });
 
 test('a dropdown shows its pick\'s picture and name', () => {
-  assert.match(dropMarkup('aurora'), /^<svg class="bgglyph" viewBox="0 0 48 32" aria-hidden="true">.*<\/svg><span class="bgname">Aurora<\/span>$/);
+  assert.match(dropMarkup('aurora'), /^<svg class="bgglyph" viewBox="0 0 48 32" aria-hidden="true" style="background:[^"]+">.*<\/svg><span class="bgname">Aurora<\/span>$/);
+  // In the background's own colours; None keeps the theme's.
+  assert.ok(dropMarkup('aurora').includes(`--g1:${lookOf('aurora').colors[0]}`));
+  assert.doesNotMatch(dropMarkup('none'), /style=/);
   assert.match(dropMarkup('gone'), new RegExp(`<span class="bgname">${BACKGROUNDS[0].name}</span>$`));
 });
 

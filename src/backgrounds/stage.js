@@ -11,7 +11,7 @@ import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
  * @typedef {{cv:HTMLCanvasElement, ctx:CanvasRenderingContext2D, W:number, H:number, dpr:number,
  *   t:number, dark:boolean, reduced:boolean, colors:string[], ink:string, rng:import('../rng.js').Rng,
  *   seed:number, layout:number, paint:() => void, onDpr:() => void}} Stage
- * W, H are CSS px and draw() paints in them; t is seconds run; colors the look's confetti colours
+ * W, H are CSS px and draw() paints in them; t is seconds run; colors the background's own colours
  * (ink alone while they are empty); layout 0..2 is the variant a seed picks; paint() redraws now.
  */
 

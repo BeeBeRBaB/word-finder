@@ -3,7 +3,7 @@
 // (by its `animated` flag), so a new entry there needs no markup anywhere; the note under the
 // mode; and the summary on the row that opens the page. The Animated menu is cut into
 // sections under headings, the dealt subject's icon motions first.
-import { BACKGROUNDS, findBackground } from './backgrounds.js';
+import { BACKGROUNDS, findBackground, lookOf } from './backgrounds.js';
 
 /** @typedef {import('./backgrounds.js').Background} Background */
 
@@ -22,7 +22,16 @@ export const KINDS = /** @type {const} */ ([['still', 'Still', false], ['moving'
 
 /** @param {Background} bg @returns {string} */
 function glyphMarkup(bg) {
-  return `<svg class="bgglyph" viewBox="0 0 48 32" aria-hidden="true">${bg.glyph}</svg>`;
+  return `<svg class="bgglyph" viewBox="0 0 48 32" aria-hidden="true"${lookStyle(bg)}>${bg.glyph}</svg>`;
+}
+
+/** A picture in its background's own colours, as it shows behind the game; None keeps the theme's.
+ * @param {Background} bg @returns {string} */
+function lookStyle(bg) {
+  if (bg.id === 'none') return '';
+  const { ground, dark, colors } = lookOf(bg.id);
+  const g = colors.slice(0, 4).map((c, i) => `--g${i + 1}:${c}`).join(';');
+  return ` style="background:${ground};${g};--gl:${dark ? '#fff' : '#222'}"`;
 }
 
 /** @param {string} kind @returns {(bg:Background) => string} */

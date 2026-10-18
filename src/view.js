@@ -2,6 +2,7 @@
 // state of its own, so what you see is a pure function of the arguments passed in.
 import { cap, lineIndices } from './puzzle.js';
 import { artFor, spriteRects, ILLUSTRATIONS } from './art.js';
+import { lookOf } from './backgrounds.js';
 
 /**
  * @typedef {import('./puzzle.js').Puzzle} Puzzle
@@ -143,7 +144,7 @@ export function renderList(els, puzzle, state, justFound) {
   });
 }
 
-/** Draw the subject's category art into #art.
+/** Draw the subject's category art into #art, in its background's own colours.
  * `style` is the Background setting: an illustration (pixel sprite where a category has none),
  * the pixel sprite, or nothing for any other choice (none, or a background module).
  * @param {Els} els @param {string} subjectId @param {string} style
@@ -152,13 +153,36 @@ export function renderArt(els, subjectId, style) {
   const a = artFor(subjectId);
   if (!a || (style !== 'illustrated' && style !== 'pixel')) {
     els.art.textContent = '';
+    els.art.removeAttribute('style');
+    delete els.art.dataset.kind;
     return;
   }
   const illo = style === 'illustrated' ? ILLUSTRATIONS[a.motif] : undefined;
+  const { colors } = lookOf(style);
+  const c = (/** @type {number} */ k) => colors[(a.hue - 1 + k) % colors.length];
+  const sprite = spriteRects(a.rows, a.flip);
   const body = illo
     ? (a.flip ? `<g transform="translate(64 0) scale(-1 1)">${illo}</g>` : illo)
-    : spriteRects(a.rows, a.flip);
+    : sprite;
   const kind = illo ? 'illustrated' : 'pixel';
-  els.art.innerHTML = `<svg viewBox="0 0 ${illo ? 64 : 16} ${illo ? 64 : 16}" class="hue-${a.hue}" `
+  els.art.dataset.kind = kind;
+  els.art.style.background = kind === 'pixel' ? pixelLayers(sprite, c(1)) : posterLayers(c(1), c(2), c(3));
+  els.art.innerHTML = `<svg viewBox="0 0 ${illo ? 64 : 16} ${illo ? 64 : 16}" style="fill:${c(0)};color:${c(0)}" `
     + `data-motif="${a.motif}" data-kind="${kind}"${illo ? '' : ' shape-rendering="crispEdges"'}>${body}</svg>`;
+}
+
+/** Illustrated's poster: three big flat discs, faint, across the page. @param {string[]} c @returns {string} */
+function posterLayers(...c) {
+  const disc = (/** @type {string} */ at, /** @type {number} */ r, /** @type {string} */ col) =>
+    `radial-gradient(circle at ${at},${col}55 0 ${r}vmax,transparent ${r + 0.2}vmax)`;
+  return [disc('12% 18%', 22, c[0]), disc('92% 42%', 16, c[1]), disc('30% 88%', 26, c[2])].join(',');
+}
+
+/** Pixel art's screen: the sprite tiled small on a half-drop, over a checker of 24px pixels.
+ * @param {string} sprite rects in a 16x16 box @param {string} col @returns {string} */
+function pixelLayers(sprite, col) {
+  const tile = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="120" height="120" shape-rendering="crispEdges">'
+    + `<g fill="${col}" opacity=".3"><g transform="translate(2 2)">${sprite}</g><g transform="translate(22 22)">${sprite}</g></g></svg>`;
+  return `url("data:image/svg+xml,${encodeURIComponent(tile)}"),`
+    + 'repeating-conic-gradient(rgba(255,255,255,.05) 0 25%,transparent 0 50%) 0 0/48px 48px';
 }

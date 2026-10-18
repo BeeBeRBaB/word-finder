@@ -5,8 +5,10 @@
 // the page paints between the background and the glyph (a halo, a plate, the see-through board
 // board, its pills), captured the same way. What counts is the ring within 2px of each
 // glyph, where legibility is decided. 95% of that ring must reach 4.5:1 for text (3:1 if large)
-// and 3:1 for icons. The still art's "host opacity" is --art-board. Prints the highest host
-// opacity that would pass as well. Exits 1 if the stylesheet's opacity fails anywhere.
+// and 3:1 for icons. Prints the highest host opacity that would pass as well (#bg and the still
+// art are now always at 1). Exits 1 if anything fails. Since the header and word list sit on solid
+// plates, only the board's letters see the background; tools/palettes/check.mjs bounds those
+// exactly, in a second, over black and white.
 //   node tools/sims/backgrounds/contrast.mjs
 //   ONLY=aurora,starfield MODES=dark SHAPES=phone LOOKS=sticker/dark node tools/sims/backgrounds/contrast.mjs
 //   NOHALO=1 strips text-shadow, to see what a halo is buying; CSS='...' adds a rule, to try one;
@@ -136,7 +138,7 @@ async function run(job, math) {
           }),
       };
     }, [sel, ICONS, bg.file ? '#bg' : '#art svg']);
-    // A host's opacity, or the still art's own (--art-board), which the frames below leave out.
+    // A host's opacity, which the frames below leave out.
     opacity = info.opacity;
     // Glyphs alone, in black on white.
     await ground('#ffffff');

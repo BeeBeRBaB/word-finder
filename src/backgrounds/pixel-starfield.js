@@ -14,8 +14,8 @@ const rgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
 
 const THEMES = {
   dark: {
-    sky: ['#07061a', '#110b2c', '#1e0f33', '#2a1230'],
-    neb: ['#6a2c8c', '#1f6f8b', '#a8325e'],
+    sky: ['#0c0a3c', '#1a1162', '#2b1272', '#3d1260'],
+    neb: ['#a63fd8', '#2aa8cc', '#e2488a'],
     stars: ['#ffffff', '#fff3b0', '#9be7ff', '#ff9ecf', '#c9a8ff', '#ffc27a'],
     planet: ['#5a2230', '#b8513a', '#ff9a5a', '#ffd08a'],
     ring: ['#8e7cc3', '#d9ccff'],

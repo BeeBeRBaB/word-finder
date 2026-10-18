@@ -247,33 +247,47 @@ test('an animated background runs behind the whole page, and stops for a still o
   await expect(page.locator('#bg canvas')).toHaveCount(0);
 });
 
-// The ring is 24 shadows on every glyph, painted for nothing when nothing is behind the text.
-// The header never takes it: it sits on a plate of the ground, since the ring
-// blurred its small label and, in WebKit, painted over the name's underline.
-test('text keeps its ground-colour ring only where something is drawn behind it', async ({ page }) => {
+// Over a background the header and the word list sit on solid plates of the ground, and no
+// text takes a ring; with None the list has no plate and the header's is the page itself.
+test('the header and the word list sit on plates of the ground only where something is drawn behind them', async ({ page }) => {
   await handPickedBackground(page);
   await page.goto('/?seed=1&subject=space/jupiter');
-  /** @param {string} sel */
-  const ring = (sel) => page.locator(sel).first().evaluate(el => getComputedStyle(el).textShadow !== 'none');
+  /** The alpha of an element's background colour, and whether its text has a ring. @param {string} sel */
+  const plate = (sel) => page.locator(sel).first().evaluate(el => {
+    const cs = getComputedStyle(el), m = cs.backgroundColor.match(/[\d.]+/g) ?? [];
+    return { alpha: m.length > 3 ? Number(m[3]) : 1, ring: cs.textShadow !== 'none', spread: cs.boxShadow !== 'none' };
+  });
   await page.locator('#list .w').first().waitFor();
-  expect(await ring('#list .w')).toBe(true);   // the category art, large behind everything
-  expect(await ring('#subject')).toBe(false);
   await openPage(page);
-  await pickBackground(page, 'aurora');
-  expect(await ring('#list .w')).toBe(true);
-  expect(await ring('#subject')).toBe(false);
+  for (const id of ['illustrated', 'aurora']) {
+    await pickBackground(page, id);
+    for (const sel of ['#hdr', '#side']) expect(await plate(sel)).toEqual({ alpha: 1, ring: false, spread: true });
+    expect((await plate('#list .w')).ring).toBe(false);
+  }
   await pickBackground(page, 'none');
-  expect(await ring('#list .w')).toBe(false);
-  expect(await ring('#subject')).toBe(false);
-  await pickBackground(page, 'illustrated');
-  expect(await ring('#list .w')).toBe(true);
-  expect(await ring('#subject')).toBe(false);
+  expect(await plate('#side')).toEqual({ alpha: 0, ring: false, spread: false });
   const hdr = await page.locator('#hdr').evaluate((el) => {
     const cs = getComputedStyle(el);
     return { bg: cs.backgroundColor, ground: getComputedStyle(document.body).backgroundColor, spread: cs.boxShadow };
   });
   expect(hdr.bg).toBe(hdr.ground);
   expect(hdr.spread).toContain(hdr.ground);
+});
+
+// Each background keeps its own ground and colours whatever the theme.
+test('a background wears its own ground in every theme', async ({ page }) => {
+  await handPickedBackground(page);
+  await page.goto('/?seed=1&subject=space/jupiter');
+  await page.locator('.cell').first().waitFor();
+  await openPage(page);
+  await pickBackground(page, 'koi');
+  const ground = () => page.locator('#bg').evaluate(el => getComputedStyle(el).backgroundImage);
+  const first = await ground();
+  expect(first).toContain('gradient');
+  await page.evaluate(() => { document.documentElement.dataset.theme = 'grove'; document.documentElement.dataset.appearance = 'light'; });
+  expect(await ground()).toBe(first);
+  await pickBackground(page, 'none');
+  expect(await ground()).toBe('none');
 });
 
 test('the choice is remembered, and a new deal keeps the background running', async ({ page }) => {
@@ -482,9 +496,7 @@ test('the background shows through the board but not through its pills', async (
   });
   await openPage(page);
   await pickBackground(page, 'aurora');
-  const a = await alpha('#gridbox');
-  expect(a).toBeGreaterThan(0.5);
-  expect(a).toBeLessThan(1);
+  expect(await alpha('#gridbox')).toBe(0.9);
   // No ring or blur: the letters stay crisp.
   expect(await page.locator('#gridbox').evaluate(el => getComputedStyle(el).backdropFilter)).toBe('none');
   expect(await page.locator('.cell').first().evaluate(el => getComputedStyle(el).textShadow)).toBe('none');
