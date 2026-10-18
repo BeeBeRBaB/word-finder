@@ -7,7 +7,7 @@ import { normalizeTheme } from './appearance.js';
 
 /**
  * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed:number, ground?:string,
- *   lookOf?:(id:string) => Look}} BackgroundOptions
+ *   lookOf?:(id:string, pref?:string) => Look}} BackgroundOptions
  * `colors` are the background's own six colours and `dark` whether its ground is dark (`lookOf`),
  * the same in every theme; `subject` and `seed` are the dealt puzzle's. `ground` is painted on the
  * host when the background starts (left as it is when absent: Subject motion paints its motion's,
@@ -25,8 +25,6 @@ import { normalizeTheme } from './appearance.js';
 export const BACKGROUNDS = Object.freeze([
   { id: 'illustrated', name: 'Illustrated', animated: false,
     glyph: '<circle class="g2" cx="35" cy="9" r="5"/><path class="g1" d="M3 29l12-15 8 9 6-6 16 12z"/>' },
-  { id: 'pixel', name: 'Pixel art', animated: false,
-    glyph: '<path class="g3" d="M14 8h4v4h-4zM30 8h4v4h-4zM10 12h28v4H10zM6 16h36v4H6zM6 20h4v4H6zM38 20h4v4h-4zM14 20h20v4H14zM18 24h4v4h-4zM26 24h4v4h-4z"/>' },
   { id: 'scene', file: 'subject-scene', name: 'Subject scene', animated: false, perDeal: true,
     glyph: '<circle class="g2" cx="10" cy="10" r="6"/><path class="g1" d="M33 3l2.6 5.4 5.9.8-4.3 4.1 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.1 5.9-.8z"/><path class="g3" d="M15 30c-6-4-9-6.6-9-10a4.5 4.5 0 0 1 9-.6 4.5 4.5 0 0 1 9 .6c0 3.4-3 6-9 10z"/><path class="g4" d="M38 30c-6 0-8-5-5-11 3 2 8 4 8 8 0 2-1 3-3 3z"/>' },
   { id: 'drift', file: 'drifting-icons', name: 'Drifting icons', animated: true, perDeal: true,
@@ -89,16 +87,6 @@ export const BACKGROUNDS = Object.freeze([
     glyph: '<path class="g1" d="M5 4l8 3.5-8 3.5 2-3.5z"/><path class="g2" d="M14 10l8 3.5-8 3.5 2-3.5z"/><path class="g3" d="M24 15l8 3.5-8 3.5 2-3.5z"/><path class="g4" d="M13 21l8 3.5-8 3.5 2-3.5z"/><path class="g2" d="M4 17l8 3.5-8 3.5 2-3.5z"/><path class="g3" d="M27 5l8 3.5-8 3.5 2-3.5z"/><path class="g1" d="M36 11l8 3.5-8 3.5 2-3.5z"/>' },
   { id: 'solar', file: 'icon-solar', name: 'Solar system', animated: true, perDeal: true,
     glyph: '<ellipse class="ln" cx="24" cy="16" rx="21" ry="11" opacity=".4"/><ellipse class="ln" cx="24" cy="16" rx="12" ry="6.5" opacity=".4"/><circle class="g1" cx="24" cy="16" r="5.5"/><circle class="g3" cx="33.6" cy="12.1" r="3"/><circle class="g2" cx="18" cy="21.6" r="2.4"/><circle class="g4" cx="7.2" cy="22.6" r="3.6"/><circle class="g2" cx="3" cy="26.5" r="1.6"/>' },
-  { id: 'starfield', file: 'pixel-starfield', name: 'Starfield', animated: true,
-    glyph: '<path class="g2" d="M6 6h2v2H6zM20 4h2v2h-2zM38 8h2v2h-2zM12 18h2v2h-2zM30 16h3v3h-3zM42 22h2v2h-2zM8 27h2v2H8zM24 26h2v2h-2z"/><path class="g4" d="M16 11h1v1h-1zM35 26h1v1h-1zM44 3h1v1h-1z"/>' },
-  { id: 'skyline', file: 'pixel-skyline', name: 'Skyline', animated: true,
-    glyph: '<path class="g4" d="M2 32V18h8v14zM12 32V10h9v22zM23 32V16h7v16zM32 32V6h8v26zM42 32V20h5v12z"/><path class="g2" d="M14 13h2v2h-2zM18 18h2v2h-2zM34 9h2v2h-2zM34 15h2v2h-2zM25 20h2v2h-2zM5 22h2v2H5z"/>' },
-  { id: 'aquarium', file: 'pixel-aquarium', name: 'Aquarium', animated: true,
-    glyph: '<path class="g3" d="M10 12h12v2h4v-2h2v8h-2v-2h-4v2H10v-2H8v-4h2z"/><path class="g2" d="M28 21h9v2h3v-2h2v6h-2v-2h-3v2h-9v-2h-2v-2h2z"/><path class="g1" d="M36 5h2v2h-2zM39 9h2v2h-2zM33 10h2v2h-2z"/><path class="g4" d="M2 30h44v2H2z"/>' },
-  { id: 'confetti', file: 'pixel-confetti', name: 'Confetti', animated: true,
-    glyph: '<path class="g1" d="M6 4h3v3H6zM30 22h3v3h-3z"/><path class="g2" d="M18 9h3v3h-3zM40 6h3v3h-3z"/><path class="g3" d="M11 20h3v3h-3zM34 13h3v3h-3z"/><path class="g4" d="M24 26h3v3h-3zM4 12h3v3H4zM44 24h3v3h-3z"/>' },
-  { id: 'shimmer', file: 'shimmer-grid', name: 'Shimmer grid', animated: true,
-    glyph: '<g class="g3"><path d="M4 4h6v6H4zM16 4h6v6h-6zM28 4h6v6h-6zM40 4h6v6h-6zM4 16h6v6H4zM28 16h6v6h-6zM16 28h6v4h-6zM40 28h6v4h-6z" opacity=".35"/><path d="M16 16h6v6h-6zM40 16h6v6h-6zM4 28h6v4H4zM28 28h6v4h-6z"/></g>' },
   { id: 'aurora', file: 'aurora-drift', name: 'Aurora', animated: true,
     glyph: '<ellipse class="g3" cx="16" cy="13" rx="15" ry="8" opacity=".7"/><ellipse class="g4" cx="31" cy="19" rx="16" ry="9" opacity=".6"/><ellipse class="g1" cx="22" cy="24" rx="12" ry="6" opacity=".5"/>' },
   { id: 'bokeh', file: 'silk-bokeh', name: 'Silk bokeh', animated: true,
@@ -381,60 +369,97 @@ export const BACKGROUNDS = Object.freeze([
 
 /**
  * @typedef {{ground:string, dark:boolean, colors:readonly string[]}} Look
- * A background's own colours, whatever the theme: `ground` is #bg's CSS background, `dark`
- * whether it is a dark one, and `colors` the six a background draws in.
+ * A background's own colours: `ground` is #bg's CSS background, `dark` whether it is a dark one,
+ * and `colors` the six a background draws in. Each family has a dark and a light one, worn with
+ * the theme's flavour, so a ground never fights the game's own colours.
  */
-/** @type {Readonly<Record<string, Look>>} */
+/** @type {(ground:string, ...colors:string[]) => Look} */
+const dk = (ground, ...colors) => ({ ground, dark: true, colors });
+/** @type {(ground:string, ...colors:string[]) => Look} */
+const lt = (ground, ...colors) => ({ ground, dark: false, colors });
+/** @type {Readonly<Record<string, {dark:Look, light:Look}>>} */
 export const LOOKS = Object.freeze({
-  night: { ground: 'radial-gradient(120% 90% at 75% 15%,#2c1c78 0%,#120c3c 50%,#05040f 100%)', dark: true,
-    colors: ['#ff5ca8', '#ffd23f', '#3ee8ff', '#7dff8a', '#ff8a3d', '#d4a5ff'] },
-  ocean: { ground: 'linear-gradient(180deg,#0a6a9a 0%,#06456f 50%,#021f3d 100%)', dark: true,
-    colors: ['#ff7a45', '#ffd166', '#3df5d0', '#ff5c8a', '#b5ecff', '#c3ff5a'] },
-  sky: { ground: 'linear-gradient(180deg,#3fb3ff 0%,#8fd6ff 55%,#e3f6ff 100%)', dark: false,
-    colors: ['#e5243b', '#ff8c00', '#ffcc00', '#13a26b', '#173a7a', '#ff3d9a'] },
-  forest: { ground: 'linear-gradient(180deg,#145a3a 0%,#0b3a24 55%,#04190e 100%)', dark: true,
-    colors: ['#ffe14d', '#ff8f3d', '#a6ff6b', '#ff6b8b', '#6be4ff', '#fff4d6'] },
-  sand: { ground: 'linear-gradient(180deg,#ffe2a1 0%,#ffc370 60%,#f3a15a 100%)', dark: false,
-    colors: ['#c1121f', '#7b2cbf', '#0067a3', '#1f7a3a', '#4a2511', '#e5007a'] },
-  arcade: { ground: 'radial-gradient(130% 100% at 50% 0%,#1d1640 0%,#0a0818 55%,#030208 100%)', dark: true,
-    colors: ['#ff2e88', '#00f0ff', '#fff200', '#39ff14', '#ff7a00', '#c06bff'] },
-  paper: { ground: 'linear-gradient(160deg,#fffaf0 0%,#fbecc8 100%)', dark: false,
-    colors: ['#e0262f', '#1f4fd8', '#f08c00', '#11924a', '#7b2fd6', '#d81b72'] },
-  blueprint: { ground: 'linear-gradient(180deg,#1565c8 0%,#0b3f8f 100%)', dark: true,
-    colors: ['#ffffff', '#a8e6ff', '#ffd23f', '#ff9ec2', '#86ffd6', '#d6ecff'] },
-  sunset: { ground: 'linear-gradient(180deg,#ff8a5c 0%,#d63c7e 45%,#5a1a8c 75%,#1e0b45 100%)', dark: true,
-    colors: ['#ffe66d', '#ffffff', '#ffb02e', '#5ee2ff', '#ff4fa8', '#b8f2e6'] },
-  candy: { ground: 'linear-gradient(135deg,#ffc6e4 0%,#ffe9a8 50%,#b8e6ff 100%)', dark: false,
-    colors: ['#e0115f', '#6a1fd1', '#0a7fd9', '#0f9b58', '#ff6a00', '#2a1a5e'] },
-  neon: { ground: 'radial-gradient(120% 90% at 30% 20%,#4b16b8 0%,#1f0759 55%,#0b0222 100%)', dark: true,
-    colors: ['#ff3fa4', '#3fd8ff', '#ffe03f', '#7dffd4', '#ff9d2e', '#ffffff'] },
-  ember: { ground: 'radial-gradient(120% 90% at 50% 100%,#6b1a0a 0%,#2e0806 55%,#120303 100%)', dark: true,
-    colors: ['#ff5a1f', '#ffb703', '#ffe8a3', '#ff3d7f', '#ff8c42', '#ffd6a5'] },
-  chalk: { ground: 'linear-gradient(180deg,#2c5a46 0%,#1b3b2e 100%)', dark: true,
-    colors: ['#ffffff', '#ffe066', '#ffa3c2', '#a5e8ff', '#c2f58f', '#ffbd7a'] },
-  ice: { ground: 'linear-gradient(180deg,#bfe4ff 0%,#eef8ff 100%)', dark: false,
-    colors: ['#0353a4', '#e0263f', '#6a1fb0', '#008f8f', '#e86a00', '#1b2440'] },
-  lab: { ground: 'radial-gradient(120% 90% at 50% 30%,#0f5260 0%,#062a33 55%,#020f13 100%)', dark: true,
-    colors: ['#00f5d4', '#fee440', '#ff5cbf', '#b98cff', '#3fc8ff', '#ffffff'] },
-  steel: { ground: 'linear-gradient(180deg,#34495e 0%,#1a2633 60%,#0c131b 100%)', dark: true,
-    colors: ['#ffb703', '#ff7b1c', '#8fd8ff', '#ff4b5c', '#7ff0c8', '#f1faee'] },
+  night: {
+    dark: dk('radial-gradient(120% 90% at 75% 15%,#2c1c78 0%,#120c3c 50%,#05040f 100%)', '#ff5ca8', '#ffd23f', '#3ee8ff', '#7dff8a', '#ff8a3d', '#d4a5ff'),
+    light: lt('linear-gradient(180deg,#c9d6ff 0%,#f3e8ff 100%)', '#d6246e', '#c77700', '#0077a8', '#1b8a3a', '#d4570e', '#6a2fc0'),
+  },
+  ocean: {
+    dark: dk('linear-gradient(180deg,#0a6a9a 0%,#06456f 50%,#021f3d 100%)', '#ff7a45', '#ffd166', '#3df5d0', '#ff5c8a', '#b5ecff', '#c3ff5a'),
+    light: lt('linear-gradient(180deg,#8fdcff 0%,#d4f3ff 100%)', '#e0471b', '#c98400', '#00876f', '#d81b60', '#1f5fa8', '#4f8f00'),
+  },
+  sky: {
+    dark: dk('linear-gradient(180deg,#1b2a6b 0%,#2e3f8f 55%,#5a4a9c 100%)', '#ff6b6b', '#ffb347', '#ffe066', '#5ef0b0', '#9fd3ff', '#ff7ac8'),
+    light: lt('linear-gradient(180deg,#3fb3ff 0%,#8fd6ff 55%,#e3f6ff 100%)', '#e5243b', '#ff8c00', '#ffcc00', '#13a26b', '#173a7a', '#ff3d9a'),
+  },
+  forest: {
+    dark: dk('linear-gradient(180deg,#145a3a 0%,#0b3a24 55%,#04190e 100%)', '#ffe14d', '#ff8f3d', '#a6ff6b', '#ff6b8b', '#6be4ff', '#fff4d6'),
+    light: lt('linear-gradient(180deg,#d8f5c8 0%,#a8e09a 100%)', '#c43c00', '#d26b00', '#1f7a1f', '#c2185b', '#00698f', '#5a3a12'),
+  },
+  sand: {
+    dark: dk('linear-gradient(180deg,#3a1f4a 0%,#6b2f3a 60%,#8a4a2a 100%)', '#ffd166', '#ff8c42', '#7ae7ff', '#9effa0', '#ffb3c6', '#ff5e7e'),
+    light: lt('linear-gradient(180deg,#ffe2a1 0%,#ffc370 60%,#f3a15a 100%)', '#c1121f', '#7b2cbf', '#0067a3', '#1f7a3a', '#4a2511', '#e5007a'),
+  },
+  arcade: {
+    dark: dk('radial-gradient(130% 100% at 50% 0%,#1d1640 0%,#0a0818 55%,#030208 100%)', '#ff2e88', '#00f0ff', '#fff200', '#39ff14', '#ff7a00', '#c06bff'),
+    light: lt('linear-gradient(180deg,#f2f0ff 0%,#dcd8ff 100%)', '#e0115f', '#007fa3', '#b38f00', '#1e9e2a', '#e05a00', '#7a2fd0'),
+  },
+  paper: {
+    dark: dk('linear-gradient(160deg,#23263a 0%,#151726 100%)', '#ff6b6b', '#6ea8ff', '#ffbe3d', '#4fd98a', '#c49bff', '#ff7ab6'),
+    light: lt('linear-gradient(160deg,#fffaf0 0%,#fbecc8 100%)', '#e0262f', '#1f4fd8', '#f08c00', '#11924a', '#7b2fd6', '#d81b72'),
+  },
+  blueprint: {
+    dark: dk('linear-gradient(180deg,#1565c8 0%,#0b3f8f 100%)', '#ffffff', '#a8e6ff', '#ffd23f', '#ff9ec2', '#86ffd6', '#d6ecff'),
+    light: lt('linear-gradient(180deg,#e8f1ff 0%,#cfe0fb 100%)', '#0b4fa8', '#00897b', '#c77700', '#c2185b', '#2e7d32', '#1a2a4a'),
+  },
+  sunset: {
+    dark: dk('linear-gradient(180deg,#ff8a5c 0%,#d63c7e 45%,#5a1a8c 75%,#1e0b45 100%)', '#ffe66d', '#ffffff', '#ffb02e', '#5ee2ff', '#ff4fa8', '#b8f2e6'),
+    light: lt('linear-gradient(180deg,#ffe0c2 0%,#ffc2d4 55%,#e2c8ff 100%)', '#c2410c', '#7c2d92', '#b45309', '#0369a1', '#be185d', '#047857'),
+  },
+  candy: {
+    dark: dk('linear-gradient(135deg,#3b1450 0%,#1d2a5c 100%)', '#ff6fb5', '#b18cff', '#5cc8ff', '#5ef0a0', '#ffb14d', '#fff4a8'),
+    light: lt('linear-gradient(135deg,#ffc6e4 0%,#ffe9a8 50%,#b8e6ff 100%)', '#e0115f', '#6a1fd1', '#0a7fd9', '#0f9b58', '#ff6a00', '#2a1a5e'),
+  },
+  neon: {
+    dark: dk('radial-gradient(120% 90% at 30% 20%,#4b16b8 0%,#1f0759 55%,#0b0222 100%)', '#ff3fa4', '#3fd8ff', '#ffe03f', '#7dffd4', '#ff9d2e', '#ffffff'),
+    light: lt('radial-gradient(120% 90% at 30% 20%,#ffe3f7 0%,#e6dcff 60%,#d5e6ff 100%)', '#d4146f', '#0a7fb5', '#a87d00', '#0e8f6a', '#d65a00', '#5b21b6'),
+  },
+  ember: {
+    dark: dk('radial-gradient(120% 90% at 50% 100%,#6b1a0a 0%,#2e0806 55%,#120303 100%)', '#ff5a1f', '#ffb703', '#ffe8a3', '#ff3d7f', '#ff8c42', '#ffd6a5'),
+    light: lt('linear-gradient(180deg,#fff0d6 0%,#ffd2a8 100%)', '#c2410c', '#b45309', '#9a3412', '#be123c', '#d97706', '#7c2d12'),
+  },
+  chalk: {
+    dark: dk('linear-gradient(180deg,#2c5a46 0%,#1b3b2e 100%)', '#ffffff', '#ffe066', '#ffa3c2', '#a5e8ff', '#c2f58f', '#ffbd7a'),
+    light: lt('linear-gradient(180deg,#e9f2e9 0%,#d4e6d6 100%)', '#1f3d2b', '#b7791f', '#c2185b', '#1565c0', '#2e7d32', '#d35400'),
+  },
+  ice: {
+    dark: dk('linear-gradient(180deg,#0e2a4a 0%,#081a30 100%)', '#9fe3ff', '#ff6b81', '#c9a3ff', '#5ef0e0', '#ffb15c', '#ffffff'),
+    light: lt('linear-gradient(180deg,#bfe4ff 0%,#eef8ff 100%)', '#0353a4', '#e0263f', '#6a1fb0', '#008f8f', '#e86a00', '#1b2440'),
+  },
+  lab: {
+    dark: dk('radial-gradient(120% 90% at 50% 30%,#0f5260 0%,#062a33 55%,#020f13 100%)', '#00f5d4', '#fee440', '#ff5cbf', '#b98cff', '#3fc8ff', '#ffffff'),
+    light: lt('radial-gradient(120% 90% at 50% 30%,#e0fbf6 0%,#c8eef0 100%)', '#00897b', '#b38600', '#c2185b', '#6a3fb5', '#0277bd', '#263238'),
+  },
+  steel: {
+    dark: dk('linear-gradient(180deg,#34495e 0%,#1a2633 60%,#0c131b 100%)', '#ffb703', '#ff7b1c', '#8fd8ff', '#ff4b5c', '#7ff0c8', '#f1faee'),
+    light: lt('linear-gradient(180deg,#eef2f6 0%,#d5dde6 100%)', '#c77700', '#d84315', '#0277bd', '#c62828', '#00897b', '#263238'),
+  },
 });
 
 /** Which look each background wears, by look. A background left out wears night.
  * @type {Readonly<Record<string, readonly string[]>>} */
 export const LOOK_OF = Object.freeze({
-  night: ['starfield', 'aurora', 'constellation', 'galaxy', 'meteors', 'orrery', 'planet', 'black-hole', 'moon-phases',
+  night: ['aurora', 'constellation', 'galaxy', 'meteors', 'orrery', 'planet', 'black-hole', 'moon-phases',
     'fireworks', 'snow', 'rainy-window', 'lighthouse', 'spiderweb', 'traffic', 'trails', 'smoke', 'fireflies', 'warp',
-    'solar', 'skyline'],
-  ocean: ['rain', 'waves', 'caustics', 'koi', 'puddles', 'river', 'jellyfish', 'kelp', 'aquarium', 'bubbles', 'swim',
+    'solar'],
+  ocean: ['rain', 'waves', 'caustics', 'koi', 'puddles', 'river', 'jellyfish', 'kelp', 'bubbles', 'swim',
     'ripple', 'whirlpool'],
   sky: ['sunbeams', 'clouds', 'paper-planes', 'kites', 'balloons', 'day-night', 'sunflower', 'windmills', 'ferris',
     'train-window', 'flag', 'tree', 'flutter', 'flock', 'fountain', 'rise', 'drift'],
   forest: ['vines', 'slime', 'leaves', 'card-cascade', 'dice', 'reversi', 'chess', 'billiards', 'bloom', 'fall', 'sway'],
   sand: ['dunes', 'zen-garden', 'ants', 'shoreline', 'hourglass', 'cracks', 'roll', 'conveyor'],
   arcade: ['pong', 'snake', 'breakout', 'invaders', 'asteroids', 'pinball', 'maze-chase', 'light-cycles', 'pegboard',
-    'dominoes', 'blocks', 'maze', 'pixel', 'letterrain', 'ticker', 'heart-monitor', 'oscilloscope', 'radar', 'equalizer',
-    'wireframe', 'mystify', 'life', 'automaton', 'confetti'],
+    'dominoes', 'blocks', 'maze', 'letterrain', 'ticker', 'heart-monitor', 'oscilloscope', 'radar', 'equalizer',
+    'wireframe', 'mystify', 'life', 'automaton'],
   paper: ['hanoi', 'slide-puzzle', 'sudoku', 'tangram', 'tiles', 'crossword', 'typewriter', 'word-hunt', 'anagrams',
     'word-swarm', 'weather-map', 'rail-map', 'sorting', 'ink', 'marbling', 'brushstrokes', 'drips', 'weave',
     'cross-stitch', 'halftone', 'contours', 'penrose', 'truchet', 'string-art', 'spirograph', 'dragon-curve',
@@ -442,7 +467,7 @@ export const LOOK_OF = Object.freeze({
   blueprint: ['blueprint', 'gears', 'kinetic', 'newtons-cradle', 'pendulums'],
   sunset: ['hills', 'lanterns', 'low-poly', 'synthwave', 'ribbons', 'wave', 'juggle'],
   candy: ['parade', 'wallpaper', 'carousel', 'bounce', 'pulse', 'trail', 'motion', 'scene', 'kaleido', 'blobs'],
-  neon: ['plasma', 'voronoi', 'honeycomb', 'flowfield', 'mandala', 'moire', 'shimmer', 'bokeh', 'neon', 'interference',
+  neon: ['plasma', 'voronoi', 'honeycomb', 'flowfield', 'mandala', 'moire', 'bokeh', 'neon', 'interference',
     'attractor'],
   ember: ['embers', 'marble-run', 'metronomes'],
   chalk: ['chalkboard'],
@@ -454,9 +479,11 @@ export const LOOK_OF = Object.freeze({
 
 const LOOK_BY_ID = new Map(Object.entries(LOOK_OF).flatMap(([look, ids]) => ids.map(id => [id, look])));
 
-/** A background's own look, whatever the theme. @param {string} id @returns {Look} */
-export function lookOf(id) {
-  return LOOKS[LOOK_BY_ID.get(id) ?? 'night'];
+/** A background's own look in the theme's flavour, whatever the theme.
+ * @param {string} id @param {string} [pref] 'light' | 'dark' @returns {Look} */
+export function lookOf(id, pref = 'dark') {
+  const family = LOOKS[LOOK_BY_ID.get(id) ?? 'night'];
+  return pref === 'light' ? family.light : family.dark;
 }
 
 /** @param {unknown} id @param {readonly Background[]} [list] @returns {Background} */
@@ -467,7 +494,7 @@ export function findBackground(id, list = BACKGROUNDS) {
 /** Each theme's own background, the same in both flavours: what the Theme mode shows.
  * @type {Readonly<Record<string, string>>} */
 export const THEME_BACKGROUNDS = Object.freeze({
-  phosphor: 'starfield', graphite: 'constellation', broadsheet: 'illustrated', drafting: 'shimmer',
+  phosphor: 'galaxy', graphite: 'constellation', broadsheet: 'illustrated', drafting: 'blueprint',
   sticker: 'motion', plum: 'bokeh', grove: 'aurora',
 });
 

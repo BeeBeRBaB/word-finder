@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { handPickedBackground, pickBackground } from './helpers.js';
 
 test.use({ serviceWorkers: 'block' });
-// The category art shows for the Illustrated and Pixel art backgrounds; a new player's Theme mode
+// The category art shows for the Illustrated background; a new player's Theme mode
 // may show another, so these start from Illustrated.
 test.beforeEach(({ page }) => handPickedBackground(page));
 
@@ -46,8 +46,10 @@ test('the Background page switches the art and is remembered', async ({ page }) 
   await page.waitForSelector('#letters .cell');
   await page.locator('#appearance').click();
   await page.locator('#settings-bg').click();
-  await pickBackground(page, 'pixel');
-  await expect(page.locator('#art svg')).toHaveAttribute('data-kind', 'pixel');
+  await pickBackground(page, 'scene');
+  await expect(page.locator('#art svg')).toHaveCount(0);
+  await pickBackground(page, 'illustrated');
+  await expect(page.locator('#art svg')).toHaveAttribute('data-kind', 'illustrated');
   await pickBackground(page, 'none');
   await expect(page.locator('#art svg')).toHaveCount(0);
   await page.reload();

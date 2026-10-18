@@ -66,7 +66,7 @@ test('the Background page has the mode, and under Manual a Still and an Animated
   const mode = page.getByRole('combobox', { name: 'Choose' });
   await expect(mode.locator('option')).toHaveText(['Theme', 'Random', 'Manual']);
   await expect(mode).toHaveValue('theme');
-  await expect(page.locator('#bgmode-note')).toHaveText('Each theme comes with its own background. Now: Starfield.');
+  await expect(page.locator('#bgmode-note')).toHaveText('Each theme comes with its own background. Now: Galaxy.');
   await expect(page.locator('#settings-bgpage .seg')).toHaveCount(0);   // no Area row: the whole page, always
   await expect(page.locator('#bg-manual')).toBeHidden();
   await mode.selectOption('manual');
@@ -90,15 +90,15 @@ test('the Background page has the mode, and under Manual a Still and an Animated
   await stillDrop.click();
   await expect(moving).toBeHidden();
   const still = page.getByRole('radiogroup', { name: 'Still' });
-  expect(await still.locator('.bgtile').evaluateAll(ts => ts.map(t => t.getAttribute('data-bg')))).toEqual(['illustrated', 'pixel', 'scene', 'none']);
+  expect(await still.locator('.bgtile').evaluateAll(ts => ts.map(t => t.getAttribute('data-bg')))).toEqual(['illustrated', 'scene', 'none']);
   // The arrows move the pick within the menu and leave it open; Enter closes it on the dropdown.
   await page.keyboard.press('ArrowRight');
-  await expect(still.getByRole('radio', { name: 'Pixel art' })).toBeChecked();
+  await expect(still.getByRole('radio', { name: 'Subject scene' })).toBeChecked();
   await expect(still).toBeVisible();
-  await expect(page.locator('#settings-bg-now .bgname')).toHaveText('Pixel art');
+  await expect(page.locator('#settings-bg-now .bgname')).toHaveText('Subject scene');
   await page.keyboard.press('Enter');
   await expect(still).toBeHidden();
-  await expect(page.getByRole('button', { name: 'Still Pixel art' })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Still Subject scene' })).toBeFocused();
   // Escape closes a menu and not the pane.
   await page.keyboard.press('Enter');
   await expect(still).toBeVisible();
@@ -119,9 +119,9 @@ test('the Background page has the mode, and under Manual a Still and an Animated
 
 test('Theme mode shows each theme\'s own background, in either flavour, and follows a change of theme', async ({ page }) => {
   await page.goto('/?seed=1&subject=space/jupiter');
-  await expect(page.locator('#bg canvas')).toHaveCount(1);   // Phosphor's Starfield, on the whole page
+  await expect(page.locator('#bg canvas')).toHaveCount(1);   // Phosphor's Galaxy, on the whole page
   await page.locator('#appearance').click();
-  await expect(page.locator('#settings-bg')).toHaveAccessibleName('Background Starfield Theme');
+  await expect(page.locator('#settings-bg')).toHaveAccessibleName('Background Galaxy Theme');
   await page.locator('#settings-theme').click();
   // Broadsheet's is the still illustration: the animation stops and the category art draws.
   await page.locator('.looktile[data-look="broadsheet/light"]').click();
@@ -217,7 +217,7 @@ test('Random picks again for every new game, and Undo and a reload keep the boar
   await expect.poll(() => drawn(page)).toBe(kindOf(first));
 
   // A reload shows the pick the save holds; a save from before it was kept picks by its seed alone.
-  const other = first === 'aquarium' ? 'skyline' : 'aquarium';
+  const other = first === 'koi' ? 'rain' : 'koi';
   await resave(page, other);
   await page.reload();
   await page.locator('.cell').first().waitFor();
@@ -243,29 +243,32 @@ test('an animated background runs behind the whole page, and stops for a still o
   });
   expect(top).toBe(true);
   await openPage(page);
-  await pickBackground(page, 'pixel');
+  await pickBackground(page, 'illustrated');
   await expect(page.locator('#bg canvas')).toHaveCount(0);
 });
 
-// Over a background the header and the word list sit on solid plates of the ground, and no
-// text takes a ring; with None the list has no plate and the header's is the page itself.
-test('the header and the word list sit on plates of the ground only where something is drawn behind them', async ({ page }) => {
+// Over a background the board lets it show through, the word list sits straight on it with its
+// text ringed in the ground, and the header is on a plate of the ground; with None none of that.
+test('the board and the word list let the background through, and the header sits on a plate', async ({ page }) => {
   await handPickedBackground(page);
   await page.goto('/?seed=1&subject=space/jupiter');
   /** The alpha of an element's background colour, and whether its text has a ring. @param {string} sel */
   const plate = (sel) => page.locator(sel).first().evaluate(el => {
     const cs = getComputedStyle(el), m = cs.backgroundColor.match(/[\d.]+/g) ?? [];
-    return { alpha: m.length > 3 ? Number(m[3]) : 1, ring: cs.textShadow !== 'none', spread: cs.boxShadow !== 'none' };
+    return { alpha: m.length > 3 ? Number(m[3]) : 1, ring: cs.textShadow !== 'none' };
   });
   await page.locator('#list .w').first().waitFor();
   await openPage(page);
   for (const id of ['illustrated', 'aurora']) {
     await pickBackground(page, id);
-    for (const sel of ['#hdr', '#side']) expect(await plate(sel)).toEqual({ alpha: 1, ring: false, spread: true });
-    expect((await plate('#list .w')).ring).toBe(false);
+    expect(await plate('#side')).toEqual({ alpha: 0, ring: true });
+    expect((await plate('#list .w')).ring).toBe(true);
+    expect((await plate('#gridbox')).alpha).toBeCloseTo(0.8, 2);
+    expect(await plate('#hdr')).toEqual({ alpha: 1, ring: false });
   }
   await pickBackground(page, 'none');
-  expect(await plate('#side')).toEqual({ alpha: 0, ring: false, spread: false });
+  expect(await plate('#side')).toEqual({ alpha: 0, ring: false });
+  expect((await plate('#gridbox')).alpha).toBe(1);
   const hdr = await page.locator('#hdr').evaluate((el) => {
     const cs = getComputedStyle(el);
     return { bg: cs.backgroundColor, ground: getComputedStyle(document.body).backgroundColor, spread: cs.boxShadow };
@@ -274,18 +277,28 @@ test('the header and the word list sit on plates of the ground only where someth
   expect(hdr.spread).toContain(hdr.ground);
 });
 
-// Each background keeps its own ground and colours whatever the theme.
-test('a background wears its own ground in every theme', async ({ page }) => {
+// Each background has its own ground and colours in two flavours: the dark one under every dark
+// theme and the light one under every light theme, whatever the theme's palette.
+test('a background wears its own ground for the theme\'s flavour', async ({ page }) => {
   await handPickedBackground(page);
   await page.goto('/?seed=1&subject=space/jupiter');
   await page.locator('.cell').first().waitFor();
   await openPage(page);
   await pickBackground(page, 'koi');
   const ground = () => page.locator('#bg').evaluate(el => getComputedStyle(el).backgroundImage);
-  const first = await ground();
-  expect(first).toContain('gradient');
-  await page.evaluate(() => { document.documentElement.dataset.theme = 'grove'; document.documentElement.dataset.appearance = 'light'; });
-  expect(await ground()).toBe(first);
+  /** @param {string} look */
+  const wear = async (look) => {
+    await page.locator(`#theme-tiles input[value="${look}"]`).evaluate(el => /** @type {HTMLInputElement} */ (el).click());
+    await expect(page.locator('html')).toHaveAttribute('data-appearance', look.split('/')[1]);
+    return ground();
+  };
+  const dark = await wear('phosphor/dark');
+  expect(dark).toContain('gradient');
+  expect(await wear('grove/dark')).toBe(dark);
+  const light = await wear('grove/light');
+  expect(light).toContain('gradient');
+  expect(light).not.toBe(dark);
+  expect(await wear('broadsheet/light')).toBe(light);
   await pickBackground(page, 'none');
   expect(await ground()).toBe('none');
 });
@@ -293,7 +306,7 @@ test('a background wears its own ground in every theme', async ({ page }) => {
 test('the choice is remembered, and a new deal keeps the background running', async ({ page }) => {
   await page.goto('/?seed=1&subject=space/jupiter');
   await openPage(page);
-  await pickBackground(page, 'starfield');
+  await pickBackground(page, 'galaxy');
   await page.reload();
   await expect(page.locator('#bg canvas')).toHaveCount(1);
   const canvas = await page.locator('#bg canvas').elementHandle();
@@ -302,7 +315,7 @@ test('the choice is remembered, and a new deal keeps the background running', as
   // The same canvas: an ordinary background is not restarted by a deal.
   expect(await page.evaluate(c => c?.isConnected, canvas)).toBe(true);
   await page.locator('#appearance').click();
-  await expect(page.locator('#settings-bg')).toHaveAccessibleName('Background Starfield');
+  await expect(page.locator('#settings-bg')).toHaveAccessibleName('Background Galaxy');
 });
 
 test('a background that could not load draws once the device is back online', async ({ page }) => {
@@ -450,7 +463,7 @@ test('the Settings row shows the background in use and how it was chosen', async
   await page.goto('/?seed=1&subject=space/jupiter');
   await page.locator('#appearance').click();
   const row = page.locator('#settings-bg');
-  await expect(row.locator('.bgname')).toHaveText('Starfield');
+  await expect(row.locator('.bgname')).toHaveText('Galaxy');
   await expect(row.locator('.bgtag')).toHaveText('Theme');
   await expect(row.locator('svg.bgglyph')).toHaveCount(1);
   await row.click();
@@ -496,7 +509,7 @@ test('the background shows through the board but not through its pills', async (
   });
   await openPage(page);
   await pickBackground(page, 'aurora');
-  expect(await alpha('#gridbox')).toBe(0.9);
+  expect(await alpha('#gridbox')).toBe(0.8);
   // No ring or blur: the letters stay crisp.
   expect(await page.locator('#gridbox').evaluate(el => getComputedStyle(el).backdropFilter)).toBe('none');
   expect(await page.locator('.cell').first().evaluate(el => getComputedStyle(el).textShadow)).toBe('none');

@@ -10,7 +10,7 @@
 // plates, only the board's letters see the background; tools/palettes/check.mjs bounds those
 // exactly, in a second, over black and white.
 //   node tools/sims/backgrounds/contrast.mjs
-//   ONLY=aurora,starfield MODES=dark SHAPES=phone LOOKS=sticker/dark node tools/sims/backgrounds/contrast.mjs
+//   ONLY=aurora,galaxy MODES=dark SHAPES=phone LOOKS=sticker/dark node tools/sims/backgrounds/contrast.mjs
 //   NOHALO=1 strips text-shadow, to see what a halo is buying; CSS='...' adds a rule, to try one;
 //   RING=3 widens the ring; DEBUG=<dir> saves the masks and prints each box; SUBJECT=nature/fish deals it.
 import { chromium } from '@playwright/test';

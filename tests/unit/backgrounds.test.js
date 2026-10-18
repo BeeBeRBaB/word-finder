@@ -45,11 +45,11 @@ test('one animated background runs at a time, and a still choice stops it', asyn
   const bd = makeBackdrop({ importFn: f.importFn });
   assert.equal(await bd.show('aurora', host('side'), OPTS), true);
   assert.equal(await bd.show('aurora', host('side'), OPTS), true, 'same choice: left running');
-  assert.equal(await bd.show('starfield', host('side'), OPTS), true);
-  assert.equal(bd.running(), 'starfield');
+  assert.equal(await bd.show('galaxy', host('side'), OPTS), true);
+  assert.equal(bd.running(), 'galaxy');
   assert.equal(await bd.show('illustrated', host('side'), OPTS), false);
   assert.equal(bd.running(), '');
-  assert.deepEqual(f.log, ['start aurora-drift side', 'stop aurora-drift', 'start pixel-starfield side', 'stop pixel-starfield']);
+  assert.deepEqual(f.log, ['start aurora-drift side', 'stop aurora-drift', 'start galaxy side', 'stop galaxy']);
 });
 
 test('a new host, mode or motion setting restarts it', async () => {
@@ -87,14 +87,14 @@ test('a new palette restarts it, and a new deal restarts only a perDeal backgrou
 
 test('a show overtaken while its module loads never starts', async () => {
   const f = fakeImports();
-  f.gates.set('pixel-skyline', () => {});
+  f.gates.set('galaxy', () => {});
   const bd = makeBackdrop({ importFn: f.importFn });
-  const slow = bd.show('skyline', host('side'), OPTS);
-  const fast = bd.show('confetti', host('side'), OPTS);
-  /** @type {() => void} */ (f.gates.get('pixel-skyline'))();
+  const slow = bd.show('galaxy', host('side'), OPTS);
+  const fast = bd.show('rain', host('side'), OPTS);
+  /** @type {() => void} */ (f.gates.get('galaxy'))();
   assert.equal(await slow, false);
   assert.equal(await fast, true);
-  assert.deepEqual(f.log, ['start pixel-confetti side']);
+  assert.deepEqual(f.log, ['start rain side']);
   bd.stop();
   assert.equal(bd.running(), '');
 });
@@ -135,16 +135,16 @@ test('every theme has its own background, a real one, the same in both flavours'
     const id = resolveBackground('theme', 'none', t, 1);
     assert.equal(findBackground(id).id, id, `${t}: ${id} is not in the registry`);
     // The flavour is no input at all, and the Manual pick, seed and last pick change nothing.
-    assert.equal(resolveBackground('theme', 'pixel', t, 2, id), id, t);
+    assert.equal(resolveBackground('theme', 'rain', t, 2, id), id, t);
   }
   assert.deepEqual(THEMES.map(t => resolveBackground('theme', '', t, 0)),
-    ['starfield', 'constellation', 'illustrated', 'shimmer', 'motion', 'bokeh', 'aurora']);
-  assert.equal(resolveBackground('theme', '', 'retired', 0), 'starfield', 'an unknown theme is the default one');
+    ['galaxy', 'constellation', 'illustrated', 'blueprint', 'motion', 'bokeh', 'aurora']);
+  assert.equal(resolveBackground('theme', '', 'retired', 0), 'galaxy', 'an unknown theme is the default one');
   assert.equal(new Set(Object.values(THEME_BACKGROUNDS)).size, THEMES.length, 'no two themes share one');
 });
 
 test('Manual shows the pick, and an unknown pick the default', () => {
-  assert.equal(resolveBackground('manual', 'aquarium', 'plum', 5, 'aquarium'), 'aquarium');
+  assert.equal(resolveBackground('manual', 'koi', 'plum', 5, 'koi'), 'koi');
   assert.equal(resolveBackground('manual', 'none', 'grove', 5), 'none');
   assert.equal(resolveBackground('manual', 'gone', 'grove', 5), BACKGROUNDS[0].id);
 });
@@ -156,7 +156,7 @@ test('Random picks by the seed from every background but None, and never the las
   let prev = '';
   const deals = 100 * RANDOM_POOL.length;
   for (let seed = 0; seed < deals; seed++) {
-    const id = resolveBackground('random', 'pixel', 'plum', seed, prev);
+    const id = resolveBackground('random', 'rain', 'plum', seed, prev);
     assert.notEqual(id, prev, `seed ${seed} repeated ${prev}`);
     assert.equal(resolveBackground('random', 'none', 'grove', seed, prev), id, 'the seed and last pick decide it, nothing else');
     count[id]++;
@@ -176,10 +176,17 @@ test('every background but None wears exactly one look, and every look is whole'
   const ids = BACKGROUNDS.map(b => b.id).filter(id => id !== 'none');
   assert.deepEqual(listed.slice().sort(), ids.slice().sort(), 'each background once, and no stale ids');
   assert.deepEqual(Object.keys(LOOK_OF).sort(), Object.keys(LOOKS).sort());
-  for (const [name, look] of Object.entries(LOOKS)) {
-    assert.equal(look.colors.length, 6, name);
-    for (const c of look.colors) assert.match(c, /^#[0-9a-f]{6}$/, `${name} ${c}`);
-    assert.equal(typeof look.dark, 'boolean', name);
+  for (const [name, family] of Object.entries(LOOKS)) {
+    // A dark ground for dark themes and a light one for light themes.
+    assert.deepEqual(Object.keys(family).sort(), ['dark', 'light'], name);
+    for (const [pref, look] of Object.entries(family)) {
+      assert.equal(look.colors.length, 6, `${name} ${pref}`);
+      for (const c of look.colors) assert.match(c, /^#[0-9a-f]{6}$/, `${name} ${pref} ${c}`);
+      assert.equal(look.dark, pref === 'dark', `${name} ${pref}`);
+      assert.match(look.ground, /gradient\(/, `${name} ${pref}`);
+    }
   }
-  assert.equal(lookOf('koi'), LOOKS.ocean);
+  assert.equal(lookOf('koi'), LOOKS.ocean.dark);
+  assert.equal(lookOf('koi', 'dark'), LOOKS.ocean.dark);
+  assert.equal(lookOf('koi', 'light'), LOOKS.ocean.light);
 });

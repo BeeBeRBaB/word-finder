@@ -2,7 +2,7 @@
 // its own: still scenes, and the animation style Subject motion runs for it (subject-motion.json).
 import fs from 'node:fs';
 const src = new URL('../../../src/', import.meta.url);
-const { SPRITES, ILLUSTRATIONS } = await import(new URL('art.js', src).href);
+const { ILLUSTRATIONS } = await import(new URL('art.js', src).href);
 const { CATEGORY_MOTION, SUBJECT_MOTION } = await import(new URL('backgrounds/subject-icons.js', src).href);
 const { iconsFor, motionFor } = await import(new URL('backgrounds/icon-scene.js', src).href);
 const { BACKGROUNDS } = await import(new URL('backgrounds.js', src).href);
@@ -22,14 +22,14 @@ const yes = (/** @type {boolean} */ b) => (b ? 'yes' : '**no**');
 const cats = [...new Set(subjects.map(s => s.split('/')[0]))].sort();
 
 const byCat = [], detail = [];
-let scenes = 0, own = 0, picked = 0, illus = 0, pixel = 0;
+let scenes = 0, own = 0, picked = 0, illus = 0;
 for (const c of cats) {
   const list = subjects.filter(s => s.startsWith(c + '/'));
   const scene = list.filter(s => iconsFor(s).length >= 4).length;
   const pick = list.filter(s => SUBJECT_MOTION[s]).length;
   const o = list.filter(ownLead).length;
-  scenes += scene; own += o; picked += pick; illus += +!!ILLUSTRATIONS[c]; pixel += +!!SPRITES[c];
-  byCat.push(`| ${c} | ${list.length} | ${yes(!!ILLUSTRATIONS[c])} | ${yes(!!SPRITES[c])} | ${scene} of ${list.length} | ${name(CATEGORY_MOTION[c])} | ${pick} |`);
+  scenes += scene; own += o; picked += pick; illus += +!!ILLUSTRATIONS[c];
+  byCat.push(`| ${c} | ${list.length} | ${yes(!!ILLUSTRATIONS[c])} | ${scene} of ${list.length} | ${name(CATEGORY_MOTION[c])} | ${pick} |`);
   detail.push(`### ${c}`, '', '| Subject | Subject scene, led by | Animation style |', '| --- | --- | --- |',
     ...list.map(s => `| ${s.split('/')[1]} | ${iconsFor(s)[0]}${ownLead(s) ? '' : ' (**shared**)'} | ${name(motionFor(s))}${SUBJECT_MOTION[s] ? '' : ' (category)'} |`), '');
 }
@@ -40,15 +40,14 @@ const out = [
   '## Overall', '',
   '| Background art | Made for | Covered |', '| --- | --- | ---: |',
   `| Still: Illustrated scene | each category | ${illus} of ${k} |`,
-  `| Still: Pixel art scene | each category | ${pixel} of ${k} |`,
   `| Still: Subject scene, the subject's own icons | each subject | ${scenes} of ${n} |`,
   `| Subject scene led by an icon no other subject leads with | each subject | ${own} of ${n} |`,
   `| Animated: a style of its own, shared with no other category | each category | ${new Set(Object.values(CATEGORY_MOTION)).size} of ${k} |`,
   `| Animated: a style picked for the subject itself, not its category's | each subject | ${picked} of ${n} |`, '',
   `**What the animated rows mean.** Subject motion runs each subject's style: its own pick where one fits (rain for weather, koi for garden ponds), else its category's, which no other category shares. It uses ${styles.size} of the ${animated} animated backgrounds; every one can also be picked by hand, and Random picks from all of them.`, '',
   '## By category', '',
-  '| Category | Subjects | Illustrated scene | Pixel art scene | Subject scenes | Its animation style | Subjects with their own style |',
-  '| --- | ---: | --- | --- | ---: | --- | ---: |',
+  '| Category | Subjects | Illustrated scene | Subject scenes | Its animation style | Subjects with their own style |',
+  '| --- | ---: | --- | ---: | --- | ---: |',
   ...byCat, '',
   '## By subject', '',
   '"(category)" means the subject uses its category\'s style.', '',
