@@ -135,11 +135,14 @@ export function renderSolvedShape(els, state, size) {
 export function renderList(els, puzzle, state, justFound) {
   els.list.innerHTML = '';
   els.count.textContent = state.foundOrder.length + ' of ' + puzzle.words.length + ' found';
+  // The progress bar beside the count fills by this share.
+  els.count.style.setProperty('--found', String(state.foundOrder.length / puzzle.words.length));
   puzzle.words.forEach((w) => {
     const s = document.createElement('span');
     s.className = 'w';
     s.textContent = cap(w);
-    if (state.found[w]) s.className = w === justFound ? 'w glow' : 'w done';
+    // A found word's tile takes its pill's colour on the board.
+    if (state.found[w]) s.className = `w ${w === justFound ? 'glow' : 'done'} ${PILL_CLASS[state.foundOrder.indexOf(w) % 4]}`;
     els.list.appendChild(s);
   });
 }
