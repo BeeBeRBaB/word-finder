@@ -411,10 +411,8 @@ body{position:fixed;inset:0;width:100%;height:100%}
    bottom corner behind everything. */
 #art{display:block;position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
 #art svg{position:absolute;right:-4vmin;bottom:-4vmin;width:min(72vmin,640px);height:min(72vmin,640px)}
-/* The two stills differ in kind, not just drawing: Illustrated is a flat poster, big soft shapes
-   behind a smooth picture; Pixel art is an 8-bit screen, a checker of big pixels and the sprite
-   tiled across it behind a giant one. view.js renderArt sets the layers and colours inline. */
-#art[data-kind="pixel"] svg{image-rendering:pixelated}
+/* Illustrated is a flat poster, big soft shapes behind a smooth picture; view.js renderArt sets
+   the layers and colours inline. */
 #app[data-landscape] #side{display:flex;flex-direction:column}
 /* Backgrounds (backgrounds.js): #bg fills the page behind #app. z-index:-1 puts it under the
    page's content and over the body's ground; a module fills its host, so it needs a box even while empty. */
@@ -422,20 +420,28 @@ body{position:fixed;inset:0;width:100%;height:100%}
 #side{position:relative}
 /* Portrait: the list's row takes the spare height. */
 #app:not([data-landscape]){grid-template-rows:auto auto 1fr}
-/* The game sits on cards over a background, which keeps its own colours whatever the theme: the
-   header and the word list on solid plates of the ground, whose small coloured text a see-through
-   plate took under AA over some backgrounds, and the board on its surface at 90%, which its
-   letters pass over all of them (tools/sims/backgrounds/contrast.mjs). A spread shadow draws a
-   plate's margin, so nothing moves; the spread adds its 6px to the corner, which comes out at the
-   board's radius, or square where the board's is 2px. A browser without color-mix keeps the board
-   solid. */
-#app[data-behind] #side{align-self:start}
-#hdr,#app[data-behind] #side{background-color:var(--bg);border-radius:max(0px,var(--radius-board) - 6px);box-shadow:0 0 0 6px var(--bg)}
+/* Over a background, which keeps its own colours in the theme's flavour, the board is its surface
+   at 80%, so the background shows through it: its letters pass over the darkest and the lightest
+   ground there can be, which bounds every other (tools/palettes/check.mjs). A browser without
+   color-mix keeps the board solid. */
 @supports (background-color:color-mix(in srgb,red 50%,transparent)){
-  #app[data-behind] #gridbox{background-color:color-mix(in srgb,var(--surface) 90%,transparent)}
+  #app[data-behind] #gridbox{background-color:color-mix(in srgb,var(--surface) 80%,transparent)}
 }
-/* Illustration tones, as shares of the art's opacity: art.js TONE, which the pixel sprites and
-   the background icons use inline. */
+/* The word list sits straight on the background, each glyph ringed in the ground (two rings of
+   8 and 16 shadows, 1.25px and 2.5px out) so whatever is behind a letter never takes it under AA.
+   Only where main.js says something is drawn behind: otherwise it is 24 shadows per glyph
+   painted for nothing. */
+#app[data-behind] :is(#side,#side button){text-shadow:
+  1.25px 0 var(--bg),0.88px 0.88px var(--bg),0 1.25px var(--bg),-0.88px 0.88px var(--bg),-1.25px 0 var(--bg),-0.88px -0.88px var(--bg),0 -1.25px var(--bg),0.88px -0.88px var(--bg),
+  2.5px 0 var(--bg),2.31px 0.96px var(--bg),1.77px 1.77px var(--bg),0.96px 2.31px var(--bg),0 2.5px var(--bg),-0.96px 2.31px var(--bg),-1.77px 1.77px var(--bg),-2.31px 0.96px var(--bg),
+  -2.5px 0 var(--bg),-2.31px -0.96px var(--bg),-1.77px -1.77px var(--bg),-0.96px -2.31px var(--bg),0 -2.5px var(--bg),0.96px -2.31px var(--bg),1.77px -1.77px var(--bg),2.31px -0.96px var(--bg)}
+/* The header sits on a plate of the ground instead. Its icons cannot take a text-shadow, and the
+   ring blurred the small label on an iPhone and, in WebKit, painted over the name's underline.
+   A spread shadow draws the plate's margin, so nothing in the header moves; the spread adds its 6px
+   to the corner, which comes out at the board's radius, or square where the board's is 2px. */
+#hdr{background-color:var(--bg);border-radius:max(0px,var(--radius-board) - 6px);box-shadow:0 0 0 6px var(--bg)}
+/* Illustration tones, as shares of the art's opacity: art.js TONE, which the background icons
+   also use inline. */
 #art .t-a{fill-opacity:.72}
 #art .t-b{fill-opacity:1}
 #art .t-c{fill-opacity:.4}
@@ -703,6 +709,10 @@ body{position:fixed;inset:0;width:100%;height:100%}
 .bgglyph .g3{fill:var(--g3,var(--confetti-3))}
 .bgglyph .g4{fill:var(--g4,var(--confetti-4))}
 .bgglyph .ln{fill:none;stroke:var(--gl,var(--text));stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+/* A background's own picture: bgpicker.js writes its colours for both flavours, and the theme's is shown. */
+.bgglyph.own{--g1:var(--g1d,var(--confetti-1));--g2:var(--g2d,var(--confetti-2));--g3:var(--g3d,var(--confetti-3));--g4:var(--g4d,var(--confetti-4));--gl:var(--gld,var(--text));--gb:var(--gbd,var(--bg))}
+:root[data-appearance="light"] .bgglyph.own{--g1:var(--g1l,var(--confetti-1));--g2:var(--g2l,var(--confetti-2));--g3:var(--g3l,var(--confetti-3));--g4:var(--g4l,var(--confetti-4));--gl:var(--gll,var(--text));--gb:var(--gbl,var(--bg))}
+:is(.bgtile,.navnow) .bgglyph.own{background:var(--gb,var(--bg))}
 /* Capped, and genuinely scrollable. The card holds a mode switch, a field and two buttons,
    and a short landscape phone leaves ~300px of usable height. box-sizing matters: without it the cap applies to
    the CONTENT box, so 60px of padding and 2px of border sat outside it and the card ended

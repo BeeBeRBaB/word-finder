@@ -7,7 +7,7 @@
 //
 // Usage (from the repo root):
 //   node tools/art-src/prototypes/check.mjs                  every animated registry entry
-//   node tools/art-src/prototypes/check.mjs pixel-skyline    one or more src/backgrounds/ files
+//   node tools/art-src/prototypes/check.mjs galaxy          one or more src/backgrounds/ files
 //   ... --hz=165       fake a 165Hz display (rAF on a timer); then each must draw 30fps (+-1)
 //   ... --big          also per-frame cost and main-thread busy % at 1920x1080 and 3840x2160
 //   ... --shots[=dir]  screenshots dark/light/rm/phone (default dir .shots/backgrounds/)

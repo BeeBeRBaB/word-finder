@@ -1,18 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { SPRITES, artFor, spriteRects, ILLUSTRATIONS } from '../../src/art.js';
+import { artFor, ILLUSTRATIONS } from '../../src/art.js';
 import { CATEGORIES } from '../../src/catalog.js';
-
-test('every catalog category has a well-formed 16x16 sprite, and no sprite is orphaned', () => {
-  for (const c of CATEGORIES) {
-    const rows = SPRITES[c.id];
-    assert.ok(rows, `no sprite for ${c.id}`);
-    assert.equal(rows.length, 16, `${c.id}: ${rows.length} rows`);
-    for (const r of rows) assert.match(r, /^[.abc]{16}$/, `${c.id}: bad row ${r}`);
-    assert.ok(rows.join('').replace(/\./g, '').length >= 40, `${c.id}: too few pixels to read`);
-  }
-  assert.deepEqual(Object.keys(SPRITES).sort(), CATEGORIES.map(c => c.id).sort());
-});
 
 test('art is stable per subject, varies across subjects, and is null for an unknown category', () => {
   assert.deepEqual(artFor('space/jupiter'), artFor('space/jupiter'));
@@ -43,16 +32,10 @@ test('every real subject gets art with in-range choices', async () => {
   assert.ok(n >= 600, `only ${n} subjects checked`);
 });
 
-test('spriteRects draws one rect per filled pixel, mirrored when asked', () => {
-  const rows = ['a' + '.'.repeat(15), ...Array(15).fill('.'.repeat(16))];
-  assert.equal((spriteRects(rows, false).match(/<rect/g) || []).length, 1);
-  assert.match(spriteRects(rows, false), /x="0"/);
-  assert.match(spriteRects(rows, true), /x="15"/);
-});
-
 test('every illustration is safe, plain shapes with tone classes only', () => {
+  const ids = new Set(CATEGORIES.map(c => c.id));
   for (const [id, svg] of Object.entries(ILLUSTRATIONS)) {
-    assert.ok(SPRITES[id], `${id}: an illustration for a category that does not exist`);
+    assert.ok(ids.has(id), `${id}: an illustration for a category that does not exist`);
     for (const m of svg.matchAll(/<\/?([a-zA-Z][\w-]*)([^>]*)>/g)) {
       assert.ok(['path', 'circle', 'ellipse', 'rect', 'polygon', 'polyline', 'line', 'g'].includes(m[1]), `${id}: <${m[1]}>`);
       for (const a of m[2].matchAll(/([\w:-]+)\s*=\s*"([^"]*)"/g)) {

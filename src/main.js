@@ -209,7 +209,7 @@ function showBoard(b) {
   els.subject.textContent = cap(b.puzzle.name);
   els.category.dataset.accent = String(accentSlot(b.puzzle.name));
   showCategory();
-  renderArt(els, b.subjectId, shownBg());
+  renderArt(els, b.subjectId, shownBg(), appearance.get());
   // Or a stale timer drops the win overlay over the fresh grid, swallowing every tap.
   if (state.winTimer) { clearTimeout(state.winTimer); state.winTimer = null; }
   hideWin();
@@ -924,11 +924,12 @@ function showBackdrop() {
   els.app.toggleAttribute('data-behind', id !== 'none');
   syncBg();
   if (!subjectId) return;   // nothing dealt yet; the deal calls again
-  // Its own ground and colours, whatever the theme. Subject motion paints its motion's ground.
-  const look = lookOf(id);
+  // Its own ground and colours in the theme's flavour, a dark night or a light day, whatever the
+  // theme's palette. Subject motion paints its motion's ground.
+  const pref = appearance.get(), look = lookOf(id, pref);
   void backdrop.show(id, bgHost, {
     colors: [...look.colors], dark: look.dark, reducedMotion: prefersReducedMotion(),
-    ground: id === 'none' ? '' : id === 'motion' ? undefined : look.ground, lookOf,
+    ground: id === 'none' ? '' : id === 'motion' ? undefined : look.ground, lookOf: (i) => lookOf(i, pref),
     subject: subjectId, seed: currentSeed,
   });
 }
@@ -1013,7 +1014,7 @@ bgManual.addEventListener('keydown', (e) => {
 /** Draw the background showing now: the category art for a still one, and the backdrop.
  * @returns {void} */
 function applyBackground() {
-  if (subjectId) renderArt(els, subjectId, shownBg());
+  if (subjectId) renderArt(els, subjectId, shownBg(), appearance.get());
   showBackdrop();
 }
 /** A pick in either menu is the one that shows, so its row's radio checks too. @param {string} id @returns {void} */

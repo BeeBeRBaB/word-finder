@@ -33,7 +33,7 @@ hidden across, down, diagonally and backwards. Drag across a word to find it.
   and your progress follows you to any device. Random play never needs an account.
 - **Art for every subject.** Each subject gets its own scene drawn from an icon library,
   still or animated, behind the word list or the whole screen. Or choose an animated
-  background such as Aurora, Starfield or Aquarium.
+  background such as Aurora, Galaxy or Koi.
 - **Seven themes**, each in a light and a dark version, all checked for readable
   contrast.
 - **Made for touch.** The board sizes itself to your screen, with a 10×10 grid on

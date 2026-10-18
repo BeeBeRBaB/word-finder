@@ -20,8 +20,8 @@ test('a Still row then an Animated one, each a radio, a dropdown and its menu of
   }
   assert.deepEqual(values(rows[0], 'bg-still'), BACKGROUNDS.filter(b => !b.animated).map(b => b.id));
   assert.deepEqual(values(rows[1], 'bg-moving'), movingSections(BACKGROUNDS).flatMap(([, bgs]) => bgs.map(b => b.id)));
-  assert.deepEqual(values(html, 'bg-still'), ['illustrated', 'pixel', 'scene', 'none']);
-  assert.equal(values(html, 'bg-moving').length, BACKGROUNDS.length - 4);
+  assert.deepEqual(values(html, 'bg-still'), ['illustrated', 'scene', 'none']);
+  assert.equal(values(html, 'bg-moving').length, BACKGROUNDS.length - 3);
   assert.equal((html.match(/<label class="tile bgtile"/g) ?? []).length, BACKGROUNDS.length);
   for (const b of BACKGROUNDS) assert.ok(html.includes(`<span class="bgname">${b.name}</span>`), `${b.id}: no name`);
 });
@@ -60,9 +60,13 @@ test('a new registry entry gets an option in the right menu with no other change
 });
 
 test('a dropdown shows its pick\'s picture and name', () => {
-  assert.match(dropMarkup('aurora'), /^<svg class="bgglyph" viewBox="0 0 48 32" aria-hidden="true" style="background:[^"]+">.*<\/svg><span class="bgname">Aurora<\/span>$/);
-  // In the background's own colours; None keeps the theme's.
-  assert.ok(dropMarkup('aurora').includes(`--g1:${lookOf('aurora').colors[0]}`));
+  assert.match(dropMarkup('aurora'), /^<svg class="bgglyph own" viewBox="0 0 48 32" aria-hidden="true" style="--gbd:[^"]+">.*<\/svg><span class="bgname">Aurora<\/span>$/);
+  // In the background's own colours, both flavours for the stylesheet to choose; None keeps the theme's.
+  for (const [k, pref] of [['d', 'dark'], ['l', 'light']]) {
+    assert.ok(dropMarkup('aurora').includes(`--gb${k}:${lookOf('aurora', pref).ground};`), pref);
+    assert.ok(dropMarkup('aurora').includes(`--g1${k}:${lookOf('aurora', pref).colors[0]};`), pref);
+  }
+  assert.match(dropMarkup('none'), /^<svg class="bgglyph" /);
   assert.doesNotMatch(dropMarkup('none'), /style=/);
   assert.match(dropMarkup('gone'), new RegExp(`<span class="bgname">${BACKGROUNDS[0].name}</span>$`));
 });
@@ -75,16 +79,16 @@ test('registry names and ids are plain text, safe to put in markup', () => {
 });
 
 test('the row summary names the background showing, and says Theme or Random under it', () => {
-  assert.match(summaryMarkup('aurora'), /^<svg class="bgglyph".*<span class="bgsum"><span class="bgname">Aurora<\/span><\/span>$/);
+  assert.match(summaryMarkup('aurora'), /^<svg class="bgglyph own".*<span class="bgsum"><span class="bgname">Aurora<\/span><\/span>$/);
   assert.equal(summaryMarkup('aurora', 'manual'), summaryMarkup('aurora'), 'Manual has no tag');
-  assert.match(summaryMarkup('starfield', 'theme'), /<span class="bgname">Starfield<\/span><span class="bgtag">Theme<\/span><\/span>$/);
+  assert.match(summaryMarkup('galaxy', 'theme'), /<span class="bgname">Galaxy<\/span><span class="bgtag">Theme<\/span><\/span>$/);
   assert.match(summaryMarkup('bokeh', 'random'), /<span class="bgname">Silk bokeh<\/span><span class="bgtag">Random<\/span><\/span>$/);
   assert.match(summaryMarkup('gone'), new RegExp(`<span class="bgname">${BACKGROUNDS[0].name}</span></span>$`));
 });
 
 test('every mode has a one-line note, and Theme and Random name what they show', () => {
   assert.deepEqual(Object.keys(MODE_NOTES), [...CHOICES.bgmode]);
-  assert.equal(modeNote('theme', 'starfield'), 'Each theme comes with its own background. Now: Starfield.');
+  assert.equal(modeNote('theme', 'galaxy'), 'Each theme comes with its own background. Now: Galaxy.');
   assert.equal(modeNote('random', 'bokeh'), 'A new background with every game. Now: Silk bokeh.');
   assert.equal(modeNote('manual', 'bokeh'), 'Pick a still and an animated one, and which of the two shows.');
 });

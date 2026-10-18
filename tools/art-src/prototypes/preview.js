@@ -4,7 +4,7 @@
 import { BACKGROUNDS } from '../../../src/backgrounds.js';
 
 const q = new URLSearchParams(location.search);
-const name = q.get('name') || 'pixel-starfield';
+const name = q.get('name') || 'galaxy';
 const dark = !q.has('light') && q.get('dark') !== '0';
 document.body.classList.toggle('light', !dark);
 

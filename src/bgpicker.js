@@ -22,16 +22,19 @@ export const KINDS = /** @type {const} */ ([['still', 'Still', false], ['moving'
 
 /** @param {Background} bg @returns {string} */
 function glyphMarkup(bg) {
-  return `<svg class="bgglyph" viewBox="0 0 48 32" aria-hidden="true"${lookStyle(bg)}>${bg.glyph}</svg>`;
+  return `<svg class="bgglyph${bg.id === 'none' ? '' : ' own'}" viewBox="0 0 48 32" aria-hidden="true"${lookStyle(bg)}>${bg.glyph}</svg>`;
 }
 
-/** A picture in its background's own colours, as it shows behind the game; None keeps the theme's.
+/** A picture in its background's own colours, as it shows behind the game, in both flavours: the
+ * stylesheet picks the theme's. None keeps the theme's own.
  * @param {Background} bg @returns {string} */
 function lookStyle(bg) {
   if (bg.id === 'none') return '';
-  const { ground, dark, colors } = lookOf(bg.id);
-  const g = colors.slice(0, 4).map((c, i) => `--g${i + 1}:${c}`).join(';');
-  return ` style="background:${ground};${g};--gl:${dark ? '#fff' : '#222'}"`;
+  const vars = [['d', 'dark'], ['l', 'light']].map(([k, pref]) => {
+    const { ground, dark, colors } = lookOf(bg.id, pref);
+    return `--gb${k}:${ground};${colors.slice(0, 4).map((c, i) => `--g${i + 1}${k}:${c}`).join(';')};--gl${k}:${dark ? '#fff' : '#222'}`;
+  });
+  return ` style="${vars.join(';')}"`;
 }
 
 /** @param {string} kind @returns {(bg:Background) => string} */
@@ -41,12 +44,12 @@ const optionMarkup = (kind) => (bg) => `<label class="tile bgtile" data-bg="${bg
 /** The Animated menu's sections after the icon motions, each naming its scenes by id. A scene
  * listed in none goes under More, so a new registry entry still shows with no change here. */
 export const MOVING_SECTIONS = /** @type {readonly (readonly [string, readonly string[]])[]} */ (Object.freeze([
-  ['Sky and space', ['starfield', 'aurora', 'constellation', 'galaxy', 'meteors', 'orrery', 'planet', 'black-hole',
+  ['Sky and space', ['aurora', 'constellation', 'galaxy', 'meteors', 'orrery', 'planet', 'black-hole',
     'moon-phases', 'day-night', 'sunbeams', 'clouds', 'fireworks', 'lanterns', 'paper-planes', 'kites', 'balloons']],
   ['Water and weather', ['rain', 'snow', 'waves', 'caustics', 'koi', 'puddles', 'rainy-window', 'shoreline', 'river',
-    'jellyfish', 'kelp', 'aquarium', 'frost', 'lighthouse', 'weather-map']],
+    'jellyfish', 'kelp', 'frost', 'lighthouse', 'weather-map']],
   ['Land and life', ['fireflies', 'hills', 'dunes', 'vines', 'tree', 'sunflower', 'leaves', 'spiderweb', 'ants', 'slime',
-    'windmills', 'train-window', 'zen-garden', 'skyline', 'traffic', 'rail-map', 'flag']],
+    'windmills', 'train-window', 'zen-garden', 'traffic', 'rail-map', 'flag']],
   ['Games', ['pong', 'snake', 'breakout', 'invaders', 'asteroids', 'chess', 'reversi', 'card-cascade', 'dice', 'pinball',
     'maze-chase', 'light-cycles', 'pegboard', 'dominoes', 'blocks', 'maze']],
   ['Puzzles and words', ['hanoi', 'slide-puzzle', 'sudoku', 'tangram', 'letterrain', 'tiles', 'crossword', 'typewriter',
@@ -57,7 +60,7 @@ export const MOVING_SECTIONS = /** @type {readonly (readonly [string, readonly s
   ['Machines', ['gears', 'clocks', 'kinetic', 'newtons-cradle', 'metronomes', 'slinky', 'marble-run', 'hourglass',
     'abacus', 'pipes', 'mystify', 'synthwave', 'wireframe', 'trails']],
   ['Light and patterns', ['plasma', 'blobs', 'contours', 'ribbons', 'voronoi', 'honeycomb', 'halftone', 'flowfield',
-    'mandala', 'truchet', 'moire', 'low-poly', 'penrose', 'spirograph', 'string-art', 'shimmer', 'bokeh', 'confetti',
+    'mandala', 'truchet', 'moire', 'low-poly', 'penrose', 'spirograph', 'string-art', 'bokeh',
     'neon', 'embers', 'smoke']],
   ['Paint and craft', ['ink', 'marbling', 'brushstrokes', 'drips', 'weave', 'cross-stitch', 'chalkboard', 'blueprint',
     'cracks']],
