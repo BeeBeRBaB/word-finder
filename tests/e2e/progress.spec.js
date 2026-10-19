@@ -218,8 +218,8 @@ test('a Settings checkbox row is a control, not a field label', async ({ page })
   await page.keyboard.press('Escape');
   await page.locator('#catbtn').click();
 
-  // ...and the Category label above it is untouched.
+  // ...and the Category label above it keeps its own heading size.
   const cat = await page.locator('label[for="picker-select"]').evaluate(
-    (el) => getComputedStyle(el).textTransform);
-  expect(cat).toBe('uppercase');
+    (el) => getComputedStyle(el).fontSize);
+  expect(cat).toBe('15px');
 });

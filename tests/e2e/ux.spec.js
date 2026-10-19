@@ -120,7 +120,7 @@ test('a board the coverage bag steered comes back identical after a reload', asy
 test('the visible copy talks about games and subjects, never topics or themes', async ({ page }) => {
   await page.goto('/?seed=1&subject=nature/birds');
   await expect(page.locator('#newbtn')).toHaveText(/New game/);
-  await expect(page.locator('#winbtn')).toHaveText(/Play a new game/);
+  await expect(page.locator('#winbtn')).toHaveText(/New game/);
   await expect(page.locator('#picker-start')).toHaveText('Start');
   await expect(page.locator('#picker-cancel')).toHaveText('Cancel');
   await expect(page.locator('#lbl-theme')).toHaveText('Theme');

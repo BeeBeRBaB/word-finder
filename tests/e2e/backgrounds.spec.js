@@ -247,28 +247,29 @@ test('an animated background runs behind the whole page, and stops for a still o
   await expect(page.locator('#bg canvas')).toHaveCount(0);
 });
 
-// Over a background the board lets it show through, the word list sits straight on it with its
-// text ringed in the ground, and the header is on a plate of the ground; with None none of that.
+// Over a background the board lets it show through, the word list sits straight on it as solid
+// tiles, and the header is on a plate of the ground; with None the board is solid again.
 test('the board and the word list let the background through, and the header sits on a plate', async ({ page }) => {
   await handPickedBackground(page);
   await page.goto('/?seed=1&subject=space/jupiter');
-  /** The alpha of an element's background colour, and whether its text has a ring. @param {string} sel */
+  /** The alpha of an element's background colour. @param {string} sel */
   const plate = (sel) => page.locator(sel).first().evaluate(el => {
-    const cs = getComputedStyle(el), m = cs.backgroundColor.match(/[\d.]+/g) ?? [];
-    return { alpha: m.length > 3 ? Number(m[3]) : 1, ring: cs.textShadow !== 'none' };
+    const m = getComputedStyle(el).backgroundColor.match(/[\d.]+/g) ?? [];
+    return m.length > 3 ? Number(m[3]) : 1;
   });
   await page.locator('#list .w').first().waitFor();
   await openPage(page);
   for (const id of ['illustrated', 'aurora']) {
     await pickBackground(page, id);
-    expect(await plate('#side')).toEqual({ alpha: 0, ring: true });
-    expect((await plate('#list .w')).ring).toBe(true);
-    expect((await plate('#gridbox')).alpha).toBeCloseTo(0.8, 2);
-    expect(await plate('#hdr')).toEqual({ alpha: 1, ring: false });
+    expect(await plate('#side')).toBe(0);
+    expect(await plate('#list .w')).toBe(1);
+    expect(await plate('#count')).toBe(1);
+    expect(await plate('#gridbox')).toBeCloseTo(0.8, 2);
+    expect(await plate('#hdr')).toBe(1);
   }
   await pickBackground(page, 'none');
-  expect(await plate('#side')).toEqual({ alpha: 0, ring: false });
-  expect((await plate('#gridbox')).alpha).toBe(1);
+  expect(await plate('#side')).toBe(0);
+  expect(await plate('#gridbox')).toBe(1);
   const hdr = await page.locator('#hdr').evaluate((el) => {
     const cs = getComputedStyle(el);
     return { bg: cs.backgroundColor, ground: getComputedStyle(document.body).backgroundColor, spread: cs.boxShadow };

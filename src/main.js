@@ -143,7 +143,7 @@ let categoryName = '';
 /** @type {string|null} */
 let justFound = null;
 
-/** Which of the four pill hues a subject underlines its name with. Hashed from the name
+/** Which of the four pill hues a subject's category chip wears. Hashed from the name
  * rather than its position, so reordering the catalog does not reshuffle all 600.
  * @param {string} name @returns {number} */
 function accentSlot(name) {
@@ -207,7 +207,7 @@ function showBoard(b) {
   state.puzzle = b.puzzle; state.found = b.found; state.foundOrder = b.foundOrder;
   state.sel = null; state.miss = null; state.drag = null; justFound = null;
   els.subject.textContent = cap(b.puzzle.name);
-  els.subject.dataset.accent = String(accentSlot(b.puzzle.name));
+  els.category.dataset.accent = String(accentSlot(b.puzzle.name));
   showCategory();
   renderArt(els, b.subjectId, shownBg(), appearance.get());
   // Or a stale timer drops the win overlay over the fresh grid, swallowing every tap.

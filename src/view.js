@@ -36,7 +36,7 @@ export function applyLayout(els, dims) {
     els.app.removeAttribute('data-landscape');
     els.app.style.gridTemplateColumns = '1fr';
   }
-  // Portrait: full width, so the list lines up with the kicker above it rather than
+  // Portrait: full width, so the list lines up with the title above it rather than
   // with the narrower centred grid. Landscape: the rail is its own column.
   els.side.style.width = dims.landscape ? dims.sideWidth + 'px' : '100%';
   els.list.style.gridTemplateColumns = dims.listColumns;
@@ -135,11 +135,14 @@ export function renderSolvedShape(els, state, size) {
 export function renderList(els, puzzle, state, justFound) {
   els.list.innerHTML = '';
   els.count.textContent = state.foundOrder.length + ' of ' + puzzle.words.length + ' found';
+  // The progress bar beside the count fills by this share.
+  els.count.style.setProperty('--found', String(state.foundOrder.length / puzzle.words.length));
   puzzle.words.forEach((w) => {
     const s = document.createElement('span');
     s.className = 'w';
     s.textContent = cap(w);
-    if (state.found[w]) s.className = w === justFound ? 'w glow' : 'w done';
+    // A found word's tile takes its pill's colour on the board.
+    if (state.found[w]) s.className = `w ${w === justFound ? 'glow' : 'done'} ${PILL_CLASS[state.foundOrder.indexOf(w) % 4]}`;
     els.list.appendChild(s);
   });
 }
