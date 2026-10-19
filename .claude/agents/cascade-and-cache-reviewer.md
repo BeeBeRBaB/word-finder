@@ -25,7 +25,7 @@ Three blocks, and the order and specificity between them are load-bearing:
 
 | Block | Holds |
 | --- | --- |
-| `:root` (first in the file) | Type tokens only — `--display`, `--utility`. Appearance-independent. |
+| `:root` (first in the file) | Type token only — `--display`. Appearance-independent. |
 | `:root, :root[data-appearance="dark"]` | The dark palette, which is also the default. |
 | `:root[data-appearance="light"]` | The light palette. |
 

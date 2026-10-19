@@ -15,7 +15,7 @@ function tokens(theme, mode) {
 }
 const KEYS = { bg: '--bg', surface: '--surface', border: '--border', text: '--text', strong: '--text-strong', muted: '--muted',
   label: '--label', hint: '--hint', accent: '--accent', accentText: '--accent-text', accentInk: '--accent-ink', sel: '--pill-sel',
-  foundText: '--found-text', done: '--done-text' };
+  foundText: '--found-text', edge: '--edge' };
 const hex = h => { h = h.replace('#', ''); if (h.length === 3) h = [...h].map(c => c + c).join(''); return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); };
 const parse = c => c.startsWith('#') ? [...hex(c), 1] : c.match(/[\d.]+/g).map(Number);
 const over = (fg, bg) => { const [r, g, b, a] = parse(fg), B = parse(bg); return [r * a + B[0] * (1 - a), g * a + B[1] * (1 - a), b * a + B[2] * (1 - a), 1]; };
@@ -33,7 +33,9 @@ for (const t of THEMES) for (const m of ['light', 'dark']) {
   const S = parse(p.surface), B = parse(p.bg);
   const checks = [['text/surface', parse(p.text), S, 4.5], ['text/bg', parse(p.text), B, 4.5], ['strong/bg', parse(p.strong), B, 4.5], ['muted/bg', parse(p.muted), B, 4.5], ['muted/surface', parse(p.muted), S, 4.5],
     ['label/bg', parse(p.label), B, 4.5], ['hint/bg', parse(p.hint), B, 4.5], ['hint/surface (the Settings card)', parse(p.hint), S, 4.5], ['accentText/bg', parse(p.accentText), B, 4.5], ['accentText/surface', parse(p.accentText), S, 4.5], ['accentInk/accent', parse(p.accentInk), parse(p.accent), 4.5],
-    ['accent/surface (control edge)', parse(p.accent), S, 3], ['done/bg', over(p.done, p.bg), B, 4.5], ['text on sel', parse(p.text), over(p.sel, p.surface), 4.5],
+    ['accent/surface (control edge)', parse(p.accent), S, 3], ['strong/surface (counts and card labels)', parse(p.strong), S, 4.5], ['text on sel', parse(p.text), over(p.sel, p.surface), 4.5],
+    // --edge rings every surface key and tile, so it must stand out from the tile and the ground.
+    ['edge/surface', parse(p.edge), S, 3], ['edge/bg', parse(p.edge), B, 3],
     ...p.pills.map((c, i) => [`foundText on pill${i + 1}`, parse(p.foundText), over(c, p.surface), 4.5]),
     // The board over a background is --surface at 80% (styles.css): its letters must pass over the
     // darkest and the lightest background there can be, which bounds every other.

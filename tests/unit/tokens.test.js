@@ -10,7 +10,7 @@ const css = readFileSync(new URL('../../styles.css', import.meta.url), 'utf8');
 // that also matches bare `:root`; LIGHT_ONLY only ever matches with the attribute set.
 const DEFAULT_DARK = ':root, :root[data-appearance="dark"]';
 const LIGHT_ONLY = ':root[data-appearance="light"]';
-// The type tokens (--display, --utility) are the only non-colour tokens in the file.
+// The type token (--display) is the only non-colour token in the file.
 // They are appearance-independent, so they live in one bare `:root` block instead of
 // being written into both palettes — and that block is kept first in styles.css so
 // this plain `:root` lookup finds it rather than the dark palette's own selector,
@@ -60,7 +60,7 @@ test('every theme has both a dark and a light block, and appearance.js lists exa
 
 test('the type block is first, so it is what a bare `:root` lookup finds', () => {
   const type = tokensIn(TYPE);
-  assert.deepEqual([...type].sort(), ['--display', '--utility'],
+  assert.deepEqual([...type].sort(), ['--display'],
     'the first `:root` block in styles.css is not the type block — did the palettes move above it?');
 });
 

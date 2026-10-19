@@ -34,7 +34,7 @@ const STEPS = [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0
 const RING = Number(process.env.RING || 2);
 
 // What sits over the background: the word list, the header and the board. Icons need 3:1, as non-text.
-const ROLES = ['.w', '#listhdr b', '#count', '#reveal', '#kicker', '#category', '#subject', '#newbtn', '#appearance svg', '#catbtn svg', '#letters .cell'];
+const ROLES = ['.w', '#count', '#reveal', '#category', '#subject', '#newbtn', '#appearance svg', '#catbtn svg', '#letters .cell'];
 const ICONS = ['#appearance svg', '#catbtn svg'];
 
 const jobs = [];
