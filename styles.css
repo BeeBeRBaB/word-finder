@@ -386,10 +386,12 @@ body{position:fixed;inset:0;width:100%;height:100%}
 :is(#appearance,#picker-cancel,.seg button:not([aria-pressed="true"])){
   border:none;background:var(--surface);color:var(--text-strong);box-shadow:inset 0 0 0 2px var(--edge),0 4px 0 var(--edge-lip)}
 :is(#newbtn,#catbtn,#winbtn,#picker-start,#toast-undo,.sc-go,.acct-submit,#appearance,#picker-cancel,.seg button){
-  font-family:var(--display);font-weight:700;cursor:pointer;transition:transform .06s ease-out,box-shadow .06s ease-out}
-:is(#newbtn,#catbtn,#winbtn,#picker-start,#toast-undo,.sc-go,.acct-submit,.seg button[aria-pressed="true"]):active{
+  font-family:var(--display);font-weight:700;transition:transform .06s ease-out,box-shadow .06s ease-out}
+/* Weightless, so a disabled or busy key's own cursor wins; a disabled key doesn't press. */
+:where(#newbtn,#catbtn,#winbtn,#picker-start,#toast-undo,.sc-go,.acct-submit,#appearance,#picker-cancel,.seg button){cursor:pointer}
+:is(#newbtn,#catbtn,#winbtn,#picker-start,#toast-undo,.sc-go,.acct-submit,.seg button[aria-pressed="true"]):active:not(:disabled,[aria-disabled="true"]){
   transform:translateY(3px);box-shadow:0 1px 0 var(--accent-lip)}
-:is(#appearance,#picker-cancel,.seg button:not([aria-pressed="true"])):active{
+:is(#appearance,#picker-cancel,.seg button:not([aria-pressed="true"])):active:not(:disabled,[aria-disabled="true"]){
   transform:translateY(3px);box-shadow:inset 0 0 0 2px var(--edge),0 1px 0 var(--edge-lip)}
 #newbtn{border-radius:var(--radius-ctl);padding:9px 16px;font-size:15px;min-height:44px}
 /* New game and its chevron read as one key: outer corners only, and a faint line between.
@@ -799,13 +801,13 @@ label[for="picker-select"]{display:block;font-family:var(--display);font-weight:
     :is(#picker-select,#settings-bgmode) option:disabled{color:var(--muted);cursor:default;background:transparent}
   }
 }
-/* After both cards' own rules on purpose: their `padding` and `border` shorthands would
-   otherwise reset the phone-only top edge set here. Same specificity, so order decides. */
-#pickercard,#settingscard{width:100%;border-radius:0 0 20px 20px;border-top:none;animation:dropIn .28s ease-out;
+/* After both cards' own rules on purpose: their `padding` shorthands would otherwise reset
+   the top padding set here. Same specificity, so order decides. */
+#pickercard,#settingscard{width:100%;border-radius:0 0 20px 20px;animation:dropIn .28s ease-out;
   padding-top:calc(22px + env(safe-area-inset-top))}
 @media (min-width:600px){
   #picker,#settings{justify-content:flex-end;padding:calc(64px + env(safe-area-inset-top)) calc(20px + env(safe-area-inset-right)) 0 0}
-  #pickercard,#settingscard{width:380px;border-radius:20px;border-top:1px solid var(--accent);padding-top:26px;
+  #pickercard,#settingscard{width:380px;border-radius:20px;padding-top:26px;
     max-height:calc(100vh - 80px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     max-height:calc(100dvh - 80px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}
 }
