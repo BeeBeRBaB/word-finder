@@ -20,7 +20,7 @@ import { THEMES, PREFS } from '../../../src/appearance.js';
 import { findAndDrag } from '../../../tests/e2e/helpers.js';
 
 const list = (k, all) => (process.env[k] ? process.env[k].split(',') : all);
-const IDS = list('ONLY', BACKGROUNDS.filter(b => b.id !== 'none').map(b => b.id));
+const IDS = list('ONLY', BACKGROUNDS.map(b => b.id));
 const MODES = list('MODES', PREFS);
 const ALL_SHAPES = { desktop: [1440, 900], phone: [390, 664], landscape: [844, 390] };
 const SHAPES = list('SHAPES', Object.keys(ALL_SHAPES));
@@ -90,9 +90,7 @@ async function run(job, math) {
   }, JSON.stringify({ bgmode: 'manual', art: bg.id }));
   await page.goto(`${site.url}/?seed=1&subject=${SUBJECT}`);
   await page.waitForSelector('.cell');
-  // A module draws into #bg; the still category art is #art's.
-  const layer = bg.file ? '#bg > *' : '#art svg';
-  await page.waitForSelector(layer, { state: 'visible' });
+  await page.waitForSelector('#bg > *', { state: 'visible' });
   // Four finds, one in each pill colour, before the list is faked: a find re-renders it.
   const words = (await page.locator('#list .w').allTextContents()).slice(0, 4);
   for (const w of words) await findAndDrag(page, w.trim().toUpperCase());
@@ -137,12 +135,12 @@ async function run(job, math) {
               x: Math.max(0, Math.floor(b.x) - 4), y: Math.max(0, Math.floor(b.y) - 4), w: Math.ceil(b.width) + 8, h: Math.ceil(b.height) + 8 };
           }),
       };
-    }, [sel, ICONS, bg.file ? '#bg' : '#art svg']);
+    }, [sel, ICONS, '#bg']);
     // A host's opacity, which the frames below leave out.
     opacity = info.opacity;
     // Glyphs alone, in black on white.
     await ground('#ffffff');
-    const hideBg = await tag(`#bg,#art{visibility:hidden!important} #settings,#toast{display:none}`);
+    const hideBg = await tag(`#bg{visibility:hidden!important} #settings,#toast{display:none}`);
     let s = await tag(`body *{visibility:hidden!important} :is(${sel}),:is(${sel}) *{visibility:visible!important;color:#000!important;`
       + `text-shadow:none!important;border-color:transparent!important;background:transparent!important;box-shadow:none!important}`);
     const glyph = (await page.screenshot()).toString('base64');
@@ -164,22 +162,20 @@ async function run(job, math) {
     await hideBg.evaluate(n => n.remove());
     if (process.env.DEBUG) for (const [n, b] of [['glyph', glyph], ['over', over[0]]]) (await import('node:fs')).writeFileSync(`${process.env.DEBUG}/${bg.id}-${look.replace('/', '-')}-${shape}-${n}.png`, Buffer.from(b, 'base64'));
     // The background alone at full opacity, over black and over white.
-    s = await tag(`#app{visibility:hidden} #art{visibility:visible} #settings,#toast{display:none} #bg,#art svg{opacity:1!important}`);
+    s = await tag(`#app{visibility:hidden} #settings,#toast{display:none} #bg{opacity:1!important}`);
     const frames = [];
-    for (let f = 0; f < (bg.animated ? FRAMES : 1); f++) {
-      if (bg.animated) {
-        await page.evaluate(() => /** @type {any} */ (window).__thaw());
-        await page.waitForTimeout(700);
-        await page.evaluate(() => /** @type {any} */ (window).__freeze());
-        await page.waitForTimeout(60);
-      }
+    for (let f = 0; f < FRAMES; f++) {
+      await page.evaluate(() => /** @type {any} */ (window).__thaw());
+      await page.waitForTimeout(700);
+      await page.evaluate(() => /** @type {any} */ (window).__freeze());
+      await page.waitForTimeout(60);
       const pair = [];
       for (const g of ['#000000', '#ffffff']) { await ground(g); pair.push((await page.screenshot()).toString('base64')); }
       frames.push(pair);
     }
     await s.evaluate(n => n.remove());
     await ground('');
-    if (bg.animated) await page.evaluate(() => /** @type {any} */ (window).__thaw());
+    await page.evaluate(() => /** @type {any} */ (window).__thaw());
 
     const res = await math.evaluate(async ([glyphPng, overPngs, frames, info, steps, cur, ring, pillPng]) => {
       /** @param {string} b64 */

@@ -5,9 +5,8 @@ import { CATEGORIES } from '../../src/catalog.js';
 import { FACING, ICONS } from '../../src/backgrounds/icons.js';
 import { existsSync, readFileSync } from 'node:fs';
 import { CATEGORY_ICONS, CATEGORY_MOTION, SUBJECT_ICONS, SUBJECT_MOTION } from '../../src/backgrounds/subject-icons.js';
-import { VARIANTS, facingOf, iconMarkup, iconsFor, layoutScene, motionFor, sceneColors, variantOf, withHero } from '../../src/backgrounds/icon-scene.js';
+import { VARIANTS, facingOf, iconMarkup, iconsFor, motionFor, sceneColors, variantOf, withHero } from '../../src/backgrounds/icon-scene.js';
 import { MOTIONS } from '../../src/backgrounds/subject-motion.js';
-import { makeRng } from '../../src/rng.js';
 
 test('every subject and category maps 4-6 distinct drawn icons, and every icon is used', async () => {
   const used = new Set();
@@ -101,28 +100,6 @@ test('icon tones become attributes, and an explicit stroke width survives', () =
   assert.ok(ln, 'some icon sets its own stroke width');
   for (const m of iconMarkup(ln).matchAll(/<[^>]*stroke="currentColor"[^>]*>/g)) assert.equal(m[0].match(/stroke-width=/g)?.length, 1, m[0]);
   assert.equal(iconMarkup('no-such-icon'), '');
-});
-
-test('every layout covers the host without leaving it, and a hero keeps its space', () => {
-  const ids = SUBJECT_ICONS['music/concerts'].split(' ');
-  for (const [W, H] of [[1280, 800], [390, 844], [300, 700], [800, 160]]) {
-    for (const layout of [0, 1, 2]) {
-      const placed = layoutScene(layout, ids, W, H, makeRng(7));
-      assert.ok(placed.length >= 3, `${layout} at ${W}x${H}: ${placed.length} icons`);
-      assert.deepEqual(placed, layoutScene(layout, ids, W, H, makeRng(7)), 'deterministic');
-      assert.ok(placed.some(p => p.x < W / 2) && placed.some(p => p.x > W / 2), `${layout} at ${W}x${H}: one-sided`);
-      for (const p of placed) {
-        assert.ok(ids.includes(p.id) && p.size > 20 && p.hue >= 0 && p.hue < 5);
-        if (layout !== 1) assert.ok(p.x > -p.size && p.x < W + p.size && p.y > -p.size && p.y < H + p.size, `${layout}: off the host`);
-      }
-      if (layout === 2) {
-        const [hero, ...rest] = placed;
-        assert.equal(hero.id, ids[0]);
-        for (const p of rest) assert.ok(Math.hypot(p.x - hero.x, p.y - hero.y) > hero.size * 0.48, 'icon on the hero');
-      }
-    }
-  }
-  assert.deepEqual(layoutScene(0, [], 100, 100, makeRng(1)), []);
 });
 
 test('a scene takes the theme\'s colours, or its fallback while they are empty', () => {

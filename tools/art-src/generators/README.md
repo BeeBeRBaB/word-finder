@@ -1,6 +1,6 @@
 # Art generators
 
-Editable sources for the subject icons and the category illustrations. Every SVG is
+Editable sources for the subject icons. Every SVG is
 inner markup for a 64x64 viewBox, using only the classes `t-a`, `t-b`, `t-c` and `ln`.
 Run everything from any directory; paths resolve from each script.
 
@@ -16,13 +16,6 @@ To add icons, copy the shape of a round-2 generator into a new `icons/genN.mjs`,
 `../icons/partN.json`, validate with `node tools/art-src/icons/check.mjs tools/art-src/icons/partN.json`,
 then run the two `iconmap` scripts below. An icon drawn side-on (facing right, by rule) also goes
 in `../icons/facing.json`, so the motions mirror it to face the way it moves.
-
-## Category illustrations (shipped as `ILLUSTRATIONS` in `src/art.js`)
-
-| File | What it is | Run |
-| --- | --- | --- |
-| `illo/gen1.mjs`–`gen4.mjs` | Generators for the 25 category illustrations, in four groups. Each writes `illo/groupN.json` (git-ignored). | `node tools/art-src/generators/illo/gen1.mjs` |
-| `illo/compare.mjs` | Diffs the generated groups against `src/art.js` and exits 1 on a mismatch. All 25 match today. Paste a changed group's `svg` into `src/art.js` by hand. | `node tools/art-src/generators/illo/compare.mjs` |
 
 ## Shared helpers (both need Playwright's Chromium)
 

@@ -31,9 +31,9 @@ hidden across, down, diagonally and backwards. Drag across a word to find it.
 - **Levels and points.** Sign in with a username and password to play an endless run of
   levels on easy, normal or hard. Points add up for each word, for streaks and for speed,
   and your progress follows you to any device. Random play never needs an account.
-- **Art for every subject.** Each subject gets its own scene drawn from an icon library,
-  still or animated, behind the word list or the whole screen. Or choose an animated
-  background such as Aurora, Galaxy or Koi.
+- **Art for every subject.** Each subject gets its own animated scene drawn from an icon
+  library, behind the whole screen. Or choose another animated background such as Aurora,
+  Galaxy or Koi.
 - **Seven themes**, each in a light and a dark version, all checked for readable
   contrast.
 - **Made for touch.** The board sizes itself to your screen, with a 10×10 grid on

@@ -13,7 +13,7 @@ const THEMES = list('THEMES', ALL_THEMES);
 const MODES = list('MODES', PREFS);
 // The main page, then each subpage through the row that opens it, and Background under Manual
 // with the Animated menu open on its pick.
-const manual = async (page) => { await page.selectOption('#settings-bgmode', 'manual'); await page.click('#bgdrop-moving'); };
+const manual = async (page) => { await page.selectOption('#settings-bgmode', 'manual'); await page.click('#bgdrop'); };
 const PAGES = [['main', null], ['theme', '#settings-theme'], ['background', '#settings-bg'], ['background menu', '#settings-bg', manual]];
 
 const site = await serve();

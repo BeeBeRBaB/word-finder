@@ -5,13 +5,13 @@
 // importer cached last week can meet this file's new copy.
 
 import { fnv1a } from '../rng.js';
-import { TONE } from '../art.js';
 import { categoryOf } from '../catalog.js';
 import { FACING, ICONS } from './icons.js';
 import { CATEGORY_ICONS, CATEGORY_MOTION, SUBJECT_ICONS, SUBJECT_MOTION } from './subject-icons.js';
 
-/** @typedef {{id:string, x:number, y:number, size:number, rot:number, hue:number, alpha:number}} Placed
- * x, y is the icon's centre in CSS px, size its edge, rot degrees, hue an index into the colours. */
+/** Each icon tone's opacity, so 'b' is the densest: t-a main, t-b shade, t-c highlight.
+ * @type {Readonly<Record<string, number>>} */
+const TONE = Object.freeze({ a: 0.72, b: 1, c: 0.4 });
 
 /** Seeds give each subject this many fixed scenes: three layouts, each with two heroes. */
 export const VARIANTS = 6;
@@ -96,51 +96,4 @@ export function iconSprites(ids, colorOf, px, ready) {
     img.src = 'data:image/svg+xml,' + encodeURIComponent(iconSvg(id, colorOf(i), px));
   });
   return () => { live = false; };
-}
-
-/**
- * Places icons over a W x H host. Layout 0 scatters them on a jittered grid, 1 is a tidy
- * staggered wallpaper, 2 is one large hero bleeding off a corner with small icons around it.
- * @param {number} layout @param {string[]} ids hero first @param {number} W @param {number} H
- * @param {import('../rng.js').Rng} rng @returns {Placed[]}
- */
-export function layoutScene(layout, ids, W, H, rng) {
-  /** @type {Placed[]} */
-  const out = [];
-  const n = ids.length;
-  if (!n || W <= 0 || H <= 0) return out;
-  const hueAt = rng.int(5);
-  const short = Math.min(W, H);
-  // Cell edge: about 120px on a laptop, never so small a narrow rail gets confetti.
-  const cell = Math.max(64, Math.min(150, Math.sqrt(W * H / 34), short / 1.6));
-  const cols = Math.max(1, Math.round(W / cell)), rows = Math.max(1, Math.round(H / cell));
-  const cw = W / cols, ch = H / rows;
-  if (layout === 1) {
-    const size = Math.min(cw, ch) * 0.5;
-    for (let r = -1; r <= rows; r++) {
-      const off = (r & 1) * cw / 2;
-      for (let c = -1; c <= cols; c++) {
-        const k = ((r * 2 + c) % n + n) % n;
-        out.push({ id: ids[k], x: c * cw + cw / 2 + off, y: r * ch + ch / 2, size, rot: 0, hue: (hueAt + ((r % 2) + 2) % 2) % 5, alpha: 0.5 });
-      }
-    }
-    return out;
-  }
-  let hero = null;
-  if (layout === 2) {
-    const size = Math.min(short * 0.62, 520), right = rng.random() < 0.5, low = rng.random() < 0.6;
-    hero = { x: right ? W - size * 0.38 : size * 0.38, y: low ? H - size * 0.38 : size * 0.38, r: size * 0.48 };
-    out.push({ id: ids[0], x: hero.x, y: hero.y, size, rot: (right ? -1 : 1) * (4 + rng.random() * 6), hue: hueAt, alpha: 0.4 });
-  }
-  const pool = layout === 2 && n > 1 ? ids.slice(1) : ids;
-  const order = rng.shuffle(pool);
-  let k = 0;
-  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
-    const x = (c + 0.5 + (rng.random() - 0.5) * 0.55) * cw, y = (r + 0.5 + (rng.random() - 0.5) * 0.55) * ch;
-    const size = Math.min(cw, ch) * (layout === 2 ? 0.42 : 0.5 + rng.random() * 0.22);
-    if (hero && Math.hypot(x - hero.x, y - hero.y) < hero.r + size * 0.35) continue;
-    out.push({ id: order[k % order.length], x, y, size, rot: (rng.random() - 0.5) * 36, hue: (hueAt + 1 + (k % 4)) % 5, alpha: 0.5 });
-    k++;
-  }
-  return out;
 }

@@ -5,7 +5,7 @@ import { memStore } from './helpers.js';
 
 test('a first visit gets the defaults', () => {
   assert.deepEqual(makeSettings({ store: memStore() }).get(), { ...DEFAULTS });
-  assert.equal(DEFAULTS.art, 'illustrated');
+  assert.equal(DEFAULTS.art, 'drift');
   assert.equal(DEFAULTS.board, 'auto');
   assert.equal(DEFAULTS.difficulty, 'normal');
   assert.equal(DEFAULTS.play, 'random', 'levels are opt-in');
@@ -17,20 +17,22 @@ test('the background is chosen by theme, at random or by hand, and the choice is
   const store = memStore();
   makeSettings({ store }).set('bgmode', 'random');
   assert.equal(makeSettings({ store }).get().bgmode, 'random');
-  assert.equal(normalizeSettings({ bgmode: 'daily', art: 'illustrated' }).bgmode, 'theme');
+  assert.equal(normalizeSettings({ bgmode: 'daily', art: 'drift' }).bgmode, 'manual');
+  assert.equal(normalizeSettings({ bgmode: 'daily' }).bgmode, 'theme');
 });
 
 test('a record from before the mode keeps a background the player picked', () => {
   /** @param {object} rec */
   const from = (rec) => { const store = memStore(); store.setItem(SETTINGS_KEY, JSON.stringify(rec)); return makeSettings({ store }).get(); };
   assert.deepEqual([from({ art: 'aurora', area: 'list' }).bgmode, from({ art: 'aurora' }).art], ['manual', 'aurora']);
-  assert.equal(from({ art: 'none' }).bgmode, 'manual', 'None was a pick too');
+  assert.equal(from({ art: 'drift' }).bgmode, 'manual', 'today\'s default was a pick then');
   assert.equal(from({ art: 'illustrated', area: 'list' }).bgmode, 'theme', 'the old default is no pick');
+  assert.equal(from({ art: 'none' }).bgmode, 'theme', 'nor is a still one, gone since');
   assert.equal(from({ art: 'gone' }).bgmode, 'theme', 'nor is one this build does not have');
   assert.equal(from({ sound: false }).bgmode, 'theme');
   // A stored mode stands, whatever the art.
   assert.equal(from({ art: 'aurora', bgmode: 'theme' }).bgmode, 'theme');
-  assert.equal(from({ art: 'illustrated', bgmode: 'manual' }).bgmode, 'manual');
+  assert.equal(from({ art: 'koi', bgmode: 'manual' }).bgmode, 'manual');
   // The retired Background area is dropped, whichever it was, and nothing else with it.
   const old = from({ bgmode: 'manual', art: 'aurora', area: 'list', sound: false });
   assert.equal('area' in old, false);
@@ -101,20 +103,18 @@ test('get() is a copy', () => {
   for (const [k, list] of Object.entries(CHOICES)) assert.equal(/** @type {any} */ (DEFAULTS)[k], list[0], `${k}: default is not first`);
 });
 
-test('Manual keeps a still and an animated pick, and its own pick is always one of them', () => {
-  assert.deepEqual([DEFAULTS.still, DEFAULTS.moving], ['illustrated', 'drift']);
-  assert.deepEqual(CHOICES.still, ['illustrated', 'scene', 'none']);
-  assert.ok(CHOICES.moving.includes('ripple') && !CHOICES.moving.includes('scene'));
-  // A record from before the two picks puts its art in its kind's.
-  assert.deepEqual([normalizeSettings({ art: 'aurora' }).moving, normalizeSettings({ art: 'aurora' }).still], ['aurora', 'illustrated']);
-  assert.deepEqual([normalizeSettings({ art: 'none' }).still, normalizeSettings({ art: 'none' }).moving], ['none', 'drift']);
-  // A pick of the wrong kind is no pick.
-  assert.equal(normalizeSettings({ still: 'aurora', art: 'scene' }).still, 'scene');
-  assert.equal(normalizeSettings({ moving: 'scene', art: 'scene' }).moving, 'drift');
+// The still backgrounds are gone (2026-10-20): a Manual pick of one shows the theme's own, and the
+// record drops the two picks Manual used to keep.
+test('a still pick falls back to the theme\'s background, and the Still and Animated picks are dropped', () => {
+  for (const art of ['illustrated', 'scene', 'none']) {
+    const s = normalizeSettings({ bgmode: 'manual', art, still: art, moving: 'koi' });
+    assert.deepEqual([s.bgmode, s.art], ['theme', DEFAULTS.art], art);
+    assert.equal('still' in s || 'moving' in s, false);
+  }
+  // Under Theme or Random a still Manual pick only resets the pick.
+  assert.equal(normalizeSettings({ bgmode: 'random', art: 'scene' }).bgmode, 'random');
   const s = makeSettings({ store: memStore() });
   s.set('art', 'bokeh');
-  s.set('art', 'scene');
-  assert.deepEqual([s.get().art, s.get().still, s.get().moving], ['scene', 'scene', 'bokeh'], 'each kind keeps its last pick');
-  s.set('art', s.get().moving);
-  assert.equal(s.get().art, 'bokeh');
+  s.set('art', /** @type {any} */ ('scene'));
+  assert.equal(s.get().art, 'bokeh', 'a still id is no pick');
 });

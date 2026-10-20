@@ -9,7 +9,7 @@ import { motionFor } from './icon-scene.js';
 /** Each style the map can name, by registry id, and the module in this folder that draws it:
  * every animated background but this one. A stale registry without an id falls back to drift. */
 export const MOTIONS = Object.freeze(/** @type {Record<string, string>} */ (Object.fromEntries(
-  BACKGROUNDS.filter(b => b.animated && b.file && b.id !== 'motion').map(b => [b.id, b.file]))));
+  BACKGROUNDS.filter(b => b.id !== 'motion').map(b => [b.id, b.file]))));
 
 /**
  * @param {HTMLElement} host positioned element the motion fills

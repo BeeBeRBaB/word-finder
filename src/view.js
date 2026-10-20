@@ -1,8 +1,6 @@
 // Rendering. Everything here writes to the DOM and returns nothing; it holds no
 // state of its own, so what you see is a pure function of the arguments passed in.
 import { cap, lineIndices } from './puzzle.js';
-import { artFor, ILLUSTRATIONS } from './art.js';
-import { lookOf } from './backgrounds.js';
 
 /**
  * @typedef {import('./puzzle.js').Puzzle} Puzzle
@@ -17,7 +15,6 @@ import { lookOf } from './backgrounds.js';
  *   subject:HTMLElement, category:HTMLElement, win:HTMLElement, winmsg:HTMLElement,
  *   winstats:HTMLElement,
  *   picker:HTMLElement, winclose:HTMLElement, appearance:HTMLElement, solved:HTMLElement,
- *   art:HTMLElement,
  * }} Els
  */
 
@@ -145,30 +142,4 @@ export function renderList(els, puzzle, state, justFound) {
     if (state.found[w]) s.className = `w ${w === justFound ? 'glow' : 'done'} ${PILL_CLASS[state.foundOrder.indexOf(w) % 4]}`;
     els.list.appendChild(s);
   });
-}
-
-/** Draw the subject's category illustration into #art, as a flat poster in its own colours for the
- * theme's flavour `pref`, when `style` (the background showing) is Illustrated; else nothing.
- * @param {Els} els @param {string} subjectId @param {string} style @param {string} [pref]
- * @returns {void} */
-export function renderArt(els, subjectId, style, pref = 'dark') {
-  const a = artFor(subjectId);
-  if (!a || style !== 'illustrated') {
-    els.art.textContent = '';
-    els.art.removeAttribute('style');
-    return;
-  }
-  const illo = ILLUSTRATIONS[a.motif];
-  const { colors } = lookOf(style, pref);
-  const c = (/** @type {number} */ k) => colors[(a.hue - 1 + k) % colors.length];
-  els.art.style.background = posterLayers(c(1), c(2), c(3));
-  els.art.innerHTML = `<svg viewBox="0 0 64 64" style="fill:${c(0)};color:${c(0)}" data-motif="${a.motif}" data-kind="illustrated">`
-    + `${a.flip ? `<g transform="translate(64 0) scale(-1 1)">${illo}</g>` : illo}</svg>`;
-}
-
-/** Three big flat discs, faint, across the page behind the illustration. @param {string[]} c @returns {string} */
-function posterLayers(...c) {
-  const disc = (/** @type {string} */ at, /** @type {number} */ r, /** @type {string} */ col) =>
-    `radial-gradient(circle at ${at},${col}55 0 ${r}vmax,transparent ${r + 0.2}vmax)`;
-  return [disc('12% 18%', 22, c[0]), disc('92% 42%', 16, c[1]), disc('30% 88%', 26, c[2])].join(',');
 }

@@ -9,25 +9,23 @@ export const SETTINGS_KEY = 'wordfinder-settings-v1';
 const LEGACY_AUTO_KEY = 'wordfinder-autonext';
 
 /**
- * @typedef {{bgmode:'theme'|'random'|'manual', art:string, still:string, moving:string, board:'auto'|'compact'|'full',
+ * @typedef {{bgmode:'theme'|'random'|'manual', art:string, board:'auto'|'compact'|'full',
  *   difficulty:'normal'|'easy'|'hard', letters:'normal'|'large', motion:'system'|'reduce',
  *   sound:boolean, vibrate:boolean, reveal:boolean, autoNext:boolean, play:'random'|'levels'}} Settings
- *   bgmode: how the background is chosen (backgrounds.js resolveBackground); art is Manual's pick,
- *   always one of still and moving, the last still and animated ones picked.
+ *   bgmode: how the background is chosen (backgrounds.js resolveBackground); art is Manual's pick.
  *   play: the side of New game last chosen. It has no Settings control.
  * @typedef {Pick<Storage,'getItem'|'setItem'>} SettingsStore
  */
 
 /** @type {Readonly<Settings>} */
 export const DEFAULTS = Object.freeze({
-  bgmode: 'theme', art: 'illustrated', still: 'illustrated', moving: 'drift', board: 'auto', difficulty: 'normal', letters: 'normal', motion: 'system',
+  bgmode: 'theme', art: 'drift', board: 'auto', difficulty: 'normal', letters: 'normal', motion: 'system',
   sound: true, vibrate: true, reveal: true, autoNext: true, play: 'random',
 });
 
 /** The allowed values of each multiple-choice setting, default first. */
 export const CHOICES = Object.freeze({
   bgmode: ['theme', 'random', 'manual'], art: BACKGROUNDS.map(b => b.id),
-  still: BACKGROUNDS.filter(b => !b.animated).map(b => b.id), moving: BACKGROUNDS.filter(b => b.animated).map(b => b.id),
   board: ['auto', 'compact', 'full'],
   difficulty: ['normal', 'easy', 'hard'], letters: ['normal', 'large'], motion: ['system', 'reduce'],
   play: ['random', 'levels'],
@@ -44,10 +42,10 @@ export function normalizeSettings(raw) {
     if (list.some(v => v === r[k])) /** @type {any} */ (out)[k] = r[k];
   }
   for (const k of FLAGS) if (typeof r[k] === 'boolean') /** @type {any} */ (out)[k] = r[k];
-  // A record from before the mode keeps a background the player picked: Manual, unless it is the default.
-  if (!CHOICES.bgmode.some(v => v === r.bgmode)) out.bgmode = out.art === DEFAULTS.art ? 'theme' : 'manual';
-  // Manual's pick is the last pick of its kind, so the Still or Animated menu shows it.
-  if (CHOICES.moving.includes(out.art)) out.moving = out.art; else out.still = out.art;
+  // A record from before the mode keeps a background the player picked as Manual. A pick that is
+  // gone, as the still backgrounds are, falls back to the theme's own.
+  if (!CHOICES.bgmode.some(v => v === r.bgmode)) out.bgmode = out.art === r.art ? 'manual' : 'theme';
+  else if (out.bgmode === 'manual' && out.art !== r.art) out.bgmode = 'theme';
   return out;
 }
 

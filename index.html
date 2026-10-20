@@ -49,9 +49,7 @@
       <div id="newgroup"><button id="newbtn" type="button" aria-label="New game">&#8635;<span class="when-wide"> New game</span></button><button id="catbtn" type="button" aria-label="Choose a category" aria-haspopup="dialog" aria-controls="picker" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9.5l6 6 6-6"/></svg></button></div>
     </div>
   </div>
-  <!-- #art, the category's art, ships hidden: only the current stylesheet shows it, so a stale
-       one (mid-update) never draws an unsized, full-opacity sprite over the board. -->
-  <div id="gridbox"><div id="art" aria-hidden="true" hidden></div><div id="pills"></div><div id="letters"></div><div id="fx"></div></div>
+  <div id="gridbox"><div id="pills"></div><div id="letters"></div><div id="fx"></div></div>
   <div id="side">
     <div id="listhdr"><span id="count"></span><button id="reveal" type="button" aria-label="Reveal a word">Reveal<span class="when-wide"> a word</span></button></div>
     <div id="list"></div>
@@ -128,7 +126,7 @@
     <div class="row"><label class="panelabel" id="lbl-bgmode" for="settings-bgmode">Choose</label>
       <div class="selfield"><select id="settings-bgmode" data-setting="bgmode" aria-describedby="bgmode-note"><option value="theme">Theme</option><option value="random">Random</option><option value="manual">Manual</option></select></div></div>
     <p class="panenote" id="bgmode-note"></p>
-    <!-- bgpicker.js, shown under Manual: a Still and an Animated row, each a radio and a dropdown with its menu. -->
+    <!-- bgpicker.js, shown under Manual: a dropdown of every background, with its menu. -->
     <div id="bg-manual" hidden></div>
   </div>
   <div id="settings-signinpage" class="subpage" hidden>

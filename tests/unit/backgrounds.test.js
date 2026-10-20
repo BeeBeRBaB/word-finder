@@ -21,12 +21,10 @@ function fakeImports() {
   return { log, importFn, gates, failNext: (/** @type {boolean} */ v) => { fail = v; } };
 }
 
-test('every animated background names a module that exists, and ids are unique', () => {
+test('every background names a module that exists, and ids are unique', () => {
   const files = readdirSync(new URL('../../src/backgrounds/', import.meta.url)).map(f => f.replace(/\.js$/, ''));
   for (const b of BACKGROUNDS) {
-    // A still background may have a module too (a scene drawn once); an animated one must.
-    if (b.animated) assert.ok(b.file, `${b.id}: animated but no module`);
-    if (b.file) assert.ok(files.includes(b.file), `${b.id}: no src/backgrounds/${b.file}.js`);
+    assert.ok(files.includes(b.file), `${b.id}: no src/backgrounds/${b.file}.js`);
     assert.ok(b.glyph.length > 20, `${b.id}: no picker picture`);
   }
   assert.equal(new Set(BACKGROUNDS.map(b => b.id)).size, BACKGROUNDS.length);
@@ -40,16 +38,14 @@ test('the settings choices are exactly the background ids, default first', async
   assert.equal(DEFAULTS.art, BACKGROUNDS[0].id);
 });
 
-test('one animated background runs at a time, and a still choice stops it', async () => {
+test('one background runs at a time', async () => {
   const f = fakeImports();
   const bd = makeBackdrop({ importFn: f.importFn });
   assert.equal(await bd.show('aurora', host('side'), OPTS), true);
   assert.equal(await bd.show('aurora', host('side'), OPTS), true, 'same choice: left running');
   assert.equal(await bd.show('galaxy', host('side'), OPTS), true);
   assert.equal(bd.running(), 'galaxy');
-  assert.equal(await bd.show('illustrated', host('side'), OPTS), false);
-  assert.equal(bd.running(), '');
-  assert.deepEqual(f.log, ['start aurora-drift side', 'stop aurora-drift', 'start galaxy side', 'stop galaxy']);
+  assert.deepEqual(f.log, ['start aurora-drift side', 'stop aurora-drift', 'start galaxy side']);
 });
 
 test('a new host, mode or motion setting restarts it', async () => {
@@ -74,15 +70,12 @@ test('a new palette restarts it, and a new deal restarts only a perDeal backgrou
 
   const g = fakeImports();
   const sd = makeBackdrop({ importFn: g.importFn });
-  assert.equal(await sd.show('scene', host('bg'), OPTS), true, 'a still background with a module runs it');
-  await sd.show('scene', host('bg'), OPTS);
-  await sd.show('scene', host('bg'), { ...OPTS, seed: 2 });
-  await sd.show('scene', host('bg'), { ...OPTS, seed: 2, subject: 'food/fruit' });
+  await sd.show('drift', host('bg'), OPTS);
   await sd.show('drift', host('bg'), OPTS);
   await sd.show('drift', host('bg'), { ...OPTS, seed: 3 });
-  assert.deepEqual(g.log, ['start subject-scene bg', 'stop subject-scene', 'start subject-scene bg', 'stop subject-scene',
-    'start subject-scene bg', 'stop subject-scene',
-    'start drifting-icons bg', 'stop drifting-icons', 'start drifting-icons bg']);
+  await sd.show('drift', host('bg'), { ...OPTS, seed: 3, subject: 'food/fruit' });
+  assert.deepEqual(g.log, ['start drifting-icons bg', 'stop drifting-icons', 'start drifting-icons bg', 'stop drifting-icons',
+    'start drifting-icons bg']);
 });
 
 test('a show overtaken while its module loads never starts', async () => {
@@ -116,9 +109,7 @@ test('no host means nothing starts', async () => {
 });
 
 test('the default loader finds every registry module, and each exports start()', async () => {
-  for (const b of BACKGROUNDS) {
-    if (b.file) assert.equal(typeof (await importBackground(b.file)).start, 'function', b.file);
-  }
+  for (const b of BACKGROUNDS) assert.equal(typeof (await importBackground(b.file)).start, 'function', b.file);
 });
 
 test('a module whose start() throws leaves nothing running, like a failed load', async () => {
@@ -132,25 +123,24 @@ test('every theme has its own background, a real one, the same in both flavours'
   const { THEMES } = await import('../../src/appearance.js');
   assert.deepEqual(Object.keys(THEME_BACKGROUNDS).sort(), [...THEMES].sort());
   for (const t of THEMES) {
-    const id = resolveBackground('theme', 'none', t, 1);
+    const id = resolveBackground('theme', 'koi', t, 1);
     assert.equal(findBackground(id).id, id, `${t}: ${id} is not in the registry`);
     // The flavour is no input at all, and the Manual pick, seed and last pick change nothing.
     assert.equal(resolveBackground('theme', 'rain', t, 2, id), id, t);
   }
   assert.deepEqual(THEMES.map(t => resolveBackground('theme', '', t, 0)),
-    ['galaxy', 'constellation', 'illustrated', 'blueprint', 'motion', 'bokeh', 'aurora']);
+    ['galaxy', 'constellation', 'halftone', 'blueprint', 'motion', 'bokeh', 'aurora']);
   assert.equal(resolveBackground('theme', '', 'retired', 0), 'galaxy', 'an unknown theme is the default one');
   assert.equal(new Set(Object.values(THEME_BACKGROUNDS)).size, THEMES.length, 'no two themes share one');
 });
 
 test('Manual shows the pick, and an unknown pick the default', () => {
   assert.equal(resolveBackground('manual', 'koi', 'plum', 5, 'koi'), 'koi');
-  assert.equal(resolveBackground('manual', 'none', 'grove', 5), 'none');
   assert.equal(resolveBackground('manual', 'gone', 'grove', 5), BACKGROUNDS[0].id);
 });
 
-test('Random picks by the seed from every background but None, and never the last pick', () => {
-  assert.deepEqual([...RANDOM_POOL], BACKGROUNDS.filter(b => b.id !== 'none').map(b => b.id));
+test('Random picks by the seed from every background, and never the last pick', () => {
+  assert.deepEqual([...RANDOM_POOL], BACKGROUNDS.map(b => b.id));
   /** @type {Record<string, number>} */
   const count = Object.fromEntries(RANDOM_POOL.map(id => [id, 0]));
   let prev = '';
@@ -158,7 +148,7 @@ test('Random picks by the seed from every background but None, and never the las
   for (let seed = 0; seed < deals; seed++) {
     const id = resolveBackground('random', 'rain', 'plum', seed, prev);
     assert.notEqual(id, prev, `seed ${seed} repeated ${prev}`);
-    assert.equal(resolveBackground('random', 'none', 'grove', seed, prev), id, 'the seed and last pick decide it, nothing else');
+    assert.equal(resolveBackground('random', 'koi', 'grove', seed, prev), id, 'the seed and last pick decide it, nothing else');
     count[id]++;
     prev = id;
   }
@@ -171,9 +161,9 @@ test('Random picks by the seed from every background but None, and never the las
   assert.equal(resolveBackground('random', '', '', 9, 'a', ['a', 'b']), 'b');
 });
 
-test('every background but None wears exactly one look, and every look is whole', () => {
+test('every background wears exactly one look, and every look is whole', () => {
   const listed = Object.values(LOOK_OF).flat();
-  const ids = BACKGROUNDS.map(b => b.id).filter(id => id !== 'none');
+  const ids = BACKGROUNDS.map(b => b.id);
   assert.deepEqual(listed.slice().sort(), ids.slice().sort(), 'each background once, and no stale ids');
   assert.deepEqual(Object.keys(LOOK_OF).sort(), Object.keys(LOOKS).sort());
   for (const [name, family] of Object.entries(LOOKS)) {

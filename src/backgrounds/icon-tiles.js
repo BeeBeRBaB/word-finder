@@ -68,7 +68,7 @@ export function start(host, opts) {
     if (w === W && h === H && d === dpr) return;
     const remake = d !== dpr || !W;
     W = w; H = h; dpr = d;
-    // layoutScene's cell: about 120px on a laptop, never so small a narrow rail gets confetti.
+    // Cell edge: about 120px on a laptop, never so small a narrow rail gets confetti.
     cell = Math.max(64, Math.min(150, Math.sqrt(W * H / 34), Math.min(W, H) / 1.6));
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     if (remake) makeSprites(); else draw();

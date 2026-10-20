@@ -129,3 +129,16 @@ test('the same seed reproduces the same puzzle', async ({ page }) => {
   const c = await page.locator('.cell').allTextContents();
   expect(c.join('')).not.toBe(a.join(''));   // different seed, different grid
 });
+
+test('Reveal a word finds one hidden word, and the last one wins', async ({ page }) => {
+  await page.goto('/?seed=1&subject=nature/birds');
+  await page.waitForSelector('#letters .cell');
+  const total = await page.locator('.w').count();
+  await page.locator('#reveal').click();
+  await expect(page.locator('#count')).toContainText(`1 of ${total} found`);
+  await expect(page.locator('#pills .pill')).toHaveCount(1);
+  for (let i = 1; i < total; i++) await page.locator('#reveal').click();
+  await expect(page.locator('#count')).toContainText(`${total} of ${total} found`);
+  await expect(page.locator('#win')).toBeVisible();
+  await expect(page.locator('#reveal')).toBeHidden();   // nothing left to reveal
+});
