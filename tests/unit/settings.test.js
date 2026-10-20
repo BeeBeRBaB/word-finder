@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { makeSettings, normalizeSettings, DEFAULTS, CHOICES, SETTINGS_KEY } from '../../src/settings.js';
+import { makeSettings, normalizeSettings, pickStyle, DEFAULTS, CHOICES, SETTINGS_KEY, STYLES } from '../../src/settings.js';
 import { memStore } from './helpers.js';
 
 test('a first visit gets the defaults', () => {
@@ -117,4 +117,20 @@ test('a still pick falls back to the theme\'s background, and the Still and Anim
   s.set('art', 'bokeh');
   s.set('art', /** @type {any} */ ('scene'));
   assert.equal(s.get().art, 'bokeh', 'a still id is no pick');
+});
+
+test('the style is Beads unless chosen; Random picks one per deal by its seed, never the last', () => {
+  assert.equal(DEFAULTS.style, 'beads');
+  assert.deepEqual(CHOICES.style, [...STYLES, 'random']);
+  assert.equal(pickStyle('glass', 1, 'glass'), 'glass', 'a chosen style is shown whatever the last one was');
+  assert.equal(pickStyle('nope', 1), 'beads');
+  const seen = new Set();
+  for (let seed = 0; seed < 200; seed++) {
+    const prev = STYLES[seed % 3], s = pickStyle('random', seed, prev);
+    assert.notEqual(s, prev);
+    assert.equal(pickStyle('random', seed, prev), s, 'the same deal picks the same style');
+    seen.add(s);
+  }
+  assert.deepEqual([...seen].sort(), [...STYLES].sort(), 'Random reaches every style');
+  assert.ok(STYLES.includes(pickStyle('random', 7)), 'a first deal picks from all three');
 });

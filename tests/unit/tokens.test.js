@@ -105,6 +105,13 @@ test('the numbers shared between a module and the stylesheet agree', () => {
     num(read('../../src/main.js'), /const GLOW_MS = (\d+)/, 'GLOW_MS in main.js'),
     num(css, /\.w\.glow\{[^}]*animation:foundGlow ([\d.]+)s/, "the foundGlow duration") * 1000,
     'main.js strikes a word through at a different moment than the glow ends');
+  // A rail at its cap still lets a long name take a second line: the header's wrap breakpoint is
+  // at least the rail's widest. Above it a name that does not fit is cut, and the widest of the
+  // 600 at the rail's 26px is 284px beside 210px of buttons and the card's padding.
+  assert.ok(
+    num(css, /@container hdr \(max-width:(\d+)px\)\{\s*#subject\{white-space:normal/, "the header's wrap breakpoint")
+      >= num(read('../../src/layout.js'), /const RAIL_MAX = (\d+)/, 'RAIL_MAX in layout.js'),
+    'a rail at its cap cuts a long subject name rather than wrapping it');
   const main = read('../../src/main.js');
   assert.equal(
     num(main, /const AUTO_NEXT_MS = (\d+)/, 'AUTO_NEXT_MS in main.js'),

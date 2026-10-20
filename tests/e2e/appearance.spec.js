@@ -23,22 +23,38 @@ async function switchMode(page, to) {
 }
 
 
-// The pill colours moved out of view.js's PAL and into the palette. A pill that
-// renders transparent means the class/variable wiring broke, which no existing
-// test would notice — they all assert on the word list, not the grid overlay.
-test('a found word paints a pill coloured by the stylesheet', async ({ page }) => {
+// The pill colours moved out of view.js's PAL and into the palette. A found word that paints
+// nothing means the class/variable wiring broke, which no other test would notice: they all
+// assert on the word list, not the grid. Each style paints it its own way: Beads as a gradient of
+// beads, Glass as a solid bar, Tiles on the letters' tiles.
+test('a found word paints its colour from the stylesheet, in every style', async ({ page }) => {
   await page.goto('/?seed=1&subject=nature/birds');
   const first = /** @type {string} */ (await page.locator('.w').first().textContent()).toUpperCase();
   await dragCells(page, await findWordInGrid(page, first));
-
   const pill = page.locator('#pills .pill').first();
   await expect(pill).toHaveClass(/\bp1\b/);
-  const paint = await pill.evaluate(el => {
-    const cs = getComputedStyle(el);
-    return { bg: cs.backgroundColor, ring: cs.boxShadow };
+  const paint = () => page.evaluate(() => {
+    const probe = document.createElement('i');
+    probe.style.color = 'var(--pill-1)';
+    document.body.append(probe);
+    const want = getComputedStyle(probe).color;
+    probe.remove();
+    const p = getComputedStyle(/** @type {Element} */ (document.querySelector('#pills .pill.p1')));
+    const tile = getComputedStyle(/** @type {Element} */ (document.querySelector('#letters .cell.found')), '::before');
+    return { want, image: p.backgroundImage, bg: p.backgroundColor, shown: p.display !== 'none', tile: tile.backgroundColor };
   });
-  expect(paint.bg).not.toBe('rgba(0, 0, 0, 0)');
-  expect(paint.ring).not.toBe('none');
+  const beads = await paint();
+  expect(beads.want).not.toBe('rgba(0, 0, 0, 0)');
+  expect(beads.image).toContain('radial-gradient');
+  expect(beads.image).toContain(beads.want);
+  await page.evaluate(() => { document.documentElement.dataset.style = 'glass'; });
+  const glass = await paint();
+  expect(glass.bg).toBe(glass.want);
+  expect(glass.image).toBe('none');
+  await page.evaluate(() => { document.documentElement.dataset.style = 'tiles'; });
+  const tiles = await paint();
+  expect(tiles.shown).toBe(false);
+  expect(tiles.tile).toBe(tiles.want);
 });
 
 // A Global Constraint of this work is that dark is unchanged value for value. These
@@ -65,7 +81,7 @@ test('the dark palette still resolves to the colours the game shipped with', asy
     text: '#f0e0d2', textStrong: '#fdf4ea', muted: '#bfa694',
     label: '#e0913f', hint: '#a89283',
     accent: '#ff8c3a', accentText: '#ffa869', accentInk: '#2b1508',
-    pill1: 'rgba(255,183,77,.34)', pillEdge: 'rgba(255,255,255,.25)',
+    pill1: '#ffb74d', pillEdge: 'rgba(255,255,255,.25)',
   });
 });
 

@@ -22,20 +22,18 @@
   --accent-wash:rgba(255,140,58,.12);
   --scrim:rgba(8,5,3,.75);
   --card-shadow:0 10px 40px rgba(0,0,0,.5);
-  --found-text:#fff1e0; --glow:rgba(255,140,58,.42);
-  --pill-1:rgba(255,183,77,.34); --pill-2:rgba(120,205,200,.30);
-  --pill-3:rgba(255,130,140,.34); --pill-4:rgba(200,155,255,.32);
+  --found-text:#2b1508; --glow:rgba(255,140,58,.42);
+  --pill-1:#ffb74d; --pill-2:#78cdc8;
+  --pill-3:#ff828c; --pill-4:#c89bff;
   --pill-sel:rgba(255,140,58,.30); --pill-miss:rgba(255,80,70,.5);
   --pill-edge:rgba(255,255,255,.25);
   --confetti-1:#ff8c3a; --confetti-2:#ffc14d; --confetti-3:#78cdc8;
   --confetti-4:#ff828c; --confetti-5:#c89bff; --confetti-6:#fdf4ea;
   /* Shape. Per theme rather than per flavour, but declared in every colour block so the
      parity test covers them too. */
-  --radius-board:16px; --radius-ctl:999px; --radius-pill:999px;
-  --found-shadow:0 0 10px var(--glow); --board-outline:none; --board-outline-offset:0px; --board-texture:none;
-  --pill-ring-1:inset 0 0 0 1px var(--pill-edge); --pill-ring-2:inset 0 0 0 1px var(--pill-edge);
-  --pill-ring-3:inset 0 0 0 1px var(--pill-edge); --pill-ring-4:inset 0 0 0 1px var(--pill-edge);
-  --edge:#7a695d; --edge-lip:#433933; --accent-lip:#945122;
+  --radius-board:16px; --radius-ctl:12px; --radius-pill:999px; --board-outline:none; --board-outline-offset:0px; --board-texture:none;
+  --edge:#7a695d;
+  --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
 }
 /* An orange light enough to feel warm on paper cannot carry white button text, so
    --accent is measured against the white --accent-ink it is actually read on (5.08:1),
@@ -43,23 +41,21 @@
 :root[data-appearance="light"]{
   color-scheme:light;
   --bg:#f2e3d5; --surface:#fffaf5; --border:#dfc9b5;
-  --text:#3a2418; --text-strong:#24140b; --muted:#775b47; --label:#9e4a0c; --hint:#725847;
+  --text:#3a2418; --text-strong:#24140b; --muted:#775b47; --label:#9b490c; --hint:#725847;
   --accent:#b84e0d; --accent-text:#a3450b; --accent-ink:#ffffff;
   --accent-wash:rgba(184,78,13,.10);
   --scrim:rgba(45,25,14,.45);
   --card-shadow:0 10px 40px rgba(90,55,30,.24);
   --found-text:#3d1c06; --glow:rgba(184,78,13,.28);
-  --pill-1:rgba(224,150,20,.34); --pill-2:rgba(30,150,145,.28);
-  --pill-3:rgba(225,80,100,.28); --pill-4:rgba(150,95,220,.28);
+  --pill-1:#efc782; --pill-2:#a0d0cb;
+  --pill-3:#f2b3b8; --pill-4:#d3b9eb;
   --pill-sel:rgba(184,78,13,.26); --pill-miss:rgba(210,45,40,.36);
   --pill-edge:rgba(60,35,20,.16);
   --confetti-1:#b84e0d; --confetti-2:#e0a014; --confetti-3:#1e9691;
   --confetti-4:#e1506e; --confetti-5:#965fdc; --confetti-6:#8a6a55;
-  --radius-board:16px; --radius-ctl:999px; --radius-pill:999px;
-  --found-shadow:0 0 10px var(--glow); --board-outline:none; --board-outline-offset:0px; --board-texture:none;
-  --pill-ring-1:inset 0 0 0 1px var(--pill-edge); --pill-ring-2:inset 0 0 0 1px var(--pill-edge);
-  --pill-ring-3:inset 0 0 0 1px var(--pill-edge); --pill-ring-4:inset 0 0 0 1px var(--pill-edge);
-  --edge:#907a6a; --edge-lip:#6c5b4f; --accent-lip:#783308;
+  --radius-board:16px; --radius-ctl:12px; --radius-pill:999px; --board-outline:none; --board-outline-offset:0px; --board-texture:none;
+  --edge:#907a6a;
+  --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
 }
 /* Six more themes, each with its own fixed colours. Same token names as Phosphor's blocks,
    and the same shape: the bare [data-theme] selector is the dark default, and the
@@ -67,19 +63,18 @@
    AA checked by tools/palettes/check.mjs; re-run it after tuning any of them. */
 :root[data-theme="broadsheet"], :root[data-theme="broadsheet"][data-appearance="dark"]{
   color-scheme:dark; --bg:#302c0c; --surface:#3a3616; --border:#d9d2ae; --text:#f1ecd3;
-  --text-strong:#fffbea; --muted:#c5bd98; --label:#ff9c7a; --hint:#bdb690; --accent:#f1ecd3;
+  --text-strong:#fffbea; --muted:#c8c09c; --label:#ffac8d; --hint:#bdb690; --accent:#f1ecd3;
   --accent-text:#f1ecd3; --accent-ink:#1f1d08; --accent-wash:rgba(241,236,211,0.14);
   --scrim:rgba(0,0,0,.62); --card-shadow:0 10px 40px rgba(0,0,0,.5);
-  --found-text:#ffffff; --glow:rgba(241,236,211,0.4);
-  --pill-1:rgba(250,215,30,.34); --pill-2:rgba(60,190,235,.38); --pill-3:rgba(245,100,165,.40);
-  --pill-4:rgba(120,210,80,.36); --pill-sel:rgba(241,236,211,.16);
+  --found-text:#1f1d08; --glow:rgba(241,236,211,0.4);
+  --pill-1:#fad71e; --pill-2:#3cbeeb; --pill-3:#f564a5;
+  --pill-4:#78d250; --pill-sel:rgba(241,236,211,.16);
   --pill-miss:rgba(255,80,70,.5); --pill-edge:rgba(255,255,255,.22); --confetti-1:#f1ecd3;
   --confetti-2:#fad71e; --confetti-3:#3cbeeb; --confetti-4:#f564a5; --confetti-5:#78d250;
   --confetti-6:#fffbea; --radius-board:2px; --radius-ctl:2px; --radius-pill:3px;
-  --found-shadow:none;
   --board-outline:1px solid var(--border); --board-outline-offset:4px; --board-texture:none;
-  --pill-ring-1:none; --pill-ring-2:none; --pill-ring-3:none; --pill-ring-4:none;
-  --edge:#e0dab9; --edge-lip:#7b7866; --accent-lip:#8c897a;
+  --edge:#e0dab9;
+  --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
 }
 :root[data-theme="broadsheet"][data-appearance="light"]{
   color-scheme:light; --bg:#efe6a0; --surface:#fffcea; --border:#1c1a10; --text:#1c1a10;
@@ -87,32 +82,29 @@
   --accent-text:#1c1a10; --accent-ink:#fffcea; --accent-wash:rgba(28,26,16,0.1);
   --scrim:rgba(28,26,16,0.4); --card-shadow:0 10px 40px rgba(28,26,22,0.22);
   --found-text:#0d0c06; --glow:rgba(28,26,16,0.26);
-  --pill-1:rgba(255,150,40,.60); --pill-2:rgba(40,185,230,.52); --pill-3:rgba(245,90,160,.50);
-  --pill-4:rgba(110,205,70,.58); --pill-sel:rgba(28,26,16,.14); --pill-miss:rgba(210,45,40,.36);
+  --pill-1:#ffbf76; --pill-2:#8fd9e8; --pill-3:#faabc5;
+  --pill-4:#abe18b; --pill-sel:rgba(28,26,16,.14); --pill-miss:rgba(210,45,40,.36);
   --pill-edge:rgba(0,0,0,.14); --confetti-1:#1c1a10; --confetti-2:#ff9628; --confetti-3:#28b9e6;
   --confetti-4:#f55aa0; --confetti-5:#6ecd46; --confetti-6:#0d0c06; --radius-board:2px;
-  --radius-ctl:2px; --radius-pill:3px;
-  --found-shadow:none; --board-outline:1px solid var(--border);
-  --board-outline-offset:4px; --board-texture:none; --pill-ring-1:none; --pill-ring-2:none;
-  --pill-ring-3:none; --pill-ring-4:none;
-  --edge:#1c1a10; --edge-lip:#15140c; --accent-lip:#12110a;
+  --radius-ctl:2px; --radius-pill:3px; --board-outline:1px solid var(--border);
+  --board-outline-offset:4px; --board-texture:none;
+  --edge:#1c1a10;
+  --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
 }
 :root[data-theme="sticker"], :root[data-theme="sticker"][data-appearance="dark"]{
   color-scheme:dark; --bg:#211756; --surface:#2c2266; --border:#0a0620; --text:#f0ebff;
   --text-strong:#ffffff; --muted:#bdb2ec; --label:#ffc75e; --hint:#b3a8e2; --accent:#ffc75e;
   --accent-text:#ffc75e; --accent-ink:#1b1240; --accent-wash:rgba(255,199,94,0.14);
   --scrim:rgba(0,0,0,.62);
-  --card-shadow:6px 6px 0 #07040f; --found-text:#120c28;
+  --card-shadow:6px 6px 0 #07040f; --found-text:#1b1240;
   --glow:rgba(255,199,94,0.4); --pill-1:#ffb547; --pill-2:#5fd4b4; --pill-3:#ff86ab;
   --pill-4:#8fadff; --pill-sel:rgba(255,199,94,.26); --pill-miss:rgba(255,80,70,.5);
   --pill-edge:rgba(255,255,255,.22); --confetti-1:#ffc75e; --confetti-2:#ffb547;
   --confetti-3:#5fd4b4; --confetti-4:#ff86ab; --confetti-5:#8fadff; --confetti-6:#ffffff;
-  --radius-board:22px; --radius-ctl:999px; --radius-pill:999px;
-  --found-shadow:none; --board-outline:none;
-  --board-outline-offset:0px; --board-texture:none; --pill-ring-1:inset 0 0 0 2px #07040f;
-  --pill-ring-2:inset 0 0 0 2px #07040f; --pill-ring-3:inset 0 0 0 2px #07040f;
-  --pill-ring-4:inset 0 0 0 2px #07040f;
-  --edge:#7d7990; --edge-lip:#45424f; --accent-lip:#947337;
+  --radius-board:22px; --radius-ctl:12px; --radius-pill:999px; --board-outline:none;
+  --board-outline-offset:0px; --board-texture:none;
+  --edge:#7d7990;
+  --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
 }
 :root[data-theme="sticker"][data-appearance="light"]{
   color-scheme:light; --bg:#c4c2fa; --surface:#ffffff; --border:#1d1638; --text:#1d1638;
@@ -124,30 +116,26 @@
   --pill-4:#b39cff; --pill-sel:rgba(91,50,214,.22); --pill-miss:rgba(210,45,40,.36);
   --pill-edge:rgba(0,0,0,.14); --confetti-1:#5b32d6; --confetti-2:#ffc54d; --confetti-3:#6fe0c0;
   --confetti-4:#ff8fb5; --confetti-5:#b39cff; --confetti-6:#120c28; --radius-board:22px;
-  --radius-ctl:999px; --radius-pill:999px;
-  --found-shadow:none; --board-outline:none;
-  --board-outline-offset:0px; --board-texture:none; --pill-ring-1:inset 0 0 0 2px #1d1638;
-  --pill-ring-2:inset 0 0 0 2px #1d1638; --pill-ring-3:inset 0 0 0 2px #1d1638;
-  --pill-ring-4:inset 0 0 0 2px #1d1638;
-  --edge:#1d1638; --edge-lip:#16112a; --accent-lip:#3b218b;
+  --radius-ctl:12px; --radius-pill:999px; --board-outline:none;
+  --board-outline-offset:0px; --board-texture:none;
+  --edge:#1d1638;
+  --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
 }
 :root[data-theme="drafting"], :root[data-theme="drafting"][data-appearance="dark"]{
   color-scheme:dark; --bg:#002f56; --surface:#113e66; --border:#326893; --text:#dee9f6;
-  --text-strong:#f6fbff; --muted:#8eaccb; --label:#67d5f5; --hint:#96aabe; --accent:#ff9a5f;
-  --accent-text:#ff9a5f; --accent-ink:#03172c; --accent-wash:rgba(255,154,95,0.14);
+  --text-strong:#f6fbff; --muted:#b4c9de; --label:#67d5f5; --hint:#96aabe; --accent:#ff9a5f;
+  --accent-text:#fcb891; --accent-ink:#03172c; --accent-wash:rgba(255,154,95,0.14);
   --scrim:rgba(0,0,0,.62); --card-shadow:0 10px 40px rgba(0,0,0,.5);
-  --found-text:#f6fbff; --glow:rgba(255,154,95,0.4);
-  --pill-1:rgba(219,148,0,0.56); --pill-2:rgba(0,185,207,0.48); --pill-3:rgba(253,117,98,0.6);
-  --pill-4:rgba(131,184,63,0.5); --pill-sel:rgba(255,154,95,0.26);
+  --found-text:#03172c; --glow:rgba(255,154,95,0.4);
+  --pill-1:#db9400; --pill-2:#00b9cf; --pill-3:#fd7562;
+  --pill-4:#83b83f; --pill-sel:rgba(255,154,95,0.26);
   --pill-miss:rgba(255,80,70,.5); --pill-edge:rgba(255,255,255,.22); --confetti-1:#ff9a5f;
   --confetti-2:#db9400; --confetti-3:#00b9cf; --confetti-4:#fd7562; --confetti-5:#83b83f;
   --confetti-6:#f6fbff; --radius-board:4px; --radius-ctl:4px; --radius-pill:5px;
-  --found-shadow:none;
   --board-outline:none; --board-outline-offset:0px;
   --board-texture:linear-gradient(rgba(127,211,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(127,211,255,.07) 1px,transparent 1px);
-  --pill-ring-1:inset 0 0 0 1.5px #ffbe46; --pill-ring-2:inset 0 0 0 1.5px #5adcff;
-  --pill-ring-3:inset 0 0 0 1.5px #ff786e; --pill-ring-4:inset 0 0 0 1.5px #aae65a;
-  --edge:#668fb1; --edge-lip:#384e61; --accent-lip:#945937;
+  --edge:#668fb1;
+  --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
 }
 :root[data-theme="drafting"][data-appearance="light"]{
   color-scheme:light; --bg:#95c5e2; --surface:#eff9fd; --border:#4b81a5; --text:#0f2430;
@@ -160,28 +148,25 @@
   --pill-miss:rgba(210,45,40,.36); --pill-edge:rgba(0,0,0,.14); --confetti-1:#c64a14;
   --confetti-2:#ffc166; --confetti-3:#77e0f2; --confetti-4:#ffbaae; --confetti-5:#b2df82;
   --confetti-6:#00121c; --radius-board:4px; --radius-ctl:4px; --radius-pill:5px;
-  --found-shadow:none;
   --board-outline:none; --board-outline-offset:0px;
   --board-texture:linear-gradient(rgba(10,95,138,.10) 1px,transparent 1px),linear-gradient(90deg,rgba(10,95,138,.10) 1px,transparent 1px);
-  --pill-ring-1:inset 0 0 0 1.5px #b87108; --pill-ring-2:inset 0 0 0 1.5px #0b7fa3;
-  --pill-ring-3:inset 0 0 0 1.5px #b8332f; --pill-ring-4:inset 0 0 0 1.5px #4f8a12;
-  --edge:#396582; --edge-lip:#2b4c61; --accent-lip:#81300d;
+  --edge:#396582;
+  --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
 }
 :root[data-theme="grove"], :root[data-theme="grove"][data-appearance="dark"]{
   color-scheme:dark; --bg:#14301f; --surface:#1b3a27; --border:#3a5c44; --text:#e4ebd6;
-  --text-strong:#f5f3e4; --muted:#aebfa2; --label:#a8cc92; --hint:#a3b598; --accent:#e0825a;
-  --accent-text:#ef9a74; --accent-ink:#1b120c; --accent-wash:rgba(224,130,90,0.14);
+  --text-strong:#f5f3e4; --muted:#b3c3a7; --label:#a8cc92; --hint:#a3b598; --accent:#e0825a;
+  --accent-text:#f0ae8e; --accent-ink:#1b120c; --accent-wash:rgba(224,130,90,0.14);
   --scrim:rgba(0,0,0,.62);
-  --card-shadow:0 10px 40px rgba(0,0,0,.5); --found-text:#fbf8ea;
-  --glow:rgba(224,130,90,0.4); --pill-1:rgba(150,210,110,.34);
-  --pill-2:rgba(230,130,90,.40); --pill-3:rgba(230,200,90,.34); --pill-4:rgba(110,200,190,.32); --pill-sel:rgba(224,130,90,.30);
+  --card-shadow:0 10px 40px rgba(0,0,0,.5); --found-text:#1b120c;
+  --glow:rgba(224,130,90,0.4); --pill-1:#96d26e;
+  --pill-2:#e6825a; --pill-3:#e6c85a; --pill-4:#6ec8be; --pill-sel:rgba(224,130,90,.30);
   --pill-miss:rgba(255,80,70,.5); --pill-edge:rgba(255,255,255,.22); --confetti-1:#e0825a;
   --confetti-2:#96d26e; --confetti-3:#e6825a; --confetti-4:#e6c85a; --confetti-5:#6ec8be;
   --confetti-6:#f5f3e4; --radius-board:18px; --radius-ctl:10px; --radius-pill:14px 4px 14px 4px;
-  --found-shadow:none;
-  --board-outline:none; --board-outline-offset:0px; --board-texture:none; --pill-ring-1:none;
-  --pill-ring-2:none; --pill-ring-3:none; --pill-ring-4:none;
-  --edge:#6d8770; --edge-lip:#3c4a3d; --accent-lip:#824b34;
+  --board-outline:none; --board-outline-offset:0px; --board-texture:none;
+  --edge:#6d8770;
+  --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
 }
 :root[data-theme="grove"][data-appearance="light"]{
   color-scheme:light; --bg:#bfe3bd; --surface:#f5fbf0; --border:#93b98a; --text:#1e2e1b;
@@ -194,27 +179,25 @@
   --pill-miss:rgba(210,45,40,.36); --pill-edge:rgba(0,0,0,.14); --confetti-1:#a94d2c;
   --confetti-2:#9fd47e; --confetti-3:#f2b48f; --confetti-4:#efd06a; --confetti-5:#9ed2c8;
   --confetti-6:#132111; --radius-board:18px; --radius-ctl:10px; --radius-pill:14px 4px 14px 4px;
-  --found-shadow:none;
-  --board-outline:none; --board-outline-offset:0px; --board-texture:none; --pill-ring-1:none;
-  --pill-ring-2:none; --pill-ring-3:none; --pill-ring-4:none;
-  --edge:#627f5b; --edge-lip:#495f45; --accent-lip:#6e321d;
+  --board-outline:none; --board-outline-offset:0px; --board-texture:none;
+  --edge:#627f5b;
+  --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
 }
 :root[data-theme="plum"], :root[data-theme="plum"][data-appearance="dark"]{
   color-scheme:dark; --bg:#43173b; --surface:#4f2146; --border:#74406a; --text:#f5e4ee;
   --text-strong:#fff3f8; --muted:#d3b0c6; --label:#f0a8c4; --hint:#c8a4bb; --accent:#ff8f78;
   --accent-text:#ffa591; --accent-ink:#2e1020; --accent-wash:rgba(255,143,120,0.14);
   --scrim:rgba(0,0,0,.62);
-  --card-shadow:0 10px 40px rgba(0,0,0,.5); --found-text:#fff5f9;
+  --card-shadow:0 10px 40px rgba(0,0,0,.5); --found-text:#2e1020;
   --glow:rgba(255,143,120,0.4);
-  --pill-1:rgba(255,140,115,.40); --pill-2:rgba(230,100,170,.42); --pill-3:rgba(160,130,240,.40);
-  --pill-4:rgba(240,195,110,.38); --pill-sel:rgba(255,165,145,.24);
+  --pill-1:#ff8c73; --pill-2:#e664aa; --pill-3:#a082f0;
+  --pill-4:#f0c36e; --pill-sel:rgba(255,165,145,.24);
   --pill-miss:rgba(255,80,70,.5); --pill-edge:rgba(255,255,255,.22); --confetti-1:#ff8f78;
   --confetti-2:#ff8c73; --confetti-3:#e664aa; --confetti-4:#a082f0; --confetti-5:#f0c36e;
-  --confetti-6:#fff3f8; --radius-board:18px; --radius-ctl:999px; --radius-pill:999px;
-  --found-shadow:none;
-  --board-outline:none; --board-outline-offset:0px; --board-texture:none; --pill-ring-1:none;
-  --pill-ring-2:none; --pill-ring-3:none; --pill-ring-4:none;
-  --edge:#9b7192; --edge-lip:#553e50; --accent-lip:#945346;
+  --confetti-6:#fff3f8; --radius-board:18px; --radius-ctl:12px; --radius-pill:999px;
+  --board-outline:none; --board-outline-offset:0px; --board-texture:none;
+  --edge:#9b7192;
+  --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
 }
 :root[data-theme="plum"][data-appearance="light"]{
   color-scheme:light; --bg:#ecbfdc; --surface:#fdf3f8; --border:#d49bbd; --text:#2d1530;
@@ -222,32 +205,30 @@
   --accent-text:#962f4c; --accent-ink:#fff7f5; --accent-wash:rgba(176,58,90,0.1);
   --scrim:rgba(45,21,48,0.4);
   --card-shadow:0 10px 40px rgba(43,26,46,0.22); --found-text:#2d1530;
-  --glow:rgba(176,58,90,0.26); --pill-1:rgba(240,140,115,.58);
-  --pill-2:rgba(215,95,160,.52); --pill-3:rgba(140,100,215,.50);
-  --pill-4:rgba(230,185,90,.62); --pill-sel:rgba(176,58,90,.18);
+  --glow:rgba(176,58,90,0.26); --pill-1:#f5b7ab;
+  --pill-2:#e9a6ca; --pill-3:#c5ace8;
+  --pill-4:#efcf96; --pill-sel:rgba(176,58,90,.18);
   --pill-miss:rgba(210,45,40,.36); --pill-edge:rgba(0,0,0,.14); --confetti-1:#b03a5a;
   --confetti-2:#f08c73; --confetti-3:#d75fa0; --confetti-4:#8c64d7; --confetti-5:#e6b95a;
-  --confetti-6:#1f0c22; --radius-board:18px; --radius-ctl:999px; --radius-pill:999px;
-  --found-shadow:none;
-  --board-outline:none; --board-outline-offset:0px; --board-texture:none; --pill-ring-1:none;
-  --pill-ring-2:none; --pill-ring-3:none; --pill-ring-4:none;
-  --edge:#8b607f; --edge-lip:#68485f; --accent-lip:#72263b;
+  --confetti-6:#1f0c22; --radius-board:18px; --radius-ctl:12px; --radius-pill:999px;
+  --board-outline:none; --board-outline-offset:0px; --board-texture:none;
+  --edge:#8b607f;
+  --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
 }
 :root[data-theme="graphite"], :root[data-theme="graphite"][data-appearance="dark"]{
   color-scheme:dark; --bg:#23272c; --surface:#2f3339; --border:#51555c; --text:#e6e8eb;
-  --text-strong:#f9fafc; --muted:#989da4; --label:#bdc5ce; --hint:#999ca2; --accent:#ff9878;
-  --accent-text:#ff9878; --accent-ink:#13161b; --accent-wash:rgba(255,152,120,0.14);
+  --text-strong:#f9fafc; --muted:#babec3; --label:#bdc5ce; --hint:#999ca2; --accent:#ff9878;
+  --accent-text:#fea78c; --accent-ink:#13161b; --accent-wash:rgba(255,152,120,0.14);
   --scrim:rgba(0,0,0,.62);
-  --card-shadow:0 10px 40px rgba(0,0,0,.5); --found-text:#0f1216;
+  --card-shadow:0 10px 40px rgba(0,0,0,.5); --found-text:#13161b;
   --glow:rgba(255,152,120,0.4); --pill-1:#afce00;
   --pill-2:#ffa747; --pill-3:#91c1ff; --pill-4:#ffa098; --pill-sel:rgba(255,152,120,0.26);
   --pill-miss:rgba(255,80,70,.5); --pill-edge:rgba(255,255,255,.22); --confetti-1:#ff9878;
   --confetti-2:#afce00; --confetti-3:#ffa747; --confetti-4:#91c1ff; --confetti-5:#ffa098;
   --confetti-6:#f9fafc; --radius-board:4px; --radius-ctl:4px; --radius-pill:3px;
-  --found-shadow:none;
-  --board-outline:none; --board-outline-offset:0px; --board-texture:none; --pill-ring-1:none;
-  --pill-ring-2:none; --pill-ring-3:none; --pill-ring-4:none;
-  --edge:#7e8187; --edge-lip:#45474a; --accent-lip:#945846;
+  --board-outline:none; --board-outline-offset:0px; --board-texture:none;
+  --edge:#7e8187;
+  --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
 }
 :root[data-theme="graphite"][data-appearance="light"]{
   color-scheme:light; --bg:#b8bec5; --surface:#f1f4f6; --border:#757b81; --text:#1f2225;
@@ -260,11 +241,9 @@
   --pill-miss:rgba(210,45,40,.36); --pill-edge:rgba(0,0,0,.14); --confetti-1:#d63600;
   --confetti-2:#c2e233; --confetti-3:#ffc392; --confetti-4:#b3d4ff; --confetti-5:#ffbeb8;
   --confetti-6:#0d1013; --radius-board:4px; --radius-ctl:4px; --radius-pill:3px;
-  --found-shadow:none;
   --board-outline:none; --board-outline-offset:0px; --board-texture:none;
-  --pill-ring-1:inset 0 0 0 1.5px #8FA10F; --pill-ring-2:inset 0 0 0 1.5px #D9731C;
-  --pill-ring-3:inset 0 0 0 1.5px #2F6FE0; --pill-ring-4:inset 0 0 0 1.5px #C42E2E;
-  --edge:#5b6065; --edge-lip:#44484c; --accent-lip:#8b2300;
+  --edge:#5b6065;
+  --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
 }
 
 /* Lock the viewport: no page scroll or rubber-band on iPad / iOS standalone. */
@@ -288,23 +267,13 @@ body{position:fixed;inset:0;width:100%;height:100%}
   padding:calc(10px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left));
   grid-template-columns:1fr;grid-template-areas:"hdr" "grid" "side";
   justify-items:center;align-content:start;gap:10px}
-/* Portrait stays CENTRED while landscape is start-aligned, and that asymmetry is a
-   decision, not an oversight. Portrait leaves 14px of slack on a phone and 32px on an
-   iPad, which reads as padding; landscape left 195px on a 1512px window, which read as
-   the board having drifted. Do not "make these consistent" without asking. */
-/* Rows are explicit so the header hugs its own height and the list takes the rest: left
-   as `auto`, the grid spans both and pushes half its height into each, centring the rail.
-   `justify-content:start`, not `safe center`: the board's cells have a cap (layout.js
-   CELL_MAX), so centring left a wide window with idle margin on both sides and the board
-   floating away from the edge. Start inherits what `safe` was protecting rather than
-   discarding it: the rail's floor (layout.js MIN_SIDE) can make the tracks wider than a
-   narrow viewport, and bare `center` splits that overflow
-   across both edges, where the start-edge half is unreachable, neither scrollable nor in
-   scrollWidth. `safe center` was already degrading to start at exactly those widths, so
-   this states the same geometry directly. Start can only ever overflow to the right,
-   which IS scrollable.
-   IF THIS IS EVER RE-CENTRED IT MUST BE `safe center`, NEVER BARE `center`. */
-#app[data-landscape]{grid-template-areas:"grid hdr" "grid side";grid-template-rows:min-content 1fr;align-content:start;justify-items:start;justify-content:start;column-gap:20px;row-gap:14px}
+/* Rows are explicit so the header hugs its own height and the list takes the rest. The board and
+   the rail are centred as a pair: the rail is capped (layout.js RAIL_MAX), so a wide window shares
+   its spare width on both sides rather than leaving it idle in the rail. `safe center`, never bare
+   `center`: the rail's floor (layout.js MIN_SIDE) can make the tracks wider than a narrow window,
+   and bare `center` splits that overflow across both edges, where the start half is unreachable;
+   `safe` falls back to start, which can only overflow to the right, which IS scrollable. */
+#app[data-landscape]{grid-template-areas:"grid hdr" "grid side";grid-template-rows:min-content 1fr;align-content:start;justify-items:start;justify-content:safe center;column-gap:20px;row-gap:0}
 /* The header stays on one line in BOTH orientations and the title truncates instead.
    Wrapping dropped the buttons to a second row, doubling the header to ~105px and pushing
    words off the bottom; vertical space is the scarce axis here. Portrait used to be
@@ -327,8 +296,7 @@ body{position:fixed;inset:0;width:100%;height:100%}
 /* A 320px phone has 300px for two content-sized columns of 19px words, which peak at 316px
    (tests/viewport.js "iPhone SE portrait" clipped 26px). Smaller type and padding there only. */
 @media (max-width:359px){
-  #list .w{font-size:16px;padding:3px 8px}
-  #list .w.done::after{left:8px;right:8px}
+  #list .w{font-size:16px}
   #list{column-gap:8px}
 }
 /* A phone has ~190px beside the buttons. */
@@ -339,9 +307,10 @@ body{position:fixed;inset:0;width:100%;height:100%}
 /* The header's own width, so a laptop window whose rail is at its floor narrows it too, not
    just a phone. A name that does not fit takes a second line rather than an ellipsis. */
 #hdr{container:hdr/inline-size}
-/* Up to where every name fits on one line. In portrait the grid gives up what the second line
-   adds (layout.js, `header`); in landscape the rail holds it. */
-@container hdr (max-width:469px){
+/* Up to where every name fits on one line: the widest, 284px at the rail's 26px, beside 210px of
+   buttons and Glass's 46px of padding. In portrait the grid gives up what the second line adds
+   (layout.js, `header`); in landscape the rail holds it. */
+@container hdr (max-width:559px){
   #subject{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
 }
 /* New game's label left the title block 83px at 320px; its icon alone lets every name and
@@ -355,58 +324,53 @@ body{position:fixed;inset:0;width:100%;height:100%}
   #app[data-landscape] #newbtn .when-wide{display:none}
   #app[data-landscape] #newbtn{width:44px;padding:0;font-size:18px}
 }
-#app[data-landscape] #listhdr{margin:2px 2px 6px 0}
-#app[data-landscape] #list{gap:4px 10px}
+#app[data-landscape] #list{gap:4px 14px}
 /* Words keep their size and give up vertical padding: 2px off each of 6 rows is 24px,
    the difference between fitting an iPhone landscape and overflowing it. */
-#app[data-landscape] .w{padding:2px 10px}
-#app[data-landscape] .w.done::after{left:10px;right:10px}
+#app[data-landscape] .w{padding-top:2px;padding-bottom:2px}
+/* A rail tall enough for the words in one column (layout.js oneColumn) sets them larger, to match
+   the board beside it. */
+#app[data-onecol] #list{gap:2px}
+#app[data-onecol] .w{font-size:23px;padding:5px 0 5px 24px}
+#app[data-onecol] .w::before{width:12px;height:12px;top:calc(50% - 6px)}
+#app[data-onecol] .w.done::after{left:24px}
+#app[data-onecol] #subject{font-size:26px}
 #hdr{grid-area:hdr;width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px}
-/* The category (or "Level N") is a chip above the name, so the subject name is the only large
-   thing in the header. */
-#kickerline{display:flex;align-items:baseline;min-width:0;margin-bottom:3px}
+/* The category (or "Level N") is a small word in the label colour above the name, so the subject
+   name is the only large thing in the header. */
+#kickerline{display:flex;align-items:baseline;min-width:0;margin-bottom:1px}
 #subjectline{display:flex;align-items:baseline;gap:8px}
-/* The chip wears one of the four pill hues, hashed from the subject's name by accentSlot in
-   main.js, so all 600 subjects don't look alike; its text is the found text on a pill, as on
-   the board. Shrinkable, or its ellipsis never engages and a long category runs under the
-   Settings button on a landscape phone. Empty at first paint, before boot resolves a subject. */
-#category{flex:0 1 auto;padding:0 10px;border-radius:var(--radius-pill);font-family:var(--display);font-weight:700;font-size:13px;
-  line-height:20px;color:var(--found-text);background:linear-gradient(var(--chip,var(--pill-1)),var(--chip,var(--pill-1))),var(--surface)}
+/* Shrinkable, or its ellipsis never engages and a long category runs under the Settings button on a
+   landscape phone. Empty at first paint, before boot resolves a subject. */
+#category{flex:0 1 auto;font-family:var(--display);font-weight:700;font-size:13px;line-height:18px;color:var(--label)}
 #category:empty{display:none}
-#category[data-accent="1"]{--chip:var(--pill-1)}
-#category[data-accent="2"]{--chip:var(--pill-2)}
-#category[data-accent="3"]{--chip:var(--pill-3)}
-#category[data-accent="4"]{--chip:var(--pill-4)}
 #subject{font-family:var(--display);font-weight:700;font-size:22px;line-height:1.15;color:var(--text-strong);letter-spacing:-.015em}
-/* Keys: the game's buttons are solid and press down. A lip under each, drawn by a shadow so it
-   takes no layout space, is what a press sinks into. The accent keys carry the actions; the
-   surface keys the rest, ringed in --edge (3:1 on the surface and the ground, check.mjs). */
+/* Keys: flat, with no ring or lip. The accent keys carry the actions; the surface keys the rest, on a
+   wash of the text colour. A press shrinks a key a touch. */
 :is(#newbtn,#catbtn,#winbtn,#picker-start,#toast-undo,.sc-go,.acct-submit,.seg button[aria-pressed="true"]){
-  border:none;background:var(--accent);color:var(--accent-ink);box-shadow:0 4px 0 var(--accent-lip)}
+  border:none;background:var(--accent);color:var(--accent-ink)}
 :is(#appearance,#picker-cancel,.seg button:not([aria-pressed="true"])){
-  border:none;background:var(--surface);color:var(--text-strong);box-shadow:inset 0 0 0 2px var(--edge),0 4px 0 var(--edge-lip)}
+  border:none;background:var(--key);color:var(--text-strong)}
 :is(#newbtn,#catbtn,#winbtn,#picker-start,#toast-undo,.sc-go,.acct-submit,#appearance,#picker-cancel,.seg button){
-  font-family:var(--display);font-weight:700;transition:transform .06s ease-out,box-shadow .06s ease-out}
+  font-family:var(--display);font-weight:700;transition:transform .08s ease-out}
 /* Weightless, so a disabled or busy key's own cursor wins; a disabled key doesn't press. */
 :where(#newbtn,#catbtn,#winbtn,#picker-start,#toast-undo,.sc-go,.acct-submit,#appearance,#picker-cancel,.seg button){cursor:pointer}
-:is(#newbtn,#catbtn,#winbtn,#picker-start,#toast-undo,.sc-go,.acct-submit,.seg button[aria-pressed="true"]):active:not(:disabled,[aria-disabled="true"]){
-  transform:translateY(3px);box-shadow:0 1px 0 var(--accent-lip)}
-:is(#appearance,#picker-cancel,.seg button:not([aria-pressed="true"])):active:not(:disabled,[aria-disabled="true"]){
-  transform:translateY(3px);box-shadow:inset 0 0 0 2px var(--edge),0 1px 0 var(--edge-lip)}
+:is(#newbtn,#catbtn,#winbtn,#picker-start,#toast-undo,.sc-go,.acct-submit,#appearance,#picker-cancel,.seg button):active:not(:disabled,[aria-disabled="true"]){
+  transform:scale(.96)}
 #newbtn{border-radius:var(--radius-ctl);padding:9px 16px;font-size:15px;min-height:44px}
 /* New game and its chevron read as one key: outer corners only, and a faint line between.
    The chevron is a full 44px target of its own. */
 #newgroup{display:flex;border-radius:var(--radius-ctl)}
 #newgroup #newbtn{border-top-right-radius:0;border-bottom-right-radius:0}
 #catbtn{width:44px;min-height:44px;padding:0;display:flex;align-items:center;justify-content:center;
-  border-left:2px solid color-mix(in srgb,var(--accent-ink) 25%,transparent);border-radius:0 var(--radius-ctl) var(--radius-ctl) 0}
+  border-left:1px solid color-mix(in srgb,var(--accent-ink) 25%,transparent);border-radius:0 var(--radius-ctl) var(--radius-ctl) 0}
 #catbtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 #actions{display:flex;align-items:center;gap:8px}
-#appearance{flex:none;width:44px;height:44px;padding:0;display:flex;align-items:center;justify-content:center;border-radius:var(--radius-ctl)}
+#appearance{flex:none;width:44px;height:44px;padding:0;display:flex;align-items:center;justify-content:center;border-radius:50%}
 #appearance svg{display:block;width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-/* The border stays 1px in every theme: layout.js reserves exactly 2px for it. The rest of the
-   tray, a second pixel of ring and its lip, is shadow, which takes no layout space. */
-#gridbox{grid-area:grid;position:relative;background:var(--surface);background-image:var(--board-texture);background-size:9px 9px;border:1px solid var(--edge);border-radius:var(--radius-board);box-shadow:inset 0 0 0 1px var(--edge),0 5px 0 var(--edge-lip);
+/* The border stays 1px in every theme: layout.js reserves exactly 2px for it. A hairline, as the
+   board is a card like the header and the list. */
+#gridbox{grid-area:grid;position:relative;background:var(--surface);background-image:var(--board-texture);background-size:9px 9px;border:1px solid var(--hairline);border-radius:var(--radius-board);box-shadow:var(--card-shadow);
   outline:var(--board-outline);outline-offset:var(--board-outline-offset);touch-action:none;cursor:pointer;flex:none}
 #pills,#fx{position:absolute;inset:0;pointer-events:none}
 #app[data-landscape] #side{display:flex;flex-direction:column}
@@ -416,41 +380,50 @@ body{position:fixed;inset:0;width:100%;height:100%}
 #side{position:relative}
 /* Portrait: the list's row takes the spare height. */
 #app:not([data-landscape]){grid-template-rows:auto auto 1fr}
-/* The background keeps its own colours in the theme's flavour, and the board is its surface at
-   80%, so the background shows through it: its letters pass over the darkest and the lightest
-   ground there can be, which bounds every other (tools/palettes/check.mjs). A browser without
-   color-mix keeps the board solid. */
+/* The header and the word list are cards of the surface, like the board. In landscape they make one
+   card down the rail: the header its top, the list the rest, as tall as its words. */
+#hdr,#side{background-color:var(--surface);border-radius:var(--radius-board);box-sizing:border-box}
+#hdr{padding:8px 8px 8px 14px}
+#side{padding:2px 14px 12px;align-self:start}
+#app[data-landscape] #hdr{border-radius:var(--radius-board) var(--radius-board) 0 0;padding:16px 12px 6px 20px}
+#app[data-landscape] #side{border-radius:0 0 var(--radius-board) var(--radius-board);padding:2px 20px 18px}
+/* The background keeps its own colours in the theme's flavour, and the cards over it are frosted: the
+   surface over a blur of what is behind, so the background shows through as colour. The board at
+   80%, which holds only letters; the header and the list at 88%, as their smaller and dimmer text
+   needs. What is written on each passes over the darkest and the lightest ground there can be,
+   which bounds every other (tools/palettes/check.mjs); the blur only narrows that range. A browser
+   without color-mix keeps these solid but loses what the tokens mix (--hairline, --key), and one
+   without backdrop-filter keeps the share. */
 @supports (background-color:color-mix(in srgb,red 50%,transparent)){
-  #gridbox{background-color:color-mix(in srgb,var(--surface) 80%,transparent)}
+  #app :is(#gridbox,#hdr,#side){-webkit-backdrop-filter:blur(18px) saturate(1.6);backdrop-filter:blur(18px) saturate(1.6)}
+  #app #gridbox{background-color:color-mix(in srgb,var(--surface) 80%,transparent)}
+  #app :is(#hdr,#side){background-color:color-mix(in srgb,var(--surface) 88%,transparent)}
 }
-/* The word list sits straight on the background: the count, Reveal and each word are tiles of
-   the surface (below), so the background shows between them and never behind their text. The
-   header sits on a plate of the ground: a spread shadow draws its margin, so nothing in it moves;
-   the spread adds its 6px to the corner, which comes out at the board's radius, or square where
-   the board's is 2px. */
-#hdr{background-color:var(--bg);border-radius:max(0px,var(--radius-board) - 6px);box-shadow:0 0 0 6px var(--bg)}
 /* Pill colours are class-driven so they live in the theme's colours; as rgba literals in JS
-   they were tuned for a dark surface and all but invisible on paper. */
+   they were tuned for a dark surface and all but invisible on paper. The drag and a miss are
+   plain pills. */
 .pill{position:absolute;border-radius:var(--radius-pill);box-shadow:inset 0 0 0 1px var(--pill-edge)}
-.pill.p1{background:var(--pill-1);box-shadow:var(--pill-ring-1)}
-.pill.p2{background:var(--pill-2);box-shadow:var(--pill-ring-2)}
-.pill.p3{background:var(--pill-3);box-shadow:var(--pill-ring-3)}
-.pill.p4{background:var(--pill-4);box-shadow:var(--pill-ring-4)}
 .pill.sel{background:var(--pill-sel)}
 .pill.miss{background:var(--pill-miss)}
-/* A pill's colour sits on solid surface, so its letters read the same over the see-through board,
-   or Drafting's grid lines; a later pill covers an earlier one where they cross. */
-#pills .pill{background-color:var(--surface)}
-#pills .p1{background-image:linear-gradient(var(--pill-1),var(--pill-1))}
-#pills .p2{background-image:linear-gradient(var(--pill-2),var(--pill-2))}
-#pills .p3{background-image:linear-gradient(var(--pill-3),var(--pill-3))}
-#pills .p4{background-image:linear-gradient(var(--pill-4),var(--pill-4))}
+/* A found word is strung as beads, one per letter, on a thread between the first and the last.
+   view.js sets --step, the letter spacing along the pill, and --bh, its height; a bead is a circle
+   of the pill's height, repeated every step from the first letter's centre. The colours are
+   opaque, so a later word's beads cover an earlier one's where they cross. */
+.pill:is(.p1,.p2,.p3,.p4){border-radius:0;box-shadow:none;background:
+  radial-gradient(circle closest-side,var(--bead,var(--pill-1)) calc(100% - 1px),transparent) calc(var(--bh,0px) / 2 - var(--step,0px) / 2) 0/var(--step,100%) 100% repeat-x,
+  linear-gradient(var(--bead,var(--pill-1)),var(--bead,var(--pill-1))) center/calc(100% - var(--bh,0px)) 26% no-repeat}
+.pill.p1{--bead:var(--pill-1)}
+.pill.p2{--bead:var(--pill-2)}
+.pill.p3{--bead:var(--pill-3)}
+.pill.p4{--bead:var(--pill-4)}
+/* The drag's colour sits on solid surface, so its letters read the same over the frosted board or
+   Drafting's grid lines. */
+#pills .pill:is(.sel,.miss){background-color:var(--surface)}
 #pills .sel{background-image:linear-gradient(var(--pill-sel),var(--pill-sel))}
 #pills .miss{background-image:linear-gradient(var(--pill-miss),var(--pill-miss))}
 .cell{position:absolute;text-align:center;font-weight:700;color:var(--text);pointer-events:none}
-/* The halo is what carries the found state — on light, --found-text and --text are two
-   dark browns a hair apart. text-shadow doesn't reflow, so cells cannot shift. */
-.cell.found{color:var(--found-text);text-shadow:var(--found-shadow)}
+/* A found letter sits on its bead in the found text colour, dark ink on the opaque colours. */
+.cell.found{color:var(--found-text)}
 /* One phosphor pass as a puzzle appears. Animating background-position keeps the
    gradient inside the element, so #gridbox needs no overflow:hidden that would clip a
    pill; ::after paints above the letters and cannot swallow the first drag. */
@@ -461,61 +434,101 @@ body{position:fixed;inset:0;width:100%;height:100%}
 @keyframes sweep{0%{opacity:0;background-position:100% 0}20%{opacity:1}80%{opacity:1}100%{opacity:0;background-position:-50% 0}}
 /* min-width:0, or its header row's min-content (WORDS + count + Reveal, ~314px) widens the
    portrait track past a 320px screen instead of letting Reveal ellipsise. */
-#side{grid-area:side;flex:none;min-width:0}
-/* Everything in the rail lines up on one edge: the count's tile, and the word tiles under it. */
-#listhdr{display:flex;justify-content:flex-start;align-items:baseline;gap:9px;margin:6px 2px 8px 0}
+#side{grid-area:side;flex:none;min-width:0;justify-self:stretch}
+/* The count and Reveal over a progress line, the words under it. */
+#listhdr{position:relative;display:flex;justify-content:flex-start;align-items:baseline;gap:9px;margin:10px 0 16px}
 /* One line always: layout.js reserves this row at 21px. The count never wraps; on a narrow
    rail or a 320px phone it is Reveal that gives up width (ellipsis), not the row its height.
    Tabular digits, or it jitters sideways as the count climbs. */
-#count{font-family:var(--display);font-weight:700;font-size:15px;font-variant-numeric:tabular-nums;color:var(--text-strong);white-space:nowrap;flex:none;
-  padding:3px 10px;margin:-3px 0;border-radius:var(--radius-ctl);background:var(--surface);box-shadow:inset 0 0 0 1.5px var(--edge),0 3px 0 var(--edge-lip)}
-/* The progress bar fills by --found, the share found (view.js renderList), sliding where the
-   browser can animate a registered property. */
+#count{font-family:var(--display);font-weight:500;font-size:15px;font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap;flex:none}
+/* The progress line across the card fills by --found, the share found (view.js renderList),
+   sliding where the browser can animate a registered property. */
 @property --found{syntax:'<number>';inherits:true;initial-value:0}
 #count{transition:--found .4s ease-out}
-#count::after{content:'';display:inline-block;vertical-align:-1px;width:60px;height:10px;margin-left:10px;border-radius:99px;
-  background:linear-gradient(90deg,var(--accent) calc(var(--found,0) * 100%),transparent 0),var(--bg);box-shadow:inset 0 0 0 1.5px var(--edge)}
-/* Reveal a word, a small surface key. A full 44px target whose negative margins give the height
-   back, so the header row stays 21px: layout.js's portrait reserve counts it at that. The key
-   is drawn inside it, so the target stays bigger than what shows. */
-#reveal{position:relative;z-index:0;margin:-12px 0 -12px auto;min-height:44px;padding:0 12px;border:none;background:transparent;
-  color:var(--accent-text);font-family:var(--display);font-weight:700;font-size:13.5px;
+#count::after{content:'';position:absolute;left:0;right:0;bottom:-8px;height:3px;border-radius:3px;
+  background:linear-gradient(90deg,var(--accent) calc(var(--found,0) * 100%),var(--hairline) 0)}
+/* Reveal a word, a text button. A full 44px target whose negative margins give the height back,
+   so the header row stays 21px: layout.js's portrait reserve counts it at that. */
+#reveal{margin:-12px 0 -12px auto;min-height:44px;padding:0 0 0 12px;border:none;background:transparent;
+  color:var(--accent-text);font-family:var(--display);font-weight:700;font-size:14px;
   cursor:pointer;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
-#reveal::before{content:'';position:absolute;inset:8px 0 11px;z-index:-1;border-radius:var(--radius-ctl);background:var(--surface);
-  box-shadow:inset 0 0 0 2px var(--edge),0 3px 0 var(--edge-lip);transition:transform .06s ease-out}
-#reveal:active::before{transform:translateY(2px);box-shadow:inset 0 0 0 2px var(--edge),0 1px 0 var(--edge-lip)}
 /* Narrower than this, "Reveal a word" was cut to "Reveal a …" at every count; "Reveal" fits. */
 #listhdr{container:listhdr/inline-size}
 @container listhdr (max-width:345px){#reveal .when-wide{display:none}}
 #reveal[disabled]{visibility:hidden}
-/* The words are tiles on the surface; a found one fills with its pill's colour on the board
-   (view.js tags it p1-p4) and keeps its found text on it, as the board's letters do. */
-#list{display:grid;gap:6px 10px}
-.w{justify-self:start;font-weight:700;font-size:19px;line-height:1.2;padding:4px 12px;border-radius:var(--radius-ctl);cursor:default;
-  color:var(--text);background:var(--surface);box-shadow:inset 0 0 0 1.5px var(--edge),0 3px 0 var(--edge-lip)}
+/* The words are plain text, each after a mark in the theme's pill shape. A found word dims and is
+   struck through, and its mark takes its beads' colour on the board (view.js tags it p1-p4). */
+#list{display:grid;gap:6px 14px}
+.w{position:relative;justify-self:start;font-weight:700;font-size:19px;line-height:1.2;padding:4px 0 4px 20px;cursor:default;color:var(--text)}
+.w::before{content:'';position:absolute;left:1px;top:calc(50% - 5px);width:10px;height:10px;border-radius:var(--radius-pill);background:var(--hairline)}
 .w.p1{--chip:var(--pill-1)}
 .w.p2{--chip:var(--pill-2)}
 .w.p3{--chip:var(--pill-3)}
 .w.p4{--chip:var(--pill-4)}
-.w.done,.w.glow{color:var(--found-text);background:linear-gradient(var(--chip,var(--pill-sel)),var(--chip,var(--pill-sel))),var(--surface);box-shadow:0 3px 0 var(--edge-lip)}
-/* The strike is drawn, not a line-through: the rail's halo paints over a text decoration in
-   Chromium. It spans the text, so its insets match .w's padding in every rule that sets it. */
-.w.done{position:relative}
-.w.done::after{content:'';position:absolute;left:12px;right:12px;top:calc(50% - 1px);height:2px;background:currentColor}
+.w.done,.w.glow{color:var(--muted)}
+.w.done::before,.w.glow::before{background:var(--chip,var(--accent));transform:scale(1.25)}
+/* The strike spans the text, so its left inset matches .w's in every rule that sets it. */
+.w.done::after{content:'';position:absolute;left:20px;right:0;top:calc(50% - .75px);height:1.5px;background:currentColor}
 /* Pops for one beat, then main.js swaps in `.done`. Duration matches GLOW_MS. */
 .w.glow{animation:foundGlow .9s ease}
 @keyframes foundGlow{0%{transform:scale(1)}30%{transform:scale(1.14)}65%{transform:scale(.97)}100%{transform:scale(1)}}
+/* Styles (settings.js STYLES, main.js applyStyle sets the root's data-style). What is above is Beads:
+   floating cards and found words strung as beads. */
+/* Glass: frosted bars along the screen's edges in place of the cards: a bar across the top and a sheet
+   up from the bottom on a phone, one sidebar down the right edge in landscape. Each bar's negative
+   margins take it over #app's padding to the edge, and its own padding gives that back, so what is in
+   it stays where it was. layout() measures the header with its margins for this. Found words are
+   solid bars. */
+:root[data-style="glass"] #app :is(#hdr,#side){border-radius:0;width:auto;justify-self:stretch}
+:root[data-style="glass"] #app:not([data-landscape]) #hdr{
+  margin:calc(-10px - env(safe-area-inset-top)) calc(-10px - env(safe-area-inset-right)) 0 calc(-10px - env(safe-area-inset-left));
+  padding:calc(18px + env(safe-area-inset-top)) calc(18px + env(safe-area-inset-right)) 8px calc(24px + env(safe-area-inset-left));
+  box-shadow:inset 0 -1px 0 var(--hairline)}
+:root[data-style="glass"] #app:not([data-landscape]) #side{align-self:stretch;
+  margin:0 calc(-10px - env(safe-area-inset-right)) calc(-10px - env(safe-area-inset-bottom)) calc(-10px - env(safe-area-inset-left));
+  padding:2px calc(24px + env(safe-area-inset-right)) calc(22px + env(safe-area-inset-bottom)) calc(24px + env(safe-area-inset-left));
+  border-radius:var(--radius-board) var(--radius-board) 0 0;box-shadow:inset 0 1px 0 var(--hairline)}
+/* `safe end`, as `safe center` above: a rail wider than the window overflows to the scrollable side. */
+:root[data-style="glass"] #app[data-landscape]{justify-content:safe end}
+:root[data-style="glass"] #app[data-landscape] #gridbox{align-self:center}
+:root[data-style="glass"] #app[data-landscape] :is(#hdr,#side){margin-right:calc(-10px - env(safe-area-inset-right));box-shadow:inset 1px 0 0 var(--hairline)}
+:root[data-style="glass"] #app[data-landscape] #hdr{margin-top:calc(-10px - env(safe-area-inset-top));
+  padding:calc(26px + env(safe-area-inset-top)) calc(22px + env(safe-area-inset-right)) 6px 24px}
+:root[data-style="glass"] #app[data-landscape] #side{align-self:stretch;margin-bottom:calc(-10px - env(safe-area-inset-bottom));
+  padding:2px calc(22px + env(safe-area-inset-right)) calc(28px + env(safe-area-inset-bottom)) 24px}
+/* Its words' marks are rings until found. */
+:root[data-style="glass"] .w:not(.done,.glow)::before{background:none;box-shadow:inset 0 0 0 1.5px var(--edge)}
+/* Glass and Tiles draw found words as solid bars: Glass on the board, Tiles in the solved mark. */
+:root:is([data-style="glass"],[data-style="tiles"]) .pill:is(.p1,.p2,.p3,.p4){border-radius:var(--radius-pill);background:var(--bead,var(--pill-1))}
+/* Tiles: every letter on its own tile of the surface, the background showing between them, and a found
+   word colouring its tiles (view.js tags a found cell with its colour, p1-p4). The board itself is a
+   faint wash, so the tiles carry it. The drag is a ring above the tiles rather than a bar under them,
+   and a miss a wash of its red over them. */
+:root[data-style="tiles"] #app #gridbox{background-color:color-mix(in srgb,var(--surface) 28%,transparent);background-image:none;
+  border-color:transparent;box-shadow:none;outline:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+:root[data-style="tiles"] #pills{z-index:1}
+:root[data-style="tiles"] #pills .pill:is(.p1,.p2,.p3,.p4){display:none}
+:root[data-style="tiles"] #pills .pill:is(.sel,.miss){background:none;box-shadow:inset 0 0 0 3px var(--accent)}
+:root[data-style="tiles"] #pills .pill.miss{box-shadow:none;background:var(--pill-miss)}
+:root[data-style="tiles"] .cell{z-index:0}
+:root[data-style="tiles"] .cell::before{content:'';position:absolute;inset:6%;z-index:-1;border-radius:min(22%,var(--radius-board));background:var(--surface)}
+:root[data-style="tiles"] .cell.p1::before{background:var(--pill-1)}
+:root[data-style="tiles"] .cell.p2::before{background:var(--pill-2)}
+:root[data-style="tiles"] .cell.p3::before{background:var(--pill-3)}
+:root[data-style="tiles"] .cell.p4::before{background:var(--pill-4)}
+/* Its words' marks are small tiles. */
+:root[data-style="tiles"] .w::before{border-radius:3px}
 #hint{margin:8px 0 0;padding-top:12px;border-top:1px solid var(--border);font-size:13.5px;line-height:1.45;color:var(--hint)}
 #hint b{color:var(--text)}
 /* safe center plus a scroll, so a card taller than a landscape phone can still be reached. */
 #win{position:fixed;inset:0;background:var(--scrim);display:none;align-items:safe center;justify-content:center;z-index:50;overflow-y:auto}
-/* The cards (this, Settings, New game, the toast) are trays like the board: a ring and a lip. */
+/* The cards (this, Settings, New game, the toast) float on a soft shadow, like the board. */
 #wincard{position:relative;min-width:260px;background:var(--surface);border-radius:24px;padding:34px 42px;text-align:center;animation:popIn .45s ease;
-  box-shadow:inset 0 0 0 2px var(--edge),0 8px 0 var(--edge-lip),var(--card-shadow)}
+  box-shadow:var(--card-shadow)}
 /* Sized in px to match SOLVED_BOX in view.js — the two have to agree or the mark is
    cropped or floats. */
 #solved{position:relative;width:148px;height:148px;margin:0 auto 16px;
-  border-radius:14px;background:var(--bg);border:1px solid var(--edge);overflow:hidden}
+  border-radius:14px;background:var(--bg);overflow:hidden}
 #wincard h2{font-family:var(--display);font-weight:700;font-size:30px;letter-spacing:-.015em;
   color:var(--text-strong);margin:8px 0 4px}
 #wincard p{font-size:14.5px;color:var(--muted);margin:0 0 20px}
@@ -526,7 +539,7 @@ body{position:fixed;inset:0;width:100%;height:100%}
 /* The Undo offer after a one-click deal. Above the board, below every overlay. */
 #toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:40;
   display:flex;align-items:center;gap:8px;padding:6px 6px 8px 16px;background:var(--surface);color:var(--text);
-  border-radius:var(--radius-ctl);box-shadow:inset 0 0 0 2px var(--edge),0 4px 0 var(--edge-lip),var(--card-shadow);font-size:15px;white-space:nowrap}
+  border-radius:var(--radius-ctl);box-shadow:var(--card-shadow);font-size:15px;white-space:nowrap}
 #toast[hidden],#toast-undo[hidden]{display:none}
 /* Only the button takes input, so a cell or word under the toast is still reachable. */
 #toast{pointer-events:none}
@@ -542,7 +555,7 @@ body{position:fixed;inset:0;width:100%;height:100%}
 #winnext{margin:-6px 0 18px}
 #winnextline{display:flex;align-items:center;justify-content:space-between;gap:12px;font-family:var(--display);font-size:14px;color:var(--text)}
 #winstay{min-height:44px;padding:0 14px;border:none;background:transparent;color:var(--accent-text);font-family:var(--display);font-size:14px;font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
-#winbar{height:10px;border-radius:999px;background:var(--bg);box-shadow:inset 0 0 0 1.5px var(--edge);overflow:hidden}
+#winbar{height:6px;border-radius:999px;background:var(--hairline);overflow:hidden}
 #winbar i{display:block;height:100%;background:var(--accent);transform-origin:left center}
 #winnext.run #winbar i{animation:drain 5s linear forwards}
 @keyframes drain{from{transform:scaleX(1)}to{transform:scaleX(0)}}
@@ -566,7 +579,7 @@ body{position:fixed;inset:0;width:100%;height:100%}
    buttons on anything wider. JS only ever toggles display; everything else is here. */
 #picker,#settings{position:fixed;inset:0;background:var(--scrim);display:none;align-items:flex-start;justify-content:center;z-index:60}
 @keyframes dropIn{from{transform:translateY(-24px);opacity:0}to{transform:none;opacity:1}}
-#settingscard{background:var(--surface);box-shadow:inset 0 0 0 2px var(--edge),0 8px 0 var(--edge-lip),var(--card-shadow);padding:18px 22px 20px;
+#settingscard{background:var(--surface);box-shadow:var(--card-shadow);padding:18px 22px 20px;
   display:flex;flex-direction:column;gap:12px;text-align:left;box-sizing:border-box;overflow-y:auto;overscroll-behavior:contain;
   max-height:calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 16px);
   max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 16px)}
@@ -597,12 +610,15 @@ body{position:fixed;inset:0;width:100%;height:100%}
 .seg{display:flex;gap:8px}
 /* A switch of keys: the one pressed is an accent key, the others surface keys (the Keys rules). */
 .seg button{flex:1;min-height:44px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius-ctl);font-size:15px}
+/* Style's four share the Settings card's column by their labels' widths, or Random is cut. */
+.seg[data-setting="style"]{gap:6px}
+.seg[data-setting="style"] button{flex:1 1 auto;padding:0 4px}
 .seg button[disabled]{opacity:.45;cursor:not-allowed}
 .check{display:flex;align-items:center;gap:10px;min-height:44px;font-size:14.5px;color:var(--text);cursor:pointer}
 .check input{width:20px;height:20px;flex:none;accent-color:var(--accent);cursor:pointer;margin:0}
 /* A row that opens a subpage: the height and edge of the selects, its value and a chevron. */
 .navrow{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;box-sizing:border-box;padding:5px 14px 5px 8px;
-  background:var(--bg);color:var(--text);border:2px solid var(--edge);border-radius:12px;box-shadow:0 3px 0 var(--edge-lip);font-family:inherit;font-size:15px;text-align:left;cursor:pointer}
+  background:var(--bg);color:var(--text);border:1.5px solid var(--edge);border-radius:12px;font-family:inherit;font-size:15px;text-align:left;cursor:pointer}
 .navrow:hover{border-color:var(--accent)}
 .navnow{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
 .navnow .bgglyph{width:42px;height:28px;flex:none;border-radius:6px;background:var(--gb,var(--bg))}
@@ -624,7 +640,7 @@ body{position:fixed;inset:0;width:100%;height:100%}
 /* Tiles on the Theme and Background pages. The radio stays in the tab order and the tile
    draws its focus and check. */
 .tile{position:relative;display:flex;flex-direction:column;gap:4px;min-width:0;padding:7px 8px 8px;
-  border:2px solid var(--edge);border-radius:14px;cursor:pointer}
+  border:1.5px solid var(--edge);border-radius:14px;cursor:pointer}
 .tile:hover{border-color:var(--muted)}
 .tile input{position:absolute;width:1px;height:1px;margin:0;opacity:0;pointer-events:none}
 .tile:has(input:checked){border-color:var(--accent);background:var(--accent-wash)}
@@ -698,7 +714,7 @@ body{position:fixed;inset:0;width:100%;height:100%}
    reason — a max-height with no scroll container clips rather than scrolls. The 100vh line
    is the fallback for a UA without dvh, where an unknown unit invalidates the whole calc
    and would otherwise drop the cap entirely. */
-#pickercard{background:var(--surface);padding:30px 34px;text-align:center;box-shadow:inset 0 0 0 2px var(--edge),0 8px 0 var(--edge-lip),var(--card-shadow);min-width:280px;
+#pickercard{background:var(--surface);padding:30px 34px;text-align:center;box-shadow:var(--card-shadow);min-width:280px;
   box-sizing:border-box;overflow-y:auto;
   max-height:calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 32px);
   max-height:calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 32px)}
@@ -724,7 +740,7 @@ label[for="picker-select"]{display:block;font-family:var(--display);font-weight:
 #picker-field::after,.selfield::after{content:'';position:absolute;right:18px;top:50%;width:9px;height:9px;margin-top:-7px;
   border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);pointer-events:none}
 #picker-select,#settings-bgmode{appearance:none;-webkit-appearance:none;width:100%;box-sizing:border-box;display:block;
-  background:var(--bg);color:var(--text);border:2px solid var(--edge);border-radius:12px;box-shadow:0 3px 0 var(--edge-lip);
+  background:var(--bg);color:var(--text);border:1.5px solid var(--edge);border-radius:12px;
   padding:11px 40px 11px 14px;font-family:inherit;font-size:15px;min-height:44px;cursor:pointer}
 #picker-error{margin:-12px 0 16px;text-align:left}
 /* Before, these sat above the base rules at equal specificity and never applied. */
@@ -881,7 +897,7 @@ label[for="picker-select"]{display:block;font-family:var(--display);font-weight:
   font-family:var(--display);font-size:14px;font-weight:700;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .sc-stay{margin-right:-14px}
 .sc-skip{justify-self:center;align-self:end}
-.sc-bar{height:10px;border-radius:999px;background:var(--surface);box-shadow:inset 0 0 0 1.5px var(--edge);overflow:hidden}
+.sc-bar{height:6px;border-radius:999px;background:var(--hairline);overflow:hidden}
 .sc-bar i{display:block;height:100%;background:var(--accent);transform:scaleX(0);transform-origin:left center}
 .sc-neg .sc-bar i{background:var(--pill-miss);transform-origin:right center}
 .sc-go{align-self:center;min-height:44px;margin-top:10px;padding:12px 22px;border-radius:var(--radius-ctl);font-size:15px}
@@ -953,7 +969,7 @@ b.acct-name{color:var(--text-strong)}
 .acct-field{display:flex;flex-direction:column;gap:6px}
 /* 16px, or iOS zooms the page in when the field takes focus. html,body turn off touch-action and
    selection for the board, so a field needs both back, as button and select already have. */
-.acct-field input{min-height:44px;box-sizing:border-box;padding:11px 14px;border:2px solid var(--edge);border-radius:12px;
+.acct-field input{min-height:44px;box-sizing:border-box;padding:11px 14px;border:1.5px solid var(--edge);border-radius:12px;
   background:var(--bg);color:var(--text);font-family:inherit;font-size:16px;touch-action:manipulation;-webkit-user-select:text;user-select:text}
 .acct-field input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 /* Text on the ground with a red rule: --pill-miss is a translucent wash, too faint for text. */

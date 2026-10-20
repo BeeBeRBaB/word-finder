@@ -3,7 +3,7 @@
 // part of the page (view, effects, picker, account, scorecard…).
 import { CATEGORIES, categoryOf } from './catalog.js';
 import { loadCategory, loadSubject, SubjectLoadError } from './subjects.js';
-import { makeRng, resolveSeed, resolveTarget, stringHash } from './rng.js';
+import { makeRng, resolveSeed, resolveTarget } from './rng.js';
 import { buildPuzzle, cap, matchWord, snap, spanOf } from './puzzle.js';
 import { computeLayout, fillsScreen, pickPreset, PRESETS, mixFor } from './layout.js';
 import { applyLayout, renderGrid, renderList, renderPills, renderFoundCells, renderSolvedShape } from './view.js';
@@ -11,7 +11,7 @@ import { burst, pop } from './effects.js';
 import { makeStorage } from './storage.js';
 import { makeProgress, chooseSubject } from './progress.js';
 import { makeAppearance } from './appearance.js';
-import { makeSettings } from './settings.js';
+import { makeSettings, pickStyle, STYLES } from './settings.js';
 import { makePicker } from './picker.js';
 import { makeBackdrop, resolveBackground, lookOf, RANDOM_POOL } from './backgrounds.js';
 import { manualMarkup, dropMarkup, modeNote, summaryMarkup } from './bgpicker.js';
@@ -109,7 +109,7 @@ const state = {
   sel: null,
   miss: null,
   drag: null,
-  dims: { landscape: false, cell: 34, gridSize: 0, sideWidth: 0, listColumns: '1fr 1fr', scroll: false },
+  dims: { landscape: false, cell: 34, gridSize: 0, sideWidth: 0, listColumns: '1fr 1fr', oneColumn: false, scroll: false },
   winTimer: null,
   // What the on-screen cells were built from; cell:0 matches nothing, so the first
   // layout() always renders.
@@ -127,8 +127,8 @@ void navigator.storage?.persist?.().catch(() => {});
 let currentSeed;
 /** @type {string} */
 let subjectId;
-// The board's Random pick, made when it was dealt and kept with it through Undo and a reload.
-let boardBg = '';
+// The board's Random picks, made when it was dealt and kept with it through Undo and a reload.
+let boardBg = '', boardStyle = '';
 // Levels: the signed-in account's numbered puzzles. Its copy on this device loads now, before
 // boot() restores a board that may be the level in progress; the cloud's answers later.
 const play = makeLevelPlay({ cloud: makeCloud() });
@@ -142,13 +142,6 @@ let categoryName = '';
 // The word mid-glow in the list. Only ever set by a live find, never by a restore.
 /** @type {string|null} */
 let justFound = null;
-
-/** Which of the four pill hues a subject's category chip wears. Hashed from the name
- * rather than its position, so reordering the catalog does not reshuffle all 600.
- * @param {string} name @returns {number} */
-function accentSlot(name) {
-  return stringHash(name) % 4 + 1;
-}
 
 /** One phosphor pass across the grid as a puzzle appears. Restarting a CSS animation
  * needs the class gone, a forced reflow, then the class back — without the reflow the
@@ -175,8 +168,9 @@ function sweep() {
  * @param {Puzzle} [dealt] a saved board to put back instead of building one
  * @param {Deal|null} [level] the level this board is; start timing it once its finds are back
  * @param {string} [bg] the board's Random pick, when it has one already (a restored save)
+ * @param {string} [style] its Random style, likewise
  * @returns {void} */
-function newPuzzle(seed, subject, shape, useBag = true, dealt, level = null, bg) {
+function newPuzzle(seed, subject, shape, useBag = true, dealt, level = null, bg, style) {
   const puzzle = dealt ?? buildPuzzle({
     name: subject.name, pool: subject.words, rng: makeRng(seed),
     size: shape.size, count: shape.count,
@@ -192,7 +186,8 @@ function newPuzzle(seed, subject, shape, useBag = true, dealt, level = null, bg)
   const same = boardBg && seed === currentSeed && subject.id === subjectId;
   showBoard({ puzzle, found: {}, foundOrder: [], seed, subjectId: subject.id, size: shape.size,
     minCell: shape.minCell, category: subject.categoryName, level,
-    bg: bg ?? (same ? boardBg : resolveBackground('random', '', appearance.getTheme(), seed, boardBg)) });
+    bg: bg ?? (same ? boardBg : resolveBackground('random', '', appearance.getTheme(), seed, boardBg)),
+    style: style ?? (same ? boardStyle : pickStyle('random', seed, boardStyle)) });
   sweep();
 }
 
@@ -202,12 +197,12 @@ function showBoard(b) {
   // Leaving a level saves where it stood, so New game's Levels side picks it up again. That save
   // reads the cloud first, which can let go of the board shown next, so the board hears of it.
   if (levelBoard) void play.pause().then(afterSync);
-  levelBoard = b.level; categoryName = b.category; currentSeed = b.seed; subjectId = b.subjectId; boardBg = b.bg;
+  levelBoard = b.level; categoryName = b.category; currentSeed = b.seed; subjectId = b.subjectId; boardBg = b.bg; boardStyle = b.style;
+  applyStyle();
   state.size = b.size; state.minCell = b.minCell;
   state.puzzle = b.puzzle; state.found = b.found; state.foundOrder = b.foundOrder;
   state.sel = null; state.miss = null; state.drag = null; justFound = null;
   els.subject.textContent = cap(b.puzzle.name);
-  els.category.dataset.accent = String(accentSlot(b.puzzle.name));
   showCategory();
   // Or a stale timer drops the win overlay over the fresh grid, swallowing every tap.
   if (state.winTimer) { clearTimeout(state.winTimer); state.winTimer = null; }
@@ -238,6 +233,7 @@ function persist() {
     // v17 read them, and a tab still running one can load this save.
     found: state.foundOrder.map(w => ({ word: w, ...state.found[w].sel, ...(state.found[w].revealed ? { revealed: true } : {}) })),
     bg: boardBg,
+    style: boardStyle,
   });
 }
 
@@ -300,11 +296,13 @@ function layout() {
   const cs = getComputedStyle(els.app);
   const padX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
   const padY = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+  const hcs = getComputedStyle(els.hdr);
   state.dims = computeLayout({
     vw: window.innerWidth - padX,
     vh: window.innerHeight - padY,
     size: state.size, pad: PAD, count: state.puzzle.words.length, minCell: state.minCell,
-    header: els.hdr.offsetHeight,
+    // With its margins: Glass's top bar reaches over #app's padding to the screen's edge.
+    header: els.hdr.offsetHeight + parseFloat(hcs.marginTop) + parseFloat(hcs.marginBottom),
   });
   applyLayout(els, state.dims);
   // Unchanged means the rebuild would be byte-identical — true on nearly every resize
@@ -744,8 +742,8 @@ const toastUndo = must('toast-undo'), newbtn = must('newbtn');
 const UNDO_MS = 6000;
 /** A board exactly as it stood, held in memory.
  * @typedef {{puzzle:Puzzle, found:State['found'], foundOrder:string[], seed:number,
- *   subjectId:string, size:number, minCell:number, category:string, level:Deal|null, bg:string}} Snapshot
- *   bg: the board's Random pick. */
+ *   subjectId:string, size:number, minCell:number, category:string, level:Deal|null, bg:string, style:string}} Snapshot
+ *   bg and style: the board's Random picks. */
 /** @type {Snapshot|null} */
 let undoSnap = null;
 /** @type {ReturnType<typeof setTimeout>|null} */
@@ -761,7 +759,7 @@ function snapshot() {
   const p = state.puzzle;
   if (!p) return null;
   return { puzzle: p, found: { ...state.found }, foundOrder: [...state.foundOrder], seed: currentSeed,
-    subjectId, size: state.size, minCell: state.minCell, category: categoryName, level: levelBoard, bg: boardBg };
+    subjectId, size: state.size, minCell: state.minCell, category: categoryName, level: levelBoard, bg: boardBg, style: boardStyle };
 }
 /** Put a snapshot back as the live board, without regenerating it.
  * @param {Snapshot} snap @returns {void} */
@@ -1160,7 +1158,14 @@ function applySetting(key) {
   if (key === 'art' || key === 'bgmode' || key === 'motion') showBackdrop();
   if (key === 'letters') { state.rendered = { puzzle: null, cell: 0 }; layout(); }
   if (key === 'reveal') els.app.dataset.reveal = now.reveal ? 'on' : 'off';
+  if (key === 'style') applyStyle();
   if (key === 'motion') document.documentElement.dataset.motion = now.motion;
+}
+/** Draw the board in the chosen style, or under Random in the board's own pick.
+ * @returns {void} */
+function applyStyle() {
+  const s = cfg.get().style;
+  document.documentElement.dataset.style = s === 'random' ? boardStyle || STYLES[0] : s;
 }
 /** @param {string} key @param {unknown} value @returns {void} */
 function changeSetting(key, value) {
@@ -1186,6 +1191,7 @@ settings.addEventListener('change', (e) => {
 });
 // Settings that shape the page before any game is dealt.
 applySetting('reveal');
+applySetting('style');
 applySetting('motion');
 must('settings-close').addEventListener('click', closeSettings);
 must('bg-close').addEventListener('click', closeSettings);
@@ -1324,9 +1330,10 @@ async function restore(saved, stillWanted) {
   // it again would advance the bag twice for one puzzle, silently, on every reload.
   // Its Random pick as saved; a save from before it was kept picks again by its seed.
   const bg = saved.bg && RANDOM_POOL.includes(saved.bg) ? saved.bg : undefined;
+  const style = saved.style && STYLES.includes(saved.style) ? saved.style : undefined;
   newPuzzle(saved.seed, subject, {
     size: saved.size, count: saved.count, mix: shape.mix, minCell: shape.minCell,
-  }, false, dealt, level, bg);
+  }, false, dealt, level, bg, style);
   addFinds(saved.found);
   if (level) startLevel(level);
 }

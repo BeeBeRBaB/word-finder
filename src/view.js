@@ -33,10 +33,8 @@ export function applyLayout(els, dims) {
     els.app.removeAttribute('data-landscape');
     els.app.style.gridTemplateColumns = '1fr';
   }
-  // Portrait: full width, so the list lines up with the title above it rather than
-  // with the narrower centred grid. Landscape: the rail is its own column.
-  els.side.style.width = dims.landscape ? dims.sideWidth + 'px' : '100%';
   els.list.style.gridTemplateColumns = dims.listColumns;
+  els.app.toggleAttribute('data-onecol', dims.oneColumn);
   // minCell won and the board is bigger than its space: scroll, or #app's
   // overflow:hidden would put cells where nothing can reach them.
   els.app.toggleAttribute('data-scroll', dims.scroll);
@@ -68,7 +66,8 @@ export function renderGrid(els, puzzle, dims, size, pad, scale = 0.46) {
 const PILL_CLASS = ['p1', 'p2', 'p3', 'p4'];
 
 /** One rounded bar over a selection. `thick` is its height as a fraction of the cell —
- * finer for the solved shape, where twelve bars in a 148px box would otherwise blur.
+ * finer for the solved shape, where twelve bars in a 148px box would otherwise blur. A found
+ * word's bar is drawn as beads, so it carries the letter spacing along it (--step) and its height.
  * @param {Selection} s @param {string} variant @param {number} cell @param {number} pad
  * @param {number} [thick]
  * @returns {HTMLDivElement} */
@@ -84,28 +83,34 @@ function pillDiv(s, variant, cell, pad, thick = 0.82) {
   d.style.height = h + 'px';
   d.style.transformOrigin = (h / 2) + 'px center';
   d.style.transform = 'rotate(' + Math.round(Math.atan2(cy1 - cy0, cx1 - cx0) * 180 / Math.PI) + 'deg)';
+  const steps = Math.max(Math.abs(s.x1 - s.x0), Math.abs(s.y1 - s.y0));
+  d.style.setProperty('--bh', h + 'px');
+  d.style.setProperty('--step', (steps ? Math.hypot(cx1 - cx0, cy1 - cy0) / steps : h) + 'px');
   return d;
 }
 
-/** Found-word pills in discovery order, plus the live selection on top.
+/** The live selection and a miss, then found-word pills in discovery order over them: a found
+ * letter keeps its own colour under a drag, as its dark ink would not read on the drag's.
  * @param {Els} els @param {GameState} state @param {LayoutDims} dims @param {number} pad
  * @returns {void} */
 export function renderPills(els, state, dims, pad) {
   els.pills.innerHTML = '';
-  state.foundOrder.forEach((w, i) => els.pills.appendChild(pillDiv(state.found[w].sel, PILL_CLASS[i % 4], dims.cell, pad)));
   if (state.sel) els.pills.appendChild(pillDiv(state.sel, 'sel', dims.cell, pad));
   if (state.miss) els.pills.appendChild(pillDiv(state.miss, 'miss', dims.cell, pad));
+  state.foundOrder.forEach((w, i) => els.pills.appendChild(pillDiv(state.found[w].sel, PILL_CLASS[i % 4], dims.cell, pad)));
 }
 
-/** Colour the letters of a found word. Reapplied from `state` because renderGrid
+/** Colour the letters of a found word, tagged with its pill's colour for the Tiles style, where a
+ * later word's colour wins a shared letter as its beads do. Reapplied from `state` because renderGrid
  * rebuilds cells wholesale. Kept out of renderPills, which runs on every pointermove.
  * @param {Els} els @param {GameState} state @param {number} size @returns {void} */
 export function renderFoundCells(els, state, size) {
   const cells = els.letters.children;
   for (let i = 0; i < cells.length; i++) cells[i].className = 'cell';
-  for (const w of state.foundOrder)
+  state.foundOrder.forEach((w, k) => {
     for (const i of lineIndices(size, state.found[w].sel))
-      if (cells[i]) cells[i].className = 'cell found';
+      if (cells[i]) cells[i].className = 'cell found ' + PILL_CLASS[k % 4];
+  });
 }
 
 // The solved-shape plate, matching #solved in styles.css. Laid out against this rather

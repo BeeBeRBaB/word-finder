@@ -217,27 +217,30 @@ test('a background runs behind the whole page and takes no clicks', async ({ pag
   expect(top).toBe(true);
 });
 
-// The board lets the background show through, the word list sits straight on it as solid tiles,
-// and the header is on a plate of the ground.
-test('the board and the word list let the background through, and the header sits on a plate', async ({ page }) => {
+// The board and the header and list cards are frosted: the surface at a share over a blur of
+// the background (tools/palettes/check.mjs bounds their text at these shares). Tiles drops the
+// board to a faint wash, its tiles carrying the letters, and Glass keeps the same cards as bars.
+test('the board and the cards let the background through, frosted', async ({ page }) => {
   await page.goto('/?seed=1&subject=space/jupiter');
-  /** The alpha of an element's background colour. @param {string} sel */
-  const plate = (sel) => page.locator(sel).first().evaluate(el => {
-    const m = getComputedStyle(el).backgroundColor.match(/[\d.]+/g) ?? [];
-    return m.length > 3 ? Number(m[3]) : 1;
+  /** The alpha of an element's background colour and its backdrop filter. @param {string} sel */
+  const card = (sel) => page.locator(sel).first().evaluate(el => {
+    const cs = getComputedStyle(el), m = cs.backgroundColor.match(/[\d.]+/g) ?? [];
+    return { a: m.length > 3 ? Number(m[3]) : 1, blur: cs.backdropFilter.includes('blur') };
   });
   await page.locator('#list .w').first().waitFor();
-  expect(await plate('#side')).toBe(0);
-  expect(await plate('#list .w')).toBe(1);
-  expect(await plate('#count')).toBe(1);
-  expect(await plate('#gridbox')).toBeCloseTo(0.8, 2);
-  expect(await plate('#hdr')).toBe(1);
-  const hdr = await page.locator('#hdr').evaluate((el) => {
-    const cs = getComputedStyle(el);
-    return { bg: cs.backgroundColor, ground: getComputedStyle(document.body).backgroundColor, spread: cs.boxShadow };
-  });
-  expect(hdr.bg).toBe(hdr.ground);
-  expect(hdr.spread).toContain(hdr.ground);
+  for (const style of ['beads', 'glass']) {
+    await page.evaluate((s) => { document.documentElement.dataset.style = s; }, style);
+    const board = await card('#gridbox'), hdr = await card('#hdr'), side = await card('#side');
+    expect(board.a, style).toBeCloseTo(0.8, 2);
+    expect(hdr.a, style).toBeCloseTo(0.88, 2);
+    expect(side.a, style).toBeCloseTo(0.88, 2);
+    expect([board.blur, hdr.blur, side.blur], style).toEqual([true, true, true]);
+  }
+  await page.evaluate(() => { document.documentElement.dataset.style = 'tiles'; });
+  expect((await card('#gridbox')).a).toBeCloseTo(0.28, 2);
+  expect((await card('#hdr')).a).toBeCloseTo(0.88, 2);
+  // Words are plain text on the card, never tiles of their own.
+  expect((await card('#list .w')).a).toBe(0);
 });
 
 // Each background has its own ground and colours in two flavours: the dark one under every dark
@@ -430,32 +433,28 @@ test('the Settings row shows the background in use and how it was chosen', async
 
 // The background shows through the board, fainter than around it, with nothing drawn on
 // the letters; a pill keeps solid surface under its colour, so a find reads as on a solid board.
-test('the background shows through the board but not through its pills', async ({ page }) => {
+test('the background shows through the board but not through its found words', async ({ page }) => {
   await page.goto('/?seed=1&subject=space/jupiter');
   await page.locator('.cell').first().waitFor();
-  /** The alpha of an element's background colour. @param {string} sel */
-  const alpha = (sel) => page.locator(sel).first().evaluate(el => {
-    const m = getComputedStyle(el).backgroundColor.match(/[\d.]+/g) ?? [];
-    return m.length > 3 ? Number(m[3]) : 1;
-  });
-  const surface = () => page.evaluate(() => {
-    const probe = document.body.appendChild(document.createElement('div'));
-    probe.style.background = 'var(--surface)';
-    const c = getComputedStyle(probe).backgroundColor;
-    probe.remove();
-    return c;
-  });
+  /** The alpha of a colour. @param {string} c */
+  const alpha = (c) => { const m = c.match(/[\d.]+/g) ?? []; return m.length > 3 ? Number(m[3]) : 1; };
   await openPage(page);
-  await pickBackground(page, 'snow');
-  expect(await alpha('#gridbox')).toBe(0.8);
-  // No ring or blur: the letters stay crisp.
-  expect(await page.locator('#gridbox').evaluate(el => getComputedStyle(el).backdropFilter)).toBe('none');
+  await pickBackground(page, 'koi');
+  expect(alpha(await page.locator('#gridbox').evaluate(el => getComputedStyle(el).backgroundColor))).toBe(0.8);
+  // The blur is of what is behind the board; its letters stay crisp, with no shadow.
   expect(await page.locator('.cell').first().evaluate(el => getComputedStyle(el).textShadow)).toBe('none');
   await page.keyboard.press('Escape');
   await findAndDrag(page, ((await page.locator('#list .w').first().textContent()) ?? '').trim().toUpperCase());
-  const pill = await page.locator('#pills .p1').evaluate(el => ({ bg: getComputedStyle(el).backgroundColor, image: getComputedStyle(el).backgroundImage }));
-  expect(pill.bg).toBe(await surface());
-  expect(pill.image).toContain('linear-gradient');
+  // A found word's colour is opaque, so its letters sit on it whatever is behind the board.
+  const bead = await page.locator('#pills .p1').evaluate(el => {
+    const probe = document.body.appendChild(document.createElement('i'));
+    probe.style.color = 'var(--pill-1)';
+    const c = getComputedStyle(probe).color;
+    probe.remove();
+    return { c, image: getComputedStyle(el).backgroundImage };
+  });
+  expect(alpha(bead.c)).toBe(1);
+  expect(bead.image).toContain(bead.c);
 });
 
 test('at 320 wide the Background page stacks each label over its control, and nothing runs off the card', async ({ page }) => {

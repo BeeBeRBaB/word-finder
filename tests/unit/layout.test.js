@@ -21,21 +21,26 @@ test('orientation flips on the 1.08 aspect threshold', () => {
   assert.equal(at(824, 280).landscape, true);
 });
 
-test('the word list is two content-sized columns in both orientations', () => {
-  // Content-sized rather than `1fr 1fr`: fractional tracks split the whole rail, and in
-  // landscape the rail is every pixel left over after the grid — so the second column
-  // sat far from the first on a wide window and slid on every resize.
+test('the word list is two content-sized columns, or one in a rail tall enough for it', () => {
+  // Content-sized rather than `1fr 1fr`: fractional tracks split the whole rail, so the second
+  // column sat far from the first on a wide window and slid on every resize.
   assert.equal(at(370, 644).listColumns, 'max-content max-content');
   assert.equal(at(824, 280).listColumns, 'max-content max-content');
+  // A laptop's rail sets its words in one larger column, to match the board beside it.
+  const laptop = at(1420, 880);
+  assert.equal(laptop.listColumns, 'minmax(0,1fr)');
+  assert.ok(laptop.oneColumn);
+  assert.ok(!at(370, 644).oneColumn, 'portrait keeps two columns');
 });
 
-test('the list column track never varies with the viewport', () => {
-  // The regression this guards is not the literal string above, it is the track being a
-  // function of available width at all. One distinct value across wildly different
-  // viewports is what keeps the second column from moving as the window resizes.
-  const seen = new Set([[390, 800], [900, 600], [1440, 900], [1920, 900], [824, 280]]
-    .map(([vw, vh]) => at(vw, vh).listColumns));
-  assert.equal(seen.size, 1, `list columns varied with the viewport: ${[...seen].join(' | ')}`);
+test('the list column track never varies with the width', () => {
+  // The regression this guards is the track being a function of available width at all: one
+  // value across wildly different widths at one height keeps the second column from moving
+  // as the window resizes. Height alone picks one column or two.
+  for (const vh of [280, 600, 900]) {
+    const seen = new Set([1000, 1200, 1440, 1920, 2400].map((vw) => at(vw, vh).listColumns));
+    assert.equal(seen.size, 1, `list columns varied with the width at ${vh}: ${[...seen].join(' | ')}`);
+  }
 });
 
 test('grid fits within the available space on every in-scope device', () => {
@@ -124,12 +129,12 @@ test('the presets are the two shapes the game deals', () => {
 // Pinned exactly, not approximately. The full preset must be a provable no-op on a
 // value that was measured against real devices; every px of drift here is a px the
 // portrait grid silently loses.
-test('reservePortrait(12) reproduces the measured 318 exactly', () => {
-  assert.equal(reservePortrait(12), 318);
+test('reservePortrait(12) reproduces the measured 358 exactly', () => {
+  assert.equal(reservePortrait(12), 358);
 });
 
 test('eight words reserve two rows less than twelve', () => {
-  assert.equal(reservePortrait(8), 244);
+  assert.equal(reservePortrait(8), 284);
   assert.ok(reservePortrait(8) < reservePortrait(12));
 });
 
@@ -138,18 +143,18 @@ test('a shorter list gives the portrait grid its rows back', () => {
   // compact preset exists to replace.
   const big = computeLayout({ vw: 370, vh: 644, size: 13, pad: 10, count: 12 });
   const small = computeLayout({ vw: 370, vh: 644, size: 10, pad: 10, count: 8 });
-  assert.equal(big.cell, 23);
+  assert.equal(big.cell, 20);
   assert.ok(small.cell >= 30, `compact cell is ${small.cell}px, expected 30+`);
 });
 
-// A name on two lines makes the header 69px, not 46. An iPhone SE in Safari is sized by height,
-// with a pixel to spare, so the extra 23 has to come out of the grid or the last row of words
-// goes below the fold, where #app's overflow:hidden leaves nothing to scroll to it.
+// A name on two lines makes the header 81px, not 60. An iPhone SE in Safari is sized by height,
+// so the extra 21 has to come out of the grid or the last row of words goes below the fold,
+// where #app's overflow:hidden leaves nothing to scroll to it.
 test('a two-line header takes its extra height from a portrait grid, and landscape ignores it', () => {
   const one = computeLayout({ vw: 355, vh: 533, size: 10, pad: 10, count: 8 });
-  const two = computeLayout({ vw: 355, vh: 533, size: 10, pad: 10, count: 8, header: 69 });
+  const two = computeLayout({ vw: 355, vh: 533, size: 10, pad: 10, count: 8, header: 81 });
   assert.ok(two.cell < one.cell, `two-line header kept a ${two.cell}px cell`);
-  assert.ok(10 * two.cell + 2 * 10 + 2 + reservePortrait(8) + 23 <= 533);
+  assert.ok(10 * two.cell + 2 * 10 + 2 + reservePortrait(8) + 21 <= 533);
   const side = { vw: 824, vh: 370, size: 13, pad: 10, count: 12 };
   assert.deepEqual(computeLayout({ ...side, header: 74 }), computeLayout(side));
 });
@@ -184,11 +189,14 @@ test('when the rail and grid cannot both fit, the layout scrolls rather than cli
   }
 });
 
-test('the rail reaches the window edge in landscape, so the header buttons sit at it', () => {
-  for (const [vw, vh] of [[1133, 644], [1420, 880], [1900, 1000], [3400, 900]]) {
+test('the rail takes what the board leaves up to its cap, and the board and rail fit', () => {
+  // Wider than the cap only widens the card around the same words; styles.css shares the spare
+  // width either side instead.
+  for (const [vw, vh] of [[1113, 644], [1420, 880], [1900, 1000], [3400, 900]]) {
     const d = at(vw, vh);
     if (d.scroll) continue;
-    assert.equal(d.gridSize + 20 + d.sideWidth, vw, `${vw}x${vh}: board + gap + rail leaves ${vw - d.gridSize - 20 - d.sideWidth}px`);
+    assert.equal(d.sideWidth, Math.min(500, vw - d.gridSize - 20), `${vw}x${vh}: rail ${d.sideWidth}`);
+    assert.ok(d.gridSize + 20 + d.sideWidth <= vw, `${vw}x${vh}: board + gap + rail overflow`);
   }
 });
 
@@ -196,16 +204,6 @@ test('a large monitor stops the board at 96px cells', () => {
   assert.equal(at(3400, 1800).cell, 96);
 });
 
-test('the rail leaves room for the longest subject title beside the action buttons', () => {
-  // The header shares the rail track with #actions (210px: Settings plus the split New
-  // game control) and a 10px gap. The widest of the 600 titles at the 22px subject size is
-  // 240px ("Woodwind instruments"), and a rail that cannot seat it ellipsises the subject
-  // name on a window with hundreds of spare pixels.
-  const ACTIONS = 210, GAP_TO_TITLE = 10, WIDEST_TITLE = 240;
-  const roomy = at(1492, 850);            // a 1512px window, insets removed
-  assert.ok(roomy.sideWidth - ACTIONS - GAP_TO_TITLE >= WIDEST_TITLE,
-    `rail ${roomy.sideWidth} leaves only ${roomy.sideWidth - ACTIONS - GAP_TO_TITLE}px for a ${WIDEST_TITLE}px title`);
-});
 
 // Pinned: a level's board is dealt at these, so a change re-deals levels in progress
 // (tests/unit/puzzle.test.js pins the layout itself).

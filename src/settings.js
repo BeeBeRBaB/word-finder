@@ -3,6 +3,7 @@
 // and a missing, throwing or garbled one degrades to the defaults, never into the game.
 import { safeStore } from './storage.js';
 import { BACKGROUNDS } from './backgrounds.js';
+import { makeRng } from './rng.js';
 
 export const SETTINGS_KEY = 'wordfinder-settings-v1';
 // The standalone key auto-start was stored under before this record existed.
@@ -11,16 +12,18 @@ const LEGACY_AUTO_KEY = 'wordfinder-autonext';
 /**
  * @typedef {{bgmode:'theme'|'random'|'manual', art:string, board:'auto'|'compact'|'full',
  *   difficulty:'normal'|'easy'|'hard', letters:'normal'|'large', motion:'system'|'reduce',
- *   sound:boolean, vibrate:boolean, reveal:boolean, autoNext:boolean, play:'random'|'levels'}} Settings
+ *   sound:boolean, vibrate:boolean, reveal:boolean, autoNext:boolean, play:'random'|'levels',
+ *   style:'beads'|'glass'|'tiles'|'random'}} Settings
  *   bgmode: how the background is chosen (backgrounds.js resolveBackground); art is Manual's pick.
  *   play: the side of New game last chosen. It has no Settings control.
+ *   style: how found words and the cards are drawn (STYLES), or Random, which picks one per deal.
  * @typedef {Pick<Storage,'getItem'|'setItem'>} SettingsStore
  */
 
 /** @type {Readonly<Settings>} */
 export const DEFAULTS = Object.freeze({
   bgmode: 'theme', art: 'drift', board: 'auto', difficulty: 'normal', letters: 'normal', motion: 'system',
-  sound: true, vibrate: true, reveal: true, autoNext: true, play: 'random',
+  sound: true, vibrate: true, reveal: true, autoNext: true, play: 'random', style: 'beads',
 });
 
 /** The allowed values of each multiple-choice setting, default first. */
@@ -28,9 +31,22 @@ export const CHOICES = Object.freeze({
   bgmode: ['theme', 'random', 'manual'], art: BACKGROUNDS.map(b => b.id),
   board: ['auto', 'compact', 'full'],
   difficulty: ['normal', 'easy', 'hard'], letters: ['normal', 'large'], motion: ['system', 'reduce'],
-  play: ['random', 'levels'],
+  play: ['random', 'levels'], style: ['beads', 'glass', 'tiles', 'random'],
 });
 const FLAGS = ['sound', 'vibrate', 'reveal', 'autoNext'];
+
+/** The styles a board can be drawn in: #app's data-style in styles.css. */
+export const STYLES = Object.freeze(['beads', 'glass', 'tiles']);
+
+/** The style a deal shows: the setting, or under Random one picked by the deal's seed, never
+ * `previous`, so a new game always changes it. Off by one from the seed so it does not move in step
+ * with a Random background, which picks from the same seed.
+ * @param {string} setting @param {number} seed @param {string} [previous] @returns {string} */
+export function pickStyle(setting, seed, previous = '') {
+  if (setting !== 'random') return STYLES.includes(setting) ? setting : STYLES[0];
+  const from = STYLES.filter(s => s !== previous);
+  return from[makeRng(seed + 1).int(from.length)];
+}
 
 /** Keep each field that is valid, default the rest: one bad field never costs the others.
  * @param {unknown} raw @returns {Settings} */

@@ -1,6 +1,6 @@
 /**
  * @typedef {{landscape:boolean, cell:number, gridSize:number, sideWidth:number,
- *   listColumns:string, scroll:boolean}} LayoutDims
+ *   listColumns:string, oneColumn:boolean, scroll:boolean}} LayoutDims
  * @typedef {import('./puzzle.js').Bucket} Bucket
  * @typedef {{size:number, count:number, minCell:number, mix:Bucket[]}} Preset
  */
@@ -66,28 +66,30 @@ export function fillsScreen({ vw, vh, screenW, screenH, landscape }) {
 }
 
 // Portrait chrome above and below the grid: a fixed part, plus one row per two words.
-// Measured: one-row header 46 + two 10px gaps + list header 35, less the last row's 6px
-// gap, is 95; each row is 31 plus a 6px gap. 96 keeps a pixel of margin. The hint used to
-// sit below the list and cost every phone 46px of grid.
-const RESERVE_BASE = 96;
+// Measured: the one-row header card 60 + two 10px gaps + the list card's padding 14 and its
+// header 47, less the last row's 6px gap, is 135; each row is 31 plus a 6px gap. 136 keeps a
+// pixel of margin. The hint used to sit below the list and cost every phone 46px of grid.
+const RESERVE_BASE = 136;
 // The header RESERVE_BASE counts. A long name takes a second line on a phone, and what that
 // adds comes out of the grid, or the last row of words falls below the fold.
-const HEADER_ROW = 46;
+const HEADER_ROW = 60;
 const ROW_H = 37;
 /** @param {number} count @returns {number} */
 export const reservePortrait = (count) => RESERVE_BASE + Math.ceil(count / 2) * ROW_H;
 
 const GAP = 20;        // must equal #app[data-landscape]'s column-gap; tokens.test.js pins it
-// Rail floor. 320, not the 160 this shipped with: 160 is less than half what the list
-// actually needs, so between roughly 725 and 950 CSS px the rail was squeezed to 167-279
-// and the second column was clipped OUTSIDE it — up to 113px of words, with `scroll`
-// unset because the TRACKS fit even though their contents did not. Silently unreachable.
-// 320 is measured, not guessed: rendering the 12 longest words of all 600 subjects as two
-// content-sized columns, the widest is 316px (sports/archery), median 275.
-const MIN_SIDE = 320;
-// No rail ceiling: the rail takes every pixel the board leaves, so the header's buttons sit
-// at the window's edge. The list stays two content-sized columns, so a wide rail widens
-// the header, not the list.
+// Rail floor: two columns of the widest word list plus the rail card's 20px padding a side.
+// 160, the first floor, squeezed the rail to 167-279 between roughly 725 and 950 CSS px and
+// clipped the second column OUTSIDE it, with `scroll` unset because the TRACKS fit even though
+// their contents did not. Measured, not guessed: the 12 longest words of all 600 subjects as
+// two content-sized columns peak at 312px (sports/archery).
+const MIN_SIDE = 352;
+// Rail ceiling: a wider rail only widens the card around the same words, so the spare width
+// goes either side of the board and rail instead (styles.css centres them).
+const RAIL_MAX = 500;
+// The rail sets the words in one larger column when it is tall enough for them: the header
+// card, the list's header and padding, and a row per word.
+const ONE_COLUMN_BASE = 150, ONE_COLUMN_ROW = 40;
 // Largest cell. The board grows to fill the height; this only stops a large monitor from
 // dealing letters the size of the rail's headings. It was 54, which left a 1440x900
 // laptop with an eighth of its height and ~100px of width unused.
@@ -95,7 +97,7 @@ const CELL_MAX = 96;
 const BORDER = 2;      // #gridbox's content-box border, 1px each side
 // Content-sized, not `1fr 1fr`: a fr split puts the second column wherever the viewport
 // ends. Portrait shares it so the orientations cannot drift.
-const LIST_COLUMNS = 'max-content max-content';
+const LIST_COLUMNS = 'max-content max-content', ONE_COLUMN = 'minmax(0,1fr)';
 
 /**
  * Viewport arithmetic. Pure, so it can be swept across every device shape in a unit test.
@@ -115,9 +117,10 @@ export function computeLayout({ vw, vh, size, pad, count, minCell = 16, header =
     const byWidth = Math.floor((vw - GAP - MIN_SIDE - 2 * pad) / size);
     cell = Math.max(minCell, Math.min(CELL_MAX, byHeight, byWidth));
     const gridSize = size * cell + 2 * pad;
-    sideWidth = Math.max(MIN_SIDE, vw - gridSize - GAP);
+    sideWidth = Math.min(RAIL_MAX, Math.max(MIN_SIDE, vw - gridSize - GAP));
     const scroll = size * cell + 2 * pad + BORDER > vh || gridSize + GAP + sideWidth > vw;
-    return { landscape, cell, gridSize, sideWidth, listColumns: LIST_COLUMNS, scroll };
+    const oneColumn = vh >= ONE_COLUMN_BASE + count * ONE_COLUMN_ROW;
+    return { landscape, cell, gridSize, sideWidth, listColumns: oneColumn ? ONE_COLUMN : LIST_COLUMNS, oneColumn, scroll };
   }
   const availW = vw - 2 * pad - BORDER;
   const availH = vh - reservePortrait(count) - Math.max(0, header - HEADER_ROW) - 2 * pad - BORDER;
@@ -125,5 +128,5 @@ export function computeLayout({ vw, vh, size, pad, count, minCell = 16, header =
   const gridSize = size * cell + 2 * pad;
   // avail* already exclude padding, border and the list reserve, so compare the raw run.
   const scroll = size * cell > availW || size * cell > availH;
-  return { landscape, cell, gridSize, sideWidth: gridSize, listColumns: LIST_COLUMNS, scroll };
+  return { landscape, cell, gridSize, sideWidth: gridSize, listColumns: LIST_COLUMNS, oneColumn: false, scroll };
 }
