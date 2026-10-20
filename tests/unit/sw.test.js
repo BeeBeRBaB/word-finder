@@ -339,9 +339,9 @@ async function waitsFor({ store, installed }, late, url) {
 test('one file that cannot be stored does not cut the carry short', async () => {
   const late = deferred();
   const silk = `${BASE}src/backgrounds/silk-bokeh.js`;
-  await waitsFor(install({ 'wordfinder-v1': { [`${BASE}src/backgrounds/aurora-drift.js`]: 'old', [silk]: 'old' } },
+  await waitsFor(install({ 'wordfinder-v1': { [`${BASE}src/backgrounds/snowfall.js`]: 'old', [silk]: 'old' } },
     async (url) => { if (url === silk) await late.promise; return new Response(`new ${url}`); },
-    (op, url) => op === 'put' && url.endsWith('aurora-drift.js')), late, silk);
+    (op, url) => op === 'put' && url.endsWith('snowfall.js')), late, silk);
 });
 
 test('nor does one import that cannot be stored while another is on the way', async () => {

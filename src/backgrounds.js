@@ -82,8 +82,6 @@ export const BACKGROUNDS = Object.freeze([
     glyph: '<path class="g1" d="M5 4l8 3.5-8 3.5 2-3.5z"/><path class="g2" d="M14 10l8 3.5-8 3.5 2-3.5z"/><path class="g3" d="M24 15l8 3.5-8 3.5 2-3.5z"/><path class="g4" d="M13 21l8 3.5-8 3.5 2-3.5z"/><path class="g2" d="M4 17l8 3.5-8 3.5 2-3.5z"/><path class="g3" d="M27 5l8 3.5-8 3.5 2-3.5z"/><path class="g1" d="M36 11l8 3.5-8 3.5 2-3.5z"/>' },
   { id: 'solar', file: 'icon-solar', name: 'Solar system', perDeal: true,
     glyph: '<ellipse class="ln" cx="24" cy="16" rx="21" ry="11" opacity=".4"/><ellipse class="ln" cx="24" cy="16" rx="12" ry="6.5" opacity=".4"/><circle class="g1" cx="24" cy="16" r="5.5"/><circle class="g3" cx="33.6" cy="12.1" r="3"/><circle class="g2" cx="18" cy="21.6" r="2.4"/><circle class="g4" cx="7.2" cy="22.6" r="3.6"/><circle class="g2" cx="3" cy="26.5" r="1.6"/>' },
-  { id: 'aurora', file: 'aurora-drift', name: 'Aurora',
-    glyph: '<ellipse class="g3" cx="16" cy="13" rx="15" ry="8" opacity=".7"/><ellipse class="g4" cx="31" cy="19" rx="16" ry="9" opacity=".6"/><ellipse class="g1" cx="22" cy="24" rx="12" ry="6" opacity=".5"/>' },
   { id: 'bokeh', file: 'silk-bokeh', name: 'Silk bokeh',
     glyph: '<path class="g4" d="M0 22c10-10 18 6 28-2s14-10 20-6v6c-6-4-10 0-20 6S10 22 0 30z" opacity=".7"/><circle class="g2" cx="11" cy="9" r="5" opacity=".7"/><circle class="g1" cx="36" cy="8" r="4" opacity=".6"/><circle class="g3" cx="25" cy="13" r="3" opacity=".8"/>' },
   { id: 'constellation', file: 'constellation', name: 'Constellation',
@@ -98,8 +96,6 @@ export const BACKGROUNDS = Object.freeze([
     glyph: '<path class="ln" d="M15 4v16M8 8l14 8M8 16l14-8M35 15v10M30.7 17.5l8.6 5M30.7 22.5l8.6-5"/><g class="g1"><circle cx="5" cy="25" r="2.2"/><circle cx="41" cy="5" r="2.6"/></g><g class="g2"><circle cx="27" cy="5" r="2"/><circle cx="21" cy="27" r="2.6"/></g><circle class="g3" cx="44" cy="27" r="1.8"/><path class="g4" d="M0 32c8-3 16-1 24-2s16-3 24-1v3z" opacity=".5"/>' },
   { id: 'blobs', file: 'blobs', name: 'Blobs',
     glyph: '<g class="g1"><circle cx="12" cy="13" r="8"/><circle cx="25" cy="18" r="6.5"/><path d="M14 7.5q6 5 11 4v13q-7-3-11 .5z"/></g><circle class="g3" cx="39" cy="8" r="5"/><g class="g2"><circle cx="35" cy="25" r="4.5"/><circle cx="43" cy="26" r="3.6"/><path d="M35 20.5h8v9h-8z"/></g><circle class="g4" cx="8" cy="27.5" r="3"/>' },
-  { id: 'plasma', file: 'plasma', name: 'Plasma',
-    glyph: '<rect class="g1" width="48" height="32" rx="3" opacity=".4"/><path class="g3" d="M6 3c10-4 18 6 14 14S5 31 3 21 0 5 6 3z" opacity=".85"/><path class="g2" d="M30 5c8-3 16 3 14 11s-10 15-17 11-5-19 3-22z" opacity=".85"/><circle class="g4" cx="11" cy="13" r="4.5"/><circle class="g1" cx="35" cy="16" r="5"/>' },
   { id: 'letterrain', file: 'letter-rain', name: 'Letter rain',
     glyph: '<g class="g1"><path d="M6 2h5v3H6z" opacity=".3"/><path d="M6 8h5v3H6z" opacity=".55"/><path d="M6 14h5v3H6z" opacity=".8"/></g><path class="ln" d="M6 27.5l2.5-7 2.5 7M7 25.5h3"/><g class="g3"><path d="M22 8h5v3h-5z" opacity=".3"/><path d="M22 14h5v3h-5z" opacity=".55"/><path d="M22 20h5v3h-5z" opacity=".8"/><path d="M38 1h5v3h-5z" opacity=".55"/></g><path class="ln" d="M38 7.5h5l-5 7h5"/><path class="g2" d="M38 18h5v3h-5z" opacity=".35"/>' },
   { id: 'waves', file: 'waves', name: 'Waves',
@@ -180,8 +176,6 @@ export const BACKGROUNDS = Object.freeze([
     glyph: '<circle class="g1" cx="15" cy="16" r="13" opacity=".35"/><circle class="g2" cx="37" cy="10" r="8" opacity=".35"/><circle class="g4" cx="40" cy="26.5" r="4.5" opacity=".5"/><g class="ln"><circle cx="15" cy="16" r="13"/><path d="M15 16V7M15 16l6 3"/><circle cx="37" cy="10" r="8"/><path d="M37 10V5M37 10l-4 2.5"/></g>' },
   { id: 'puddles', file: 'puddles', name: 'Puddles',
     glyph: '<ellipse class="ln" cx="17" cy="20" rx="14" ry="7"/><ellipse class="ln" cx="17" cy="20" rx="7.5" ry="3.7"/><ellipse class="ln" cx="35" cy="13" rx="10" ry="5"/><ellipse class="g2" cx="35" cy="13" rx="3.5" ry="1.8"/><ellipse class="g1" cx="17" cy="20" rx="2.5" ry="1.4"/><circle class="g3" cx="35" cy="4" r="1.8"/>' },
-  { id: 'flag', file: 'flag', name: 'Flag',
-    glyph: '<path class="ln" d="M6 31V3"/><path class="g1" d="M7 5C13 2 17 8 24 5S35 2 42 5V12C35 9 31 9 24 12S13 9 7 12z"/><path class="g2" d="M7 12C13 9 17 15 24 12S35 9 42 12V19C35 16 31 16 24 19S13 16 7 19z"/><path class="g3" d="M7 19C13 16 17 22 24 19S35 16 42 19V26C35 23 31 23 24 26S13 23 7 26z"/>' },
   { id: 'string-art', file: 'stringart', name: 'String art',
     glyph: '<circle class="ln" cx="24" cy="16" r="13.5" opacity=".3"/><path class="ln" d="M24 2.5L36.8 20.2L16.1 26.9L16.1 5.1L36.8 11.8L24 29.5L11.2 11.8L31.9 5.1L31.9 26.9L11.2 20.2z" opacity=".8"/><path class="g1" d="M22.4 0.9h3.2v3.2h-3.2zM35.2 10.2h3.2v3.2h-3.2zM30.3 25.3h3.2v3.2h-3.2zM14.5 25.3h3.2v3.2h-3.2zM9.6 10.2h3.2v3.2h-3.2z"/><path class="g2" d="M30.3 3.5h3.2v3.2h-3.2zM35.2 18.6h3.2v3.2h-3.2zM22.4 27.9h3.2v3.2h-3.2zM9.6 18.6h3.2v3.2h-3.2zM14.5 3.5h3.2v3.2h-3.2z"/>' },
   { id: 'oscilloscope', file: 'oscilloscope', name: 'Oscilloscope',
@@ -308,8 +302,6 @@ export const BACKGROUNDS = Object.freeze([
     glyph: '<path class="ln" d="M14 10Q30 22 46 31M37 9q6 10 9 22" opacity=".45"/><path class="g1" d="M14 2 8 9l6 11z"/><path class="g3" d="M14 2l6 7-6 11z"/><path class="ln" d="M14 20q-3 3 0 5.5t0 6"/><path class="g2" d="M36 2l-8 11 8-2z"/><path class="g4" d="M36 2l8 11-8-2z"/><path class="ln" d="M36 11q-4 2-3 5.5t-4 5"/>' },
   { id: 'balloons', file: 'balloons', name: 'Hot air balloons',
     glyph: '<path class="g4" d="M0 32c10-5 22-6 30-3s12 0 18-2v5z" opacity=".45"/><path class="g1" d="M8 12a9 9 0 0 1 18 0c0 5-5 8-6 11h-6c-1-3-6-6-6-11z"/><path class="g3" d="M17 3c-4 4-4 14-2.5 20h5c1.5-6 1.5-16-2.5-20z"/><path class="ln" d="M14.5 23v2.5M19.5 23v2.5"/><path class="g4" d="M14 25.5h6v3.5h-6z"/><path class="g2" d="M32 8a5 5 0 0 1 10 0c0 3-3 4.5-3.5 6h-3c-.5-1.5-3.5-3-3.5-6z"/><path class="g4" d="M35.5 15.5h3v2h-3z"/>' },
-  { id: 'moire', file: 'moire', name: 'Moire',
-    glyph: '<path class="g1" d="M1 0h3v32h-3zM7 0h3v32h-3zM13 0h3v32h-3zM19 0h3v32h-3zM25 0h3v32h-3zM31 0h3v32h-3zM37 0h3v32h-3zM43 0h3v32h-3z"/><path class="g2" opacity=".75" transform="rotate(-12 24 16)" d="M-8 -8h3v48h-3zM-2 -8h3v48h-3zM4 -8h3v48h-3zM10 -8h3v48h-3zM16 -8h3v48h-3zM22 -8h3v48h-3zM28 -8h3v48h-3zM34 -8h3v48h-3zM40 -8h3v48h-3zM46 -8h3v48h-3zM52 -8h3v48h-3zM58 -8h3v48h-3z"/>' },
   { id: 'chaos-game', file: 'chaosgame', name: 'Chaos game',
     glyph: '<path class="g1" d="M24 3l3.8 6.5h-7.5zM20.2 9.5l3.8 6.5h-7.5zM27.8 9.5l3.8 6.5h-7.5z"/><path class="g2" d="M16.5 16l3.8 6.5h-7.5zM12.8 22.5l3.8 6.5h-7.5zM20.2 22.5l3.8 6.5h-7.5z"/><path class="g3" d="M31.5 16l3.8 6.5h-7.5zM27.8 22.5l3.8 6.5h-7.5zM35.2 22.5l3.8 6.5h-7.5z"/>' },
   { id: 'attractor', file: 'attractor', name: 'Attractor',
@@ -441,13 +433,13 @@ export const LOOKS = Object.freeze({
 /** Which look each background wears, by look. A background left out wears night.
  * @type {Readonly<Record<string, readonly string[]>>} */
 export const LOOK_OF = Object.freeze({
-  night: ['aurora', 'constellation', 'galaxy', 'meteors', 'orrery', 'planet', 'black-hole', 'moon-phases',
+  night: ['constellation', 'galaxy', 'meteors', 'orrery', 'planet', 'black-hole', 'moon-phases',
     'fireworks', 'snow', 'rainy-window', 'lighthouse', 'spiderweb', 'traffic', 'trails', 'smoke', 'fireflies', 'warp',
     'solar'],
   ocean: ['rain', 'waves', 'caustics', 'koi', 'puddles', 'river', 'jellyfish', 'kelp', 'bubbles', 'swim',
     'ripple', 'whirlpool'],
   sky: ['sunbeams', 'clouds', 'paper-planes', 'kites', 'balloons', 'day-night', 'sunflower', 'windmills', 'ferris',
-    'train-window', 'flag', 'tree', 'flutter', 'flock', 'fountain', 'rise', 'drift'],
+    'train-window', 'tree', 'flutter', 'flock', 'fountain', 'rise', 'drift'],
   forest: ['vines', 'slime', 'leaves', 'card-cascade', 'dice', 'reversi', 'chess', 'billiards', 'bloom', 'fall', 'sway'],
   sand: ['dunes', 'zen-garden', 'ants', 'shoreline', 'hourglass', 'cracks', 'roll', 'conveyor'],
   arcade: ['pong', 'snake', 'breakout', 'invaders', 'asteroids', 'pinball', 'maze-chase', 'light-cycles', 'pegboard',
@@ -460,7 +452,7 @@ export const LOOK_OF = Object.freeze({
   blueprint: ['blueprint', 'gears', 'kinetic', 'newtons-cradle', 'pendulums'],
   sunset: ['hills', 'lanterns', 'low-poly', 'synthwave', 'ribbons', 'wave', 'juggle'],
   candy: ['parade', 'wallpaper', 'carousel', 'bounce', 'pulse', 'trail', 'motion', 'kaleido', 'blobs'],
-  neon: ['plasma', 'voronoi', 'honeycomb', 'flowfield', 'mandala', 'moire', 'bokeh', 'neon', 'interference',
+  neon: ['voronoi', 'honeycomb', 'flowfield', 'mandala', 'bokeh', 'neon', 'interference',
     'attractor'],
   ember: ['embers', 'marble-run', 'metronomes'],
   chalk: ['chalkboard'],
@@ -488,7 +480,7 @@ export function findBackground(id, list = BACKGROUNDS) {
  * @type {Readonly<Record<string, string>>} */
 export const THEME_BACKGROUNDS = Object.freeze({
   phosphor: 'galaxy', graphite: 'constellation', broadsheet: 'halftone', drafting: 'blueprint',
-  sticker: 'motion', plum: 'bokeh', grove: 'aurora',
+  sticker: 'motion', plum: 'bokeh', grove: 'hills',
 });
 
 /** What Random picks from: every background. @type {readonly string[]} */

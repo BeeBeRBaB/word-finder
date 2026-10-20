@@ -47,11 +47,11 @@ test('a new registry entry gets an option with no other change', () => {
 });
 
 test('a dropdown shows its pick\'s picture and name', () => {
-  assert.match(dropMarkup('aurora'), /^<svg class="bgglyph" viewBox="0 0 48 32" aria-hidden="true" style="--gbd:[^"]+">.*<\/svg><span class="bgname">Aurora<\/span>$/);
+  assert.match(dropMarkup('snow'), /^<svg class="bgglyph" viewBox="0 0 48 32" aria-hidden="true" style="--gbd:[^"]+">.*<\/svg><span class="bgname">Snowfall<\/span>$/);
   // In the background's own colours, both flavours for the stylesheet to choose.
   for (const [k, pref] of [['d', 'dark'], ['l', 'light']]) {
-    assert.ok(dropMarkup('aurora').includes(`--gb${k}:${lookOf('aurora', pref).ground};`), pref);
-    assert.ok(dropMarkup('aurora').includes(`--g1${k}:${lookOf('aurora', pref).colors[0]};`), pref);
+    assert.ok(dropMarkup('snow').includes(`--gb${k}:${lookOf('snow', pref).ground};`), pref);
+    assert.ok(dropMarkup('snow').includes(`--g1${k}:${lookOf('snow', pref).colors[0]};`), pref);
   }
   assert.match(dropMarkup('gone'), new RegExp(`<span class="bgname">${BACKGROUNDS[0].name}</span>$`));
 });
@@ -64,8 +64,8 @@ test('registry names and ids are plain text, safe to put in markup', () => {
 });
 
 test('the row summary names the background showing, and says Theme or Random under it', () => {
-  assert.match(summaryMarkup('aurora'), /^<svg class="bgglyph".*<span class="bgsum"><span class="bgname">Aurora<\/span><\/span>$/);
-  assert.equal(summaryMarkup('aurora', 'manual'), summaryMarkup('aurora'), 'Manual has no tag');
+  assert.match(summaryMarkup('snow'), /^<svg class="bgglyph".*<span class="bgsum"><span class="bgname">Snowfall<\/span><\/span>$/);
+  assert.equal(summaryMarkup('snow', 'manual'), summaryMarkup('snow'), 'Manual has no tag');
   assert.match(summaryMarkup('galaxy', 'theme'), /<span class="bgname">Galaxy<\/span><span class="bgtag">Theme<\/span><\/span>$/);
   assert.match(summaryMarkup('bokeh', 'random'), /<span class="bgname">Silk bokeh<\/span><span class="bgtag">Random<\/span><\/span>$/);
   assert.match(summaryMarkup('gone'), new RegExp(`<span class="bgname">${BACKGROUNDS[0].name}</span></span>$`));

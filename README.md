@@ -32,7 +32,7 @@ hidden across, down, diagonally and backwards. Drag across a word to find it.
   levels on easy, normal or hard. Points add up for each word, for streaks and for speed,
   and your progress follows you to any device. Random play never needs an account.
 - **Art for every subject.** Each subject gets its own animated scene drawn from an icon
-  library, behind the whole screen. Or choose another animated background such as Aurora,
+  library, behind the whole screen. Or choose another animated background such as Snowfall,
   Galaxy or Koi.
 - **Seven themes**, each in a light and a dark version, all checked for readable
   contrast.

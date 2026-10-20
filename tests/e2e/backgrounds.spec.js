@@ -117,24 +117,24 @@ test('a pick in the menu shows and closes it, and outlasts a new theme, Theme mo
   await page.goto('/?seed=1&subject=space/jupiter');
   await openPage(page);
   await setMode(page, 'manual');
-  await pickBackground(page, 'aurora');
+  await pickBackground(page, 'snow');
   await expect(page.getByRole('radiogroup', { name: 'Background' })).toBeHidden();   // a pick by pointer closes the menu
   await expect(page.locator('#bg canvas')).toHaveCount(1);
-  await expect(page.getByRole('button', { name: 'Background Aurora' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Background Snowfall' })).toBeVisible();
   await page.locator('#bg-back').click();
-  await expect(page.locator('#settings-bg')).toHaveAccessibleName('Background Aurora');
+  await expect(page.locator('#settings-bg')).toHaveAccessibleName('Background Snowfall');
   // A new theme leaves a Manual pick alone.
   await page.locator('#settings-theme').click();
   await page.locator('.looktile[data-look="broadsheet/light"]').click();
   await page.locator('#theme-back').click();
-  await expect(page.locator('#settings-bg')).toHaveAccessibleName('Background Aurora');
+  await expect(page.locator('#settings-bg')).toHaveAccessibleName('Background Snowfall');
   await expect(page.locator('#bg canvas')).toHaveCount(1);
   // Theme again shows the theme's own, and Manual keeps its pick for later.
   await page.locator('#settings-bg').click();
   await setMode(page, 'theme');
   await expect(page.locator('#bgmode-note')).toHaveText('Each theme comes with its own background. Now: Halftone.');
   await setMode(page, 'manual');
-  await expect(page.getByRole('button', { name: 'Background Aurora' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Background Snowfall' })).toBeVisible();
   await pickBackground(page, 'constellation');
   await page.reload();
   await page.locator('#appearance').click();
@@ -205,7 +205,7 @@ test('Random picks again for every new game, and Undo and a reload keep the boar
 test('a background runs behind the whole page and takes no clicks', async ({ page }) => {
   await page.goto('/?seed=1&subject=space/jupiter');
   await openPage(page);
-  await pickBackground(page, 'aurora');
+  await pickBackground(page, 'snow');
   await expect(page.locator('#bg canvas')).toHaveCount(1);
   // Under the page: it takes no clicks, and the board still paints over it.
   await page.keyboard.press('Escape');
@@ -280,12 +280,12 @@ test('the choice is remembered, and a new deal keeps the background running', as
 
 test('a background that could not load draws once the device is back online', async ({ page }) => {
   await page.goto('/?seed=1&subject=space/jupiter');
-  await page.route(/\/src\/backgrounds\/aurora-drift\.js/, route => route.abort('internetdisconnected'));
-  const failed = page.waitForEvent('requestfailed', r => r.url().includes('aurora-drift.js'));
+  await page.route(/\/src\/backgrounds\/snowfall\.js/, route => route.abort('internetdisconnected'));
+  const failed = page.waitForEvent('requestfailed', r => r.url().includes('snowfall.js'));
   await openPage(page);
-  await pickBackground(page, 'aurora');
+  await pickBackground(page, 'snow');
   await failed;
-  await page.unroute(/\/src\/backgrounds\/aurora-drift\.js/);
+  await page.unroute(/\/src\/backgrounds\/snowfall\.js/);
   // Again until the failed load has settled: one asked for while it is still failing fails with it.
   await expect.poll(async () => {
     await page.evaluate(() => dispatchEvent(new Event('online')));
@@ -446,7 +446,7 @@ test('the background shows through the board but not through its pills', async (
     return c;
   });
   await openPage(page);
-  await pickBackground(page, 'aurora');
+  await pickBackground(page, 'snow');
   expect(await alpha('#gridbox')).toBe(0.8);
   // No ring or blur: the letters stay crisp.
   expect(await page.locator('#gridbox').evaluate(el => getComputedStyle(el).backdropFilter)).toBe('none');

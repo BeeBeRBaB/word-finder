@@ -29,7 +29,7 @@ test('every background names a module that exists, and ids are unique', () => {
   }
   assert.equal(new Set(BACKGROUNDS.map(b => b.id)).size, BACKGROUNDS.length);
   assert.equal(findBackground('nope').id, BACKGROUNDS[0].id);
-  assert.equal(findBackground('aurora').file, 'aurora-drift');
+  assert.equal(findBackground('snow').file, 'snowfall');
 });
 
 test('the settings choices are exactly the background ids, default first', async () => {
@@ -41,11 +41,11 @@ test('the settings choices are exactly the background ids, default first', async
 test('one background runs at a time', async () => {
   const f = fakeImports();
   const bd = makeBackdrop({ importFn: f.importFn });
-  assert.equal(await bd.show('aurora', host('side'), OPTS), true);
-  assert.equal(await bd.show('aurora', host('side'), OPTS), true, 'same choice: left running');
+  assert.equal(await bd.show('snow', host('side'), OPTS), true);
+  assert.equal(await bd.show('snow', host('side'), OPTS), true, 'same choice: left running');
   assert.equal(await bd.show('galaxy', host('side'), OPTS), true);
   assert.equal(bd.running(), 'galaxy');
-  assert.deepEqual(f.log, ['start aurora-drift side', 'stop aurora-drift', 'start galaxy side']);
+  assert.deepEqual(f.log, ['start snowfall side', 'stop snowfall', 'start galaxy side']);
 });
 
 test('a new host, mode or motion setting restarts it', async () => {
@@ -62,11 +62,11 @@ test('a new host, mode or motion setting restarts it', async () => {
 test('a new palette restarts it, and a new deal restarts only a perDeal background', async () => {
   const f = fakeImports();
   const bd = makeBackdrop({ importFn: f.importFn });
-  await bd.show('aurora', host('bg'), OPTS);
-  await bd.show('aurora', host('bg'), { ...OPTS, subject: 'food/fruit', seed: 2 });
+  await bd.show('snow', host('bg'), OPTS);
+  await bd.show('snow', host('bg'), { ...OPTS, subject: 'food/fruit', seed: 2 });
   assert.equal(f.log.length, 1, 'a deal leaves an ordinary background running');
-  await bd.show('aurora', host('bg'), { ...OPTS, subject: 'food/fruit', seed: 2, colors: ['#333333'] });
-  assert.deepEqual(f.log, ['start aurora-drift bg', 'stop aurora-drift', 'start aurora-drift bg']);
+  await bd.show('snow', host('bg'), { ...OPTS, subject: 'food/fruit', seed: 2, colors: ['#333333'] });
+  assert.deepEqual(f.log, ['start snowfall bg', 'stop snowfall', 'start snowfall bg']);
 
   const g = fakeImports();
   const sd = makeBackdrop({ importFn: g.importFn });
@@ -105,7 +105,7 @@ test('a module that fails to load leaves nothing running, and is retried next ti
 
 test('no host means nothing starts', async () => {
   const bd = makeBackdrop({ importFn: fakeImports().importFn });
-  assert.equal(await bd.show('aurora', null, OPTS), false);
+  assert.equal(await bd.show('snow', null, OPTS), false);
 });
 
 test('the default loader finds every registry module, and each exports start()', async () => {
@@ -115,7 +115,7 @@ test('the default loader finds every registry module, and each exports start()',
 test('a module whose start() throws leaves nothing running, like a failed load', async () => {
   // No DOM here, so the real module's start() throws.
   const bd = makeBackdrop();
-  assert.equal(await bd.show('aurora', host('side'), OPTS), false);
+  assert.equal(await bd.show('snow', host('side'), OPTS), false);
   assert.equal(bd.running(), '');
 });
 
@@ -129,7 +129,7 @@ test('every theme has its own background, a real one, the same in both flavours'
     assert.equal(resolveBackground('theme', 'rain', t, 2, id), id, t);
   }
   assert.deepEqual(THEMES.map(t => resolveBackground('theme', '', t, 0)),
-    ['galaxy', 'constellation', 'halftone', 'blueprint', 'motion', 'bokeh', 'aurora']);
+    ['galaxy', 'constellation', 'halftone', 'blueprint', 'motion', 'bokeh', 'hills']);
   assert.equal(resolveBackground('theme', '', 'retired', 0), 'galaxy', 'an unknown theme is the default one');
   assert.equal(new Set(Object.values(THEME_BACKGROUNDS)).size, THEMES.length, 'no two themes share one');
 });

@@ -24,19 +24,19 @@ test('the background is chosen by theme, at random or by hand, and the choice is
 test('a record from before the mode keeps a background the player picked', () => {
   /** @param {object} rec */
   const from = (rec) => { const store = memStore(); store.setItem(SETTINGS_KEY, JSON.stringify(rec)); return makeSettings({ store }).get(); };
-  assert.deepEqual([from({ art: 'aurora', area: 'list' }).bgmode, from({ art: 'aurora' }).art], ['manual', 'aurora']);
+  assert.deepEqual([from({ art: 'snow', area: 'list' }).bgmode, from({ art: 'snow' }).art], ['manual', 'snow']);
   assert.equal(from({ art: 'drift' }).bgmode, 'manual', 'today\'s default was a pick then');
   assert.equal(from({ art: 'illustrated', area: 'list' }).bgmode, 'theme', 'the old default is no pick');
   assert.equal(from({ art: 'none' }).bgmode, 'theme', 'nor is a still one, gone since');
   assert.equal(from({ art: 'gone' }).bgmode, 'theme', 'nor is one this build does not have');
   assert.equal(from({ sound: false }).bgmode, 'theme');
   // A stored mode stands, whatever the art.
-  assert.equal(from({ art: 'aurora', bgmode: 'theme' }).bgmode, 'theme');
+  assert.equal(from({ art: 'snow', bgmode: 'theme' }).bgmode, 'theme');
   assert.equal(from({ art: 'koi', bgmode: 'manual' }).bgmode, 'manual');
   // The retired Background area is dropped, whichever it was, and nothing else with it.
-  const old = from({ bgmode: 'manual', art: 'aurora', area: 'list', sound: false });
+  const old = from({ bgmode: 'manual', art: 'snow', area: 'list', sound: false });
   assert.equal('area' in old, false);
-  assert.deepEqual([old.bgmode, old.art, old.sound], ['manual', 'aurora', false]);
+  assert.deepEqual([old.bgmode, old.art, old.sound], ['manual', 'snow', false]);
 });
 
 test('the New game side is remembered, and only random or levels', () => {

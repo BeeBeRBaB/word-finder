@@ -9,8 +9,8 @@ import { stage, TAU, clamp, mix } from './stage.js';
 const NV = 120;        // columns along the shore
 const BRK = 0.12;      // where waves break, seaward of the mean shoreline, in host-minimum units
 const FAR = 0.95;      // where an incoming crest first shows
-const CREST = 0.05;    // incoming crest speed, units a second
-const SWASH = 9;       // seconds a wave runs up and drains back
+const CREST = 0.11;    // incoming crest speed, units a second
+const SWASH = 5.5;     // seconds a wave runs up and drains back
 const UP = 0.3;        // share of that spent running up
 
 /** @typedef {{tb:number, r:number, k1:number, p1:number, k2:number, p2:number}} Wave */
@@ -31,6 +31,8 @@ export function start(host, opts) {
     /** @type {Foam[]} */
     let foam = [];
     const pebbles = Array.from({ length: 40 }, () => ({ v: rng.random(), u: 0.25 + rng.random() * 1.2, r: 0.5 + rng.random(), a: rng.random() * TAU }));
+    // Glints on the swell, riding in toward the beach and twinkling.
+    const glints = Array.from({ length: 70 }, () => ({ v: rng.random(), u: -FAR + rng.random() * (FAR - BRK), ph: rng.random() * TAU, sp: 2 + rng.random() * 3 }));
     let T = 0, next = 2, m = 1, warmed = false;
     // Geometry: an origin and axes for a straight beach, or a centre and radius for the cove.
     let ox = 0, oy = 0, tx = 1, ty = 0, v0 = 0, v1 = 1, R0 = 1;
@@ -88,7 +90,7 @@ export function start(host, opts) {
       if (T >= next - (FAR - BRK) / CREST) {
         waves.push({ tb: next, r: 0.1 + rng.random() * 0.12, k1: 2 + rng.random() * 5, p1: rng.random() * TAU,
           k2: 7 + rng.random() * 9, p2: rng.random() * TAU });
-        next += 5.5 + rng.random() * 3;
+        next += 2.4 + rng.random() * 1.8;
       }
       waves = waves.filter((w) => T - w.tb < SWASH);
       F0.set(F);
@@ -99,7 +101,7 @@ export function start(host, opts) {
         wet[j] = Math.max(f, wet[j] - 0.03 * dt);
         // Foam spawns where the edge surges up the sand.
         const d = f - F0[j];
-        for (let n = d * 24 + rng.random(); n >= 1 && foam.length < 650; n--) {
+        for (let n = d * 30 + rng.random(); n >= 1 && foam.length < 800; n--) {
           foam.push({ v: (j + rng.random() - 0.5) / NV, u: f - rng.random() * rng.random() * 0.07, age: 0, life: 3 + rng.random() * 4,
             r: 0.3 + rng.random() * rng.random(), q: 0.6 + rng.random() * 0.4 });
         }
@@ -114,6 +116,10 @@ export function start(host, opts) {
         p.age += dt;
       }
       foam = foam.filter((p) => p.age < p.life);
+      for (const g of glints) {
+        g.u += CREST * 0.8 * dt;
+        if (g.u > -BRK - 0.02) { g.u = -FAR - 0.05; g.v = rng.random(); }
+      }
     }
 
     return {
@@ -148,6 +154,16 @@ export function start(host, opts) {
         if (layout === 2) ctx.lineTo(ox, oy);
         else { const [ax, ay] = pt(1, -40), [bx, by] = pt(0, -40); ctx.lineTo(ax, ay); ctx.lineTo(bx, by); }
         ctx.fill();
+        // Glints, short dashes along the swell.
+        ctx.strokeStyle = foamCol;
+        ctx.lineCap = 'round';
+        ctx.lineWidth = 2;
+        for (const g of glints) {
+          const [x, y] = pt(g.v, g.u), [x2, y2] = pt(g.v + 0.015, g.u), tw = Math.sin(T * g.sp + g.ph);
+          if (tw <= 0) continue;
+          ctx.globalAlpha = tw * tw * (s.dark ? 0.45 : 0.7);
+          ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + (x2 - x) * 0.6, y + (y2 - y) * 0.6); ctx.stroke();
+        }
         // Incoming crests, firming up as they near the break.
         ctx.strokeStyle = foamCol;
         ctx.lineCap = 'round';
@@ -155,7 +171,7 @@ export function start(host, opts) {
           const u = -BRK - CREST * (w.tb - T);
           if (u >= -BRK) continue;
           const k = clamp(1 - (-BRK - u) / (FAR - BRK), 0, 1);
-          ctx.globalAlpha = k * (s.dark ? 0.4 : 0.75);
+          ctx.globalAlpha = (0.25 + 0.75 * k) * (s.dark ? 0.6 : 0.8);
           ctx.lineWidth = 1.5 + k * 2.5;
           ctx.beginPath();
           for (let j = 0; j <= NV; j += 2) {

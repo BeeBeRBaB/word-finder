@@ -10,8 +10,10 @@ import { stage, TAU, clamp } from './stage.js';
 /** @typedef {{x:number, y:number, vx:number, vy:number, life:number, age:number, layer:number}} Grain */
 /** @typedef {{base:number, h:number, L:number, pan:number, u:number, c:number, grad:CanvasGradient|string, depth:number, acc:number}} Ridge */
 /** @typedef {{x:number, y:number, R:number, c:number}} Barchan */
+/** A sand snake skimming the ground downwind: head X in the wind frame, lane d, length L.
+ * @typedef {{X:number, d:number, L:number, v:number, ph:number, lane:number, age:number, life:number}} Streamer */
 
-const MAX_GRAINS = 420;
+const MAX_GRAINS = 800;
 
 /** @param {HTMLElement} host @param {import('./stage.js').StageOptions} opts @returns {() => void} */
 export function start(host, opts) {
@@ -29,6 +31,17 @@ export function start(host, opts) {
     /** @type {Barchan[]} */
     let barchans = [];
     const shade = s.dark ? 'rgba(0,0,0,.32)' : 'rgba(0,0,0,.1)';
+    /** The wind's strength now, 0.35..1.4: gusts that build and die every few seconds. */
+    const gust = () => 0.35 + 1.05 * Math.pow(0.5 + (Math.sin(s.t * 0.9 + salt) + 0.6 * Math.sin(s.t * 2.3 + salt * 2) + 0.4 * Math.sin(s.t * 0.31)) / 4, 1.5);
+    /** @type {Streamer[]} */
+    let streamers = [];
+    let sacc = 0;
+    /** Cloud shadows sweeping over the sand. @type {{x:number, y:number, r:number}[]} */
+    let clouds = [];
+    /** Grainflows sliding down the great dune's slip face: where across it they run, and how far.
+     * @type {{a:number, age:number, life:number}[]} */
+    let flows = [];
+    const shadow = shadowSprite(s.dark ? 0.3 : 0.14);
 
     // ---- Side view (layout 0) ----
 
@@ -63,7 +76,7 @@ export function start(host, opts) {
       for (let i = 0; i < n; i++) {
         const u = n > 1 ? i / (n - 1) : 1;
         ridges.push({ base: horizon + (s.H * 0.98 - horizon) * Math.pow((i + 0.7) / n, 1.15), h: m * (0.05 + 0.13 * u),
-          L: m * (0.38 + 0.7 * u), pan: dir * (1.5 + 9 * u), u, c: i % C, grad: '', depth: 0, acc: 0 });
+          L: m * (0.38 + 0.7 * u), pan: dir * (6 + 46 * u), u, c: i % C, grad: '', depth: 0, acc: 0 });
       }
       for (let i = 0; i < n; i++) {
         const r = ridges[i];
@@ -159,7 +172,7 @@ export function start(host, opts) {
      * and ends against its neighbours, as real ripples fork. @param {number} lam spacing @param {number} alpha */
     function drawRipples(lam, alpha) {
       const { ctx } = s, step = 10;
-      const n = Math.ceil(s.W / lam) + 3, run = s.t * 2.5 * dir, laps = Math.floor(run / lam), drift = run - laps * lam;
+      const n = Math.ceil(s.W / lam) + 3, run = s.t * 14 * dir, laps = Math.floor(run / lam), drift = run - laps * lam;
       ctx.lineWidth = 1;
       for (let j = -2; j < n; j++) {
         const g = j - laps;   // the ripple's own index, so its wobble stays its own
@@ -227,7 +240,7 @@ export function start(host, opts) {
       const K = clamp(Math.round((foot - cy) / (m * 0.028)), 8, 26);
       ctx.strokeStyle = s.colors[0]; ctx.lineWidth = 1.3;
       for (let j = 0; j < K; j++) {
-        const d = (j / K + s.t * 0.008) % 1, depth = Math.pow(1 - d, 1.6);
+        const d = (j / K + s.t * 0.08) % 1, depth = Math.pow(1 - d, 1.6);
         ctx.beginPath();
         for (let X = x0; X <= cx; X += 10) {
           // Parallel to the brink, lower by the ripple's depth down the face.
@@ -262,31 +275,53 @@ export function start(host, opts) {
         ridges.forEach((r, i) => {
           if (r.u < 0.3) return;
           const vis = Math.ceil((s.W + r.L) / r.L);
-          r.acc += dt * vis * (8 + 20 * r.u);
+          r.acc += dt * vis * (10 + 34 * r.u) * gust();
           const w0 = Math.min(wxOf(r, 0), wxOf(r, s.W));
           while (r.acc >= 1) {
             r.acc--;
             const a = crest(r, Math.floor(w0 / r.L) + rng.int(vis + 1), i);
-            spawn(a[0], a[1] - 1, i, m * 0.07 * (0.5 + r.u));
+            spawn(a[0], a[1] - 1, i, m * 0.11 * (0.5 + r.u) * gust());
           }
         });
       } else if (layout === 1) {
-        acc += dt * barchans.length * 4;
+        acc += dt * barchans.length * 10 * gust();
         while (acc >= 1) {
           acc--;
           const b = barchans[rng.int(barchans.length)];
           const side = rng.random() < 0.5 ? -1 : 1, onHorn = rng.random() < 0.6;
-          spawn(b.x + dir * b.R * (onHorn ? 1.45 : -0.1), b.y + side * b.R * (onHorn ? 0.8 : rng.random() * 0.5), 0, m * 0.11);
+          spawn(b.x + dir * b.R * (onHorn ? 1.45 : -0.1), b.y + side * b.R * (onHorn ? 0.8 : rng.random() * 0.5), 0, m * 0.2 * gust());
         }
       } else {
         // Off the top of the windward face, thickest at the brink.
-        acc += dt * 80;
+        acc += dt * 200 * gust();
         while (acc >= 1) {
           acc--;
           const X = cx - (cx - x0) * 0.3 * Math.pow(rng.random(), 2);
-          spawn(mx(X), face(X) - 1, 0, m * 0.12);
+          spawn(mx(X), face(X) - 1, 0, m * 0.2 * gust());
         }
       }
+      // Sand snakes, more of them in a gust.
+      sacc += dt * 5 * gust();
+      while (sacc >= 1) {
+        sacc--;
+        const near = ridges.filter((r) => r.u >= 0.5);
+        const lane = layout === 0 && near.length ? ridges.indexOf(near[rng.int(near.length)]) : 0;
+        let X = rng.random();
+        if (layout === 0) { const r = ridges[lane], w0 = Math.min(wxOf(r, 0), wxOf(r, s.W)); X = w0 - m * 0.3 + X * (s.W + m * 0.3); }
+        else if (layout === 1) X *= s.W;
+        else X = x0 + X * (cx - x0) * 0.8;
+        streamers.push({ X, d: rng.random(), L: m * (0.12 + 0.2 * rng.random()), v: m * (0.25 + 0.2 * rng.random()), ph: rng.random() * TAU,
+          lane, age: 0, life: 1.6 + rng.random() * 1.8 });
+      }
+      for (const q of streamers) { q.age += dt; q.X += q.v * gust() * dt; }
+      for (const c of clouds) {
+        c.x += dir * m * 0.07 * dt;
+        if (dir > 0 ? c.x - c.r > s.W : c.x + c.r < 0) { c.x = dir > 0 ? -c.r : s.W + c.r; c.y = rng.random() * s.H; }
+      }
+      if (layout === 2 && rng.random() < dt * 1.6) flows.push({ a: 0.3 + 0.7 * rng.random(), age: 0, life: 1.4 + rng.random() });
+      for (const f of flows) f.age += dt;
+      flows = flows.filter((f) => f.age < f.life);
+      streamers = streamers.filter((q) => q.age < q.life);
       for (const p of grains) {
         p.age += dt;
         p.x += p.vx * dt; p.y += p.vy * dt;
@@ -315,9 +350,55 @@ export function start(host, opts) {
       }
     }
 
+    /** The sand snakes of one lane as wavy threads, faint at the tail.
+     * @param {number} lane @param {string} color */
+    function drawStreamers(lane, color) {
+      const { ctx } = s, N = 14;
+      ctx.strokeStyle = color; ctx.lineWidth = layout === 1 ? 1.6 : 2; ctx.lineCap = 'round';
+      for (const q of streamers) {
+        if (q.lane !== lane) continue;
+        const f = Math.sin(Math.PI * q.age / q.life);
+        let prev = null;
+        for (let k = 0; k <= N; k++) {
+          const X = q.X - q.L * (1 - k / N), w = m * 0.008 * Math.sin(X / (m * 0.05) - s.t * 6 + q.ph);
+          /** @type {number[]} */
+          let p;
+          if (layout === 0) { const r = ridges[lane]; p = [sx(r, X), profile(r, lane, X) - 3 - q.d * r.h * 0.25 + w]; }
+          else if (layout === 1) p = [mx(X), q.d * s.H + w];
+          else { if (X < x0 || X > cx) { prev = null; continue; } p = [mx(X), face(X) + (0.08 + q.d * 0.8) * (foot - cy) + w]; }
+          if (prev) {
+            ctx.globalAlpha = f * (k / N) * (s.dark ? 0.6 : 0.65);
+            ctx.beginPath(); ctx.moveTo(prev[0], prev[1]); ctx.lineTo(p[0], p[1]); ctx.stroke();
+          }
+          prev = p;
+        }
+      }
+    }
+
+    function drawClouds() {
+      for (const c of clouds) { s.ctx.globalAlpha = 1; s.ctx.drawImage(shadow, c.x - c.r, c.y - c.r * 0.6, c.r * 2, c.r * 1.2); }
+    }
+
+    /** Tongues of sand running down the slip face from the brink, speeding up as they go. */
+    function drawFlows() {
+      const { ctx } = s;
+      ctx.strokeStyle = s.dark ? tint(rgb[0], 0.5) : s.colors[0]; ctx.lineWidth = 2; ctx.lineCap = 'round';
+      for (const f of flows) {
+        const v = f.age / f.life, head = v * v, tail = Math.max(0, head - 0.25);
+        const bx = cx + slip * (f.a * 1.15 - 0.15);
+        ctx.globalAlpha = (s.dark ? 0.5 : 0.55) * Math.sin(Math.PI * v);
+        ctx.beginPath();
+        ctx.moveTo(mx(cx + (bx - cx) * tail), cy + (s.H + 10 - cy) * tail);
+        ctx.lineTo(mx(cx + (bx - cx) * head), cy + (s.H + 10 - cy) * head);
+        ctx.stroke();
+      }
+    }
+
     return {
       lay() {
         m = Math.min(s.W, s.H);
+        if (!clouds.length) for (let k = 0; k < 3; k++) clouds.push({ x: rng.random() * s.W, y: rng.random() * s.H, r: 0 });
+        for (const c of clouds) c.r = m * (0.35 + 0.25 * rng.random());
         if (layout === 0) layRidges();
         if (layout === 2) layGreat();
         if (layout === 1) {
@@ -336,7 +417,7 @@ export function start(host, opts) {
         if (layout === 1) {
           for (const b of barchans) {
             // A small barchan outruns a big one, as real ones do.
-            b.x += dir * m * 0.016 * (m * 0.06 / b.R) * dt;
+            b.x += dir * m * 0.06 * (m * 0.06 / b.R) * dt;
             if ((dir > 0 && b.x > s.W + b.R * 1.3) || (dir < 0 && b.x < -b.R * 1.3)) Object.assign(b, barchan(true));
           }
         }
@@ -345,13 +426,23 @@ export function start(host, opts) {
       draw() {
         const { ctx } = s;
         if (layout === 0) {
-          ridges.forEach((r, i) => { drawRidge(r, i); drawGrains(i, s.dark ? tint(rgb[r.c], 0.5) : s.colors[r.c]); });
+          ridges.forEach((r, i) => {
+            drawRidge(r, i);
+            if (i === ridges.length - 2) drawClouds();
+            const c = s.dark ? tint(rgb[r.c], 0.5) : s.colors[r.c];
+            drawStreamers(i, c); drawGrains(i, c);
+          });
         } else if (layout === 1) {
           drawRipples(clamp(m * 0.035, 12, 28), s.dark ? 0.12 : 0.15);
+          drawStreamers(0, s.dark ? tint(rgb[0], 0.4) : s.colors[0]);
           for (const b of barchans) drawBarchan(b);
+          drawClouds();
           drawGrains(0, s.dark ? tint(rgb[0], 0.5) : s.colors[0]);
         } else {
           drawGreat();
+          drawClouds();
+          drawFlows();
+          drawStreamers(0, s.dark ? tint(rgb[0], 0.6) : s.colors[0]);
           drawGrains(0, s.dark ? tint(rgb[0], 0.6) : s.colors[0]);
         }
         ctx.globalAlpha = 1;
@@ -364,6 +455,18 @@ export function start(host, opts) {
 function hash(i) {
   const x = Math.sin(i * 127.1 + 311.7) * 43758.5453;
   return x - Math.floor(x);
+}
+
+/** A soft round shadow, dark at the middle and gone at the rim. @param {number} a @returns {HTMLCanvasElement} */
+function shadowSprite(a) {
+  const c = document.createElement('canvas');
+  c.width = c.height = 128;
+  const g = c.getContext('2d');
+  if (!g) return c;
+  const r = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  r.addColorStop(0, `rgba(0,0,0,${a})`); r.addColorStop(0.6, `rgba(0,0,0,${a * 0.6})`); r.addColorStop(1, 'rgba(0,0,0,0)');
+  g.fillStyle = r; g.fillRect(0, 0, 128, 128);
+  return c;
 }
 
 /** The colour taken `u` of the way to white. @param {number[]} c @param {number} u @returns {string} */

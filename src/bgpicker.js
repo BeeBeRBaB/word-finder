@@ -38,12 +38,12 @@ const optionMarkup = (bg) => `<label class="tile bgtile" data-bg="${bg.id}">`
 /** The menu's sections after the icon motions, each naming its scenes by id. A scene
  * listed in none goes under More, so a new registry entry still shows with no change here. */
 export const MOVING_SECTIONS = /** @type {readonly (readonly [string, readonly string[]])[]} */ (Object.freeze([
-  ['Sky and space', ['aurora', 'constellation', 'galaxy', 'meteors', 'orrery', 'planet', 'black-hole',
+  ['Sky and space', ['constellation', 'galaxy', 'meteors', 'orrery', 'planet', 'black-hole',
     'moon-phases', 'day-night', 'sunbeams', 'clouds', 'fireworks', 'lanterns', 'paper-planes', 'kites', 'balloons']],
   ['Water and weather', ['rain', 'snow', 'waves', 'caustics', 'koi', 'puddles', 'rainy-window', 'shoreline', 'river',
     'jellyfish', 'kelp', 'frost', 'lighthouse', 'weather-map']],
   ['Land and life', ['fireflies', 'hills', 'dunes', 'vines', 'tree', 'sunflower', 'leaves', 'spiderweb', 'ants', 'slime',
-    'windmills', 'train-window', 'zen-garden', 'traffic', 'rail-map', 'flag']],
+    'windmills', 'train-window', 'zen-garden', 'traffic', 'rail-map']],
   ['Games', ['pong', 'snake', 'breakout', 'invaders', 'asteroids', 'chess', 'reversi', 'card-cascade', 'dice', 'pinball',
     'maze-chase', 'light-cycles', 'pegboard', 'dominoes', 'blocks', 'maze']],
   ['Puzzles and words', ['hanoi', 'slide-puzzle', 'sudoku', 'tangram', 'letterrain', 'tiles', 'crossword', 'typewriter',
@@ -53,8 +53,8 @@ export const MOVING_SECTIONS = /** @type {readonly (readonly [string, readonly s
     'heart-monitor', 'oscilloscope', 'radar', 'circuit', 'equalizer']],
   ['Machines', ['gears', 'clocks', 'kinetic', 'newtons-cradle', 'metronomes', 'slinky', 'marble-run', 'hourglass',
     'abacus', 'pipes', 'mystify', 'synthwave', 'wireframe', 'trails']],
-  ['Light and patterns', ['plasma', 'blobs', 'contours', 'ribbons', 'voronoi', 'honeycomb', 'halftone', 'flowfield',
-    'mandala', 'truchet', 'moire', 'low-poly', 'penrose', 'spirograph', 'string-art', 'bokeh',
+  ['Light and patterns', ['blobs', 'contours', 'ribbons', 'voronoi', 'honeycomb', 'halftone', 'flowfield',
+    'mandala', 'truchet', 'low-poly', 'penrose', 'spirograph', 'string-art', 'bokeh',
     'neon', 'embers', 'smoke']],
   ['Paint and craft', ['ink', 'marbling', 'brushstrokes', 'drips', 'weave', 'cross-stitch', 'chalkboard', 'blueprint',
     'cracks']],
