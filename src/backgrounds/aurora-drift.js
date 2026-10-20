@@ -5,8 +5,8 @@ import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
 
 /** @typedef {{colors:string[], dark:boolean, reducedMotion:boolean}} BackgroundOptions */
 
-const DARK = ['#14b8a6', '#8b5cf6', '#ec4899', '#0ea5e9', '#f59e0b', '#6366f1'];
-const LIGHT = ['#5eead4', '#c4b5fd', '#f9a8d4', '#7dd3fc', '#fcd34d', '#a5b4fc'];
+const DARK = ['#14b8a6', '#22c55e', '#ec4899', '#0ea5e9', '#f59e0b', '#84cc16'];
+const LIGHT = ['#5eead4', '#86efac', '#f9a8d4', '#7dd3fc', '#fcd34d', '#bef264'];
 const SCALE = 6; // CSS px per canvas px
 const SPEED = 0.0001; // radians per ms at frequency 1 (~60s loop)
 const TAU = Math.PI * 2;

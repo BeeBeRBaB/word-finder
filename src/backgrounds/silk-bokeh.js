@@ -15,13 +15,13 @@ const STEP = 14; // CSS px between path points
 
 const PAL = {
   dark: {
-    rib: [['#22d3ee', '#a78bfa'], ['#f472b6', '#fbbf24'], ['#34d399', '#60a5fa']],
-    dot: ['#67e8f9', '#c4b5fd', '#f9a8d4', '#fde68a', '#86efac'],
+    rib: [['#22d3ee', '#fb923c'], ['#f472b6', '#fbbf24'], ['#34d399', '#60a5fa']],
+    dot: ['#67e8f9', '#fdba74', '#f9a8d4', '#fde68a', '#86efac'],
     line: 0.46, sheen: 0.07, dotA: 0.42,
   },
   light: {
-    rib: [['#0891b2', '#7c3aed'], ['#db2777', '#d97706'], ['#059669', '#2563eb']],
-    dot: ['#22d3ee', '#a78bfa', '#f472b6', '#fbbf24', '#34d399'],
+    rib: [['#0891b2', '#ea580c'], ['#db2777', '#d97706'], ['#059669', '#2563eb']],
+    dot: ['#22d3ee', '#fb923c', '#f472b6', '#fbbf24', '#34d399'],
     line: 0.4, sheen: 0.06, dotA: 0.34,
   },
 };

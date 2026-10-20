@@ -373,15 +373,15 @@ const lt = (ground, ...colors) => ({ ground, dark: false, colors });
 /** @type {Readonly<Record<string, {dark:Look, light:Look}>>} */
 export const LOOKS = Object.freeze({
   night: {
-    dark: dk('radial-gradient(120% 90% at 75% 15%,#2c1c78 0%,#120c3c 50%,#05040f 100%)', '#ff5ca8', '#ffd23f', '#3ee8ff', '#7dff8a', '#ff8a3d', '#d4a5ff'),
-    light: lt('linear-gradient(180deg,#c9d6ff 0%,#f3e8ff 100%)', '#d6246e', '#c77700', '#0077a8', '#1b8a3a', '#d4570e', '#6a2fc0'),
+    dark: dk('radial-gradient(120% 90% at 75% 15%,#1d3260 0%,#0c1631 50%,#04070f 100%)', '#ff5ca8', '#ffd23f', '#3ee8ff', '#7dff8a', '#ff8a3d', '#f4f1e8'),
+    light: lt('linear-gradient(180deg,#c6d9ef 0%,#eef3f8 100%)', '#d6246e', '#c77700', '#0077a8', '#1b8a3a', '#d4570e', '#1f3f8f'),
   },
   ocean: {
     dark: dk('linear-gradient(180deg,#0a6a9a 0%,#06456f 50%,#021f3d 100%)', '#ff7a45', '#ffd166', '#3df5d0', '#ff5c8a', '#b5ecff', '#c3ff5a'),
     light: lt('linear-gradient(180deg,#8fdcff 0%,#d4f3ff 100%)', '#e0471b', '#c98400', '#00876f', '#d81b60', '#1f5fa8', '#4f8f00'),
   },
   sky: {
-    dark: dk('linear-gradient(180deg,#1b2a6b 0%,#2e3f8f 55%,#5a4a9c 100%)', '#ff6b6b', '#ffb347', '#ffe066', '#5ef0b0', '#9fd3ff', '#ff7ac8'),
+    dark: dk('linear-gradient(180deg,#12284f 0%,#1d4373 55%,#2d6390 100%)', '#ff6b6b', '#ffb347', '#ffe066', '#5ef0b0', '#9fd3ff', '#ff7ac8'),
     light: lt('linear-gradient(180deg,#3fb3ff 0%,#8fd6ff 55%,#e3f6ff 100%)', '#e5243b', '#ff8c00', '#ffcc00', '#13a26b', '#173a7a', '#ff3d9a'),
   },
   forest: {
@@ -389,12 +389,12 @@ export const LOOKS = Object.freeze({
     light: lt('linear-gradient(180deg,#d8f5c8 0%,#a8e09a 100%)', '#c43c00', '#d26b00', '#1f7a1f', '#c2185b', '#00698f', '#5a3a12'),
   },
   sand: {
-    dark: dk('linear-gradient(180deg,#3a1f4a 0%,#6b2f3a 60%,#8a4a2a 100%)', '#ffd166', '#ff8c42', '#7ae7ff', '#9effa0', '#ffb3c6', '#ff5e7e'),
+    dark: dk('linear-gradient(180deg,#2a1a14 0%,#5a2e1e 60%,#8a4a2a 100%)', '#ffd166', '#ff8c42', '#7ae7ff', '#9effa0', '#ffb3c6', '#ff5e7e'),
     light: lt('linear-gradient(180deg,#ffe2a1 0%,#ffc370 60%,#f3a15a 100%)', '#c1121f', '#7b2cbf', '#0067a3', '#1f7a3a', '#4a2511', '#e5007a'),
   },
   arcade: {
-    dark: dk('radial-gradient(130% 100% at 50% 0%,#1d1640 0%,#0a0818 55%,#030208 100%)', '#ff2e88', '#00f0ff', '#fff200', '#39ff14', '#ff7a00', '#c06bff'),
-    light: lt('linear-gradient(180deg,#f2f0ff 0%,#dcd8ff 100%)', '#e0115f', '#007fa3', '#b38f00', '#1e9e2a', '#e05a00', '#7a2fd0'),
+    dark: dk('radial-gradient(130% 100% at 50% 0%,#142033 0%,#090d18 55%,#030408 100%)', '#ff2e88', '#00f0ff', '#fff200', '#39ff14', '#ff7a00', '#ffffff'),
+    light: lt('linear-gradient(180deg,#f3f4f6 0%,#dde1e8 100%)', '#e0115f', '#007fa3', '#b38f00', '#1e9e2a', '#e05a00', '#1a1a2e'),
   },
   paper: {
     dark: dk('linear-gradient(160deg,#23263a 0%,#151726 100%)', '#ff6b6b', '#6ea8ff', '#ffbe3d', '#4fd98a', '#c49bff', '#ff7ab6'),
@@ -405,16 +405,16 @@ export const LOOKS = Object.freeze({
     light: lt('linear-gradient(180deg,#e8f1ff 0%,#cfe0fb 100%)', '#0b4fa8', '#00897b', '#c77700', '#c2185b', '#2e7d32', '#1a2a4a'),
   },
   sunset: {
-    dark: dk('linear-gradient(180deg,#ff8a5c 0%,#d63c7e 45%,#5a1a8c 75%,#1e0b45 100%)', '#ffe66d', '#ffffff', '#ffb02e', '#5ee2ff', '#ff4fa8', '#b8f2e6'),
-    light: lt('linear-gradient(180deg,#ffe0c2 0%,#ffc2d4 55%,#e2c8ff 100%)', '#c2410c', '#7c2d92', '#b45309', '#0369a1', '#be185d', '#047857'),
+    dark: dk('linear-gradient(180deg,#120c10 0%,#2e1618 45%,#7a3426 80%,#c8693c 100%)', '#ffe66d', '#ffffff', '#ffb02e', '#5ee2ff', '#ff4fa8', '#b8f2e6'),
+    light: lt('linear-gradient(180deg,#ffe0c2 0%,#ffd2b8 55%,#f6e7d8 100%)', '#c2410c', '#9f1239', '#b45309', '#0369a1', '#be185d', '#047857'),
   },
   candy: {
-    dark: dk('linear-gradient(135deg,#3b1450 0%,#1d2a5c 100%)', '#ff6fb5', '#b18cff', '#5cc8ff', '#5ef0a0', '#ffb14d', '#fff4a8'),
-    light: lt('linear-gradient(135deg,#ffc6e4 0%,#ffe9a8 50%,#b8e6ff 100%)', '#e0115f', '#6a1fd1', '#0a7fd9', '#0f9b58', '#ff6a00', '#2a1a5e'),
+    dark: dk('linear-gradient(135deg,#173440 0%,#14243a 100%)', '#ff6fb5', '#ff8f70', '#5cc8ff', '#5ef0a0', '#ffb14d', '#fff4a8'),
+    light: lt('linear-gradient(135deg,#fff3e0 0%,#fde6cc 100%)', '#e0115f', '#0f766e', '#0a7fd9', '#0f9b58', '#ff6a00', '#2a1a5e'),
   },
   neon: {
-    dark: dk('radial-gradient(120% 90% at 30% 20%,#4b16b8 0%,#1f0759 55%,#0b0222 100%)', '#ff3fa4', '#3fd8ff', '#ffe03f', '#7dffd4', '#ff9d2e', '#ffffff'),
-    light: lt('radial-gradient(120% 90% at 30% 20%,#ffe3f7 0%,#e6dcff 60%,#d5e6ff 100%)', '#d4146f', '#0a7fb5', '#a87d00', '#0e8f6a', '#d65a00', '#5b21b6'),
+    dark: dk('radial-gradient(120% 90% at 30% 20%,#0f4152 0%,#08202c 55%,#03090e 100%)', '#ff3fa4', '#3fd8ff', '#ffe03f', '#7dffd4', '#ff9d2e', '#ffffff'),
+    light: lt('radial-gradient(120% 90% at 30% 20%,#eaf6f8 0%,#d7ebf1 100%)', '#d4146f', '#0a7fb5', '#a87d00', '#0e8f6a', '#d65a00', '#0f3f5f'),
   },
   ember: {
     dark: dk('radial-gradient(120% 90% at 50% 100%,#6b1a0a 0%,#2e0806 55%,#120303 100%)', '#ff5a1f', '#ffb703', '#ffe8a3', '#ff3d7f', '#ff8c42', '#ffd6a5'),

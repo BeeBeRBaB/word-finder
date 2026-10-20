@@ -4,8 +4,8 @@ import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
 
 /** @typedef {{colors:string[], dark:boolean, reducedMotion:boolean}} BackgroundOptions */
 
-const DARK = ['#ff6b8b', '#ffc857', '#5ee6a8', '#4cc9f0', '#a78bfa', '#ff9f5a'];
-const LIGHT = ['#d63a64', '#c98a00', '#0f9960', '#1b82c4', '#6d4fd6', '#d9661f'];
+const DARK = ['#ff6b8b', '#ffc857', '#5ee6a8', '#4cc9f0', '#f4f1e8', '#ff9f5a'];
+const LIGHT = ['#d63a64', '#c98a00', '#0f9960', '#1b82c4', '#1f3f8f', '#d9661f'];
 const MAX = 80;
 
 /**

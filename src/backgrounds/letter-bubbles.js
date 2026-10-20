@@ -10,8 +10,8 @@ import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
  * }} Bubble
  */
 
-const DARK = ['#ff7aa2', '#ffb35c', '#ffe46b', '#6ee7b7', '#67c8ff', '#b79cff'];
-const LIGHT = ['#d63f73', '#d8701a', '#b08a00', '#169a68', '#1a82c8', '#7250d6'];
+const DARK = ['#ff7aa2', '#ffb35c', '#ffe46b', '#6ee7b7', '#67c8ff', '#ff8f70'];
+const LIGHT = ['#d63f73', '#d8701a', '#b08a00', '#169a68', '#1a82c8', '#c2410c'];
 const LETTERS = 'AAABCDEEEEFGHIIIJKLMNNOOOPQRRSSSTTTUUVWXYZ';
 
 /** Every field is overwritten by spawn() before the first draw.

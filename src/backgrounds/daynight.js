@@ -182,7 +182,8 @@ export function start(host, opts) {
         // The land, darkening and cooling toward night, nearer layers stronger.
         const lit = 0.35 + 0.65 * day;
         for (let i = 0; i < hills.length; i++) {
-          const c = mixc(rgb[(land0 + i) % C], night, 0.55 * (1 - lit));
+          // Every layer the look's green, nearer ones darker: its other colours over the sky read violet.
+          const c = mixc(rgb[land0], night, Math.min(1, 0.55 * (1 - lit) + i * 0.15));
           // Clear what lies behind the layer first, so no sky, sun or farther hill shows through.
           ctx.globalAlpha = 1;
           ctx.globalCompositeOperation = 'destination-out';

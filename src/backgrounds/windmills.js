@@ -176,7 +176,8 @@ export function start(host, opts) {
         }
         ctx.fill();
         if (layout === 2) {
-          ctx.fillStyle = col(0);
+          // The sea in the look's blue: a warm one over the sky's blue reads violet.
+          ctx.fillStyle = col(4);
           ctx.globalAlpha = 0.12 * lift;
           ctx.fillRect(0, sea, W, H - sea);
           // Swell: short dashes that sway, closer together toward the horizon.
