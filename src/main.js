@@ -923,7 +923,7 @@ function showBackdrop() {
   void backdrop.show(id, bgHost, {
     colors: [...look.colors], dark: look.dark, reducedMotion: prefersReducedMotion(),
     ground: id === 'motion' ? undefined : look.ground, lookOf: (i) => lookOf(i, pref),
-    subject: subjectId, seed: currentSeed,
+    subject: subjectId, seed: currentSeed, icons: cfg.get().icons,
   });
 }
 globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').addEventListener?.('change', showBackdrop);
@@ -1155,7 +1155,7 @@ function syncSettings() {
  * @param {string} key @returns {void} */
 function applySetting(key) {
   const now = cfg.get();
-  if (key === 'art' || key === 'bgmode' || key === 'motion') showBackdrop();
+  if (key === 'art' || key === 'bgmode' || key === 'motion' || key === 'icons') showBackdrop();
   if (key === 'letters') { state.rendered = { puzzle: null, cell: 0 }; layout(); }
   if (key === 'reveal') els.app.dataset.reveal = now.reveal ? 'on' : 'off';
   if (key === 'style') applyStyle();

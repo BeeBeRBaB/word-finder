@@ -49,7 +49,8 @@ test('the Background page has the mode, and under Manual a dropdown of every bac
   await expect(mode.locator('option')).toHaveText(['Theme', 'Random', 'Manual']);
   await expect(mode).toHaveValue('theme');
   await expect(page.locator('#bgmode-note')).toHaveText('Each theme comes with its own background. Now: Galaxy.');
-  await expect(page.locator('#settings-bgpage .seg')).toHaveCount(0);   // no Area row: the whole page, always
+  // Icons is the page's one switch: no Area row, the whole page always.
+  await expect(page.locator('#settings-bgpage .seg')).toHaveAttribute('data-setting', 'icons');
   await expect(page.locator('#bg-manual')).toBeHidden();
   await mode.selectOption('manual');
   await expect(page.locator('#bgmode-note')).toHaveText('The one you pick shows with every game.');
@@ -379,6 +380,39 @@ test('Drifting icons restarts for every new subject', async ({ page }) => {
   // Restarted for the new subject, unlike the other animated backgrounds.
   await expect.poll(() => page.evaluate(c => c?.isConnected, canvas)).toBe(false);
   await expect(page.locator('#bg > canvas')).toHaveCount(1);
+  await expect.poll(() => painted(page, '#bg > canvas')).toBe(true);
+});
+
+test('Icons switches the subject backgrounds between one colour and flat colour drawings', async ({ page }) => {
+  await handPickedBackground(page, 'drift');
+  await page.setViewportSize({ width: 1280, height: 800 });
+  /** @type {string[]} */ const loaded = [];
+  page.on('requestfinished', r => { const m = r.url().match(/\/src\/backgrounds\/icons\/(mono|flat)\/([a-z]+)\.js/); if (m) loaded.push(`${m[1]}/${m[2]}`); });
+  await page.goto('/?seed=1&subject=animals/dogs');
+  await expect.poll(() => painted(page, '#bg > canvas')).toBe(true);
+  // Its category's drawings alone, in the default style.
+  expect(loaded).toEqual(['mono/animals']);
+  const canvas = await page.locator('#bg canvas').elementHandle();
+  await openPage(page);
+  const flat = page.getByRole('button', { name: 'Flat colour' });
+  await flat.click();
+  await expect(flat).toHaveAttribute('aria-pressed', 'true');
+  // Restarted in the new style, which loads its own files and keeps the setting.
+  await expect.poll(() => page.evaluate(c => c?.isConnected, canvas)).toBe(false);
+  await expect.poll(() => painted(page, '#bg > canvas')).toBe(true);
+  expect(loaded).toEqual(['mono/animals', 'flat/animals']);
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('wordfinder-settings-v1') ?? '{}').icons)).toBe('flat');
+});
+
+test('icons that failed to load offline draw once the device is back online', async ({ page }) => {
+  await handPickedBackground(page, 'drift');
+  await page.route('**/src/backgrounds/icons/**', (route) => route.abort());
+  await page.goto('/?seed=1&subject=animals/dogs');
+  await expect(page.locator('#bg > canvas')).toHaveCount(1);
+  await page.waitForTimeout(1000);
+  expect(await painted(page, '#bg > canvas')).toBe(false);
+  await page.unroute('**/src/backgrounds/icons/**');
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
   await expect.poll(() => painted(page, '#bg > canvas')).toBe(true);
 });
 

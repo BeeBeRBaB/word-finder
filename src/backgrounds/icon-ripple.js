@@ -8,7 +8,8 @@ import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
 import { facingOf, iconSprites, iconsFor, sceneColors, variantOf, withHero } from './icon-scene.js';
 
 /**
- * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number}} BackgroundOptions
+ * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number,
+ *   icons?:import('./icon-scene.js').IconStyle}} BackgroundOptions
  * @typedef {{k:number, d:number, base:number, size:number, x:number, y:number, vx:number, vy:number,
  *   ph:number, bobF:number, kick:number, alpha:number, cyc:number}} Float
  * x, y is where it meets the water in CSS px; d its depth, 0 far to 1 near; kick a bob a passing
@@ -80,7 +81,7 @@ export function start(host, opts) {
     cancel = iconSprites(ids, i => colors[(hue0 + 1 + i) % colors.length], Math.round(SPRITE * dpr), (i, s) => {
       sprites[i] = s;
       draw();
-    });
+    }, opts);
   }
 
   /** @param {number} x @param {number} y @param {number} max @param {number} n @param {number} a

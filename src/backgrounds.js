@@ -6,7 +6,7 @@ import { normalizeTheme } from './appearance.js';
 
 /**
  * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed:number, ground?:string,
- *   lookOf?:(id:string, pref?:string) => Look}} BackgroundOptions
+ *   lookOf?:(id:string, pref?:string) => Look, icons?:import('./backgrounds/icon-scene.js').IconStyle}} BackgroundOptions
  * `colors` are the background's own six colours and `dark` whether its ground is dark (`lookOf`),
  * the same in every theme; `subject` and `seed` are the dealt puzzle's. `ground` is painted on the
  * host when the background starts (left as it is when absent: Subject motion paints its motion's,
@@ -533,7 +533,7 @@ export function makeBackdrop(deps = {}) {
      * @returns {Promise<boolean>} whether a background is now running */
     async show(id, host, opts) {
       const bg = findBackground(id, deps.list);
-      const deal = bg.perDeal ? `|${opts.subject}|${opts.seed}` : '';
+      const deal = bg.perDeal ? `|${opts.subject}|${opts.seed}|${opts.icons}` : '';
       const next = host ? `${bg.id}|${host.id}|${opts.dark}|${opts.reducedMotion}|${opts.colors}${deal}` : '';
       if (next && next === key && stop) return true;
       halt();

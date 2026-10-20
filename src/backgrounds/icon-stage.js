@@ -55,7 +55,7 @@ export function iconStage(host, opts, make) {
       cancel = iconSprites(ids, i => s.hue(i), Math.round(SPRITE * s.dpr), (i, spr) => {
         sprites[i] = spr;
         s.paint();
-      });
+      }, opts);
     };
     s.onDpr = load;
     load();

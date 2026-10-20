@@ -7,7 +7,8 @@ import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
 import { iconSprites, iconsFor, sceneColors, variantOf, withHero } from './icon-scene.js';
 
 /**
- * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number}} BackgroundOptions
+ * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number,
+ *   icons?:import('./icon-scene.js').IconStyle}} BackgroundOptions
  * @typedef {{k:number, x:number, y:number, size:number, alpha:number, rot:number, spin:number,
  *   twist:number, ph:number, age:number, hold:number}} Bloom
  * x, y is the centre in CSS px, rot and twist radians, spin radians a second (or the garden's sway),
@@ -61,7 +62,7 @@ export function start(host, opts) {
     cancel = iconSprites(ids, i => colors[(hue0 + i) % colors.length], Math.round(SPRITE * dpr), (i, s) => {
       sprites[i] = s;
       draw();
-    });
+    }, opts);
   }
 
   /** The clear CSS px between a spot and the nearest icon showing, less both their reaches.

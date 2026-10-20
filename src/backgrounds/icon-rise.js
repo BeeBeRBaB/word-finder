@@ -7,7 +7,8 @@ import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
 import { iconSprites, iconsFor, sceneColors, variantOf, withHero } from './icon-scene.js';
 
 /**
- * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number}} BackgroundOptions
+ * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number,
+ *   icons?:import('./icon-scene.js').IconStyle}} BackgroundOptions
  * @typedef {{k:number, size:number, speed:number, rise:number, x:number, sway:number, swayF:number,
  *   f2:number, tilt:number, ph:number, alpha:number, grow:number, top:number, pop:number}} Riser
  * rise is the distance climbed from just below the bottom edge, x the centre across. f2 is the
@@ -68,7 +69,7 @@ export function start(host, opts) {
     cancel = iconSprites(ids, colorOf, Math.round(SPRITE * dpr), (i, s) => {
       sprites[i] = kind === 1 ? bubble(s, colorOf(i)) : s;
       draw();
-    });
+    }, opts);
   }
 
   /** @param {Riser} p @returns {number} how far below the bottom edge its centre starts */

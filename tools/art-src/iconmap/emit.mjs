@@ -1,18 +1,23 @@
 // node emit.mjs [--check] — writes the lazy icon modules the subject backgrounds import:
-// src/backgrounds/icons.js (every icon a map uses, and which way the side-on ones face, from
-// ../icons/facing.json) and subject-icons.js (the icon and motion maps).
-// --check writes nothing and exits 1 when either file differs from what it would write.
+// src/backgrounds/icons/mono/<category>.js and icons/flat/<category>.js (the Fluent Emoji drawings,
+// one colour and flat colour, from ../icons/fluent-emoji*.json: every icon the category maps, so a
+// scene needs its category's file alone) and subject-icons.js (the icon and motion maps, and which way
+// the side-on icons face, from ../icons/facing.json).
+// --check writes nothing and exits 1 when any of them differs from what it would write.
 import fs from 'node:fs';
 const dir = new URL('.', import.meta.url).pathname;
 const iconDir = new URL('../icons/', import.meta.url).pathname;
 const out = new URL('../../../src/backgrounds/', import.meta.url).pathname;
+const STYLES = /** @type {const} */ ([['mono', 'in currentColor (high contrast)'], ['flat', 'in their own flat colours']]);
 
-/** @type {Map<string, string>} */
-const svg = new Map();
-for (const f of fs.readdirSync(iconDir).filter(f => /^part\d+\.json$/.test(f)))
-  for (const it of JSON.parse(fs.readFileSync(iconDir + f, 'utf8'))) svg.set(it.id, it.svg);
+// Each drawing is drawn on 32x32; doubled, it fills the 64x64 viewBox icon-scene.js draws in.
+/** @param {string} file @returns {Map<string, string>} */
+const drawings = file => new Map(Object.entries(JSON.parse(fs.readFileSync(iconDir + file, 'utf8')))
+  .map(([id, body]) => [id, `<g transform="scale(2)">${body}</g>`]));
+const mono = drawings('fluent-emoji.json'), flat = drawings('fluent-emoji-flat.json');
+const licence = fs.readFileSync(iconDir + 'LICENSE-fluent-emoji.txt', 'utf8').trim().split('\n').map(l => `// ${l}`.trimEnd()).join('\n');
 
-const cats = fs.readdirSync(dir).filter(f => /^[a-z]+\.json$/.test(f) && f !== 'wishlist.json').sort();
+const cats = fs.readdirSync(dir).filter(f => /^[a-z]+\.json$/.test(f)).sort();
 // Subject motion: a motion per category, and per subject where another fits better.
 /** @type {{categories:Record<string,string>, subjects:Record<string,string>}} */
 const motion = JSON.parse(fs.readFileSync(dir + 'subject-motion.json', 'utf8'));
@@ -20,40 +25,42 @@ const motion = JSON.parse(fs.readFileSync(dir + 'subject-motion.json', 'utf8'));
 const sorted = o => Object.entries(o).sort(([a], [b]) => (a < b ? -1 : 1)).map(([k, v]) => [k, [v]]);
 /** @type {[string, string[]][]} */ const category = [];
 /** @type {[string, string[]][]} */ const subject = [];
+/** @type {[string, string[]][]} each category and every icon its map uses */
+const perCat = [];
 for (const f of cats) {
-  const m = JSON.parse(fs.readFileSync(dir + f, 'utf8'));
-  category.push([f.slice(0, -5), m.category]);
+  const cat = f.slice(0, -5), m = JSON.parse(fs.readFileSync(dir + f, 'utf8'));
+  const foreign = Object.keys(m.subjects).filter(k => k.split('/')[0] !== cat);
+  if (foreign.length) { console.error(`${f} maps subjects of another category: ${foreign.join(', ')}`); process.exit(1); }
+  category.push([cat, m.category]);
   for (const [k, v] of Object.entries(m.subjects).sort(([a], [b]) => (a < b ? -1 : 1))) subject.push([k, v]);
+  perCat.push([cat, [...new Set([m.category, ...Object.values(m.subjects)].flat())].sort()]);
 }
 const used = new Set([...category, ...subject].flatMap(([, v]) => v));
-const unknown = [...used].filter(id => !svg.has(id));
-if (unknown.length) { console.error(`mapped but not drawn: ${unknown.join(', ')}`); process.exit(1); }
+const unknown = [...used].filter(id => !mono.has(id) || !flat.has(id));
+if (unknown.length) { console.error(`mapped but not vendored (run ../icons/vendor.mjs): ${unknown.join(', ')}`); process.exit(1); }
 const ids = [...used].sort();
-const quoted = ids.filter(id => /['\\\n]/.test(/** @type {string} */ (svg.get(id))));
+const quoted = ids.filter(id => /['\\\n]/.test(`${mono.get(id)}${flat.get(id)}`));
 if (quoted.length) { console.error(`cannot single-quote: ${quoted.join(', ')}`); process.exit(1); }
 // Icons drawn side-on, which the motions mirror to face the way they move.
 /** @type {{left:string[], right:string[]}} */
 const facing = JSON.parse(fs.readFileSync(iconDir + 'facing.json', 'utf8'));
 if (!Array.isArray(facing.left) || !Array.isArray(facing.right)) { console.error('icons/facing.json needs "left" and "right" lists'); process.exit(1); }
-const undrawn = [...facing.left, ...facing.right].filter(id => !svg.has(id));
-if (undrawn.length) { console.error(`icons/facing.json names icons not drawn: ${undrawn.join(', ')}`); process.exit(1); }
+const unmapped = [...facing.left, ...facing.right].filter(id => !used.has(id));
+if (unmapped.length) { console.error(`icons/facing.json names icons no map uses: ${unmapped.join(', ')}`); process.exit(1); }
 const both = facing.left.filter(id => facing.right.includes(id));
 if (both.length) { console.error(`icons/facing.json lists these as both left and right: ${both.join(', ')}`); process.exit(1); }
 const side = ids.filter(id => facing.left.includes(id) || facing.right.includes(id));
 
 const head = '// Generated by tools/art-src/iconmap/emit.mjs; edit the sources there, not this file.\n';
-const icons = `${head}// Inner markup for a 64x64 viewBox: classes t-a (main), t-b (shade), t-c (highlight), ln (stroke).
+/** @param {string} style @param {Map<string, string>} svg @param {string[]} list @returns {string} */
+const iconModule = (style, svg, list) => `${head}// Inner markup for a 64x64 viewBox, ${style}: Fluent Emoji by Microsoft,
+// https://github.com/microsoft/fluentui-emoji, under this licence:
+//
+${licence}
 
 /** @type {Readonly<Record<string, string>>} */
 export const ICONS = Object.freeze({
-${ids.map(id => `  '${id}': '${svg.get(id)}',`).join('\n')}
-});
-
-// The icons drawn side-on: -1 faces left, 1 right. Any other faces front or is symmetric.
-
-/** @type {Readonly<Record<string, number>>} */
-export const FACING = Object.freeze({
-${side.map(id => `  '${id}': ${facing.left.includes(id) ? -1 : 1},`).join('\n')}
+${list.map(id => `  '${id}': '${svg.get(id)}',`).join('\n')}
 });
 `;
 /** @param {[string, string[]][]} rows */
@@ -70,6 +77,14 @@ export const SUBJECT_ICONS = Object.freeze({
 ${table(subject)}
 });
 
+// The icons drawn side-on, in both styles alike: -1 faces left, 1 right. Any other faces front or
+// is symmetric.
+
+/** @type {Readonly<Record<string, number>>} */
+export const FACING = Object.freeze({
+${side.map(id => `  '${id}': ${facing.left.includes(id) ? -1 : 1},`).join('\n')}
+});
+
 // Motion ids (subject-motion.js) per category, and per subject where another fits better.
 
 /** @type {Readonly<Record<string, string>>} */
@@ -83,14 +98,30 @@ ${table(sorted(motion.subjects))}
 });
 `;
 
+/** @type {[string, string][]} path under src/backgrounds/, text */
+const files = [['subject-icons.js', maps]];
+for (const [style, about] of STYLES) {
+  const svg = style === 'mono' ? mono : flat;
+  for (const [cat, list] of perCat) files.push([`icons/${style}/${cat}.js`, iconModule(about, svg, list)]);
+}
+const check = process.argv.includes('--check');
 let stale = 0;
-for (const [name, text] of [['icons.js', icons], ['subject-icons.js', maps]]) {
+for (const [name, text] of files) {
   const now = fs.existsSync(out + name) ? fs.readFileSync(out + name, 'utf8') : '';
   if (now === text) continue;
-  if (process.argv.includes('--check')) { console.error(`src/backgrounds/${name} is stale: run node tools/art-src/iconmap/emit.mjs`); stale++; }
-  else fs.writeFileSync(out + name, text);
+  if (check) { console.error(`src/backgrounds/${name} is stale: run node tools/art-src/iconmap/emit.mjs`); stale++; }
+  else { fs.mkdirSync(out + name.replace(/[^/]+$/, ''), { recursive: true }); fs.writeFileSync(out + name, text); }
 }
-const unused = [...svg.keys()].filter(id => !used.has(id));
+// A file left from a category that has gone, or from the single-file layout before this one.
+const want = new Set(files.map(([n]) => n));
+const strays = ['icons.js', 'icons-flat.js', ...STYLES.flatMap(([style]) =>
+  fs.existsSync(`${out}icons/${style}`) ? fs.readdirSync(`${out}icons/${style}`).map(f => `icons/${style}/${f}`) : [])]
+  .filter(n => !want.has(n) && fs.existsSync(out + n));
+for (const n of strays) {
+  if (check) { console.error(`src/backgrounds/${n} is not emitted: run node tools/art-src/iconmap/emit.mjs`); stale++; }
+  else fs.rmSync(out + n);
+}
+const unused = [...mono.keys()].filter(id => !used.has(id));
 console.log(`${ids.length} icons, ${subject.length} subjects, ${category.length} categories` +
-  (unused.length ? `; not mapped, so not emitted: ${unused.join(', ')}` : ''));
+  (unused.length ? `; vendored but not mapped, so not emitted: ${unused.join(', ')}` : ''));
 process.exit(stale ? 1 : 0);

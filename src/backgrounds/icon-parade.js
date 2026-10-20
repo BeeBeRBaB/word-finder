@@ -8,7 +8,8 @@ import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
 import { facingOf, iconSprites, iconsFor, sceneColors, variantOf, withHero } from './icon-scene.js';
 
 /**
- * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number}} BackgroundOptions
+ * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number,
+ *   icons?:import('./icon-scene.js').IconStyle}} BackgroundOptions
  * @typedef {{z:number, dir:number, speed:number, salt:number, seq:number[], s:number, ph:number,
  *   at:number, vis:number, size:number, gap:number, stride:number, alpha:number}} Lane
  * A lane is an endless procession: icon k sits at (k + dir*s) gaps from the anchor edge, so it
@@ -77,7 +78,7 @@ export function start(host, opts) {
     cancel = iconSprites(ids, i => colors[(hue0 + i) % colors.length], Math.round(SPRITE * dpr), (i, s) => {
       sprites[i] = s;
       draw();
-    });
+    }, opts);
   }
 
   /** Sizes follow the host smoothly; only the lane count steps, and lanes glide to their new place.

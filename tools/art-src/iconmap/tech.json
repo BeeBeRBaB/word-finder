@@ -1,171 +1,29 @@
 {
-  "category": [
-    "laptop",
-    "smartphone",
-    "battery",
-    "game-controller",
-    "satellite",
-    "gear"
-  ],
+  "category": ["laptop", "mobile-phone", "desktop-computer", "battery", "video-game", "robot"],
   "subjects": {
-    "tech/computers": ["desktop-computer", "microchip", "keyboard-and-mouse", "code-window", "laptop", "gear"],
-    "tech/smartphones": ["smartphone", "speech-bubble", "camera", "battery", "microphone", "alarm-clock"],
-    "tech/laptops": ["laptop", "microchip", "keyboard-and-mouse", "battery", "smartphone", "gear"],
-    "tech/internet": ["wifi-signal", "padlock", "laptop", "speech-bubble", "smartphone", "satellite"],
-    "tech/software": ["code-window", "laptop", "gear", "smartphone", "lightbulb"],
-    "tech/hardware": ["microchip", "keyboard-and-mouse", "battery", "gear", "laptop", "smartphone"],
-    "tech/robots": ["robot-arm", "robot", "microchip", "gear", "wheel", "battery"],
-    "tech/cameras": ["camera-lens", "camera", "film-reel", "eye", "smartphone"],
-    "tech/video-games": ["game-controller", "treasure-chest", "shield", "medal", "television", "laptop"],
-    "tech/social-media": ["speech-bubble", "heart", "smiley", "camera", "smartphone"],
-    "tech/coding": ["curly-braces", "code-window", "laptop", "lightbulb", "gear", "smartphone"],
-    "tech/batteries": ["battery", "lightbulb", "smartphone", "laptop"],
-    "tech/screens": ["computer-monitor", "desktop-computer", "television", "laptop", "smartphone", "lightbulb"],
-    "tech/headphones": ["headphones", "microphone", "guitar", "drum", "smartphone"],
-    "tech/printers": ["printer", "book-stack", "quill", "paintbrush", "laptop"],
-    "tech/drones": ["drone", "airplane", "camera", "battery", "smartphone"],
-    "tech/wearables": ["smartwatch", "heart", "sneaker", "alarm-clock", "smartphone", "battery"],
-    "tech/keyboards": ["keyboard-and-mouse", "laptop", "lightbulb", "smartphone", "gear"],
-    "tech/networking": ["router", "wifi-signal", "satellite", "laptop", "smartphone", "gear"],
-    "tech/artificial-intelligence": ["ai-brain", "robot", "microchip", "brain", "speech-bubble", "eye"],
-    "tech/virtual-reality": ["vr-headset", "eye", "game-controller", "laptop", "gear"],
-    "tech/smart-home": ["smart-house", "padlock", "wifi-signal", "lightbulb", "smartphone", "lamp"],
-    "tech/cybersecurity": ["padlock", "shield", "eye", "laptop", "smartphone", "gear"],
-    "tech/streaming": ["play-screen", "headphones", "wifi-signal", "television", "film-reel", "popcorn"]
-  },
-  "wishlist": [
-    {
-      "id": "microchip",
-      "motif": "square chip with pins on every side",
-      "subjects": [
-        "tech/computers",
-        "tech/hardware",
-        "tech/laptops",
-        "tech/robots",
-        "tech/artificial-intelligence"
-      ]
-    },
-    {
-      "id": "wifi-signal",
-      "motif": "wifi fan of arcs over a dot",
-      "subjects": [
-        "tech/internet",
-        "tech/networking",
-        "tech/smart-home",
-        "tech/streaming"
-      ]
-    },
-    {
-      "id": "keyboard-and-mouse",
-      "motif": "computer keyboard with a mouse beside it",
-      "subjects": [
-        "tech/keyboards",
-        "tech/computers",
-        "tech/hardware",
-        "tech/laptops"
-      ]
-    },
-    {
-      "id": "code-window",
-      "motif": "window with angle brackets and lines of code",
-      "subjects": [
-        "tech/coding",
-        "tech/software",
-        "tech/computers"
-      ]
-    },
-    {
-      "id": "bug",
-      "motif": "cartoon beetle with antennae",
-      "subjects": [
-        "tech/coding",
-        "tech/software",
-        "tech/cybersecurity"
-      ]
-    },
-    {
-      "id": "padlock",
-      "motif": "closed padlock with a keyhole",
-      "subjects": [
-        "tech/cybersecurity",
-        "tech/smart-home",
-        "tech/internet"
-      ]
-    },
-    {
-      "id": "robot",
-      "motif": "friendly boxy robot with antenna",
-      "subjects": [
-        "tech/robots",
-        "tech/artificial-intelligence"
-      ]
-    },
-    {
-      "id": "desktop-computer",
-      "motif": "monitor on a stand with a tower",
-      "subjects": [
-        "tech/computers",
-        "tech/screens"
-      ]
-    },
-    {
-      "id": "electric-plug",
-      "motif": "plug with cord and a spark",
-      "subjects": [
-        "tech/batteries",
-        "tech/hardware",
-        "tech/smart-home"
-      ]
-    },
-    {
-      "id": "headphones",
-      "motif": "over-ear headphones with music notes",
-      "subjects": [
-        "tech/headphones",
-        "tech/streaming"
-      ]
-    },
-    {
-      "id": "smartwatch",
-      "motif": "smartwatch showing a heartbeat line",
-      "subjects": [
-        "tech/wearables"
-      ]
-    },
-    {
-      "id": "printer",
-      "motif": "printer pushing out a page",
-      "subjects": [
-        "tech/printers"
-      ]
-    },
-    {
-      "id": "drone",
-      "motif": "quadcopter with four rotors and a camera",
-      "subjects": [
-        "tech/drones"
-      ]
-    },
-    {
-      "id": "vr-headset",
-      "motif": "virtual reality headset",
-      "subjects": [
-        "tech/virtual-reality"
-      ]
-    },
-    {
-      "id": "smart-house",
-      "motif": "little house with a wifi signal over the roof",
-      "subjects": [
-        "tech/smart-home"
-      ]
-    },
-    {
-      "id": "thumbs-up",
-      "motif": "like thumbs-up in a bubble",
-      "subjects": [
-        "tech/social-media"
-      ]
-    }
-  ]
+    "tech/computers": ["desktop-computer", "computer-mouse", "keyboard", "floppy-disk", "computer-disk"],
+    "tech/smartphones": ["mobile-phone", "selfie", "speech-balloon", "telephone-receiver", "battery"],
+    "tech/laptops": ["laptop", "low-battery", "electric-plug", "computer-mouse", "keyboard"],
+    "tech/internet": ["globe-with-meridians", "wireless", "link", "e-mail", "magnifying-glass-tilted-left"],
+    "tech/software": ["optical-disk", "floppy-disk", "bug", "puzzle-piece", "gear"],
+    "tech/hardware": ["computer-disk", "electric-plug", "computer-mouse", "trackball", "screwdriver"],
+    "tech/robots": ["mechanical-arm", "robot", "mechanical-leg", "gear", "battery"],
+    "tech/cameras": ["camera-with-flash", "camera", "film-frames", "selfie", "framed-picture"],
+    "tech/video-games": ["video-game", "joystick", "alien-monster", "crossed-swords", "trophy"],
+    "tech/social-media": ["thumbs-up", "red-heart", "speech-balloon", "selfie", "mobile-phone"],
+    "tech/coding": ["technologist", "laptop", "bug", "keyboard", "page-facing-up"],
+    "tech/batteries": ["battery", "low-battery", "electric-plug", "high-voltage", "light-bulb"],
+    "tech/screens": ["television", "desktop-computer", "laptop", "mobile-phone", "light-bulb"],
+    "tech/headphones": ["headphone", "musical-notes", "speaker-high-volume", "muted-speaker", "studio-microphone"],
+    "tech/printers": ["printer", "page-facing-up", "fax-machine", "black-nib"],
+    "tech/drones": ["helicopter", "camera", "joystick", "battery", "round-pushpin"],
+    "tech/wearables": ["watch", "beating-heart", "footprints", "person-running", "zzz"],
+    "tech/keyboards": ["keyboard", "computer-mouse", "laptop", "electric-plug"],
+    "tech/networking": ["wireless", "satellite-antenna", "link", "desktop-computer", "electric-plug"],
+    "tech/artificial-intelligence": ["robot", "brain", "speech-balloon", "sparkles", "thought-balloon"],
+    "tech/virtual-reality": ["goggles", "video-game", "eyes", "joystick", "globe-showing-asia-australia"],
+    "tech/smart-home": ["house", "wireless", "light-bulb", "locked", "mobile-phone", "thermometer"],
+    "tech/cybersecurity": ["locked-with-key", "shield", "key", "microbe", "skull-and-crossbones"],
+    "tech/streaming": ["cinema", "television", "popcorn", "headphone", "wireless"]
+  }
 }

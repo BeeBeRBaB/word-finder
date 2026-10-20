@@ -8,7 +8,8 @@ import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
 import { facingOf, iconSprites, iconsFor, sceneColors, variantOf, withHero } from './icon-scene.js';
 
 /**
- * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number}} BackgroundOptions
+ * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number,
+ *   icons?:import('./icon-scene.js').IconStyle}} BackgroundOptions
  * @typedef {{spin:number, phi:number, fam:number, step:number, cx:number, cy:number, rx:number, ry:number,
  *   lo:number, hi:number, w:number, icon:number[], vis:number[]}} Ring
  * Slot s sits at angle phi + s * 2pi / SLOTS and shows when s % step is 0; vis fades it in and out.
@@ -86,7 +87,7 @@ export function start(host, opts) {
     cancel = iconSprites(ids, i => colors[(hue0 + i) % colors.length], Math.round(SPRITE * dpr), (i, s) => {
       sprites[i] = s;
       draw();
-    });
+    }, opts);
   }
 
   /**

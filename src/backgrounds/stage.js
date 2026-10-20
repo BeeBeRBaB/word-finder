@@ -6,7 +6,8 @@ import { makeRng } from '../rng.js';
 import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
 
 /**
- * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject?:string, seed?:number}} StageOptions
+ * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject?:string, seed?:number,
+ *   icons?:import('./icon-scene.js').IconStyle}} StageOptions
  * @typedef {{lay:() => void, step:(dt:number) => void, draw:() => void, stop?:() => void}} Scene
  * @typedef {{cv:HTMLCanvasElement, ctx:CanvasRenderingContext2D, W:number, H:number, dpr:number,
  *   t:number, dark:boolean, reduced:boolean, colors:string[], ink:string, rng:import('../rng.js').Rng,

@@ -119,6 +119,12 @@ test('the service worker only falls back to index.html for navigations', async (
   expect(cameBackAsIndexHtml).toBe(false);
 });
 
+/** Whether the background's canvas has anything drawn on it. @param {import('@playwright/test').Page} page */
+const painted = (page) => page.locator('#bg canvas').first().evaluate(c => {
+  const cv = /** @type {HTMLCanvasElement} */ (c);
+  return !!cv.getContext('2d')?.getImageData(0, 0, cv.width, cv.height).data.some((v, i) => i % 4 === 3 && v > 0);
+});
+
 // A first visit deals before the worker controls the page, so nothing cached that board's word
 // pool or its background, and the next launch offline said "Offline", or lost the background.
 test('the board and background from a first visit come back offline', async ({ page, context }) => {
@@ -133,7 +139,7 @@ test('the board and background from a first visit come back offline', async ({ p
   await expect.poll(() => page.evaluate(async () => {
     const paths = new Set();
     for (const k of await caches.keys()) for (const r of await (await caches.open(k)).keys()) paths.add(new URL(r.url).pathname);
-    return ['/src/backgrounds/drifting-icons.js', '/src/backgrounds/icons.js'].every(p => paths.has(p))
+    return paths.has('/src/backgrounds/drifting-icons.js') && [...paths].some(p => p.startsWith('/src/backgrounds/icons/mono/'))
       && [...paths].some(p => p.startsWith('/src/subjects/'));
   })).toBe(true);
   // Offline for the worker as well: context.setOffline stops holding back the worker's own
@@ -143,6 +149,23 @@ test('the board and background from a first visit come back offline', async ({ p
   await page.locator('.cell').first().waitFor();
   expect(await page.locator('#letters').textContent()).toBe(letters);
   await expect(drawn).not.toHaveCount(0);
+  // Its icons too, not only an empty canvas.
+  await expect.poll(() => painted(page)).toBe(true);
+});
+
+// Each category's drawings are one file, so any subject of a category played online shows its
+// icons offline. Split by icon instead, most subjects needed files no other subject had loaded.
+test('another subject of a category played online shows its icons offline', async ({ page, context }) => {
+  await page.addInitScript(() => {
+    if (!localStorage.getItem('wordfinder-settings-v1')) localStorage.setItem('wordfinder-settings-v1', JSON.stringify({ bgmode: 'manual', art: 'drift' }));
+  });
+  await openBoard(page, '/?subject=animals/dogs');
+  expect(await page.evaluate(controlled)).toBe(true);
+  await expect.poll(() => painted(page)).toBe(true);
+  await context.route('**/*', (route) => route.abort());
+  await page.goto('/?subject=animals/bats');
+  await expect(page.locator('#subject')).toHaveText('Bats');
+  await expect.poll(() => painted(page)).toBe(true);
 });
 
 // An update that takes over an open page leaves the old build's modules running, and a background
