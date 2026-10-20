@@ -488,7 +488,7 @@ export function findBackground(id, list = BACKGROUNDS) {
  * @type {Readonly<Record<string, string>>} */
 export const THEME_BACKGROUNDS = Object.freeze({
   phosphor: 'galaxy', graphite: 'constellation', broadsheet: 'halftone', drafting: 'blueprint',
-  sticker: 'motion', plum: 'bokeh', grove: 'aurora',
+  sticker: 'motion', plum: 'truchet', grove: 'leaves',
 });
 
 /** What Random picks from: every background. @type {readonly string[]} */

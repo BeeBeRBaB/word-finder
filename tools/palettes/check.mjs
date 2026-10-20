@@ -34,12 +34,19 @@ for (const t of THEMES) for (const m of ['light', 'dark']) {
   const checks = [['text/surface', parse(p.text), S, 4.5], ['text/bg', parse(p.text), B, 4.5], ['strong/bg', parse(p.strong), B, 4.5], ['muted/bg', parse(p.muted), B, 4.5], ['muted/surface', parse(p.muted), S, 4.5],
     ['label/bg', parse(p.label), B, 4.5], ['hint/bg', parse(p.hint), B, 4.5], ['hint/surface (the Settings card)', parse(p.hint), S, 4.5], ['accentText/bg', parse(p.accentText), B, 4.5], ['accentText/surface', parse(p.accentText), S, 4.5], ['accentInk/accent', parse(p.accentInk), parse(p.accent), 4.5],
     ['accent/surface (control edge)', parse(p.accent), S, 3], ['strong/surface (counts and card labels)', parse(p.strong), S, 4.5], ['text on sel', parse(p.text), over(p.sel, p.surface), 4.5],
-    // --edge rings every surface key and tile, so it must stand out from the tile and the ground.
+    // --edge outlines the selects, the Settings rows, the tiles and the fields, so it must stand out
+    // from the card and the ground.
     ['edge/surface', parse(p.edge), S, 3], ['edge/bg', parse(p.edge), B, 3],
+    // A surface key is a 10% wash of the text over the surface (--key).
+    ['strong on a surface key', parse(p.strong), over(`rgba(${parse(p.text).slice(0, 3).join(',')},.1)`, p.surface), 4.5],
     ...p.pills.map((c, i) => [`foundText on pill${i + 1}`, parse(p.foundText), over(c, p.surface), 4.5]),
-    // The board over a background is --surface at 80% (styles.css): its letters must pass over the
-    // darkest and the lightest background there can be, which bounds every other.
-    ...['#000000', '#ffffff'].map(g => [`text on the board over ${g}`, parse(p.text), over(`rgba(${S.slice(0, 3).join(',')},.8)`, g), 4.5])];
+    // Over a background the board is --surface at 80% and the header and the list at 88% (styles.css):
+    // what is written on them must pass over the darkest and the lightest background there can be,
+    // which bounds every other. The board holds only letters.
+    ...['#000000', '#ffffff'].flatMap(g => [
+      ['text on the board', p.text, .8],
+      ...[['text', p.text], ['strong', p.strong], ['muted', p.muted], ['label', p.label], ['accentText', p.accentText]].map(([n, c]) => [`${n} on a card`, c, .88]),
+    ].map(([n, c, a]) => [`${n} over ${g}`, parse(c), over(`rgba(${S.slice(0, 3).join(',')},${a})`, g), 4.5]))];
   for (const [n, a, b, min] of checks) { const r = cr(a, b); if (r < min) { console.log(`FAIL ${t}/${m} ${n} ${r.toFixed(2)} < ${min}`); fail++; } }
   const [h, , l] = hsl(p.bg); const rgb = parse(p.bg).slice(0, 3); const chroma = (Math.max(...rgb) - Math.min(...rgb)) / 255;
   out.push({ t, m, bg: p.bg, hue: Math.round(h), sat: +chroma.toFixed(2), light: +l.toFixed(2) });

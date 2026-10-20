@@ -9,6 +9,7 @@
 //   npm run shots -- --subject=sports/golf
 //   npm run shots -- --dark            Render the dark flavour instead of light.
 //   npm run shots -- --measure         Also print grid/list geometry per shape.
+//   npm run shots -- --style=glass     Draw the board in that style (settings.js STYLES).
 //
 // The default subject is pinned so runs are comparable: the same board every time,
 // and a deliberately LONG name, because a short one hides header-wrapping bugs (the
@@ -26,6 +27,7 @@ const DEFAULT_SUBJECT = 'history/industrial-revolution';
 const args = process.argv.slice(2);
 const dark = args.includes('--dark');
 const withGeometry = args.includes('--measure');
+const style = args.find((a) => a.startsWith('--style='))?.slice('--style='.length);
 const subject = args.find((a) => a.startsWith('--subject='))?.slice('--subject='.length) ?? DEFAULT_SUBJECT;
 const filters = args.filter((a) => !a.startsWith('--')).map((a) => a.toLowerCase());
 const shapes = filters.length
@@ -64,6 +66,7 @@ for (const d of shapes) {
   // Set the stored flavour before any script runs — index.html's inline resolver reads it
   // before first paint. Light is set too, as an unset one resolves to dark.
   await page.addInitScript((p) => localStorage.setItem('wordfinder-appearance', p), dark ? 'dark' : 'light');
+  if (style) await page.addInitScript((s) => localStorage.setItem('wordfinder-settings-v1', JSON.stringify({ style: s })), style);
   await page.goto(url);
   await page.waitForSelector('#letters .cell');
   const file = new URL(`${d.name.replace(/\s+/g, '-').toLowerCase()}.png`, OUT);

@@ -129,7 +129,7 @@ test('every theme has its own background, a real one, the same in both flavours'
     assert.equal(resolveBackground('theme', 'rain', t, 2, id), id, t);
   }
   assert.deepEqual(THEMES.map(t => resolveBackground('theme', '', t, 0)),
-    ['galaxy', 'constellation', 'halftone', 'blueprint', 'motion', 'bokeh', 'aurora']);
+    ['galaxy', 'constellation', 'halftone', 'blueprint', 'motion', 'truchet', 'leaves']);
   assert.equal(resolveBackground('theme', '', 'retired', 0), 'galaxy', 'an unknown theme is the default one');
   assert.equal(new Set(Object.values(THEME_BACKGROUNDS)).size, THEMES.length, 'no two themes share one');
 });
