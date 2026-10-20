@@ -7,7 +7,8 @@ import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
 import { iconSprites, iconsFor, sceneColors, variantOf, withHero } from './icon-scene.js';
 
 /**
- * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number}} BackgroundOptions
+ * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number,
+ *   icons?:import('./icon-scene.js').IconStyle}} BackgroundOptions
  * @typedef {{k:number, d:number, base:number, size:number, speed:number, x:number, y:number,
  *   sway:number, swayF:number, ph:number, rot:number, spin:number, flip:number, flipF:number,
  *   alpha:number}} Flake
@@ -79,7 +80,7 @@ export function start(host, opts) {
     cancel = iconSprites(ids, i => colors[(hue0 + i) % colors.length], Math.round(SPRITE * dpr), (i, s) => {
       sprites[i] = s;
       draw();
-    });
+    }, opts);
   }
 
   /** @param {Flake} p @param {number} i its place in parts @param {number} j its place among

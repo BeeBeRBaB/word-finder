@@ -2,11 +2,28 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { CATEGORIES } from '../../src/catalog.js';
-import { FACING, ICONS } from '../../src/backgrounds/icons.js';
-import { existsSync, readFileSync } from 'node:fs';
-import { CATEGORY_ICONS, CATEGORY_MOTION, SUBJECT_ICONS, SUBJECT_MOTION } from '../../src/backgrounds/subject-icons.js';
-import { VARIANTS, facingOf, iconMarkup, iconsFor, motionFor, sceneColors, variantOf, withHero } from '../../src/backgrounds/icon-scene.js';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { CATEGORY_ICONS, CATEGORY_MOTION, FACING, SUBJECT_ICONS, SUBJECT_MOTION } from '../../src/backgrounds/subject-icons.js';
+import { VARIANTS, facingOf, iconsFor, motionFor, sceneColors, variantOf, withHero } from '../../src/backgrounds/icon-scene.js';
 import { MOTIONS } from '../../src/backgrounds/subject-motion.js';
+
+/** Every drawing in a style, by id, and the ids each category's file holds. An icon two categories
+ * map is in both files, drawn the same.
+ * @param {'mono'|'flat'} style @returns {Promise<{all:Map<string, string>, files:Map<string, string[]>}>} */
+async function drawings(style) {
+  const all = new Map(), files = new Map();
+  for (const f of readdirSync(new URL(`../../src/backgrounds/icons/${style}/`, import.meta.url))) {
+    const { ICONS } = await import(`../../src/backgrounds/icons/${style}/${f}`);
+    for (const [id, svg] of Object.entries(ICONS)) {
+      assert.equal(all.get(id) ?? svg, svg, `${style} ${id} differs between files`);
+      all.set(id, svg);
+    }
+    files.set(f.slice(0, -3), Object.keys(ICONS));
+  }
+  return { all, files };
+}
+const mono = await drawings('mono'), flat = await drawings('flat');
+const MONO = mono.all, FLAT = flat.all;
 
 test('every subject and category maps 4-6 distinct drawn icons, and every icon is used', async () => {
   const used = new Set();
@@ -17,25 +34,39 @@ test('every subject and category maps 4-6 distinct drawn icons, and every icon i
       const ids = list.split(' ');
       assert.ok(ids.length >= 4 && ids.length <= 6, `${key}: ${ids.length} icons`);
       assert.equal(new Set(ids).size, ids.length, `${key}: duplicate icon`);
-      for (const i of ids) { assert.ok(i in ICONS, `${key}: ${i} is not drawn`); used.add(i); }
+      for (const i of ids) { assert.ok(MONO.has(i), `${key}: ${i} is not drawn`); used.add(i); }
     }
   }
-  assert.deepEqual(Object.keys(ICONS).filter(i => !used.has(i)), [], 'emitted but never shown');
+  assert.deepEqual([...MONO.keys()].filter(i => !used.has(i)), [], 'emitted but never shown');
 });
 
-// The markup goes in through innerHTML and an image URL, so only the drawing vocabulary passes.
-test('icon markup uses only shapes, geometry attributes and the four tone classes', () => {
-  const TAGS = /^(path|circle|ellipse|rect|polygon|polyline|line|g)$/;
-  const ATTRS = /^(d|cx|cy|r|rx|ry|x|y|width|height|points|x1|y1|x2|y2|transform|fill-rule|stroke-width|stroke-linecap|stroke-linejoin|class)$/;
-  for (const [id, svg] of Object.entries(ICONS)) {
-    for (const [, tag, rest] of svg.matchAll(/<\/?([a-zA-Z][\w-]*)([^>]*)>/g)) {
-      assert.match(tag, TAGS, `${id}: <${tag}>`);
-      for (const [, a, v] of rest.matchAll(/([\w:-]+)\s*=\s*"([^"]*)"/g)) {
-        assert.match(a, ATTRS, `${id}: ${a}`);
-        if (a === 'class') assert.match(v, /^(t-a|t-b|t-c|ln)$/, `${id}: class ${v}`);
+test('both styles draw the same icons, and each category\'s file every icon its subjects show', async () => {
+  assert.deepEqual([...FLAT.keys()].sort(), [...MONO.keys()].sort());
+  assert.deepEqual([...mono.files.keys()].sort(), CATEGORIES.map(c => c.id).sort());
+  for (const { id: cat } of CATEGORIES) {
+    const { WORDS } = await import(`../../src/subjects/${cat}.js`);
+    const want = [...new Set([CATEGORY_ICONS[cat], ...Object.keys(WORDS).map(s => SUBJECT_ICONS[s])].flatMap(l => l.split(' ')))].sort();
+    assert.deepEqual(mono.files.get(cat), want, `mono/${cat}`);
+    assert.deepEqual(flat.files.get(cat), want, `flat/${cat}`);
+  }
+});
+
+// The markup goes into an image URL, so only the drawing vocabulary passes. One colour paints in
+// currentColor alone, so the scene's tint is the only colour it shows.
+test('icon markup uses only shapes and their geometry, paint and stroke attributes', () => {
+  const TAGS = /^(path|circle|ellipse|rect|g)$/;
+  const ATTRS = /^(d|cx|cy|r|rx|ry|x|y|width|height|transform|fill|fill-rule|clip-rule|opacity|stroke|stroke-width|stroke-linecap|stroke-linejoin|stroke-miterlimit)$/;
+  for (const [style, set] of [['mono', MONO], ['flat', FLAT]]) {
+    for (const [id, svg] of set) {
+      for (const [, tag, rest] of svg.matchAll(/<\/?([a-zA-Z][\w-]*)([^>]*)>/g)) {
+        assert.match(tag, TAGS, `${style} ${id}: <${tag}>`);
+        for (const [, a, v] of rest.matchAll(/([\w:-]+)\s*=\s*"([^"]*)"/g)) {
+          assert.match(a, ATTRS, `${style} ${id}: ${a}`);
+          if (a === 'fill' || a === 'stroke') assert.match(v, style === 'mono' ? /^(currentColor|none)$/ : /^(#[0-9A-Fa-f]{3,8}|none|currentColor)$/, `${style} ${id}: ${a}="${v}"`);
+        }
       }
+      assert.doesNotMatch(svg, /url\(|href|javascript|on\w+=|style|['\\]/i, `${style} ${id}`);
     }
-    assert.doesNotMatch(svg, /url\(|href|javascript|on\w+=|style|['\\]/i, id);
   }
 });
 
@@ -62,15 +93,15 @@ test('the emitted modules match the icon and map sources', () => {
 
 test('FACING is facing.json for the drawn icons, -1 or 1 each, and facingOf gives the rest 0', () => {
   const src = JSON.parse(readFileSync(new URL('../../tools/art-src/icons/facing.json', import.meta.url), 'utf8'));
-  const want = [...src.left.map(id => [id, -1]), ...src.right.map(id => [id, 1])].filter(([id]) => id in ICONS);
-  assert.deepEqual(FACING, Object.fromEntries(want));
+  const want = [...src.left.map(id => [id, -1]), ...src.right.map(id => [id, 1])].sort(([a], [b]) => (a < b ? -1 : 1));
+  assert.deepEqual(Object.entries(FACING), want);
   assert.ok(Object.isFrozen(FACING));
   for (const [id, v] of Object.entries(FACING)) {
-    assert.ok(id in ICONS, `${id} is not drawn`);
+    assert.ok(MONO.has(id), `${id} is not drawn`);
     assert.ok(v === -1 || v === 1, `${id}: ${v}`);
     assert.equal(facingOf(id), v);
   }
-  assert.ok('owl' in ICONS && !('owl' in FACING));
+  assert.ok(MONO.has('owl') && !('owl' in FACING));
   assert.equal(facingOf('owl'), 0);
   assert.equal(facingOf('no-such-icon'), 0);
 });
@@ -92,14 +123,6 @@ test('seeds pick each fixed variant, and the same seed always the same one', () 
   }
   assert.equal(seen.size, VARIANTS);
   assert.notEqual(variantOf('food/pizza', 0).seed, variantOf('food/tacos', 0).seed);
-});
-
-test('icon tones become attributes, and an explicit stroke width survives', () => {
-  for (const id of Object.keys(ICONS)) assert.doesNotMatch(iconMarkup(id), /class=/, id);
-  const ln = Object.keys(ICONS).find(id => /class="ln" [^>]*stroke-width="/.test(ICONS[id]) || /stroke-width="[^"]*"[^>]*class="ln"/.test(ICONS[id]));
-  assert.ok(ln, 'some icon sets its own stroke width');
-  for (const m of iconMarkup(ln).matchAll(/<[^>]*stroke="currentColor"[^>]*>/g)) assert.equal(m[0].match(/stroke-width=/g)?.length, 1, m[0]);
-  assert.equal(iconMarkup('no-such-icon'), '');
 });
 
 test('a scene takes the theme\'s colours, or its fallback while they are empty', () => {

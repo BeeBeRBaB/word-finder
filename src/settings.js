@@ -13,8 +13,9 @@ const LEGACY_AUTO_KEY = 'wordfinder-autonext';
  * @typedef {{bgmode:'theme'|'random'|'manual', art:string, board:'auto'|'compact'|'full',
  *   difficulty:'normal'|'easy'|'hard', letters:'normal'|'large', motion:'system'|'reduce',
  *   sound:boolean, vibrate:boolean, reveal:boolean, autoNext:boolean, play:'random'|'levels',
- *   style:'beads'|'glass'|'tiles'|'random'}} Settings
+ *   style:'beads'|'glass'|'tiles'|'random', icons:'mono'|'flat'}} Settings
  *   bgmode: how the background is chosen (backgrounds.js resolveBackground); art is Manual's pick.
+ *   icons: the style the icon backgrounds draw in (icon-scene.js IconStyle).
  *   play: the side of New game last chosen. It has no Settings control.
  *   style: how found words and the cards are drawn (STYLES), or Random, which picks one per deal.
  * @typedef {Pick<Storage,'getItem'|'setItem'>} SettingsStore
@@ -23,7 +24,7 @@ const LEGACY_AUTO_KEY = 'wordfinder-autonext';
 /** @type {Readonly<Settings>} */
 export const DEFAULTS = Object.freeze({
   bgmode: 'theme', art: 'drift', board: 'auto', difficulty: 'normal', letters: 'normal', motion: 'system',
-  sound: true, vibrate: true, reveal: true, autoNext: true, play: 'random', style: 'beads',
+  sound: true, vibrate: true, reveal: true, autoNext: true, play: 'random', style: 'beads', icons: 'mono',
 });
 
 /** The allowed values of each multiple-choice setting, default first. */
@@ -31,7 +32,7 @@ export const CHOICES = Object.freeze({
   bgmode: ['theme', 'random', 'manual'], art: BACKGROUNDS.map(b => b.id),
   board: ['auto', 'compact', 'full'],
   difficulty: ['normal', 'easy', 'hard'], letters: ['normal', 'large'], motion: ['system', 'reduce'],
-  play: ['random', 'levels'], style: ['beads', 'glass', 'tiles', 'random'],
+  play: ['random', 'levels'], style: ['beads', 'glass', 'tiles', 'random'], icons: ['mono', 'flat'],
 });
 const FLAGS = ['sound', 'vibrate', 'reveal', 'autoNext'];
 

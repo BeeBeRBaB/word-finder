@@ -31,8 +31,8 @@ hidden across, down, diagonally and backwards. Drag across a word to find it.
 - **Levels and points.** Sign in with a username and password to play an endless run of
   levels on easy, normal or hard. Points add up for each word, for streaks and for speed,
   and your progress follows you to any device. Random play never needs an account.
-- **Art for every subject.** Each subject gets its own animated scene drawn from an icon
-  library, behind the whole screen. Or choose another animated background such as Aurora,
+- **Art for every subject.** Each subject gets its own animated scene of its icons, behind
+  the whole screen, in one colour or in full colour. Or choose another animated background such as Aurora,
   Galaxy or Koi.
 - **Seven themes**, each in a light and a dark version, all checked for readable
   contrast.
@@ -68,6 +68,9 @@ working offline.
 - [docs/development.md](docs/development.md) has the file-by-file map, the tests, how to
   add a subject, and how to set up accounts.
 - [CLAUDE.md](CLAUDE.md) explains how to work on the project safely.
+
+The subject icons are Microsoft's [Fluent Emoji](https://github.com/microsoft/fluentui-emoji),
+used under the MIT licence.
 
 ```bash
 npm ci && npx playwright install chromium

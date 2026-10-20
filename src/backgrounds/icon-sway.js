@@ -7,7 +7,8 @@ import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
 import { iconSprites, iconsFor, sceneColors, variantOf, withHero } from './icon-scene.js';
 
 /**
- * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number}} BackgroundOptions
+ * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number,
+ *   icons?:import('./icon-scene.js').IconStyle}} BackgroundOptions
  * @typedef {{k:number, rope:number, u:number, x:number, y:number, len:number, base:number, size:number,
  *   th:number, w:number, w0:number, alpha:number}} Hang
  * One icon on its string: rope is its line (-1 for the top edge), u its place along it, x, y the
@@ -80,7 +81,7 @@ export function start(host, opts) {
     cancel = iconSprites(ids, i => colors[(hue0 + 1 + i) % colors.length], Math.round(SPRITE * dpr), (i, s) => {
       sprites[i] = s;
       draw();
-    });
+    }, opts);
   }
 
   /** Height of rope r at x, sagging between its ends or in scallops between pins.

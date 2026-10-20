@@ -8,7 +8,8 @@ import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
 import { facingOf, iconSprites, iconsFor, sceneColors, variantOf, withHero } from './icon-scene.js';
 
 /**
- * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number}} BackgroundOptions
+ * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number,
+ *   icons?:import('./icon-scene.js').IconStyle}} BackgroundOptions
  * @typedef {{k:number, d:number, size:number, speed:number, along:number, across:number,
  *   sway:number, swayF:number, tilt:number, tiltF:number, ph:number, alpha:number}} Drifter
  * along is the distance travelled from the entry edge, across the position on the other axis.
@@ -55,7 +56,7 @@ export function start(host, opts) {
     cancel = iconSprites(ids, i => colors[(hue0 + i) % colors.length], Math.round(SPRITE * dpr), (i, s) => {
       sprites[i] = s;
       draw();
-    });
+    }, opts);
   }
 
   /** @param {Drifter} p @param {boolean} anywhere true on (re)size: place mid-flight @returns {void} */
