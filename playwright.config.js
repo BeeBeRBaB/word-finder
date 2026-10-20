@@ -7,6 +7,9 @@ const BASE = `http://localhost:${process.env.PORT || 5173}`;
 
 export default defineConfig({
   testDir: './tests/e2e',
+  // A full solve is a dozen real drags over the frosted board, which headless Chromium blurs in
+  // software: about 13s here, and past the default 30s on a machine half as fast.
+  timeout: 60_000,
   fullyParallel: false,          // the service-worker tests share one origin's cache
   workers: 1,
   reporter: [['list']],
