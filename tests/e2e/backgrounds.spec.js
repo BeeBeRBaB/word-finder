@@ -242,7 +242,6 @@ test('the board and the words are clear glass over the background, the header fr
     const [board, ownBoard] = await share('--glass-board'), [list, ownList] = await share('--glass-list');
     expect(board, look).toBeGreaterThan(0.3);
     expect(list, look).toBeGreaterThan(0.3);
-    const band = Math.min(0.9, (await share('--glass-band'))[1]);
     for (const style of ['beads', 'glass']) {
       await page.evaluate((s) => { document.documentElement.dataset.style = s; }, style);
       const b = await card('#gridbox'), hdr = await card('#hdr'), side = await card('#side');
@@ -253,7 +252,7 @@ test('the board and the words are clear glass over the background, the header fr
       // The list's own colour is clear; a gradient carries the count row's frost and the words' glass.
       expect(side.a, `${look} ${style}`).toBe(0);
       expect([...side.image.matchAll(/\/ ([\d.]+)\)/g)].map(m => Number(m[1])), `${look} ${style}`)
-        .toEqual([band, Math.min(list, ownList)].map(v => expect.closeTo(v, 2)));
+        .toEqual([0.9, Math.min(list, ownList)].map(v => expect.closeTo(v, 2)));
     }
   }
   await page.evaluate(() => { document.documentElement.dataset.style = 'tiles'; });
@@ -285,9 +284,9 @@ test('each background brings its own glass, and the board and the words take the
     const flavour = /** @type {'dark' | 'light'} */ (look.split('/')[1]);
     for (const id of [calm, busy]) {
       await pickBackground(page, id);
-      const g = await glass(), [b, l, band] = GLASS_SHARES[id][flavour];
+      const g = await glass(), [b, l] = GLASS_SHARES[id][flavour];
       expect(g.board, `${id} ${look}`).toBeCloseTo(Math.min(g.tokens[0], b) / 100, 2);
-      expect(g.list, `${id} ${look}`).toEqual([Math.min(90, band), Math.min(g.tokens[1], l)].map(v => expect.closeTo(v / 100, 2)));
+      expect(g.list, `${id} ${look}`).toEqual([90, Math.min(g.tokens[1], l)].map(v => expect.closeTo(v / 100, 2)));
     }
   }
   // Subject motion takes the glass of the background it runs for the subject.

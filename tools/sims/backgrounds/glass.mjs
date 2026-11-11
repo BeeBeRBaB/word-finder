@@ -6,7 +6,7 @@
 // or 3:1 for large text, as tools/sims/backgrounds/contrast.mjs holds it.
 // Board letters are held to --glass-board, the words to --glass-list, the count row to BAND and the
 // header to HDR, each capped by the background's own share when it has one (--clear-board,
-// --clear-list, --clear-band, from src/glass-shares.js). Exits 1 when a share is short; the summary
+// --clear-list, from src/glass-shares.js). Exits 1 when a share is short; the summary
 // gives each look's needs. Each look takes FRAMES frames GAP ms apart and keeps the worst; the
 // backgrounds that draw the subject's icons (perDeal) run once per subject in SUBJECTS.
 //   node tools/sims/backgrounds/glass.mjs                      every background, phone
@@ -101,7 +101,7 @@ async function run({ shape, id, subject }, math) {
       const pct = (/** @type {string} */ k, /** @type {number} */ d) => { const v = parseFloat(root.getPropertyValue(k)); return Number.isNaN(v) ? d : v / 100; };
       return {
         share: { board: Math.min(pct('--glass-board', 1), pct('--clear-board', 1)), list: Math.min(pct('--glass-list', 1), pct('--clear-list', 1)),
-          band: pct('--clear-band', 1) },
+        },
         boxes: [...document.querySelectorAll(sel)].map(e => ({ e, b: e.getBoundingClientRect(), cs: getComputedStyle(e) }))
           .filter(x => x.b.width > 0 && x.b.height > 0 && x.cs.visibility !== 'hidden' && x.cs.display !== 'none')
           .map(({ e, b, cs }) => {
@@ -112,7 +112,7 @@ async function run({ shape, id, subject }, math) {
           }),
       };
     }, sel);
-    shares[look] = { ...info.share, band: Math.min(BAND, info.share.band), hdr: HDR };
+    shares[look] = { ...info.share, band: BAND, hdr: HDR };
     // Glyphs alone, in black on white; then the pills alone, so a plain letter's ring leaves out a
     // diagonal pill grazing it.
     await ground('#ffffff');
