@@ -486,7 +486,9 @@ test('the background shows through the board but not through its found words', a
   const alpha = (c) => { const m = c.match(/[\d.]+/g) ?? []; return m.length > 3 ? Number(m[3]) : 1; };
   await openPage(page);
   await pickBackground(page, 'koi');
-  expect(alpha(await page.locator('#gridbox').evaluate(el => getComputedStyle(el).backgroundColor))).toBe(0.8);
+  const share = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--glass-board')) / 100);
+  expect(share).toBeLessThan(1);
+  expect(alpha(await page.locator('#gridbox').evaluate(el => getComputedStyle(el).backgroundColor))).toBeCloseTo(share, 2);
   // The blur is of what is behind the board; its letters stay crisp, with no shadow.
   expect(await page.locator('.cell').first().evaluate(el => getComputedStyle(el).textShadow)).toBe('none');
   await page.keyboard.press('Escape');
