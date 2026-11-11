@@ -913,14 +913,20 @@ function shownBg() {
   const s = cfg.get();
   return s.bgmode === 'random' && boardBg ? boardBg : resolveBackground(s.bgmode, s.art, appearance.getTheme(), currentSeed);
 }
+/** The background Subject motion last ran, and for which subject: the subject alone picks it. */
+let motionScene = { subject: '', id: '' };
 /** Run the background showing for the current deal. @returns {void} */
 function showBackdrop() {
   const id = shownBg(), pref = appearance.get();
   syncBg();
   // The glass this background needs in this flavour, which over most is far less than the look's.
   // The old one stops at once and the new one draws once loaded, so the two never meet under it.
-  for (const [k, v] of glassVars(id, pref)) document.documentElement.style.setProperty(k, v);
+  // Subject motion runs another background, whose glass it takes once that has started; until
+  // then, '' leaves the look's own, which holds over every background.
+  const glass = (/** @type {string} */ bg) => { for (const [k, v] of glassVars(bg, pref)) document.documentElement.style.setProperty(k, v); };
+  glass(id !== 'motion' ? id : motionScene.subject === subjectId ? motionScene.id : '');
   if (!subjectId) return;   // nothing dealt yet; the deal calls again
+  const dealt = subjectId;
   // Its own ground and colours in the theme's flavour, a dark night or a light day, whatever the
   // theme's palette. Subject motion paints its motion's ground.
   const look = lookOf(id, pref);
@@ -928,6 +934,7 @@ function showBackdrop() {
     colors: [...look.colors], dark: look.dark, reducedMotion: prefersReducedMotion(),
     ground: id === 'motion' ? undefined : look.ground, lookOf: (i) => lookOf(i, pref),
     subject: subjectId, seed: currentSeed,
+    onScene: (scene) => { motionScene = { subject: dealt, id: scene }; glass(scene); },
   });
 }
 globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').addEventListener?.('change', showBackdrop);

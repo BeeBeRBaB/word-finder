@@ -25,10 +25,11 @@ export function start(host, opts) {
     if (!live || started) return;
     started = true;
     removeEventListener('online', load);
-    // The motion's own look, not this background's.
+    // The motion's own look, not this background's, and its own glass (main.js).
     const look = opts.lookOf?.(MOTIONS[id] ? id : 'drift');
     if (look) host.style.background = look.ground;
     stop = m.start(host, look ? { ...opts, colors: [...look.colors], dark: look.dark } : opts);
+    opts.onScene?.(MOTIONS[id] ? id : 'drift');
   }, () => {});
   addEventListener('online', load);
   load();

@@ -2,13 +2,13 @@
 // board, its words and the list's count row need under them for AA, 5 over the worst that
 // tools/sims/backgrounds/glass.mjs measured across every look, shape, style, frame and subject.
 // styles.css takes the lesser of this and the look's own share (--glass-board, --glass-list, the
-// count row's 90%), so over a calm background the words sit on next to nothing.
+// count row's 90%), so over a calm background the words sit on next to nothing. Subject motion has
+// no row of its own: main.js gives it the row of the background it runs.
 // Written by tools/sims/backgrounds/glass-shares.mjs from 656 runs: re-run it, don't edit by hand.
 
 /** @type {Readonly<Record<string, {dark: readonly number[], light: readonly number[]}>>} */
 export const GLASS_SHARES = Object.freeze({
   'drift': { dark: [80, 70, 30], light: [25, 50, 70] },
-  'motion': { dark: [75, 65, 90], light: [15, 50, 80] },
   'parade': { dark: [80, 15, 90], light: [45, 30, 90] },
   'bloom': { dark: [75, 60, 25], light: [25, 60, 35] },
   'wallpaper': { dark: [65, 55, 55], light: [20, 25, 65] },

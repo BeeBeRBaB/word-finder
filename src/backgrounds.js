@@ -6,11 +6,12 @@ import { normalizeTheme } from './appearance.js';
 
 /**
  * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed:number, ground?:string,
- *   lookOf?:(id:string, pref?:string) => Look}} BackgroundOptions
+ *   lookOf?:(id:string, pref?:string) => Look, onScene?:(id:string) => void}} BackgroundOptions
  * `colors` are the background's own six colours and `dark` whether its ground is dark (`lookOf`),
  * the same in every theme; `subject` and `seed` are the dealt puzzle's. `ground` is painted on the
  * host when the background starts (left as it is when absent: Subject motion paints its motion's,
- * through `lookOf`, passed in so an older copy of this file cannot break its import).
+ * through `lookOf`, passed in so an older copy of this file cannot break its import). Subject
+ * motion calls `onScene` with the id of the background it runs, once that has started.
  */
 /** @typedef {{start:(host:HTMLElement, opts:BackgroundOptions)=>()=>void}} BackgroundModule */
 /**

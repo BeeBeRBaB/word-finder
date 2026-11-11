@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import { GLASS_SHARES, glassVars } from '../../src/glass-shares.js';
 import { BACKGROUNDS } from '../../src/backgrounds.js';
 
-test('every background has its own glass in both flavours, and nothing else does', () => {
-  assert.deepEqual(Object.keys(GLASS_SHARES).sort(), BACKGROUNDS.map(b => b.id).sort());
+// Subject motion runs another background and takes that one's glass (main.js), so it has none.
+test('every background but Subject motion has its own glass in both flavours, and nothing else does', () => {
+  assert.deepEqual(Object.keys(GLASS_SHARES).sort(), BACKGROUNDS.map(b => b.id).filter(id => id !== 'motion').sort());
   for (const [id, s] of Object.entries(GLASS_SHARES)) for (const pref of /** @type {const} */ (['dark', 'light'])) {
     assert.equal(s[pref].length, 3, `${id} ${pref}`);
     // Steps of 5 from the margin up: glass-shares.mjs never writes less than its margin over a need of 0.

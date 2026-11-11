@@ -3,7 +3,8 @@
 // style, frame and subject in the runs, plus MARGIN, in steps of 5. styles.css takes the lesser of
 // that and the look's own share, so a background is never short of what the look already proves.
 //   node tools/sims/backgrounds/glass-shares.mjs phone.jsonl landscape.jsonl desktop.jsonl ...
-// Each background has to appear in some run, in both flavours, or nothing is written.
+// Each background has to appear in some run, in both flavours, or nothing is written. Subject motion
+// has no row: it runs another background, whose glass main.js gives it once that has started.
 import fs from 'node:fs';
 import { BACKGROUNDS } from '../../../src/backgrounds.js';
 
@@ -28,11 +29,12 @@ for (const f of files) for (const line of fs.readFileSync(f, 'utf8').split('\n')
     }
   }
 }
-const missing = BACKGROUNDS.filter(b => !need[b.id]?.dark || !need[b.id]?.light).map(b => b.id);
+const IDS = BACKGROUNDS.map(b => b.id).filter(id => id !== 'motion');
+const missing = IDS.filter(id => !need[id]?.dark || !need[id]?.light);
 if (missing.length) { console.error(`no runs cover ${missing.join(', ')}`); process.exit(1); }
 
 const pct = (/** @type {number} */ m) => Math.min(100, Math.ceil((m * 100 - 1e-6) / 5) * 5 + MARGIN);
-const body = BACKGROUNDS.map(({ id }) => {
+const body = IDS.map((id) => {
   const [d, l] = ['dark', 'light'].map(p => `[${need[id][p].map(pct).join(', ')}]`);
   return `  '${id}': { dark: ${d}, light: ${l} },`;
 }).join('\n');
@@ -41,7 +43,8 @@ const out = `// Each background's own glass in each flavour: the share of the su
 // board, its words and the list's count row need under them for AA, ${MARGIN} over the worst that
 // tools/sims/backgrounds/glass.mjs measured across every look, shape, style, frame and subject.
 // styles.css takes the lesser of this and the look's own share (--glass-board, --glass-list, the
-// count row's 90%), so over a calm background the words sit on next to nothing.
+// count row's 90%), so over a calm background the words sit on next to nothing. Subject motion has
+// no row of its own: main.js gives it the row of the background it runs.
 // Written by tools/sims/backgrounds/glass-shares.mjs from ${rows} runs: re-run it, don't edit by hand.
 
 /** @type {Readonly<Record<string, {dark: readonly number[], light: readonly number[]}>>} */
@@ -60,6 +63,6 @@ export function glassVars(id, pref) {
 }
 `;
 fs.writeFileSync(new URL('../../../src/glass-shares.js', import.meta.url), out);
-const all = BACKGROUNDS.flatMap(({ id }) => ['dark', 'light'].map(p => need[id][p].map(pct)));
+const all = IDS.flatMap((id) => ['dark', 'light'].map(p => need[id][p].map(pct)));
 const clear = all.filter(s => s[1] <= MARGIN).length;
-console.log(`src/glass-shares.js: ${BACKGROUNDS.length} backgrounds from ${rows} runs; the words sit on ${MARGIN}% or less in ${clear} of ${all.length} background-flavours`);
+console.log(`src/glass-shares.js: ${IDS.length} backgrounds from ${rows} runs; the words sit on ${MARGIN}% or less in ${clear} of ${all.length} background-flavours`);

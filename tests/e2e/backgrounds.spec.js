@@ -290,6 +290,11 @@ test('each background brings its own glass, and the board and the words take the
       expect(g.list, `${id} ${look}`).toEqual([Math.min(90, band), Math.min(g.tokens[1], l)].map(v => expect.closeTo(v / 100, 2)));
     }
   }
+  // Subject motion takes the glass of the background it runs for the subject.
+  await pickBackground(page, 'motion');
+  const scene = motionFor('space/jupiter'), [b, l] = GLASS_SHARES[scene].light;
+  await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--clear-list'))).toBe(`${l}%`);
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--clear-board'))).toBe(`${b}%`);
 });
 
 // Each background has its own ground and colours in two flavours: the dark one under every dark
