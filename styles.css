@@ -34,6 +34,7 @@
   --radius-board:16px; --radius-ctl:12px; --radius-pill:999px; --board-outline:none; --board-outline-offset:0px; --board-texture:none;
   --edge:#7a695d;
   --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
+  --glass-board:70%; --glass-list:75%;
 }
 /* An orange light enough to feel warm on paper cannot carry white button text, so
    --accent is measured against the white --accent-ink it is actually read on (5.08:1),
@@ -56,6 +57,7 @@
   --radius-board:16px; --radius-ctl:12px; --radius-pill:999px; --board-outline:none; --board-outline-offset:0px; --board-texture:none;
   --edge:#907a6a;
   --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
+  --glass-board:50%; --glass-list:65%;
 }
 /* Six more themes, each with its own fixed colours. Same token names as Phosphor's blocks,
    and the same shape: the bare [data-theme] selector is the dark default, and the
@@ -75,6 +77,7 @@
   --board-outline:1px solid var(--border); --board-outline-offset:4px; --board-texture:none;
   --edge:#e0dab9;
   --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
+  --glass-board:75%; --glass-list:80%;
 }
 :root[data-theme="broadsheet"][data-appearance="light"]{
   color-scheme:light; --bg:#efe6a0; --surface:#fffcea; --border:#1c1a10; --text:#1c1a10;
@@ -90,6 +93,7 @@
   --board-outline-offset:4px; --board-texture:none;
   --edge:#1c1a10;
   --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
+  --glass-board:40%; --glass-list:45%;
 }
 :root[data-theme="sticker"], :root[data-theme="sticker"][data-appearance="dark"]{
   color-scheme:dark; --bg:#211756; --surface:#2c2266; --border:#0a0620; --text:#f0ebff;
@@ -105,6 +109,7 @@
   --board-outline-offset:0px; --board-texture:none;
   --edge:#7d7990;
   --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
+  --glass-board:70%; --glass-list:75%;
 }
 :root[data-theme="sticker"][data-appearance="light"]{
   color-scheme:light; --bg:#c4c2fa; --surface:#ffffff; --border:#1d1638; --text:#1d1638;
@@ -120,6 +125,7 @@
   --board-outline-offset:0px; --board-texture:none;
   --edge:#1d1638;
   --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
+  --glass-board:40%; --glass-list:45%;
 }
 :root[data-theme="drafting"], :root[data-theme="drafting"][data-appearance="dark"]{
   color-scheme:dark; --bg:#002f56; --surface:#113e66; --border:#326893; --text:#dee9f6;
@@ -136,6 +142,7 @@
   --board-texture:linear-gradient(rgba(127,211,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(127,211,255,.07) 1px,transparent 1px);
   --edge:#668fb1;
   --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
+  --glass-board:85%; --glass-list:80%;
 }
 :root[data-theme="drafting"][data-appearance="light"]{
   color-scheme:light; --bg:#95c5e2; --surface:#eff9fd; --border:#4b81a5; --text:#0f2430;
@@ -152,6 +159,7 @@
   --board-texture:linear-gradient(rgba(10,95,138,.10) 1px,transparent 1px),linear-gradient(90deg,rgba(10,95,138,.10) 1px,transparent 1px);
   --edge:#396582;
   --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
+  --glass-board:50%; --glass-list:50%;
 }
 :root[data-theme="grove"], :root[data-theme="grove"][data-appearance="dark"]{
   color-scheme:dark; --bg:#14301f; --surface:#1b3a27; --border:#3a5c44; --text:#e4ebd6;
@@ -167,6 +175,7 @@
   --board-outline:none; --board-outline-offset:0px; --board-texture:none;
   --edge:#6d8770;
   --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
+  --glass-board:75%; --glass-list:70%;
 }
 :root[data-theme="grove"][data-appearance="light"]{
   color-scheme:light; --bg:#bfe3bd; --surface:#f5fbf0; --border:#93b98a; --text:#1e2e1b;
@@ -182,6 +191,7 @@
   --board-outline:none; --board-outline-offset:0px; --board-texture:none;
   --edge:#627f5b;
   --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
+  --glass-board:50%; --glass-list:50%;
 }
 :root[data-theme="plum"], :root[data-theme="plum"][data-appearance="dark"]{
   color-scheme:dark; --bg:#43173b; --surface:#4f2146; --border:#74406a; --text:#f5e4ee;
@@ -198,6 +208,7 @@
   --board-outline:none; --board-outline-offset:0px; --board-texture:none;
   --edge:#9b7192;
   --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
+  --glass-board:75%; --glass-list:75%;
 }
 :root[data-theme="plum"][data-appearance="light"]{
   color-scheme:light; --bg:#ecbfdc; --surface:#fdf3f8; --border:#d49bbd; --text:#2d1530;
@@ -214,6 +225,7 @@
   --board-outline:none; --board-outline-offset:0px; --board-texture:none;
   --edge:#8b607f;
   --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
+  --glass-board:45%; --glass-list:50%;
 }
 :root[data-theme="graphite"], :root[data-theme="graphite"][data-appearance="dark"]{
   color-scheme:dark; --bg:#23272c; --surface:#2f3339; --border:#51555c; --text:#e6e8eb;
@@ -229,6 +241,7 @@
   --board-outline:none; --board-outline-offset:0px; --board-texture:none;
   --edge:#7e8187;
   --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
+  --glass-board:75%; --glass-list:80%;
 }
 :root[data-theme="graphite"][data-appearance="light"]{
   color-scheme:light; --bg:#b8bec5; --surface:#f1f4f6; --border:#757b81; --text:#1f2225;
@@ -244,6 +257,7 @@
   --board-outline:none; --board-outline-offset:0px; --board-texture:none;
   --edge:#5b6065;
   --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
+  --glass-board:45%; --glass-list:50%;
 }
 
 /* Lock the viewport: no page scroll or rubber-band on iPad / iOS standalone. */
@@ -388,17 +402,20 @@ body{position:fixed;inset:0;width:100%;height:100%}
 #side{padding:2px 14px 12px;align-self:start}
 #app[data-landscape] #hdr{border-radius:var(--radius-board) var(--radius-board) 0 0;padding:16px 12px 6px 20px}
 #app[data-landscape] #side{border-radius:0 0 var(--radius-board) var(--radius-board);padding:2px 20px 18px}
-/* The background keeps its own colours in the theme's flavour, and the cards over it are frosted: the
-   surface over a blur of what is behind, so the background shows through as colour. The board at
-   80%, which holds only letters; the header and the list at 88%, as their smaller and dimmer text
-   needs. What is written on each passes over the darkest and the lightest ground there can be,
-   which bounds every other (tools/palettes/check.mjs); the blur only narrows that range. A browser
-   without color-mix keeps these solid but loses what the tokens mix (--hairline, --key), and one
-   without backdrop-filter keeps the share. */
+/* The board and the words are clear glass: a light blur keeps the background's shapes, under the
+   surface at the look's own share (--glass-board, --glass-list), the least that keeps their letters
+   at AA over every background (tools/sims/backgrounds/glass.mjs). The header and the list's count
+   row stay frosted, at 88% and 90%: their small text passes over the darkest and the lightest
+   ground there can be (tools/palettes/check.mjs). The list's frost fades into its glass below the
+   progress line, 44px down. A browser without color-mix keeps these solid but loses what the tokens
+   mix (--hairline, --key), and one without backdrop-filter keeps the share. */
 @supports (background-color:color-mix(in srgb,red 50%,transparent)){
-  #app :is(#gridbox,#hdr,#side){-webkit-backdrop-filter:blur(18px) saturate(1.6);backdrop-filter:blur(18px) saturate(1.6)}
-  #app #gridbox{background-color:color-mix(in srgb,var(--surface) 80%,transparent)}
-  #app :is(#hdr,#side){background-color:color-mix(in srgb,var(--surface) 88%,transparent)}
+  #app #hdr{-webkit-backdrop-filter:blur(18px) saturate(1.6);backdrop-filter:blur(18px) saturate(1.6);
+    background-color:color-mix(in srgb,var(--surface) 88%,transparent)}
+  #app :is(#gridbox,#side){-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+  #app #gridbox{background-color:color-mix(in srgb,var(--surface) var(--glass-board),transparent)}
+  #app #side{background-color:transparent;background-image:linear-gradient(
+    color-mix(in srgb,var(--surface) 90%,transparent) 44px,color-mix(in srgb,var(--surface) var(--glass-list),transparent) 56px)}
 }
 /* Pill colours are class-driven so they live in the theme's colours; as rgba literals in JS
    they were tuned for a dark surface and all but invisible on paper. The drag and a miss are

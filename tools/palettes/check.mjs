@@ -40,13 +40,12 @@ for (const t of THEMES) for (const m of ['light', 'dark']) {
     // A surface key is a 10% wash of the text over the surface (--key).
     ['strong on a surface key', parse(p.strong), over(`rgba(${parse(p.text).slice(0, 3).join(',')},.1)`, p.surface), 4.5],
     ...p.pills.map((c, i) => [`foundText on pill${i + 1}`, parse(p.foundText), over(c, p.surface), 4.5]),
-    // Over a background the board is --surface at 80% and the header and the list at 88% (styles.css):
+    // Over a background the header is --surface at 88% and the list's count row at 90% (styles.css):
     // what is written on them must pass over the darkest and the lightest background there can be,
-    // which bounds every other. The board holds only letters.
-    ...['#000000', '#ffffff'].flatMap(g => [
-      ['text on the board', p.text, .8],
-      ...[['text', p.text], ['strong', p.strong], ['muted', p.muted], ['label', p.label], ['accentText', p.accentText]].map(([n, c]) => [`${n} on a card`, c, .88]),
-    ].map(([n, c, a]) => [`${n} over ${g}`, parse(c), over(`rgba(${S.slice(0, 3).join(',')},${a})`, g), 4.5]))];
+    // which bounds every other. The board and the words are clear glass at the look's own share,
+    // which tools/sims/backgrounds/glass.mjs measures over every background instead.
+    ...['#000000', '#ffffff'].flatMap(g => [['text', p.text], ['strong', p.strong], ['muted', p.muted], ['label', p.label], ['accentText', p.accentText]]
+      .map(([n, c]) => [`${n} on a card over ${g}`, parse(c), over(`rgba(${S.slice(0, 3).join(',')},.88)`, g), 4.5]))];
   for (const [n, a, b, min] of checks) { const r = cr(a, b); if (r < min) { console.log(`FAIL ${t}/${m} ${n} ${r.toFixed(2)} < ${min}`); fail++; } }
   const [h, , l] = hsl(p.bg); const rgb = parse(p.bg).slice(0, 3); const chroma = (Math.max(...rgb) - Math.min(...rgb)) / 255;
   out.push({ t, m, bg: p.bg, hue: Math.round(h), sat: +chroma.toFixed(2), light: +l.toFixed(2) });

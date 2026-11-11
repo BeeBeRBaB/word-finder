@@ -218,24 +218,36 @@ test('a background runs behind the whole page and takes no clicks', async ({ pag
   expect(top).toBe(true);
 });
 
-// The board and the header and list cards are frosted: the surface at a share over a blur of
-// the background (tools/palettes/check.mjs bounds their text at these shares). Tiles drops the
-// board to a faint wash, its tiles carrying the letters, and Glass keeps the same cards as bars.
-test('the board and the cards let the background through, frosted', async ({ page }) => {
+// The board and the words are clear glass, a light blur under the look's own share of the surface
+// (tools/sims/backgrounds/glass.mjs measures those shares); the header and the list's count row stay
+// frosted (tools/palettes/check.mjs bounds them). Tiles drops the board to a faint wash, its tiles
+// carrying the letters, and Glass keeps the same cards as bars.
+test('the board and the words are clear glass over the background, the header frosted', async ({ page }) => {
   await page.goto('/?seed=1&subject=space/jupiter');
-  /** The alpha of an element's background colour and its backdrop filter. @param {string} sel */
+  /** The alpha of an element's background colour, its backdrop blur and its background image. @param {string} sel */
   const card = (sel) => page.locator(sel).first().evaluate(el => {
     const cs = getComputedStyle(el), m = cs.backgroundColor.match(/[\d.]+/g) ?? [];
-    return { a: m.length > 3 ? Number(m[3]) : 1, blur: cs.backdropFilter.includes('blur') };
+    return { a: m.length > 3 ? Number(m[3]) : 1, blur: cs.backdropFilter.match(/blur\(([\d.]+)px\)/)?.[1] ?? '', image: cs.backgroundImage };
   });
+  /** A look's share token, as a fraction. @param {string} name */
+  const share = (name) => page.evaluate(n => parseFloat(getComputedStyle(document.documentElement).getPropertyValue(n)) / 100, name);
   await page.locator('#list .w').first().waitFor();
-  for (const style of ['beads', 'glass']) {
-    await page.evaluate((s) => { document.documentElement.dataset.style = s; }, style);
-    const board = await card('#gridbox'), hdr = await card('#hdr'), side = await card('#side');
-    expect(board.a, style).toBeCloseTo(0.8, 2);
-    expect(hdr.a, style).toBeCloseTo(0.88, 2);
-    expect(side.a, style).toBeCloseTo(0.88, 2);
-    expect([board.blur, hdr.blur, side.blur], style).toEqual([true, true, true]);
+  for (const look of ['phosphor/dark', 'grove/light']) {
+    const [theme, flavour] = look.split('/');
+    await page.evaluate(([t, f]) => { document.documentElement.dataset.theme = t; document.documentElement.dataset.appearance = f; }, [theme, flavour]);
+    const board = await share('--glass-board'), list = await share('--glass-list');
+    expect(board, look).toBeGreaterThan(0.3);
+    expect(list, look).toBeGreaterThan(0.3);
+    for (const style of ['beads', 'glass']) {
+      await page.evaluate((s) => { document.documentElement.dataset.style = s; }, style);
+      const b = await card('#gridbox'), hdr = await card('#hdr'), side = await card('#side');
+      expect(b.a, `${look} ${style}`).toBeCloseTo(board, 2);
+      expect([b.blur, side.blur, hdr.blur], `${look} ${style}`).toEqual(['3', '3', '18']);
+      expect(hdr.a, `${look} ${style}`).toBeCloseTo(0.88, 2);
+      // The list's own colour is clear; a gradient carries the count row's frost and the words' glass.
+      expect(side.a, `${look} ${style}`).toBe(0);
+      expect(side.image, `${look} ${style}`).toContain('linear-gradient');
+    }
   }
   await page.evaluate(() => { document.documentElement.dataset.style = 'tiles'; });
   expect((await card('#gridbox')).a).toBeCloseTo(0.28, 2);
