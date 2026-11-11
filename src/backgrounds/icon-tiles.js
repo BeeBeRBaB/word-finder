@@ -7,8 +7,7 @@ import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
 import { iconSprites, iconsFor, sceneColors, variantOf, withHero } from './icon-scene.js';
 
 /**
- * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number,
- *   icons?:import('./icon-scene.js').IconStyle}} BackgroundOptions
+ * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number}} BackgroundOptions
  */
 
 const SPRITE = 86;                         // largest drawn edge in CSS px, breath included

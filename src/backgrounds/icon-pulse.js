@@ -7,8 +7,7 @@ import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
 import { iconSprites, iconsFor, sceneColors, variantOf, withHero } from './icon-scene.js';
 
 /**
- * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number,
- *   icons?:import('./icon-scene.js').IconStyle}} BackgroundOptions
+ * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number}} BackgroundOptions
  * @typedef {{i:number, j:number, jx:number, jy:number, k:number, f:number, size:number,
  *   cos:number, sin:number, alpha:number}} Cell
  * i, j is the lattice cell, jx, jy its jitter and f its edge, all in pitches; alpha its resting strength.

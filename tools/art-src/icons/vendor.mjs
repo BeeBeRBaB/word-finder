@@ -1,14 +1,12 @@
-// node vendor.mjs <one-colour-dir> <flat-colour-dir> — copies the Fluent Emoji drawings the iconmap uses
-// into fluent-emoji.json (one colour, in currentColor) and fluent-emoji-flat.json (flat colour).
-// The dirs are @iconify-json/fluent-emoji-high-contrast and @iconify-json/fluent-emoji-flat unpacked:
-// `npm pack` each into an empty folder and untar it there. Nothing is installed. Run
-// ../iconmap/emit.mjs afterwards.
+// node vendor.mjs <flat-colour-dir> — copies the Fluent Emoji drawings the iconmap uses into
+// fluent-emoji-flat.json. The dir is @iconify-json/fluent-emoji-flat unpacked: `npm pack` it into
+// an empty folder and untar it there. Nothing is installed. Run ../iconmap/emit.mjs afterwards.
 import fs from 'node:fs';
 import path from 'node:path';
 
-const [mono, flat] = process.argv.slice(2);
-if (!mono || !flat) {
-  console.error('usage: node vendor.mjs <unpacked fluent-emoji-high-contrast> <unpacked fluent-emoji-flat>');
+const [flat] = process.argv.slice(2);
+if (!flat) {
+  console.error('usage: node vendor.mjs <unpacked fluent-emoji-flat>');
   process.exit(1);
 }
 const dir = new URL('.', import.meta.url).pathname;
@@ -54,7 +52,7 @@ for (const f of fs.readdirSync(mapDir).filter(f => /^[a-z]+\.json$/.test(f))) {
   for (const v of [m.category, ...Object.values(m.subjects)]) for (const n of v) names.add(n);
 }
 const bad = [];
-for (const [src, file] of [[mono, 'fluent-emoji.json'], [flat, 'fluent-emoji-flat.json']]) {
+for (const [src, file] of [[flat, 'fluent-emoji-flat.json']]) {
   const set = load(src);
   /** @type {Record<string, string>} */
   const out = {};
@@ -64,4 +62,4 @@ for (const [src, file] of [[mono, 'fluent-emoji.json'], [flat, 'fluent-emoji-fla
   if (!bad.length) fs.writeFileSync(dir + file, JSON.stringify(out, null, 1) + '\n');
 }
 if (bad.length) { console.error(bad.join('\n')); process.exit(1); }
-console.log(`${names.size} drawings written to fluent-emoji.json and fluent-emoji-flat.json`);
+console.log(`${names.size} drawings written to fluent-emoji-flat.json`);

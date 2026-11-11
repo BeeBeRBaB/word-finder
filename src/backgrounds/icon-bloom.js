@@ -7,8 +7,7 @@ import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
 import { iconSprites, iconsFor, sceneColors, variantOf, withHero } from './icon-scene.js';
 
 /**
- * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number,
- *   icons?:import('./icon-scene.js').IconStyle}} BackgroundOptions
+ * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number}} BackgroundOptions
  * @typedef {{k:number, x:number, y:number, size:number, alpha:number, rot:number, spin:number,
  *   twist:number, ph:number, age:number, hold:number}} Bloom
  * x, y is the centre in CSS px, rot and twist radians, spin radians a second (or the garden's sway),

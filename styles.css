@@ -417,6 +417,14 @@ body{position:fixed;inset:0;width:100%;height:100%}
   #app #side{background-color:transparent;background-image:linear-gradient(
     color-mix(in srgb,var(--surface) 90%,transparent) 44px,color-mix(in srgb,var(--surface) var(--glass-list),transparent) 56px)}
 }
+/* Most backgrounds need far less than the worst one: main.js sets each background's own shares in
+   its flavour (--clear-board, --clear-list, --clear-band, from src/glass-shares.js), and the glass
+   takes the lesser, so over a calm one the words sit on next to nothing. Unset, the look's hold. */
+@supports (background-color:color-mix(in srgb,red min(50%,60%),transparent)){
+  #app #gridbox{background-color:color-mix(in srgb,var(--surface) min(var(--glass-board),var(--clear-board,100%)),transparent)}
+  #app #side{background-image:linear-gradient(color-mix(in srgb,var(--surface) min(90%,var(--clear-band,100%)),transparent) 44px,
+    color-mix(in srgb,var(--surface) min(var(--glass-list),var(--clear-list,100%)),transparent) 56px)}
+}
 /* Pill colours are class-driven so they live in the theme's colours; as rgba literals in JS
    they were tuned for a dark surface and all but invisible on paper. The drag and a miss are
    plain pills. */

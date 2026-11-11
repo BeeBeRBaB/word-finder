@@ -14,6 +14,7 @@ import { makeAppearance } from './appearance.js';
 import { makeSettings, pickStyle, STYLES } from './settings.js';
 import { makePicker } from './picker.js';
 import { makeBackdrop, resolveBackground, lookOf, RANDOM_POOL } from './backgrounds.js';
+import { glassVars } from './glass-shares.js';
 import { manualMarkup, dropMarkup, modeNote, summaryMarkup } from './bgpicker.js';
 import { makeSubpage } from './subpage.js';
 import { makePane } from './pane.js';
@@ -914,16 +915,19 @@ function shownBg() {
 }
 /** Run the background showing for the current deal. @returns {void} */
 function showBackdrop() {
-  const id = shownBg();
+  const id = shownBg(), pref = appearance.get();
   syncBg();
+  // The glass this background needs in this flavour, which over most is far less than the look's.
+  // The old one stops at once and the new one draws once loaded, so the two never meet under it.
+  for (const [k, v] of glassVars(id, pref)) document.documentElement.style.setProperty(k, v);
   if (!subjectId) return;   // nothing dealt yet; the deal calls again
   // Its own ground and colours in the theme's flavour, a dark night or a light day, whatever the
   // theme's palette. Subject motion paints its motion's ground.
-  const pref = appearance.get(), look = lookOf(id, pref);
+  const look = lookOf(id, pref);
   void backdrop.show(id, bgHost, {
     colors: [...look.colors], dark: look.dark, reducedMotion: prefersReducedMotion(),
     ground: id === 'motion' ? undefined : look.ground, lookOf: (i) => lookOf(i, pref),
-    subject: subjectId, seed: currentSeed, icons: cfg.get().icons,
+    subject: subjectId, seed: currentSeed,
   });
 }
 globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').addEventListener?.('change', showBackdrop);
@@ -1155,7 +1159,7 @@ function syncSettings() {
  * @param {string} key @returns {void} */
 function applySetting(key) {
   const now = cfg.get();
-  if (key === 'art' || key === 'bgmode' || key === 'motion' || key === 'icons') showBackdrop();
+  if (key === 'art' || key === 'bgmode' || key === 'motion') showBackdrop();
   if (key === 'letters') { state.rendered = { puzzle: null, cell: 0 }; layout(); }
   if (key === 'reveal') els.app.dataset.reveal = now.reveal ? 'on' : 'off';
   if (key === 'style') applyStyle();

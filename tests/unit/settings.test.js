@@ -47,13 +47,13 @@ test('the New game side is remembered, and only random or levels', () => {
   assert.equal(normalizeSettings({ play: 'daily' }).play, 'random');
 });
 
-test('the icon style is remembered, one colour unless flat was picked', () => {
-  const store = memStore();
-  assert.equal(DEFAULTS.icons, 'mono');
-  makeSettings({ store }).set('icons', 'flat');
-  assert.equal(makeSettings({ store }).get().icons, 'flat');
-  assert.deepEqual(CHOICES.icons, ['mono', 'flat']);
-  assert.equal(normalizeSettings({ icons: 'line' }).icons, 'mono');
+// The Icons switch is gone (icons are always in their own colours): a record from before it drops
+// the key and keeps the rest.
+test('a saved icon style from the old Icons switch is dropped', () => {
+  const out = normalizeSettings({ icons: 'mono', style: 'glass' });
+  assert.equal('icons' in out, false);
+  assert.equal(out.style, 'glass');
+  assert.equal('icons' in DEFAULTS, false);
 });
 
 test('a change persists and is read back', () => {

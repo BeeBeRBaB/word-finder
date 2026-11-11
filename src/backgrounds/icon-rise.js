@@ -7,8 +7,7 @@ import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
 import { iconSprites, iconsFor, sceneColors, variantOf, withHero } from './icon-scene.js';
 
 /**
- * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number,
- *   icons?:import('./icon-scene.js').IconStyle}} BackgroundOptions
+ * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number}} BackgroundOptions
  * @typedef {{k:number, size:number, speed:number, rise:number, x:number, sway:number, swayF:number,
  *   f2:number, tilt:number, ph:number, alpha:number, grow:number, top:number, pop:number}} Riser
  * rise is the distance climbed from just below the bottom edge, x the centre across. f2 is the

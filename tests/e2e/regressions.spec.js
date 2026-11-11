@@ -139,7 +139,7 @@ test('the board and background from a first visit come back offline', async ({ p
   await expect.poll(() => page.evaluate(async () => {
     const paths = new Set();
     for (const k of await caches.keys()) for (const r of await (await caches.open(k)).keys()) paths.add(new URL(r.url).pathname);
-    return paths.has('/src/backgrounds/drifting-icons.js') && [...paths].some(p => p.startsWith('/src/backgrounds/icons/mono/'))
+    return paths.has('/src/backgrounds/drifting-icons.js') && [...paths].some(p => p.startsWith('/src/backgrounds/icons/flat/'))
       && [...paths].some(p => p.startsWith('/src/subjects/'));
   })).toBe(true);
   // Offline for the worker as well: context.setOffline stops holding back the worker's own

@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { openBoard, handPickedBackground, findAndDrag, pickBackground } from './helpers.js';
 import { BACKGROUNDS, findBackground, resolveBackground } from '../../src/backgrounds.js';
 import { MOTIONS } from '../../src/backgrounds/subject-motion.js';
+import { GLASS_SHARES } from '../../src/glass-shares.js';
 import { motionFor } from '../../src/backgrounds/icon-scene.js';
 
 /** @typedef {import('@playwright/test').Page} Page */
@@ -49,8 +50,8 @@ test('the Background page has the mode, and under Manual a dropdown of every bac
   await expect(mode.locator('option')).toHaveText(['Theme', 'Random', 'Manual']);
   await expect(mode).toHaveValue('theme');
   await expect(page.locator('#bgmode-note')).toHaveText('Each theme comes with its own background. Now: Galaxy.');
-  // Icons is the page's one switch: no Area row, the whole page always.
-  await expect(page.locator('#settings-bgpage .seg')).toHaveAttribute('data-setting', 'icons');
+  // No switches on the page: no Area row, no Icons, the whole page always.
+  await expect(page.locator('#settings-bgpage .seg')).toHaveCount(0);
   await expect(page.locator('#bg-manual')).toBeHidden();
   await mode.selectOption('manual');
   await expect(page.locator('#bgmode-note')).toHaveText('The one you pick shows with every game.');
@@ -229,24 +230,30 @@ test('the board and the words are clear glass over the background, the header fr
     const cs = getComputedStyle(el), m = cs.backgroundColor.match(/[\d.]+/g) ?? [];
     return { a: m.length > 3 ? Number(m[3]) : 1, blur: cs.backdropFilter.match(/blur\(([\d.]+)px\)/)?.[1] ?? '', image: cs.backgroundImage };
   });
-  /** A look's share token, as a fraction. @param {string} name */
-  const share = (name) => page.evaluate(n => parseFloat(getComputedStyle(document.documentElement).getPropertyValue(n)) / 100, name);
+  /** A look's share token and the background's own share, as fractions (1 when unset). @param {string} name */
+  const share = (name) => page.evaluate(n => [n, n.replace('glass', 'clear')].map(k => {
+    const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(k));
+    return Number.isNaN(v) ? 1 : v / 100;
+  }), name);
   await page.locator('#list .w').first().waitFor();
   for (const look of ['phosphor/dark', 'grove/light']) {
     const [theme, flavour] = look.split('/');
     await page.evaluate(([t, f]) => { document.documentElement.dataset.theme = t; document.documentElement.dataset.appearance = f; }, [theme, flavour]);
-    const board = await share('--glass-board'), list = await share('--glass-list');
+    const [board, ownBoard] = await share('--glass-board'), [list, ownList] = await share('--glass-list');
     expect(board, look).toBeGreaterThan(0.3);
     expect(list, look).toBeGreaterThan(0.3);
+    const band = Math.min(0.9, (await share('--glass-band'))[1]);
     for (const style of ['beads', 'glass']) {
       await page.evaluate((s) => { document.documentElement.dataset.style = s; }, style);
       const b = await card('#gridbox'), hdr = await card('#hdr'), side = await card('#side');
-      expect(b.a, `${look} ${style}`).toBeCloseTo(board, 2);
+      // The lesser of the look's share and the background's own.
+      expect(b.a, `${look} ${style}`).toBeCloseTo(Math.min(board, ownBoard), 2);
       expect([b.blur, side.blur, hdr.blur], `${look} ${style}`).toEqual(['3', '3', '18']);
       expect(hdr.a, `${look} ${style}`).toBeCloseTo(0.88, 2);
       // The list's own colour is clear; a gradient carries the count row's frost and the words' glass.
       expect(side.a, `${look} ${style}`).toBe(0);
-      expect(side.image, `${look} ${style}`).toContain('linear-gradient');
+      expect([...side.image.matchAll(/\/ ([\d.]+)\)/g)].map(m => Number(m[1])), `${look} ${style}`)
+        .toEqual([band, Math.min(list, ownList)].map(v => expect.closeTo(v, 2)));
     }
   }
   await page.evaluate(() => { document.documentElement.dataset.style = 'tiles'; });
@@ -254,6 +261,35 @@ test('the board and the words are clear glass over the background, the header fr
   expect((await card('#hdr')).a).toBeCloseTo(0.88, 2);
   // Words are plain text on the card, never tiles of their own.
   expect((await card('#list .w')).a).toBe(0);
+});
+
+// Each background brings its own glass in each flavour (src/glass-shares.js), and the board and
+// the words take the lesser of that and the look's: over a calm background they sit on next to
+// nothing, over a busy one they keep the look's glass.
+test('each background brings its own glass, and the board and the words take the lesser', async ({ page }) => {
+  await page.goto('/?seed=1&subject=space/jupiter');
+  await page.locator('.cell').first().waitFor();
+  const ids = Object.keys(GLASS_SHARES).sort((a, b) => GLASS_SHARES[a].dark[1] - GLASS_SHARES[b].dark[1]);
+  const calm = ids[0], busy = /** @type {string} */ (ids.at(-1));
+  expect(GLASS_SHARES[calm].dark[1]).toBeLessThan(GLASS_SHARES[busy].dark[1]);
+  /** The board's alpha, the list's two gradient alphas, and the look's tokens. */
+  const glass = () => page.evaluate(() => {
+    const a = (/** @type {string} */ c) => [...c.matchAll(/\/ ([\d.]+)\)/g)].map(m => Number(m[1]));
+    const root = getComputedStyle(document.documentElement), pct = (/** @type {string} */ k) => parseFloat(root.getPropertyValue(k));
+    return { board: a(getComputedStyle(/** @type {Element} */ (document.querySelector('#gridbox'))).backgroundColor)[0] ?? 1,
+      list: a(getComputedStyle(/** @type {Element} */ (document.querySelector('#side'))).backgroundImage), tokens: [pct('--glass-board'), pct('--glass-list')] };
+  });
+  await openPage(page);
+  for (const look of ['plum/dark', 'plum/light']) {
+    await page.locator(`#theme-tiles input[value="${look}"]`).evaluate(el => /** @type {HTMLInputElement} */ (el).click());
+    const flavour = /** @type {'dark' | 'light'} */ (look.split('/')[1]);
+    for (const id of [calm, busy]) {
+      await pickBackground(page, id);
+      const g = await glass(), [b, l, band] = GLASS_SHARES[id][flavour];
+      expect(g.board, `${id} ${look}`).toBeCloseTo(Math.min(g.tokens[0], b) / 100, 2);
+      expect(g.list, `${id} ${look}`).toEqual([Math.min(90, band), Math.min(g.tokens[1], l)].map(v => expect.closeTo(v / 100, 2)));
+    }
+  }
 });
 
 // Each background has its own ground and colours in two flavours: the dark one under every dark
@@ -395,25 +431,23 @@ test('Drifting icons restarts for every new subject', async ({ page }) => {
   await expect.poll(() => painted(page, '#bg > canvas')).toBe(true);
 });
 
-test('Icons switches the subject backgrounds between one colour and flat colour drawings', async ({ page }) => {
+// Icons are in their own colours, with no switch: a player who had picked One colour gets them too.
+test('the subject backgrounds draw their category\'s icons in their own colours, with no Icons switch', async ({ page }) => {
   await handPickedBackground(page, 'drift');
+  await page.addInitScript(() => {
+    const s = JSON.parse(localStorage.getItem('wordfinder-settings-v1') ?? '{}');
+    localStorage.setItem('wordfinder-settings-v1', JSON.stringify({ ...s, icons: 'mono' }));
+  });
   await page.setViewportSize({ width: 1280, height: 800 });
   /** @type {string[]} */ const loaded = [];
-  page.on('requestfinished', r => { const m = r.url().match(/\/src\/backgrounds\/icons\/(mono|flat)\/([a-z]+)\.js/); if (m) loaded.push(`${m[1]}/${m[2]}`); });
+  page.on('requestfinished', r => { const m = r.url().match(/\/src\/backgrounds\/icons\/([a-z]+)\/([a-z]+)\.js/); if (m) loaded.push(`${m[1]}/${m[2]}`); });
   await page.goto('/?seed=1&subject=animals/dogs');
   await expect.poll(() => painted(page, '#bg > canvas')).toBe(true);
-  // Its category's drawings alone, in the default style.
-  expect(loaded).toEqual(['mono/animals']);
-  const canvas = await page.locator('#bg canvas').elementHandle();
+  // Its category's drawings alone.
+  expect(loaded).toEqual(['flat/animals']);
   await openPage(page);
-  const flat = page.getByRole('button', { name: 'Flat colour' });
-  await flat.click();
-  await expect(flat).toHaveAttribute('aria-pressed', 'true');
-  // Restarted in the new style, which loads its own files and keeps the setting.
-  await expect.poll(() => page.evaluate(c => c?.isConnected, canvas)).toBe(false);
-  await expect.poll(() => painted(page, '#bg > canvas')).toBe(true);
-  expect(loaded).toEqual(['mono/animals', 'flat/animals']);
-  expect(await page.evaluate(() => JSON.parse(localStorage.getItem('wordfinder-settings-v1') ?? '{}').icons)).toBe('flat');
+  await expect(page.locator('[data-setting="icons"]')).toHaveCount(0);
+  await expect(page.getByText('One colour')).toHaveCount(0);
 });
 
 test('icons that failed to load offline draw once the device is back online', async ({ page }) => {
@@ -486,7 +520,8 @@ test('the background shows through the board but not through its found words', a
   const alpha = (c) => { const m = c.match(/[\d.]+/g) ?? []; return m.length > 3 ? Number(m[3]) : 1; };
   await openPage(page);
   await pickBackground(page, 'koi');
-  const share = await page.evaluate(() => parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--glass-board')) / 100);
+  const share = await page.evaluate(() => ['--glass-board', '--clear-board']
+    .map(k => parseFloat(getComputedStyle(document.documentElement).getPropertyValue(k)) / 100).reduce((a, b) => Math.min(a, b)));
   expect(share).toBeLessThan(1);
   expect(alpha(await page.locator('#gridbox').evaluate(el => getComputedStyle(el).backgroundColor))).toBeCloseTo(share, 2);
   // The blur is of what is behind the board; its letters stay crisp, with no shadow.

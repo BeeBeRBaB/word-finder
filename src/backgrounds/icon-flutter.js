@@ -8,8 +8,7 @@ import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
 import { facingOf, iconSprites, iconsFor, sceneColors, variantOf, withHero } from './icon-scene.js';
 
 /**
- * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number,
- *   icons?:import('./icon-scene.js').IconStyle}} BackgroundOptions
+ * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number}} BackgroundOptions
  * @typedef {{k:number, d:number, size:number, speed:number, alpha:number, x:number, y:number,
  *   vx:number, vy:number, head:number, turn:number, face:number, beat:number, ph:number,
  *   h:number, u:number, v:number, w:number[]}} Flier

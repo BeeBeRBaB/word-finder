@@ -8,8 +8,7 @@ import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
 import { facingOf, iconSprites, iconsFor, sceneColors, variantOf, withHero } from './icon-scene.js';
 
 /**
- * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number,
- *   icons?:import('./icon-scene.js').IconStyle}} BackgroundOptions
+ * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number}} BackgroundOptions
  * @typedef {{u0:number, len:number, dir:number, lane:number, amp:number, wl:number, ph:number}} Leg
  * One crossing: it starts at u0 (in crossings) and `len` includes the time off the host; dir is
  * +1 left to right. lane, amp and wl are 0..1, scaled to the host's size as it draws.

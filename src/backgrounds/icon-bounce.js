@@ -8,8 +8,7 @@ import { frameLoop, hostCanvas, hostSize } from './frame-loop.js';
 import { facingOf, iconSprites, iconsFor, sceneColors, variantOf, withHero } from './icon-scene.js';
 
 /**
- * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number,
- *   icons?:import('./icon-scene.js').IconStyle}} BackgroundOptions
+ * @typedef {{colors:string[], dark:boolean, reducedMotion:boolean, subject:string, seed?:number}} BackgroundOptions
  * @typedef {{k:number, z:number, size:number, alpha:number, x:number, y:number, vx:number, vy:number,
  *   hops:number[], n:number, u:number, rest:number, stride:number, wall:number, hit:number}} Bouncer
  * One icon of the hopping (0) or travelling (2) variant: x, y in CSS px, hops the heights it cycles
