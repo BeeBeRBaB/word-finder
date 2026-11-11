@@ -46,10 +46,10 @@ const site = await serve();
 const proxy = process.env.HTTPS_PROXY;   // the theme fonts come from Google Fonts
 const browser = await chromium.launch(proxy ? { proxy: { server: proxy, bypass: 'localhost,127.0.0.1' } } : {});
 const out = process.env.OUT ? fs.createWriteStream(process.env.OUT, { flags: 'a' }) : null;
-/** look -> group -> [need, where] @type {Record<string, Record<string, [number, string]>>} */
+/** look -> group -> [need, where, the share it had there] @type {Record<string, Record<string, [number, string, number]>>} */
 const needs = {};
-/** look -> group -> share @type {Record<string, Record<string, number>>} */
-const shares = {};
+/** Each background x look x role whose share was short. */
+let shortfalls = 0;
 
 /** The cards at a share of the surface, over their own backdrop filters. @param {number} a */
 const cardCss = (a) => `#app :is(#gridbox,#hdr,#side){background-color:color-mix(in srgb,var(--surface) ${a}%,transparent)!important}
@@ -83,6 +83,8 @@ async function run({ shape, id, subject }, math) {
   const ground = (/** @type {string} */ c) => page.evaluate((c) => { document.documentElement.style.background = c; document.body.style.background = c; }, c);
   /** @type {Record<string, Record<string, number>>} */
   const res = {};
+  /** look -> group -> the share this background has in it @type {Record<string, Record<string, number>>} */
+  const shares = {};
   for (const look of LOOKS) {
     // Through the app's own controls, so the background restarts in the look's colours.
     const moved = await page.evaluate((look) => {
@@ -195,13 +197,15 @@ async function run({ shape, id, subject }, math) {
     for (const [role, m] of Object.entries(res[look])) {
       const g = GROUP[role];
       if (!g) continue;
-      const n = (needs[look] ??= {})[g] ??= [0, ''];
-      if (m > n[0]) needs[look][g] = [m, `${id}/${shape}${subject === SUBJECTS[0] ? '' : ` ${subject}`}`];
+      const n = (needs[look] ??= {})[g] ??= [0, '', 1];
+      if (m > n[0]) needs[look][g] = [m, `${id}/${shape}${subject === SUBJECTS[0] ? '' : ` ${subject}`}`, shares[look][g]];
     }
   }
   await ctx.close();
   out?.write(JSON.stringify({ shape, id, subject, style: STYLE, frames: FRAMES, res }) + '\n');
-  const short = Object.entries(res).flatMap(([look, r]) => Object.entries(r).filter(([role, m]) => GROUP[role] && m > shares[look][GROUP[role]] + 1e-9).map(([role, m]) => `${look} ${role} needs ${m}`));
+  const short = Object.entries(res).flatMap(([look, r]) => Object.entries(r).filter(([role, m]) => GROUP[role] && m > shares[look][GROUP[role]] + 1e-9)
+    .map(([role, m]) => `${look} ${role} needs ${m}, has ${shares[look][GROUP[role]]}`));
+  shortfalls += short.length;
   console.log(`${short.length ? 'FAIL' : 'ok  '} ${shape.padEnd(9)} ${id}${subject === SUBJECTS[0] ? '' : ` ${subject}`}${short.length ? `: ${short.join(', ')}` : ''}`);
 }
 
@@ -213,15 +217,10 @@ await Promise.all(Array.from({ length: Math.min(WORKERS, jobs.length) }, async (
 await browser.close();
 site.close();
 out?.end();
-let failed = 0;
-console.log('\nEach look: the share each group needs at worst (where), against what it has.');
+console.log('\nEach look: the share each group needs at worst (where), against what it had there.');
 for (const look of Object.keys(needs).sort()) {
-  const row = Object.entries(needs[look]).map(([g, [m, at]]) => {
-    const bad = m > shares[look][g] + 1e-9;
-    failed += Number(bad);
-    return `${g} ${m.toFixed(2)}/${shares[look][g].toFixed(2)}${bad ? ' SHORT' : ''} (${at})`;
-  });
+  const row = Object.entries(needs[look]).map(([g, [m, at, has]]) => `${g} ${m.toFixed(2)}/${has.toFixed(2)}${m > has + 1e-9 ? ' SHORT' : ''} (${at})`);
   console.log(`  ${look.padEnd(17)} ${row.join('  ')}`);
 }
-console.log(failed ? `${failed} shares short of AA` : 'every share keeps its text at AA');
-process.exit(failed ? 1 : 0);
+console.log(shortfalls ? `${shortfalls} shares short of AA (the FAIL lines)` : 'every share keeps its text at AA');
+process.exit(shortfalls ? 1 : 0);
