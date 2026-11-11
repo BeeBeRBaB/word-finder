@@ -57,7 +57,7 @@
   --radius-board:16px; --radius-ctl:12px; --radius-pill:999px; --board-outline:none; --board-outline-offset:0px; --board-texture:none;
   --edge:#907a6a;
   --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
-  --glass-board:50%; --glass-list:65%;
+  --glass-board:55%; --glass-list:70%;
 }
 /* Six more themes, each with its own fixed colours. Same token names as Phosphor's blocks,
    and the same shape: the bare [data-theme] selector is the dark default, and the
@@ -93,7 +93,7 @@
   --board-outline-offset:4px; --board-texture:none;
   --edge:#1c1a10;
   --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
-  --glass-board:40%; --glass-list:45%;
+  --glass-board:45%; --glass-list:55%;
 }
 :root[data-theme="sticker"], :root[data-theme="sticker"][data-appearance="dark"]{
   color-scheme:dark; --bg:#211756; --surface:#2c2266; --border:#0a0620; --text:#f0ebff;
@@ -125,7 +125,7 @@
   --board-outline-offset:0px; --board-texture:none;
   --edge:#1d1638;
   --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
-  --glass-board:40%; --glass-list:45%;
+  --glass-board:45%; --glass-list:55%;
 }
 :root[data-theme="drafting"], :root[data-theme="drafting"][data-appearance="dark"]{
   color-scheme:dark; --bg:#002f56; --surface:#113e66; --border:#326893; --text:#dee9f6;
@@ -159,7 +159,7 @@
   --board-texture:linear-gradient(rgba(10,95,138,.10) 1px,transparent 1px),linear-gradient(90deg,rgba(10,95,138,.10) 1px,transparent 1px);
   --edge:#396582;
   --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
-  --glass-board:50%; --glass-list:50%;
+  --glass-board:55%; --glass-list:60%;
 }
 :root[data-theme="grove"], :root[data-theme="grove"][data-appearance="dark"]{
   color-scheme:dark; --bg:#14301f; --surface:#1b3a27; --border:#3a5c44; --text:#e4ebd6;
@@ -175,7 +175,7 @@
   --board-outline:none; --board-outline-offset:0px; --board-texture:none;
   --edge:#6d8770;
   --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
-  --glass-board:75%; --glass-list:70%;
+  --glass-board:75%; --glass-list:75%;
 }
 :root[data-theme="grove"][data-appearance="light"]{
   color-scheme:light; --bg:#bfe3bd; --surface:#f5fbf0; --border:#93b98a; --text:#1e2e1b;
@@ -191,7 +191,7 @@
   --board-outline:none; --board-outline-offset:0px; --board-texture:none;
   --edge:#627f5b;
   --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
-  --glass-board:50%; --glass-list:50%;
+  --glass-board:55%; --glass-list:60%;
 }
 :root[data-theme="plum"], :root[data-theme="plum"][data-appearance="dark"]{
   color-scheme:dark; --bg:#43173b; --surface:#4f2146; --border:#74406a; --text:#f5e4ee;
@@ -225,7 +225,7 @@
   --board-outline:none; --board-outline-offset:0px; --board-texture:none;
   --edge:#8b607f;
   --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
-  --glass-board:45%; --glass-list:50%;
+  --glass-board:50%; --glass-list:60%;
 }
 :root[data-theme="graphite"], :root[data-theme="graphite"][data-appearance="dark"]{
   color-scheme:dark; --bg:#23272c; --surface:#2f3339; --border:#51555c; --text:#e6e8eb;
@@ -257,7 +257,7 @@
   --board-outline:none; --board-outline-offset:0px; --board-texture:none;
   --edge:#5b6065;
   --hairline:color-mix(in srgb,var(--text) 16%,transparent); --key:color-mix(in srgb,var(--text) 10%,var(--surface));
-  --glass-board:45%; --glass-list:50%;
+  --glass-board:50%; --glass-list:60%;
 }
 
 /* Lock the viewport: no page scroll or rubber-band on iPad / iOS standalone. */
