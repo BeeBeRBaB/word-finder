@@ -10,7 +10,7 @@
 // gives each look's needs. Each look takes FRAMES frames GAP ms apart and keeps the worst; the
 // backgrounds that draw the subject's icons (perDeal) run once per subject in SUBJECTS.
 //   node tools/sims/backgrounds/glass.mjs                      every background, phone
-//   SHAPES=phone,landscape,desktop ONLY=voronoi,drift LOOKS=plum/dark ICONS=flat STYLE=glass
+//   SHAPES=phone,landscape,desktop ONLY=voronoi,drift LOOKS=plum/dark STYLE=glass
 //   FRAMES=3 GAP=1500 SUBJECTS=animals/frogs,food/sushi
 //   WORKERS=4 WAIT=700 OUT=needs.jsonl                         a JSON line per job, for
 //   tools/sims/backgrounds/glass-shares.mjs to turn into src/glass-shares.js
@@ -26,7 +26,7 @@ const IDS = list('ONLY', BACKGROUNDS.map(b => b.id));
 const ALL_SHAPES = { phone: [390, 664], landscape: [844, 390], desktop: [1440, 900] };
 const SHAPES = list('SHAPES', ['phone']);
 const LOOKS = list('LOOKS', THEMES.flatMap(t => PREFS.map(p => `${t}/${p}`)));
-const STYLE = process.env.STYLE || 'beads', ICONS = process.env.ICONS || 'mono';
+const STYLE = process.env.STYLE || 'beads';
 const SUBJECTS = list('SUBJECTS', [process.env.SUBJECT || 'history/industrial-revolution']);
 const WORKERS = Number(process.env.WORKERS || 4), WAIT = Number(process.env.WAIT || 700);
 const FRAMES = Number(process.env.FRAMES || 1), GAP = Number(process.env.GAP || 1500);
@@ -41,7 +41,7 @@ for (const shape of SHAPES) for (const id of IDS) {
   const bg = BACKGROUNDS.find(b => b.id === id);
   if (bg) for (const subject of bg.perDeal ? SUBJECTS : SUBJECTS.slice(0, 1)) jobs.push({ shape, id, subject });
 }
-console.log(`${jobs.length} jobs x ${LOOKS.length} looks x ${FRAMES} frames, style ${STYLE}, icons ${ICONS}`);
+console.log(`${jobs.length} jobs x ${LOOKS.length} looks x ${FRAMES} frames, style ${STYLE}`);
 const site = await serve();
 const proxy = process.env.HTTPS_PROXY;   // the theme fonts come from Google Fonts
 const browser = await chromium.launch(proxy ? { proxy: { server: proxy, bypass: 'localhost,127.0.0.1' } } : {});
@@ -68,7 +68,7 @@ async function run({ shape, id, subject }, math) {
     g.__freeze = () => { held = []; window.requestAnimationFrame = (cb) => { held.push(cb); return 0; }; };
     // Each held frame is released once: releasing one twice would start a second loop.
     g.__thaw = () => { window.requestAnimationFrame = raf; const x = held; held = []; for (const cb of x) raf(cb); };
-  }, JSON.stringify({ bgmode: 'manual', art: id, style: STYLE, icons: ICONS, autoNext: false }));
+  }, JSON.stringify({ bgmode: 'manual', art: id, style: STYLE, autoNext: false }));
   await page.goto(`${site.url}/?seed=1&subject=${subject}`);
   await page.waitForSelector('.cell');
   await page.waitForSelector('#bg > *', { state: 'visible' }).catch(() => {});
@@ -200,7 +200,7 @@ async function run({ shape, id, subject }, math) {
     }
   }
   await ctx.close();
-  out?.write(JSON.stringify({ shape, id, subject, style: STYLE, icons: ICONS, frames: FRAMES, res }) + '\n');
+  out?.write(JSON.stringify({ shape, id, subject, style: STYLE, frames: FRAMES, res }) + '\n');
   const short = Object.entries(res).flatMap(([look, r]) => Object.entries(r).filter(([role, m]) => GROUP[role] && m > shares[look][GROUP[role]] + 1e-9).map(([role, m]) => `${look} ${role} needs ${m}`));
   console.log(`${short.length ? 'FAIL' : 'ok  '} ${shape.padEnd(9)} ${id}${subject === SUBJECTS[0] ? '' : ` ${subject}`}${short.length ? `: ${short.join(', ')}` : ''}`);
 }
