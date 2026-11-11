@@ -284,7 +284,8 @@ body{position:fixed;inset:0;width:100%;height:100%}
 /* min-width:0 too, or the portrait 1fr track grows to the header's no-wrap width and
    pushes New game off a 320px screen. */
 #hdr{flex-wrap:nowrap;min-width:0}
-#actions{flex:none}
+/* At the top, so a name on two lines grows the header below the keys and New game stays put. */
+#actions{flex:none;align-self:flex-start}
 /* The title block fills whatever the buttons leave. */
 #titles{min-width:0;flex:1 1 auto}
 /* The category yields before the name, and the name keeps a floor: letting both

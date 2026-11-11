@@ -29,6 +29,18 @@ for (const d of DEVICES) {
       expect(m.clippedX, 'content clipped horizontally by #app').toBe(0);
     });
 
+    // A long subject name takes a second line and makes the header taller; New game stays where a
+    // short name leaves it rather than riding down with the centre.
+    test('New game stays put whatever the subject name\'s length', async ({ page }) => {
+      const at = async (/** @type {string} */ subject) => {
+        await openBoard(page, `/?seed=1&subject=${subject}`);
+        await page.evaluate(() => document.fonts.ready);
+        return page.locator('#newbtn').evaluate(el => el.getBoundingClientRect().top);
+      };
+      const short = await at('animals/frogs'), long = await at('tech/artificial-intelligence');
+      expect(long).toBeCloseTo(short, 0);
+    });
+
     // min(viewport) under 480 is the compact board. Asserted per device because
     // "the layout fits" passes just as well when the wrong board is on screen.
     test('deals the board this device should get', async ({ page }) => {
