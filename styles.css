@@ -474,8 +474,10 @@ body{position:fixed;inset:0;width:100%;height:100%}
 #listhdr{container:listhdr/inline-size}
 @container listhdr (max-width:345px){#reveal .when-wide{display:none}}
 #reveal[disabled]{visibility:hidden}
-/* The words are plain text, each after a mark in the theme's pill shape. A found word dims and is
-   struck through, and its mark takes its beads' colour on the board (view.js tags it p1-p4). */
+/* The words are plain text, each after a mark in the theme's pill shape. A found word is struck
+   through in the same ink, and its mark takes its beads' colour on the board (view.js tags it
+   p1-p4). It keeps full ink because the list is clear over calm backgrounds: a dimmed word would
+   need a backing behind it on almost every one (tools/sims/backgrounds/glass.mjs). */
 #list{display:grid;gap:6px 14px}
 .w{position:relative;justify-self:start;font-weight:700;font-size:19px;line-height:1.2;padding:4px 0 4px 20px;cursor:default;color:var(--text)}
 .w::before{content:'';position:absolute;left:1px;top:calc(50% - 5px);width:10px;height:10px;border-radius:var(--radius-pill);background:var(--hairline)}
@@ -483,7 +485,6 @@ body{position:fixed;inset:0;width:100%;height:100%}
 .w.p2{--chip:var(--pill-2)}
 .w.p3{--chip:var(--pill-3)}
 .w.p4{--chip:var(--pill-4)}
-.w.done,.w.glow{color:var(--muted)}
 .w.done::before,.w.glow::before{background:var(--chip,var(--accent));transform:scale(1.25)}
 /* The strike spans the text, so its left inset matches .w's in every rule that sets it. */
 .w.done::after{content:'';position:absolute;left:20px;right:0;top:calc(50% - .75px);height:1.5px;background:currentColor}
