@@ -439,7 +439,7 @@ body{position:fixed;inset:0;width:100%;height:100%}
 #pills .pill:is(.sel,.miss){background-color:var(--surface)}
 #pills .sel{background-image:linear-gradient(var(--pill-sel),var(--pill-sel))}
 #pills .miss{background-image:linear-gradient(var(--pill-miss),var(--pill-miss))}
-.cell{position:absolute;text-align:center;font-weight:700;color:var(--text);pointer-events:none}
+.cell{position:absolute;text-align:center;font-weight:700;color:var(--text-strong);pointer-events:none}
 /* A found letter sits on its bead in the found text colour, dark ink on the opaque colours. */
 .cell.found{color:var(--found-text)}
 /* One phosphor pass as a puzzle appears. Animating background-position keeps the
@@ -458,7 +458,7 @@ body{position:fixed;inset:0;width:100%;height:100%}
 /* One line always: layout.js reserves this row at 21px. The count never wraps; on a narrow
    rail or a 320px phone it is Reveal that gives up width (ellipsis), not the row its height.
    Tabular digits, or it jitters sideways as the count climbs. */
-#count{font-family:var(--display);font-weight:500;font-size:15px;font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap;flex:none}
+#count{font-family:var(--display);font-weight:500;font-size:15px;font-variant-numeric:tabular-nums;color:var(--text);white-space:nowrap;flex:none}
 /* The progress line across the card fills by --found, the share found (view.js renderList),
    sliding where the browser can animate a registered property. */
 @property --found{syntax:'<number>';inherits:true;initial-value:0}
@@ -474,12 +474,13 @@ body{position:fixed;inset:0;width:100%;height:100%}
 #listhdr{container:listhdr/inline-size}
 @container listhdr (max-width:345px){#reveal .when-wide{display:none}}
 #reveal[disabled]{visibility:hidden}
-/* The words are plain text, each after a mark in the theme's pill shape. A found word is struck
-   through in the same ink, and its mark takes its beads' colour on the board (view.js tags it
-   p1-p4). It keeps full ink because the list is clear over calm backgrounds: a dimmed word would
-   need a backing behind it on almost every one (tools/sims/backgrounds/glass.mjs). */
+/* The words are plain text in the look's strongest ink, each after a mark in the theme's pill
+   shape. A found word is struck through in the same ink, and its mark takes its beads' colour on
+   the board (view.js tags it p1-p4). The ink is the strongest, and a found word keeps it, because
+   the list is clear glass: dimmer words need more surface behind them over every background
+   (tools/sims/backgrounds/glass.mjs). The board's letters and the count are inked the same way. */
 #list{display:grid;gap:6px 14px}
-.w{position:relative;justify-self:start;font-weight:700;font-size:19px;line-height:1.2;padding:4px 0 4px 20px;cursor:default;color:var(--text)}
+.w{position:relative;justify-self:start;font-weight:700;font-size:19px;line-height:1.2;padding:4px 0 4px 20px;cursor:default;color:var(--text-strong)}
 .w::before{content:'';position:absolute;left:1px;top:calc(50% - 5px);width:10px;height:10px;border-radius:var(--radius-pill);background:var(--hairline)}
 .w.p1{--chip:var(--pill-1)}
 .w.p2{--chip:var(--pill-2)}
